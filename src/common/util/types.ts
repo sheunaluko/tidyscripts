@@ -1,4 +1,5 @@
 
+export type Indexer = string | number 
 
 export enum Status {
     Ok = "OK", 
