@@ -41,6 +41,15 @@ export function setter_im(a, val) {
 export function all_true(arr) {
     return arr.reduce(function (a, b) { return (a && b); });
 }
+export function any_true(arr) {
+    return arr.reduce(function (a, b) { return (a || b); });
+}
+export function all_false(arr) {
+    return !any_true(arr);
+}
+export function any_false(arr) {
+    return !all_true(arr);
+}
 export function repeat(thing, num) {
     return Array(num).fill(thing);
 }
@@ -48,9 +57,29 @@ export function map(arr, mapper) {
     return arr.map(mapper);
 }
 /* Functions */
-export function inc(n) {
+/* MATH */
+export function add(a, b) { return a + b; }
+export function subtract(a, b) { return a - b; }
+export function multiply(a, b) { return a * b; }
+export function divide(a, b) { return a / b; }
+export function adder(n) {
     return function (x) {
         return x + n;
+    };
+}
+export function subtractor(n) {
+    return function (x) {
+        return x - n;
+    };
+}
+export function divider(n) {
+    return function (x) {
+        return x / n;
+    };
+}
+export function multuplier(n) {
+    return function (x) {
+        return x * n;
     };
 }
 //# sourceMappingURL=fp.js.map
