@@ -1,0 +1,16 @@
+cd .. ; #get out of bin 
+
+# read status file 
+FILE=".prepped_for_web" 
+if [ -f "$FILE" ]; then
+    echo "Already prepped"
+else 
+	for f in `ls src`; 
+	do 
+	cd src/$f 
+	echo "Prepping $(pwd)"
+	grep -RiIl --exclude-dir=deno '.ts"' | xargs sed 's/.ts"/"/g'
+	cd ../../
+	done 
+	touch .prepped_for_web 
+fi
