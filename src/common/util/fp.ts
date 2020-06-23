@@ -100,17 +100,17 @@ export function adder(n : number) : (x: number)=> number {
 } 
 export function subtractor(n : number) : (x: number)=> number { 
     return function(x: number) {
-	return x - m  
+	return x - n
     } 
 } 
 export function divider(n : number) : (x: number)=> number { 
     return function(x: number) {
-	return x / m  
+	return x / n
     } 
 } 
 export function multuplier(n : number) : (x: number)=> number { 
     return function(x: number) {
-	return x *  m  
+	return x *  n
     } 
 } 
 

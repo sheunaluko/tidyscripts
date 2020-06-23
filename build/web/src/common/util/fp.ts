@@ -60,6 +60,18 @@ export function all_true(arr : boolean[]) : boolean {
     return arr.reduce( (a,b)=> (a && b) ) 
 } 
 
+export function any_true(arr : boolean[]) : boolean { 
+    return arr.reduce( (a,b)=> (a || b) ) 
+} 
+
+export function all_false(arr : boolean[]) : boolean { 
+    return !any_true(arr) 
+} 
+
+export function any_false(arr : boolean[]): boolean { 
+    return !all_true(arr)
+} 
+
 
 export function repeat<T>(thing : T, num : number) : string[]{
     return (Array(num) as any).fill(thing) 
@@ -72,9 +84,42 @@ export function map<I,O>(arr : I[] , mapper : (x : I) => O): O[] {
 
 /* Functions */
 
-export function inc(n : number) : (x: number)=> number { 
+
+
+
+/* MATH */ 
+export function add(a : number, b : number ) : number  { return a + b }  
+export function subtract(a : number, b : number ): number  { return a - b }  
+export function multiply(a : number, b : number )  : number  { return a * b } 
+export function divide(a : number, b : number ) : number  { return a / b } 
+
+export function adder(n : number) : (x: number)=> number { 
     return function(x: number) {
 	return x + n 
     } 
 } 
+export function subtractor(n : number) : (x: number)=> number { 
+    return function(x: number) {
+	return x - n
+    } 
+} 
+export function divider(n : number) : (x: number)=> number { 
+    return function(x: number) {
+	return x / n
+    } 
+} 
+export function multuplier(n : number) : (x: number)=> number { 
+    return function(x: number) {
+	return x *  n
+    } 
+} 
+
+
+
+
+
+
+
+
+
 
