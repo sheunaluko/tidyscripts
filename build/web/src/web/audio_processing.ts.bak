@@ -16,11 +16,20 @@ type listener = [string, any]
 
 export var listeners : listener[] = [] 
 
+export var detection_threshold  = 1000 
+
+export function set_detection_threshold(t : number) {
+    detection_threshold = t 
+} 
 
 export function audio_detector(cb : any,thresh? : number) {
     //first we start the detection 
     //and automatically calculate the audio power 
     start_power() 
+    
+    if (thresh) {
+	set_detection_threshold(thresh) 
+    } 
     
     var last_val = 0 
     var start_time = perf.ms() 
@@ -33,7 +42,7 @@ export function audio_detector(cb : any,thresh? : number) {
 	let pchange = (100)*(power/last_val) 
 	let elapsed = perf.ms()- start_time 
 	
-	if ( elapsed > 2000 && pchange > (thresh || 1000) ) {
+	if ( elapsed > 600 && pchange > detection_threshold ) {
 	    cb() 
 	} else{ 
 	    //nothing 

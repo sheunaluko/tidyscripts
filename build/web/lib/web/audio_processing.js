@@ -7,10 +7,17 @@ import * as perf from "../common/util/performance";
  */
 export function start_power() { mic.connect(function (buf) { return dsp.power(buf); }, 'tidyscripts_web_mic'); }
 export var listeners = [];
+export var detection_threshold = 1000;
+export function set_detection_threshold(t) {
+    detection_threshold = t;
+}
 export function audio_detector(cb, thresh) {
     //first we start the detection 
     //and automatically calculate the audio power 
     start_power();
+    if (thresh) {
+        set_detection_threshold(thresh);
+    }
     var last_val = 0;
     var start_time = perf.ms();
     var f = function (e) {
@@ -21,7 +28,7 @@ export function audio_detector(cb, thresh) {
         }
         var pchange = (100) * (power / last_val);
         var elapsed = perf.ms() - start_time;
-        if (elapsed > 2000 && pchange > (thresh || 1000)) {
+        if (elapsed > 600 && pchange > detection_threshold) {
             cb();
         }
         else {

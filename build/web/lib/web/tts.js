@@ -73,7 +73,7 @@ export function finished_speaking() {
     });
 }
 export function is_speaking() {
-    return tts.speaking;
+    return (tts.speaking || (speech_que.length > 0));
 }
 export function _speak(ops) {
     return __awaiter(this, void 0, void 0, function () {

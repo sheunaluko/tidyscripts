@@ -1,9 +1,10 @@
 
+import { 
+    assertEquals, 
+    assertArrayContains, 
+    path 
+} from "./base_imports.ts" 
 
-import {
-  assertEquals,
-  assertArrayContains,
-} from "https://deno.land/std/testing/asserts.ts";
 
 
 import * as common from "../common/util/index.ts" ; //common utilities  
@@ -14,10 +15,11 @@ import {AsyncResult,
 
 export {common, 
 	assertEquals,
+	path ,
 	assertArrayContains}
 
 
-let log = common.Logger("dutil") 
+export var log = common.Logger("dutil") 
     
     
 

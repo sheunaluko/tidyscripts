@@ -47,19 +47,22 @@ var audio_context = window.AudioContext || window.webkitAudioContext;
 export var context = new audio_context();
 export function tone(ops) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, type, _b, duration, freq, osc;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var _a, type, _b, duration, _c, gain, freq, osc, gainNode;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _a = ops.type, type = _a === void 0 ? "sine" : _a, _b = ops.duration, duration = _b === void 0 ? 600 : _b, freq = ops.freq;
+                    _a = ops.type, type = _a === void 0 ? "sine" : _a, _b = ops.duration, duration = _b === void 0 ? 600 : _b, _c = ops.gain, gain = _c === void 0 ? 0.5 : _c, freq = ops.freq;
                     osc = context.createOscillator();
                     osc.frequency.value = freq;
                     osc.type = type;
-                    osc.connect(context.destination);
+                    gainNode = context.createGain();
+                    gainNode.gain.value = gain;
+                    osc.connect(gainNode);
+                    gainNode.connect(context.destination);
                     osc.start(0);
                     return [4 /*yield*/, asnc.wait(duration)];
                 case 1:
-                    _c.sent();
+                    _d.sent();
                     osc.stop();
                     return [2 /*return*/];
             }

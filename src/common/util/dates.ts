@@ -5,6 +5,24 @@ import {Logger} from "./logger.ts"
 let log = Logger("dates") ; 
 
 
+
+export function to_iso(d : Date) {
+    return d.toISOString() 
+} 
+
+export function iso_now() {
+    return to_iso(new Date()) 
+} 
+
+
+export function to_iso_day_filename(d : Date) {
+    return to_iso(d).split("T")[0].replace(/-/g,"_")
+} 
+
+export function iso_day_filename() {
+    return to_iso_day_filename(new Date()) 
+} 
+
 export function to_ms(d : Date) { return Number(d) }
 
 export function dates_eq(d1 : Date , d2 : Date ) {

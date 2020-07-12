@@ -21,18 +21,26 @@ interface tone_ops {
     type? : string, 
     freq : number , 
     duration? : number , 
+    gain? : number 
     
 } 
 
 export async function tone(ops : tone_ops ){ 
     let { type = "sine" ,
 	  duration = 600 , 
+	  gain = 0.5 , 
 	  freq ,   } = ops 
     
     var osc = context.createOscillator() 
     osc.frequency.value = freq 
     osc.type = type 
-    osc.connect(context.destination) 
+    
+    var gainNode  = context.createGain();
+
+    gainNode.gain.value = gain ; 
+    
+    osc.connect(gainNode) 
+    gainNode.connect(context.destination) 
     
     osc.start(0)
     await asnc.wait(duration) 

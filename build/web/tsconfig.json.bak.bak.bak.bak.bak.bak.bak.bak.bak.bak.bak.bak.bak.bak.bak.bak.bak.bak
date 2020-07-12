@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "outDir" : "lib" , 
+    "skipLibCheck": true,
+    "sourceMap" : true, 
+    "declaration": true, 
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImpo": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+  },
+  "include": [
+    "src"
+  ],
+    
+}

@@ -7,5 +7,6 @@ export interface RecognitionOps {
     onError?: () => void;
     onEnd?: () => void;
     lang?: string;
+    result_dispatch?: string;
 }
 export declare function get_recognition_object(ops?: RecognitionOps): any;
