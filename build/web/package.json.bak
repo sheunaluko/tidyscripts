@@ -1,0 +1,11 @@
+{
+  "name": "tidyscripts_web",
+  "version": "1.0.0",
+  "description": "Tidy collection of typescript libraries for the web",
+  "main": "./lib/web/index.js",
+  "repository": "https://github.com/sheunaluko/tidyscripts",
+  "author": "Sheun Aluko",
+  "license": "MIT",
+  "private": null
+}
+

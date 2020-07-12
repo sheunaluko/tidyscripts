@@ -15,15 +15,22 @@ export interface RecognitionOps {
     onError? : ()=>void,
     onEnd?  : ()=>void, 
     lang?  : string , 
+    result_dispatch? : string , 
 } 
 
 export function get_recognition_object(ops: RecognitionOps = {})  {
+    
+    let {result_dispatch = "tidyscripts_web_speech_recognition_result"} = ops 
     
     let {continuous = true,
 	 interimResults = false,
 	 onStart = ()=>{console.log("Recognition started")} ,
 	 onSoundStart = ()=>{console.log("Sound started...") },
-	 onResult = (e : any)=>{ console.log("Recognition result: " + e.results[e.resultIndex][0].transcript)} , 
+	 onResult = function(e : any) { 
+	     let result = e.results[e.resultIndex][0].transcript
+	     console.log("Recognition result: " + result)
+	     window.dispatchEvent( new CustomEvent(result_dispatch, { detail : result } ) ) 
+	 } , 
 	 onError = (e :any)=> {console.log("Recognition error: "); console.log(e);} , 
 	 onEnd = ()=> {console.log("Recognition ended")} , 
 	 lang = 'en-US' , 

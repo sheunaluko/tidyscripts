@@ -33,5 +33,13 @@ export function alert(s : string) {
     window.alert(s) 
 } 
 
+export function is_chrome() {
+    return  /Chrome/.test(window.navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+} 
+
+export function is_mobile() {
+    return /Mobi/.test(window.navigator.userAgent)
+}
+
 
 

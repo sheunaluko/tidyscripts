@@ -5,6 +5,7 @@ interface tone_ops {
     type?: string;
     freq: number;
     duration?: number;
+    gain?: number;
 }
 export declare function tone(ops: tone_ops): Promise<void>;
 interface note {

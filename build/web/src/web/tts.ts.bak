@@ -4,8 +4,8 @@
  */ 
 
 
-import * as asnc from "../common/util/async.ts" 
-import * as fp from "../common/util/fp.ts" 
+import * as asnc from "../common/util/async" 
+import * as fp from "../common/util/fp" 
 
 
 declare var window : any ;
@@ -32,7 +32,7 @@ export async function finished_speaking() {
 }
 
 export function is_speaking() : boolean {
-    return tts.speaking
+    return (tts.speaking || (speech_que.length > 0))
 } 
 
 interface SpeechOps {
