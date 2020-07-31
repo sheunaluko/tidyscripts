@@ -4,8 +4,8 @@
  Sheun Aluko 
 */
 
-import * as fp from "../common/util/fp.ts" 
-import * as asnc from "../common/util/async.ts" 
+import * as fp from "../../common/util/fp.ts" 
+import * as asnc from "../../common/util/async.ts" 
 import {m2f} from "./midi2freq.ts" 
 
 

@@ -2,8 +2,8 @@
 
 import * as mic from "./browser_mic.ts" 
 
-import * as dsp from "../common/util/dsp.ts" 
-import * as perf from "../common/util/performance.ts" 
+import * as dsp from "../../common/util/dsp.ts" 
+import * as perf from "../../common/util/performance.ts" 
 
 
 /* 

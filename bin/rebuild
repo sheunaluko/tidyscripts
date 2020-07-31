@@ -1,0 +1,2 @@
+./bin/clean_build
+./bin/build_web_module

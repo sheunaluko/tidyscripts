@@ -4,8 +4,8 @@
  */ 
 
 
-import * as asnc from "../common/util/async.ts" 
-import * as fp from "../common/util/fp.ts" 
+import * as asnc from "../../common/util/async.ts" 
+import * as fp from "../../common/util/fp.ts" 
 
 
 declare var window : any ;
