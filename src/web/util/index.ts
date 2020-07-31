@@ -1,14 +1,14 @@
 
 
 
-import * as common from "../common/util/index.ts" ; //common utilities  
+import * as common from "../../common/util/index.ts" ; //common utilities  
 
 export {common } 
 
 
 import {Success,
 	Error, 
-	AsyncResult} from "../common/util/types.ts" 
+	AsyncResult} from "../../common/util/types.ts" 
 
 
 import * as tts from "./tts.ts" 
@@ -16,10 +16,11 @@ import * as speech_recognition from "./speech_recognition.ts"
 import * as sounds from "./sounds.ts" 
 import * as audio_processing from "./audio_processing.ts" 
 import * as voice_interface from "./voice_interface.ts" 
-
+import * as ws from "./ws.ts" 
 
 
 export {tts, 
+	ws , 
 	speech_recognition, 
 	sounds, 
 	voice_interface , 
