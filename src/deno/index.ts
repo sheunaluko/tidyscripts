@@ -5,6 +5,8 @@ import * as io from "./io.ts"
 
 import * as base from "./base_imports.ts" 
 
-export {util, io , base} 
+import * as hyperloop fro "./hyperloop/index.ts" 
+
+export {util, io , base, hyperloop} 
 
 
