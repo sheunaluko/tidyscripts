@@ -13,11 +13,12 @@ export var default_client : any  =  null
 import * as common from "../../common/util/index.ts" ; //common utilities  
 let log = common.Logger("hlm")
 
+import * as wutil from "../util/index.ts" 
 
 let default_ops = { 
-    host : "127.0.0.1" , 
+    host : "35.227.177.177" , 
     port : 9500 , 
-    id : "sattsys.tsw.hyperloop.client.1" ,
+    id : "sattsys.hyperloop.client." + wutil.uuid() ,
 } 
 
 export async function get_default_client(ops? : client.ClientOps) { 
