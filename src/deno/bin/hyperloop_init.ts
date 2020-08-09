@@ -28,7 +28,7 @@ log("Server initiated")
 
 // 2) create and connect a hyperloop client 
 
-let hc1 = new hl.client.Client({host : "localhost" , 
+let hc1 = new hl.client.Client({host : "10.138.0.5" , 
 				id : "hc1" ,  //how is this id used? must it be unique? 
 				port : s_ops.port ,  }) 
 
