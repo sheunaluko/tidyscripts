@@ -17,10 +17,11 @@ import * as sounds from "./sounds.ts"
 import * as audio_processing from "./audio_processing.ts" 
 import * as voice_interface from "./voice_interface.ts" 
 import * as ws from "./ws.ts" 
-
+import * as http from "./base_http.ts" 
 
 export {tts, 
 	ws , 
+	http , 
 	speech_recognition, 
 	sounds, 
 	voice_interface , 
