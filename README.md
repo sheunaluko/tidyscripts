@@ -9,14 +9,22 @@
 #### Currently included libraries: 
 
 ##### Common
-- functional programming with objects, strings, arrays 
-- date object manipuluation 
-- asynchronous helpers 
+- Dunctional programming with objects, strings, arrays 
+- Date object manipuluation 
+- Asynchronous helper functions (wait, wait_until, etc) 
+- Loggers
+- Custom Types (Result,AsyncResult,etc)
 
 ##### Browser
-- speech recognition and text to speech libraries (chrome) 
-- sound generation 
+- Speech recognition and text to speech libraries (chrome) 
+- Sound generation 
+- Cryptocurrency apis (websocket feeds to the Binance Exchange) 
+- Hyperloop client 
+- Wikidata Queries 
+- Medical Subject Headings (MeSH) Queries 
 
 ##### Deno 
-- http requests
+- HTTP requests
+- Hyperloop Server and Client 
+- File IO 
 

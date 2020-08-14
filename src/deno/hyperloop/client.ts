@@ -256,6 +256,10 @@ export class Client {
     if (!this.conn) {
       throw "Ws connection has not been initialized";
     }
+      console.log("S E N D I N G =  = = = = = = = = > ")  
+      console.log(msg) 
+
+      //
     this.conn.send(JSON.stringify(msg));
   }
 

@@ -5,7 +5,9 @@ import {AsyncResult,
 	Success, 
 	Error} from "../../common/util/types.ts" 
 
-import {base_http_json   } from "../util.ts"  
+import {base_http_json , 
+	post_json_get_json , 
+       } from "../util.ts"  
 
 
 
@@ -28,7 +30,7 @@ log("Server initiated")
 
 // 2) create and connect a hyperloop client 
 
-let hc1 = new hl.client.Client({host : "10.138.0.5" , 
+let hc1 = new hl.client.Client({host : "35.227.177.177" , 
 				id : "hc1" ,  //how is this id used? must it be unique? 
 				port : s_ops.port ,  }) 
 
@@ -46,7 +48,16 @@ let default_providers = [
 	    return result 
 	} ,  
 	args_info : [["url","string"]] 
+    } , 
+    { 
+	id : "sattsys.hyperloop.post_json" , 
+	handler : async function(url : string, msg : object ) { 
+	    let result = await post_json_get_json(url,msg)
+	    return result 
+	} ,  
+	args_info : [["url","string"] , ["msg" , "json argument to POST"]]
     } 
+    
 ] 
 
 
@@ -57,6 +68,22 @@ export default {
     hc1 , 
     hl_server 
 } 
+
+
+
+/*
+log("Testing stuff...") 
+
+let result = await post_json_get_json("https://query.wikidata.org/w/api.php",  {
+    action : "wbgetentities" , 
+    format : 'json' ,  
+    ids : "Q5" , 
+    titles : "", 
+    sites : "enwiki" , 
+}) 
+
+console.log(result) 
+*/
 
 
 

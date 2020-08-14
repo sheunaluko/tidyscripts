@@ -62,3 +62,17 @@ export async function  http_json(url_base :string,url_params : any) {
 } 
 
 
+
+export async function post_json(url : string, msg : object ) {
+    
+    let client = await get_default_client() 
+    log("Request to post json") 
+    
+    let data = await client.call( { id : "sattsys.hyperloop.post_json", 
+				    args : { url , msg } } )
+    
+    log("Done") 
+    log("Got value: " + JSON.stringify(data))     
+
+    return data
+} 

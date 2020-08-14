@@ -262,7 +262,7 @@ export function divider(n : number) : (x: number)=> number {
 	return x / n
     } 
 } 
-export function multuplier(n : number) : (x: number)=> number { 
+export function multiplier(n : number) : (x: number)=> number { 
     return function(x: number) {
 	return x *  n
     } 
@@ -279,7 +279,25 @@ export function equals(a : any, b :any ) : boolean {
 
 
 
-
-
-
+export function make_debouncer(d : number, cb : any ){
+    
+    var state :any =  { 
+	attempt_ref : null
+    } 
+    
+    return (args : any[] ) => {
+	
+	if (state.attempt_ref) { 
+	    clearTimeout(state.attempt_ref) //cancel any previously stored callback attempt 
+	} 
+	
+	//and reset with a new one 
+	state.attempt_ref = setTimeout( function(){
+	    cb(args) 
+	},d)
+	
+    } 
+    
+    
+} 
 
