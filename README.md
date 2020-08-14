@@ -1,4 +1,4 @@
-# tidyscripts
+# Tidyscripts
 ##### A tidy collection of web and server (deno) typescript libraries 
 
 - Both web and server code share a common codebase at src/common, allowing the effective re-use of typescript code! 
@@ -9,7 +9,7 @@
 #### Currently included libraries: 
 
 ##### Common
-- Dunctional programming with objects, strings, arrays 
+- Functional programming with objects, strings, arrays 
 - Date object manipuluation 
 - Asynchronous helper functions (wait, wait_until, etc) 
 - Loggers
