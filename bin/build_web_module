@@ -22,7 +22,7 @@ cp bin/.build_assets/tsconfig.json build/web
 # and then we compile the typescript app 
 echo "Compiling typescript" 
 cd build/web 
-tsc
+tsc --jsx "react"
 cd ../..
 
 echo "Finished compiling!"

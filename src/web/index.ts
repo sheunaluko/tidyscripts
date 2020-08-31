@@ -10,8 +10,11 @@ import * as wikidata from "./wikidata/index.ts"
 import * as hyperloop from "./hyperloop/index.ts" 
 import * as apis from "./apis/index.ts" 
 
+import * as components from "./components/index.ts"
+
 export {util,
 	wikidata,
 	hyperloop, 
+	components, 
 	apis, 
 	cryptocurrency } 
