@@ -12,6 +12,7 @@ export function keys(a : dic) : string[] {
 
 export function values(a : dic) : any[] { 
     let ks = keys(a) 
+    if (is_empty(ks)) {return []} 
     return map(ks,(k:string)=>a[k]) 
 } 
 
@@ -23,7 +24,8 @@ export function clone(o :dic): dic {
     let cpy = Object.assign({},o)
     return cpy 
 } 
-    
+
+
 export function set(o : dic, a : string , val : any) : dic {
     o[a] = val 
     return o 
@@ -59,8 +61,25 @@ export function is_empty_map(o : any) {
 } 
 
 
+export function update_at(o : {[k:string] : any}, path : string[], fn : (x : any) => any ) { 
+    
+    var ref = o ; 
+    for (var k = 0 ; k <path.length -1 ; k ++ ) { ref = ref[k] }  
+    
+    let lk = last(path) as string
+    ref[lk] = fn(ref[lk]) 
+    
+    return clone(o) 
+    
+} 
+
 
 /* ARRAYS  */ 
+
+export function clone_array(o : any) {
+    return JSON.parse(JSON.stringify(o))
+} 
+
 
 export function first<T>(arr : T[]) : T { 
     return arr[0] 
@@ -94,6 +113,14 @@ export function any_false(arr : boolean[]): boolean {
 
 export function repeat<T>(thing : T, num : number) : string[]{
     return (Array(num) as any).fill(thing) 
+} 
+
+export function range(n : number): number[] {
+    var arr = Array(n).fill(0) 
+    for (var i =0;i<arr.length; i++) {
+	arr[i] = i 
+    } 
+    return arr 
 } 
 
 export function map<I,O>(arr : I[] , mapper : (x : I) => O): O[] { 

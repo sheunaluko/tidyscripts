@@ -4,6 +4,7 @@ import * as common from "../../common/util/index.ts" ; //common utilities
 let log = common.Logger("wikidata")
 let hlm = hyperloop.main 
 let fp = common.fp 
+let debug = common.debug
 
 
 interface WikiDataOps { 
@@ -145,7 +146,7 @@ export async function entity_with_meshid(id : string) {
 
 
 let all_predicates_template = `
-SELECT ?item ?itemLabel 
+SELECT ?item ?itemLabel ?itemDescription
 WHERE 
 {
   ?item wdt:P31/wdt:P279* wd:Q19887775 . 
@@ -169,10 +170,10 @@ export async function all_predicates() {
     
     let bindings=  tmp.result.value.results.bindings
     
-    ALL_PREDICATES = bindings.map((x:any)=>[x.itemLabel.value,x.item.value])
+    ALL_PREDICATES = bindings.map((x:any)=>[x.itemLabel.value,x.itemDescription,x.item.value])
     
     for (var p of ALL_PREDICATES) { 
-	let id = fp.last(p[1].split("/"))
+	let id = fp.last(p[2].split("/"))
 	PREDICATE_TO_ID[p[0]] = id 
 	ID_TO_PREDICATE[(id as string)] = p[0]
     } 
@@ -283,7 +284,9 @@ export async function x() {
 
 
 let prop_id_template = `
-SELECT ?item ?itemLabel ?prop ?propValLabel ?mesh ?meshLabel 
+PREFIX schema: <http://schema.org/>
+
+SELECT ?item ?itemLabel ?prop ?propValLabel ?mesh ?meshLabel ?description
 WHERE 
 {
   
@@ -292,8 +295,11 @@ WHERE
   VALUES ?mesh { MESH_IDS }  . 
   
   ?item wdt:P486 ?mesh ; 
+        schema:description ?description; 
         ?prop ?propVal . 
-  
+
+
+  FILTER ( lang(?description) = "en" )
 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }
@@ -317,8 +323,16 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	    format : 'json' 
 	} 
     }) 
-    
-    let bindings=  tmp.result.value.results.bindings
+
+    var  bindings : any = null 
+    try { 
+	bindings = tmp.result.value.results.bindings    
+    } catch (e) { 
+	log("Error extracting bindings!")
+	log(e) 
+	debug.add("wikidata.default_props_for_ids.tmp" , tmp) 
+	bindings = [] ; 
+    } 
     
     //*
     var to_return : any = {} 
@@ -329,11 +343,21 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	     mesh, 
 	     item,
 	     itemLabel,
+	     description, 
 	     propValLabel} = binding
 	
 	
 	let qid = fp.last(item.value.split("/")) 
 	let qlabel = itemLabel.value
+	
+	var qDescription : any = null 
+	try { 
+	    qDescription = description.value 
+	} catch (e) {
+	    log("Error reading item description")
+	    console.log(binding) 
+	    qDescription = description
+	} 
 	let mesh_id = mesh.value 
 	let prop_id = fp.last(prop.value.split("/"))
 	let prop_name = ID_TO_PREDICATE[(prop_id as string)]
@@ -353,6 +377,8 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	} else { 
 	    to_return[qlabel][prop_name] = [payload]
 	}
+	
+	to_return[qlabel]["description"] = qDescription 
 	
 	
     } 
