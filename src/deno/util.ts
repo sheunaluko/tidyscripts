@@ -2,9 +2,10 @@
 import { 
     assertEquals, 
     assertArrayContains, 
-    path 
+    path , 
+    WebSocket,
+    WebSocketServer
 } from "./base_imports.ts" 
-
 
 
 import * as common from "../common/util/index.ts" ; //common utilities  
@@ -86,6 +87,35 @@ export async function post_json_get_json(url : string, msg  : any) : AsyncResult
     
 } 
 
+
+
+export interface WsOps { 
+    url : string, 
+    handler : (e:any) => void , 
+    error? : (e:any) => void, 
+    close? : () => void, 
+    open? : () => void, 
+} 
+
+
+export function WebSocketMaker(ops : WsOps) { 
+    
+    var {url,handler,open, error,close} = ops    
+    
+    /*  get params ready     */
+    open = open   || ( ()=> {log(`ws to ${url} opened`)}  )
+    close = close || ( ()=> {log(`ws to ${url} closed`)} )
+    error = error || ( (e:any)=> {log(`ws to ${url} errored: ${JSON.stringify(e)}`)} )
+    
+    /* go .. */ 
+    let ws = new WebSocket(url) 
+    ws.on("open", open )
+    ws.on("close", close ) 
+    ws.on("error",  error ) 
+    ws.on("message", (e:any) => {handler(e.data)} ) 
+    
+    return ws 
+} 
 
 
 
