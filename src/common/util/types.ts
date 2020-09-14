@@ -17,7 +17,11 @@ export interface Result<T>  {
     error? : ErrorObject ,
 } 
 
-export type AsyncResult<T> = Promise<Result<T>> 
+export type AsyncResult<T> = Promise<Result<T>>
+    
+export type AsyncResults<T> = Promise<Result<T>[]>    
+    
+
 
 export function Error(e : ErrorObject)  { 
     return { 
