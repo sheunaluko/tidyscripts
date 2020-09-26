@@ -73,6 +73,13 @@ export function update_at(o : {[k:string] : any}, path : string[], fn : (x : any
 
 }
 
+export function map_items(o : {[k:string] : any}) { 
+    let ks = keys(o) 
+    let vs = values(o) 
+    
+    return zip2(ks,vs) 
+} 
+
 
 /* ARRAYS  */
 
@@ -211,6 +218,15 @@ export function partition( arr : any[] , num :number ) {
     return remove_empty(partitions)
 }
 
+export function zip2(a1 : any[], a2 : any[]) {
+    let ret = [] 
+    for (var i=0; i < a1.length;i ++) {
+	ret.push( [a1[i], a2[i] ] ) 
+    } 
+    return ret 
+} 
+
+
 
 /*  TYPES  */
 
@@ -264,6 +280,17 @@ export function joiner(ch : string)  : (s : string[])=> string {
 export function split(s :  string, ch : any) {
     return s.split(ch)
 }
+
+export function format(s : string, _replacers : string[]) { 
+    let replacers = clone_array(_replacers) 
+    let nxt = replacers.shift() 
+    let ret = s 
+    while ( nxt ) { 
+	ret = ret.replace("{}",nxt)
+	nxt = replacers.shift() 
+    } 
+    return ret  
+} 
 
 
 
