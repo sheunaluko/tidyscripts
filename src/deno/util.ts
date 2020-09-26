@@ -95,12 +95,13 @@ export interface WsOps {
     error? : (e:any) => void, 
     close? : () => void, 
     open? : () => void, 
+    json? : boolean, 
 } 
 
 
 export function WebSocketMaker(ops : WsOps) { 
     
-    var {url,handler,open, error,close} = ops    
+    var {url,handler,open, error,close , json} = ops    
     
     /*  get params ready     */
     open = open   || ( ()=> {log(`ws to ${url} opened`)}  )
@@ -112,7 +113,16 @@ export function WebSocketMaker(ops : WsOps) {
     ws.on("open", open )
     ws.on("close", close ) 
     ws.on("error",  error ) 
-    ws.on("message", (e:any) => {handler(e.data)} ) 
+    ws.on("message", function(e:any) {
+	
+	//console.log("Got the following message")
+	//console.log(e)
+	
+	var dta = ( json ? JSON.parse(e) : e ) 
+	handler(dta)
+	
+    }) 
+	  
     
     return ws 
 } 

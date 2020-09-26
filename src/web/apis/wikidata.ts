@@ -74,8 +74,6 @@ export async function wikidata_instances_of_id(id : string) {
 
 
 
-
-
 interface SparqlTemplateOps { 
     template : string, 
     replacers : string[][], 
@@ -142,6 +140,75 @@ export async function entity_with_meshid(id : string) {
     } 
     
 } 
+
+
+
+
+
+let diseases_with_symptom_template=`
+SELECT ?item ?itemLabel ?symptom ?symptomLabel
+WHERE 
+{
+  VALUES ?symptom { ENTITY_STRING  }
+  ?item wdt:P780 ?symptom  .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+`
+export async function diseases_with_symptoms( wikidata_qids : string[] ) { 
+    let tmp = await sparql_template_fn( {
+	template : diseases_with_symptom_template , 
+	replacers : [[ "ENTITY_STRING" , wikidata_qids.join(" ") ]], 
+	url_base : "https://query.wikidata.org/sparql", 
+	url_params : { 
+	    format : 'json' 
+	} 
+    }) 
+    
+   
+    let bindings=  tmp.result.value.results.bindings
+    if (bindings.length > 0 ) {
+	return bindings 
+    } else { 
+	return null
+    } 
+        
+} 
+
+
+
+
+let reverse_findings_template=`
+SELECT ?item ?itemLabel ?finding ?findingLabel
+WHERE 
+{
+  VALUES ?finding { ENTITY_STRING } 
+  
+  ?item wdt:P5131 ?finding  .
+  
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+`
+export async function reverse_findings( wikidata_qids : string[] ) { 
+    let tmp = await sparql_template_fn( {
+	template : reverse_findings_template , 
+	replacers : [[ "ENTITY_STRING" , wikidata_qids.join(" ") ]], 
+	url_base : "https://query.wikidata.org/sparql", 
+	url_params : { 
+	    format : 'json' 
+	} 
+    }) 
+    
+   
+    let bindings=  tmp.result.value.results.bindings
+    if (bindings.length > 0 ) {
+	return bindings 
+    } else { 
+	return null
+    } 
+        
+} 
+
+
 
 
 
@@ -360,6 +427,7 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	} 
 	let mesh_id = mesh.value 
 	let prop_id = fp.last(prop.value.split("/"))
+	let item_id = fp.last(item.value.split("/"))	
 	let prop_name = ID_TO_PREDICATE[(prop_id as string)]
 	let prop_value = propValLabel.value 
 	
@@ -379,7 +447,7 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	}
 	
 	to_return[qlabel]["description"] = qDescription 
-	
+	to_return[qlabel]["itemId"] = item_id
 	
     } 
     
