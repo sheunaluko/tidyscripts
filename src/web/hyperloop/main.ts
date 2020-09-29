@@ -15,6 +15,32 @@ let log = common.Logger("hlm")
 
 import * as wutil from "../util/index.ts" 
 
+
+// -- async function for checking status of default_client 
+// -- if a react component needs to make an http query inorder to render itself 
+// (via a useEffect hook for example)
+// -- then it can await default_client_ready()  prior to making the request 
+// -- in order to avoid runtime exception where the hyperloop client is not connected by 
+// -- an external library calls into one of the functions 
+
+export async function default_client_ready(){ 
+    
+    log("checking default client ready status...") 
+    let timeout = await common.asnc.wait_until( ()=>(default_client != null && default_client.conn.readyState == 1) , 10000, 30 ) 
+    
+    if (timeout) { 
+	//never connected , 
+	log("Default client timeout!") 
+	return false 
+    } else { 
+	log("Successfully connect default hyperloop client")
+	log("Returning async promise ->") 
+	return true 
+    }
+}
+
+
+
 let default_ops = { 
     host : "35.227.177.177" , 
     port : 9500 , 
@@ -32,6 +58,7 @@ export async function get_default_client(ops? : client.ClientOps) {
 	default_client = new client.Client(ops || default_ops)
 	
 	await default_client.connect()
+	await default_client_ready() 
 	
 	return default_client  
 

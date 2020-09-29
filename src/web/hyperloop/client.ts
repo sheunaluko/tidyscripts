@@ -340,6 +340,12 @@ export class Client {
     Allows this client to asynchronously query the hyperloop for some function call 
   */    
   async call(ops : CallFunctionOps) { 
+      
+      await this.await_registration()  //hmm ? lol this line solved an interesting bug 
+      // when a react component was rendering to the screen and then immediately using 
+      // HL to retrieve data it was erroring that websocket was not connected yet haha
+      
+      
       //generate the call_identifier       
       let call_identifier = this.gen_call_id() 
 

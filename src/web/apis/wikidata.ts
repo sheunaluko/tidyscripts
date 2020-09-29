@@ -83,6 +83,8 @@ interface SparqlTemplateOps {
 } 
 
 export async function sparql_template_fn(ops : SparqlTemplateOps) {
+    
+    
     let {
 	template,
 	replacers,
@@ -224,6 +226,7 @@ WHERE
 export var ALL_PREDICATES : any = null ; //will set below 
 export var PREDICATE_TO_ID : any = {} 
 export var ID_TO_PREDICATE : any = {} 
+export var PREDICATES_READY = false 
 
 export async function all_predicates() {
     let tmp = await sparql_template_fn( {
@@ -245,11 +248,17 @@ export async function all_predicates() {
 	ID_TO_PREDICATE[(id as string)] = p[0]
     } 
 
+    PREDICATES_READY = true 
     return ALL_PREDICATES 
     
 } 
 
 all_predicates() 
+
+
+export async function default_props_ready() {
+     await common.asnc.wait_until( ()=> PREDICATES_READY , 10000, 100 ) 
+} 
 
 
 var DEBUG : any  = {}  ;  
@@ -377,6 +386,8 @@ WHERE
 
 export async function default_props_for_ids(mesh_ids : string[]) {
     
+    await default_props_ready() 
+    
     let prop_ids = fp.values(PREDICATE_TO_ID).map( (id:string)=>"wdt:" + id)
 
     
@@ -448,6 +459,126 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	
 	to_return[qlabel]["description"] = qDescription 
 	to_return[qlabel]["itemId"] = item_id
+	
+    } 
+    
+    return to_return 
+    //*/
+   
+    //return bindings 
+    
+} 
+
+
+
+
+
+let prop_qid_template =` 
+PREFIX schema: <http://schema.org/>
+
+SELECT ?item ?itemLabel ?prop ?propVal ?propValLabel ?mesh ?meshLabel ?description
+WHERE 
+{
+  
+  VALUES ?prop { PROP_IDS } . 
+
+  VALUES ?item { Q_IDS }  . 
+  
+  ?item wdt:P486 ?mesh ; 
+        schema:description ?description; 
+        ?prop ?propVal . 
+
+
+  FILTER ( lang(?description) = "en" )
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+` 
+
+
+export async function default_props_for_qids(qids : string[]) {
+    
+    await default_props_ready() 
+    
+    let prop_ids = fp.values(PREDICATE_TO_ID).map( (id:string)=>"wdt:" + id)
+
+    
+    let tmp = await sparql_template_fn( {
+	template : prop_qid_template , 
+	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
+		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
+		    ], 
+	url_base : "https://query.wikidata.org/sparql", 
+	url_params : { 
+	    format : 'json' 
+	} 
+    }) 
+
+    var  bindings : any = null 
+    try { 
+	bindings = tmp.result.value.results.bindings    
+    } catch (e) { 
+	log("Error extracting bindings!")
+	log(e) 
+	debug.add("wikidata.default_props_for_qids.tmp" , tmp) 
+	bindings = [] ; 
+    } 
+    
+    //*
+    var to_return : any = {} 
+    
+    for (var binding of bindings) {
+	
+	let {prop, 
+	     mesh, 
+	     item,
+	     itemLabel,
+	     description, 
+	     propVal , 
+	     propValLabel} = binding
+	
+	
+	let qid = String(fp.last(item.value.split("/")))
+	let qlabel = itemLabel.value
+	
+	var qDescription : any = null 
+	try { 
+	    qDescription = description.value 
+	} catch (e) {
+	    log("Error reading item description")
+	    console.log(binding) 
+	    qDescription = description
+	} 
+	let mesh_id = mesh.value 
+	let prop_id = fp.last(prop.value.split("/"))
+	let item_id = fp.last(item.value.split("/"))
+	
+	let item_label = itemLabel.value 
+
+	let prop_name = ID_TO_PREDICATE[(prop_id as string)]
+	
+	let match_id = fp.last(propVal.value.split("/"))		
+	let match_label = propValLabel.value 
+	
+	if (! to_return[qid] ) {
+	    to_return[qid] = {} 
+	} 
+	
+	let payload = {
+	    prop_id, 
+	    match_label, 
+	    match_id , 
+	} 
+	    
+	if (to_return[qid][prop_name]) {
+	    to_return[qid][prop_name].push(payload) 	    
+	} else { 
+	    to_return[qid][prop_name] = [payload]
+	}
+	
+	to_return[qid]["description"] = qDescription 
+	to_return[qid]["itemId"] = item_id
+	to_return[qid]["itemLabel"] = item_label  
 	
     } 
     
