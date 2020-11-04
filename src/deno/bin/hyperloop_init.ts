@@ -28,9 +28,14 @@ hl_server.initialize()
 log("Server initiated") 
 
 
+//pause 
+let _ = await common.asnc.wait(2000) 
+
+
+
 // 2) create and connect a hyperloop client 
 
-let hc1 = new hl.client.Client({host : "35.227.177.177" , 
+let hc1 = new hl.client.Client({host : "127.0.0.1" , 
 				id : "hc1" ,  //how is this id used? must it be unique? 
 				port : s_ops.port ,  }) 
 
