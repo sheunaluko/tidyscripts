@@ -1,4 +1,4 @@
 
 
-deno run "$1" ./bin/main.ts 
+deno run "$1" main.ts 
 
