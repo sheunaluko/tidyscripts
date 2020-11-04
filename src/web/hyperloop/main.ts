@@ -10,6 +10,8 @@ import * as client from "./client.ts"
 
 export var default_client : any  =  null 
 
+declare var window : any ; 
+
 import * as common from "../../common/util/index.ts" ; //common utilities  
 let log = common.Logger("hlm")
 
@@ -39,10 +41,15 @@ export async function default_client_ready(){
     }
 }
 
-
+var host = null 
+//flag for setting localhost endpoint (for quicker development iterations) 
+if (window.localStorage['TS_USE_LOCALHOST'] == "1" ) { 
+    host = "127.0.0.1" 
+    log("Using localhost for hyperloop endpoint due to client configuration (localStorage.TS_USE_LOCALHOST == 1") 
+} 
 
 let default_ops = { 
-    host : "35.227.177.177" , 
+    host : (host || "35.227.177.177" )  , 
     port : 9500 , 
     id : "sattsys.hyperloop.client." + wutil.uuid() ,
 } 
@@ -59,6 +66,17 @@ export async function get_default_client(ops? : client.ClientOps) {
 	
 	await default_client.connect()
 	await default_client_ready() 
+	
+	
+	//add an onclose listener 
+	//which just calls this function again in 1 second
+	//(after setting default_client to null first 
+	default_client.conn.addEventListener("close",
+					     function restarter(){
+						 log("client closed -- attempt to recconect in 1s")
+						 default_client = null //have to delete it first
+						 setTimeout( get_default_client , 1000)
+					     })
 	
 	return default_client  
 
@@ -87,6 +105,20 @@ export async function  http_json(url_base :string,url_params : any) {
     
     return data 
 } 
+
+
+export async function  http(url_base :string,url_params : any) { 
+    
+    let url = get_url_with_params(url_base,url_params) 
+    let client = await get_default_client() 
+    
+    log(`Using url: ${url.toString()}`) 
+    let data = await client.call({ id : "sattsys.hyperloop.http", args : { url : url.toString()}}) 
+    log("Done") 
+    log("Got value: " + JSON.stringify(data)) 
+    return data 
+} 
+
 
 
 
