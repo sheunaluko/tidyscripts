@@ -6,6 +6,7 @@ import {AsyncResult,
 	Error} from "../../common/util/types.ts" 
 
 import {base_http_json , 
+	base_http, 
 	post_json_get_json , 
        } from "../util.ts"  
 
@@ -54,6 +55,15 @@ let default_providers = [
 	} ,  
 	args_info : [["url","string"]] 
     } , 
+    { 
+	id : "sattsys.hyperloop.http" , 
+	handler : async function(url : string ) { 
+	    let result = await base_http(url) 
+	    return result 
+	} ,  
+	args_info : [["url","string"]] 
+    } , 
+    
     { 
 	id : "sattsys.hyperloop.post_json" , 
 	handler : async function(url : string, msg : object ) { 

@@ -55,6 +55,37 @@ export async function base_http_json(url : string) : AsyncResult<object> {
     
 }
 
+export async function base_http(url : string) : AsyncResult<string> {
+
+    log(`Requesting url: ${url}`)
+    
+    const res = await fetch(url, {method : "POST"}) ;
+
+    let status = res.status ; 
+    let headers = res.headers ; 
+
+    log(`Status: ${status}`) ; 
+    log("Got headers:") ; 
+    log(headers) 
+
+    if (status != 200) {
+	//there was some error --
+	return Error({description: "status code failure" ,
+		      status,
+		      statusText : res.statusText } ) 
+    }
+
+    //otherwise we got the result
+    var text; 
+    try {
+	text = await res.text()
+	return Success(text) 
+    } catch (error) {
+	return Error({description: error})
+    } 
+    
+}
+
 
 
 export var get_json_get_json = base_http_json ; 
