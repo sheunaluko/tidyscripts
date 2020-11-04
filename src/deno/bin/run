@@ -1,4 +1,4 @@
 
 
-deno run --allow-read --allow-net ./bin/main.ts 
+deno run "$1" ./bin/main.ts 
 
