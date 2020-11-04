@@ -43,9 +43,9 @@ export async function default_client_ready(){
 
 var host = null 
 //flag for setting localhost endpoint (for quicker development iterations) 
-if (window.localStorage['TS_USE_LOCALHOST'] == "1" ) { 
-    host = "127.0.0.1" 
-    log("Using localhost for hyperloop endpoint due to client configuration (localStorage.TS_USE_LOCALHOST == 1") 
+if (window.localStorage['TS_HYPERLOOP_HOST']) { 
+    host =  window.localStorage['TS_HYPERLOOP_HOST']
+    log("Using localStorage defined host:" + host)
 } 
 
 let default_ops = { 
