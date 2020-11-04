@@ -17,7 +17,7 @@ log("Initiating tidyscripts deno main function >> ")
 
 
 
-const cmd = ["deno", "run" ,"--allow-all"  , "hyperloop_init.ts" ] 
+const cmd = ["deno", "run" ,"--allow-read"  ,"--allow-net", "hyperloop_init.ts" ] 
 
 while (true) { 
     
