@@ -31,6 +31,10 @@ export function dates_eq(d1 : Date , d2 : Date ) {
 
 export function copy_date(d:Date) { return new Date(d.getTime()) } 
 
+export function day_string(d:Date) { 
+    return d.toString().split(" ").slice(0,4).join(" ").replace(" ","_")
+} 
+
 export function round_date(in_date : Date , t : string ) : Date {
 
     let d = copy_date(in_date) // dont modify it
