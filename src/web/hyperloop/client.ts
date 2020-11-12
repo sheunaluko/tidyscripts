@@ -59,6 +59,7 @@ import * as wutil from "../util/index.ts"
 export interface ClientOps { 
     host : string, 
     port : string | number , 
+    secure : boolean , 
     id : string , 
 }
 
@@ -111,8 +112,14 @@ export class Client {
 
 
 
-    async connect() { 
-        let url = `ws://${this.ops.host}:${this.ops.port}`;
+    async connect(secure : boolean = true) { 
+	
+	var url = null ; 
+	if (secure) { 
+	    url = `wss://${this.ops.host}:${this.ops.port}`
+	} else { 
+            url = `ws://${this.ops.host}:${this.ops.port}`;	    
+	}
 
         /* 
         Perform the websocket connection 
@@ -396,7 +403,7 @@ export class Client {
 
 export async function test_client() {
     log("Testing hyperloop web client") 
-    let hc = new Client({ host : "127.0.0.1", port : 9500, id : "web1"})
+    let hc = new Client({ secure: false, host : "127.0.0.1", port : 9500, id : "web1"})
     await hc.connect() 
     
     let test_url = "https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=Berlin&props=descriptions&languages=en&format=json" 

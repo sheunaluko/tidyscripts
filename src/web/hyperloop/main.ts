@@ -42,15 +42,12 @@ export async function default_client_ready(){
 }
 
 var host = null 
-//flag for setting localhost endpoint (for quicker development iterations) 
-if (window.localStorage['TS_HYPERLOOP_HOST']) { 
-    host =  window.localStorage['TS_HYPERLOOP_HOST']
-    log("Using localStorage defined host:" + host)
-} 
+
 
 let default_ops = { 
-    host : (host || "35.227.177.177" )  , 
-    port : 9500 , 
+    host : (host || "sattsys.com/api/hyperloop" )  , 
+    port : 80 , 
+    secure : true, 
     id : "sattsys.hyperloop.client." + wutil.uuid() ,
 } 
 
@@ -61,11 +58,22 @@ export async function get_default_client(ops? : client.ClientOps) {
 	return default_client 
 	
     } else { 
-
-	default_client = new client.Client(ops || default_ops)
 	
-	await default_client.connect()
-	await default_client_ready() 
+	default_client = new client.Client(ops || default_ops)	
+
+	try { 
+	    
+	    await default_client.connect(ops ? ops.secure : true)	    
+	    await default_client_ready() 	    
+
+	} catch(error) { 
+	    log("Error in connecting client -- likely endpoint is down")
+	    log("Retrying in 2 seconds:")
+	    setTimeout( get_default_client , 2000) 
+	} 
+	
+
+	log("Successfully connected client! Now creating close listener for automatic restarting")
 	
 	
 	//add an onclose listener 
@@ -107,7 +115,7 @@ export async function  http_json(url_base :string,url_params : any) {
 } 
 
 
-export async function  http(url_base :string,url_params : any) { 
+export async function  http(url_base :string,url_params : any,to_dom : boolean = true) { 
     
     let url = get_url_with_params(url_base,url_params) 
     let client = await get_default_client() 
@@ -116,6 +124,13 @@ export async function  http(url_base :string,url_params : any) {
     let data = await client.call({ id : "sattsys.hyperloop.http", args : { url : url.toString()}}) 
     log("Done") 
     log("Got value: " + JSON.stringify(data)) 
+    
+    if (to_dom) {
+	var el = document.createElement("html")
+	el.innerHTML = data.result.value
+	return el 
+    } 
+    
     return data 
 } 
 
