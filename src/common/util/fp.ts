@@ -6,24 +6,36 @@ type dic = { [k:string] : any }
 
 
 /* MAPS  */
+
+export function clone(o :dic): dic {
+    let cpy = Object.assign({},o)
+    return cpy
+}
+ 
+
 export function keys(a : dic) : string[] {
     return Object.keys(a)
 }
 
 export function values(a : dic) : any[] {
     let ks = keys(a)
+    let cloned = clone(a) 
     if (is_empty(ks)) {return []}
-    return map(ks,(k:string)=>a[k])
+    return map(ks,(k:string)=>cloned[k])
 }
+
+export function merge_dictionary(a : dic, b : dic )  : dic { 
+    return Object.assign(clone(a), b  ) 
+} 
+
+export function merge_dictionaries( ds : dic[] ) : dic { 
+    return ds.reduce( merge_dictionary , {}) 
+} 
 
 export function get(o : dic, a : string) : any {
     return o[a]
 }
 
-export function clone(o :dic): dic {
-    let cpy = Object.assign({},o)
-    return cpy
-}
 
 
 export function set(o : dic, a : string , val : any) : dic {
@@ -80,6 +92,7 @@ export function map_items(o : {[k:string] : any}) {
     return zip2(ks,vs) 
 } 
 
+export var dict_to_list = map_items 
 
 /* ARRAYS  */
 
@@ -100,6 +113,13 @@ export function last<T>(arr : T[]) : T {
 export function nth<T>(arr :T[],n : number) : T {
     return arr[n]
 }
+
+export function indexer(i : number) {
+    //returns a function that will index at a given location 
+    return function(o : any[]) {
+	return nth(o,i)
+    } 
+} 
 
 export function all_true(arr : boolean[]) : boolean {
     return arr.reduce( (a,b)=> (a && b) )
@@ -122,18 +142,56 @@ export function repeat<T>(thing : T, num : number) : string[]{
     return (Array(num) as any).fill(thing)
 }
 
-export function range(n : number): number[] {
-    var arr = Array(n).fill(0)
-    for (var i =0;i<arr.length; i++) {
-	arr[i] = i
-    }
-    return arr
+export function range(n : number,end : any = null): number[] {
+
+    if(end) { 	
+	
+	let num = (end -n ) 
+	var arr = Array(num).fill(0)    
+	for (var i =0;i<arr.length; i++) {
+	    arr[i] = i +n
+	}
+	return arr
+	
+    } else { 
+	
+	var arr = Array(n).fill(0)    
+	for (var i =0;i<arr.length; i++) {
+	    arr[i] = i
+	}
+	return arr
+
+
+    } 
 }
 
 export function map<I,O>(arr : I[] , mapper : (x : I) => O): O[] {
     return arr.map(mapper)
 }
 
+
+export function enumerate(o : any[]) : [number,any][] { 
+    /* 
+       Like pythons enumerate, converts a list into a list of tuples where the first element 
+       in the tuple is the index
+     */ 
+    let num = len(o) 
+    return map( range(num), (i:number)=> [i,o[i]] ) 
+} 
+
+
+export function enumermap(os : any[], f : (i:number,o:any)=> any) : any[] {
+    let results = [] 
+    for ( var [i,o] of enumerate(os) ) { results.push(f(i,o)) }
+    return results 
+}
+
+
+
+
+export function concat(a : any[], b : any[]) : any[]{ 
+    return a.concat(b) 
+} 
 
 export function map_get(o : object[],k :string) : any[] {
     return map(o,getter(k))
@@ -226,6 +284,19 @@ export function zip2(a1 : any[], a2 : any[]) {
     return ret 
 } 
 
+export var zip = zip2 
+
+export function list_to_dict(kvs : any) {
+    let result = [] 
+    for ( var [k,v] of kvs ) {
+	result[k] = v 
+    } 
+    return result 
+} 
+
+export function zip_map(a1 : any[], a2 :any[]) {
+    return list_to_dict( zip(a1,a2) ) 
+} 
 
 
 /*  TYPES  */
@@ -281,12 +352,12 @@ export function split(s :  string, ch : any) {
     return s.split(ch)
 }
 
-export function format(s : string, _replacers : string[]) { 
+export function format(s : string, _replacers : any[]) { 
     let replacers = clone_array(_replacers) 
     let nxt = replacers.shift() 
     let ret = s 
     while ( nxt ) { 
-	ret = ret.replace("{}",nxt)
+	ret = ret.replace("{}",String(nxt))
 	nxt = replacers.shift() 
     } 
     return ret  

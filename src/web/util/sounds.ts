@@ -21,7 +21,8 @@ interface tone_ops {
     type? : string, 
     freq : number , 
     duration? : number , 
-    gain? : number 
+    gain? : number ,
+    delay? : number,
     
 } 
 
@@ -29,6 +30,7 @@ export async function tone(ops : tone_ops ){
     let { type = "sine" ,
 	  duration = 600 , 
 	  gain = 0.5 , 
+	  delay , 
 	  freq ,   } = ops 
     
     var osc = context.createOscillator() 
@@ -37,6 +39,13 @@ export async function tone(ops : tone_ops ){
     
     var gainNode  = context.createGain();
 
+    if (delay) { 
+	var delayNode = context.createDelay();
+	delayNode.delayTime.value = delay
+	gainNode.connect(delayNode);
+	delayNode.connect(context.destination)
+    }
+    
     gainNode.gain.value = gain ; 
     
     osc.connect(gainNode) 
@@ -117,6 +126,9 @@ export function note_to_freq(n : string) : number {
 } 
 
 export async function play_note(n : string, dur? : number, key?: string) {
+    
+    console.log(fp.format("note | n= {}, dur={}, k={}", [n,dur,key]) )
+    
     let offset = key ? note_to_midi(key)  : 60 
     let midi = note_to_midi(n) 
     let freq = m2f[String(offset+midi)]
@@ -126,6 +138,8 @@ export async function play_note(n : string, dur? : number, key?: string) {
     } catch (e) {
 	console.log("Error playing. You likely played a note outside of currently supported range")
 	console.log(e)
+	console.log("freq + duration:")
+	console.log({freq,duration}) 
     } 
 } 
 
