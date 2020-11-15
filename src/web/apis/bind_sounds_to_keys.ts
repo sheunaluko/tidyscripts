@@ -12,7 +12,7 @@ var mid = ["a","s","d","f","g","h","j","k","l",";"]
 var lo  = ["z","x","c","v","b","n","m", "," ]
 
 
-export var keys = { 
+export var keys : {[k:string] : string[]} = { 
     hi, mid, lo 
 } 
 
