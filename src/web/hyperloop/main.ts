@@ -18,6 +18,29 @@ let log = common.Logger("hlm")
 import * as wutil from "../util/index.ts" 
 
 
+let fp = common.fp 
+let debug = common.debug 
+
+
+export var event_logger : any = null 
+export function set_event_logger(f : any) {   
+    event_logger = f
+    log("Reset event logger") 
+    console.log(f) 
+    debug.add("event_logger", event_logger) 
+    
+}  
+export function event_log(...args : any) {
+    log("called event log!") 
+    console.log(args) 
+    
+    if (event_logger) { 
+	event_logger.apply(null, args) 
+    } else { 
+	log("No event logger") 
+    } 
+} 
+
 // -- async function for checking status of default_client 
 // -- if a react component needs to make an http query inorder to render itself 
 // (via a useEffect hook for example)
@@ -52,6 +75,8 @@ let default_ops = {
 } 
 
 export async function get_default_client(ops? : client.ClientOps) { 
+    
+    //event_log("Getting default client") 
     
     if (default_client) {
 	
@@ -122,6 +147,8 @@ export async function  http_json(url_base :string,url_params : any) {
      */ 
     
     
+    event_log("HTTP_JSON Request:")
+    event_log(url_base) 
     
     let url = get_url_with_params(url_base,url_params) 
     let client = await get_default_client() 
@@ -138,6 +165,10 @@ export async function  http_json(url_base :string,url_params : any) {
 
 
 export async function  http(url_base :string,url_params : any,to_dom : boolean = true) { 
+    
+    event_log("HTTP Request:")
+    event_log(url_base) 
+
     
     let url = get_url_with_params(url_base,url_params) 
     let client = await get_default_client() 
@@ -161,6 +192,9 @@ export async function  http(url_base :string,url_params : any,to_dom : boolean =
 
 export async function post_json(url : string, msg : object ) {
     
+    event_log("POST Request:")
+    event_log(url) 
+
     let client = await get_default_client() 
     log("Request to post json") 
     
