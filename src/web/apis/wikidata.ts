@@ -253,7 +253,7 @@ export async function all_predicates() {
     
 } 
 
-all_predicates() 
+//all_predicates() 
 
 
 export async function default_props_ready() {
