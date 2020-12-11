@@ -6,6 +6,11 @@
   "repository": "https://github.com/sheunaluko/tidyscripts",
   "author": "Sheun Aluko",
   "license": "MIT",
-  "private": null
+  "private": null , 
+  "peerDependencies" : { 
+	"react": "^16.13.1",
+	"react-dom": "^16.13.1"
+    } 
+    
 }
 

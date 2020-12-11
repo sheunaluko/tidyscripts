@@ -8,6 +8,7 @@
       "esnext"
     ],
     "outDir" : "lib" , 
+    "jsx" : "react" , 
     "skipLibCheck": true,
     "sourceMap" : true, 
     "declaration": true, 
@@ -16,9 +17,10 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
+    "moduleResolution": "node",      
   },
   "include": [
-    "src"
+      "src", 
   ],
     
 }

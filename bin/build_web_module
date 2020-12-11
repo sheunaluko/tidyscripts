@@ -9,7 +9,7 @@ echo "Copying files into build directory"
 cp -r src/web/* build/web/src/web 
 cp -r src/common/* build/web/src/common 
 
-# and then strip the files of the .ts extensions 
+# and then strip the files of the .ts  extensions (within the import statements IN the file) 
 echo "Removing .ts extensions" 
 cd build/web ; 
 grep -RiIl '.ts"'  .  | xargs sed -i.bak 's/.ts"/"/g'
@@ -19,16 +19,27 @@ cd ../..
 echo "Creating tsconfig file" 
 cp bin/.build_assets/tsconfig.json build/web 
 
+
+# [DONT] link the node modules  
+# I was doing this to get material ui to work but instead made it a PEER DEPENDENCY 
+# ** if you edit this make sure you are in the correct working directory! 
+# echo "Linking node_modules folder" 
+# cd build/web 
+# ln -s ../../node_modules ./node_modules 
+
 # and then we compile the typescript app 
 echo "Compiling typescript" 
 cd build/web 
 tsc --jsx "react"
-cd ../..
 
 echo "Finished compiling!"
 echo "Adding package.json" 
-cp bin/.build_assets/package.json build/web
+cp ../../bin/.build_assets/package.json ./package.json 
 
+echo "Publishing to yalc" 
+yalc push 
+
+cd ../.. 
 
 echo "Finished building module, enjoy :)" 
 
