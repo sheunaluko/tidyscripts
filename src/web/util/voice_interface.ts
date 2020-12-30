@@ -35,8 +35,10 @@ export var recognition : any  = null
 
 export enum RecognitionState {
     NULL = "NULL", 
+    STOPPED = "STOPPED", 
     PAUSED = "PAUSED" ,  
     LISTENING = "LISTENING", 
+    STOPPING = "STOPPING" , 
 }
 export var recognition_state : RecognitionState = RecognitionState.NULL 
 
@@ -50,8 +52,16 @@ export function initialize_recognition(ops? : sr.RecognitionOps) {
     let old_on_end = ops.onEnd 
 
     ops.onEnd = function() {
-	recognition_state = RecognitionState.PAUSED 
-	console.log("Recognition ended") 
+	
+	if (recognition_state == RecognitionState.STOPPING) {
+	    console.log("Recognition stopped") 
+	    recognition_state = RecognitionState.STOPPED 
+	} else { 
+	    recognition_state = RecognitionState.PAUSED 
+	    console.log("Recognition paused") 
+	} 
+	
+	//any other on end callbacks 
 	old_on_end ? old_on_end() : null 
     } 
     
@@ -71,20 +81,22 @@ export function pause_recognition() {
 
 export function stop_recognition() {
     if (recognition) {
+	console.log("Stopping recognition")
+	recognition_state = RecognitionState.STOPPING
 	recognition.abort()
 	recognition = null
-	recognition_state = RecognitionState.NULL	
     } 
     ap.stop()
 } 
 
 export async function start_recognition() {
-    //if tts is speaking then we should wait 
+
     if (recognition_state == RecognitionState.LISTENING) {
 	//console.log("Already listening")
 	return 
     } 
-    
+
+    //if tts is speaking then we should wait     
     if (tts.is_speaking()) {
 	console.log("Wont start recognition while tts active")
     }
@@ -110,17 +122,28 @@ export function start_recognition_and_detection(t : number) {
     ap.set_detection_threshold(t) 
 } 
 
+export var default_voice : string | null = null  
 
-export async function speak(text : string) {
+
+export function set_default_voice(v : string) {
+    default_voice = v 
+} 
+
+export async function speak_with_voice(text :string,voiceURI : string | null) {
     if (recognition) {
 	let thresh  = stop_recognition_and_detection() 
-	tts.speak({text})
+	tts.speak({text, voiceURI})
 	await tts.finished_speaking()
 	start_recognition_and_detection(thresh) 
     } else { 
-	tts.speak({text})
+	tts.speak({text, voiceURI})
 	await tts.finished_speaking()
     } 
-    return 
+    return     
 } 
+
+export async function speak(text : string) {
+    speak_with_voice(text,default_voice) 
+} 
+
 

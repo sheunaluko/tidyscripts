@@ -126,26 +126,6 @@ function get_url_with_params(_url : string ,params : any) {
 
 export async function  http_json(url_base :string,url_params : any) { 
     
-    /* 
-       
-       Want to build a default caching strategy which is flexible but simple. 
-       
-       I can have a dictionary like this => 
-       
-       { 
-        'id' : { filter : (url,params)=> boolean , 
-	         max_time_elapsed_ms : number } , 
-		 
-	'id2' : { ... } , 
-	
-	... 
-       } 
-       
-       Loop through the keys, check the regex on the url, and if it matches apply the max_time_elapsed to 
-       determine the caching strategy for that particular request 
-       
-     */ 
-    
     
     event_log("HTTP_JSON Request:")
     event_log(url_base) 

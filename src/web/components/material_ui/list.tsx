@@ -8,6 +8,8 @@ import Button from '@material-ui/core/Button';
 import MenuIcon from '@material-ui/icons/Menu';
 
 import InfoIcon from '@material-ui/icons/Info';
+import MicIcon from '@material-ui/icons/Mic';
+import MicOffIcon from '@material-ui/icons/MicOff';
 
 import Container from '@material-ui/core/Container';
 
@@ -103,6 +105,8 @@ export {
     Checkbox, 
     MenuIcon,
     Icon, 
+    MicIcon, 
+    MicOffIcon, 
     Tabs, 
     Tab, 
     Accordion,
@@ -112,8 +116,6 @@ export {
     ExpandMoreIcon, 
     Container, 
     Grid, 
-    
-    
     InfoIcon, 
     Link, 
     Paper,

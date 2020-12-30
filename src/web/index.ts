@@ -1,5 +1,8 @@
 
 
+import * as idbkv from  "idb-keyval" 
+
+//import localforage from "localforage" 
 
 import * as util from "./util/index.ts" 
 
@@ -17,4 +20,6 @@ export {util,
 	hyperloop, 
 	components, 
 	apis, 
+	//localforage, 
+	idbkv,
 	cryptocurrency } 
