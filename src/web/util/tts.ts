@@ -37,14 +37,24 @@ export function is_speaking() : boolean {
 
 interface SpeechOps {
     text : string, 
-    voice? : number ,
+    voiceURI? : string | null , 
     rate? : number , 
+} 
+
+
+export function get_voice(vuri : string) {
+    let tmp = tts.getVoices().filter( (v:any)=> v.voiceURI == vuri ) 
+    if (tmp.length > 0 ) {
+	return tmp[0] 
+    } else { 
+	return null 
+    } 
 } 
 
 export async function _speak(ops : SpeechOps) {  
     
     let { 
-	voice  = 49, 
+	voiceURI  , 
 	rate = 1 , 
 	text 
     }  = ops 
@@ -52,7 +62,14 @@ export async function _speak(ops : SpeechOps) {
     
     if (! tts.speaking) { 
 	var utterance  = new window.SpeechSynthesisUtterance(text);
-	utterance.voice = tts.getVoices()[voice] 
+	
+	if (voiceURI)  { 
+	    //try to get the 
+	    let voice = get_voice(voiceURI) 
+	    if (voice) { 
+		utterance.voice = voice 
+	    }
+	} 
 	//utterance.pitch = pitch.value;
 	utterance.rate =  rate ; 
 	tts.speak(utterance); 
@@ -74,12 +91,13 @@ export async function _speak(ops : SpeechOps) {
 export function speak(ops : SpeechOps) {
      
     let { 
-	voice  = 49, 
+	voiceURI , 
 	rate = 1 , 
 	text 
     }  = ops 
     
     console.log("Request to speak  =:> " + text) 
+    console.log("With voice =:> " + voiceURI) 
     /*chunk up the text by word length */ 
     let chunks = fp.map(fp.partition(fp.split(text," "), 20),fp.joiner(" "))
     

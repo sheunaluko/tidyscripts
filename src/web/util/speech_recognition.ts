@@ -11,6 +11,9 @@ export interface RecognitionOps {
     interimResults? : boolean, 
     onStart? : ()=>void , 
     onSoundStart? : ()=>void, 
+    onSoundEnd? : ()=>void,     
+    onSpeechStart? : ()=>void, 
+    onSpeechEnd? : ()=>void,     
     onResult? : ()=>void, 
     onError? : ()=>void,
     onEnd?  : ()=>void, 
@@ -26,6 +29,9 @@ export function get_recognition_object(ops: RecognitionOps = {})  {
 	 interimResults = false,
 	 onStart = ()=>{console.log("Recognition started")} ,
 	 onSoundStart = ()=>{console.log("Sound started...") },
+	 onSoundEnd = ()=>{console.log("Sound ended...") },	 
+	 onSpeechStart = ()=>{console.log("Speech started...") },
+	 onSpeechEnd = ()=>{console.log("Speech ended...") },	 
 	 onResult = function(e : any) { 
 	     let result = e.results[e.resultIndex][0].transcript
 	     console.log("Recognition result: " + result)
@@ -38,7 +44,8 @@ export function get_recognition_object(ops: RecognitionOps = {})  {
     
     let rec = new window.webkitSpeechRecognition() 
     
-    rec.onsoundstart = onStart ; 
+
+
     rec.onresult = onResult ; 
     rec.onerror = onError ;
     rec.onend = onEnd ; 
@@ -46,6 +53,10 @@ export function get_recognition_object(ops: RecognitionOps = {})  {
     rec.interimResults = interimResults ; 
     rec.onstart = onStart ; 
     rec.onsoundstart = onSoundStart ; 
+    rec.onsoundend = onSoundEnd  ; 
+    rec.onspeechstart = onSpeechStart; 
+    rec.onspeechend = onSpeechEnd ; 
+
     
     return rec 
     

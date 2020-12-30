@@ -31,6 +31,7 @@ let log = common.Logger("hl_client")
 
 import * as wutil from "../util/index.ts" 
 
+import * as cache  from "./client_cacher.ts"
 
 
 /* 
@@ -342,15 +343,15 @@ export class Client {
 } 
 
 
-
   /* 
-    Allows this client to asynchronously query the hyperloop for some function call 
+    Allows this client to asynchronously query the hyperloop for some function call
+    Does not perform any caching (this is a helper function used by async call() below 
   */    
-  async call(ops : CallFunctionOps) { 
+  async uncached_call(ops : CallFunctionOps) { 
       
       await this.await_registration()  //hmm ? lol this line solved an interesting bug 
       // when a react component was rendering to the screen and then immediately using 
-      // HL to retrieve data it was erroring that websocket was not connected yet haha
+      // HL to retrieve data it was erroring that websocket was not connected yet 
       
       
       //generate the call_identifier       
@@ -386,6 +387,41 @@ export class Client {
 
       //return the promise 
       return promise
+  }
+    
+
+  /* 
+    Allows this client to asynchronously query the hyperloop for some function call 
+    The caching is performed here, while raw request is in in uncached_call (see above) 
+  */    
+  async call(ops : CallFunctionOps) { 
+      
+      //check the cache 
+      let { hit, value, call_id }  = await cache.check_cache_for_call_ops(ops) 
+      
+      //return the cached value if there is a hit 
+      if (hit) { 
+	  log("Returning cached value")
+	  return value 
+      } 
+      
+      log("No result in cache :o -> will request it") 
+	  
+      //if not we proceed to obtain the value 
+      let result = await this.uncached_call(ops) 
+      
+      //and then we determine its ttl using the cache rules 
+      let ttl = cache.get_ttl(ops) 
+      log(`Got result for call. TTL is -> ${ttl}`) 
+      
+      // do it 
+      if (ttl)  { 
+	  await cache.set_with_ttl( { id : call_id , ttl_ms : ttl , value : result }) 
+	  log("Set val in cache") 
+      } 
+      
+      return value 
+      
   }
 
   await_registration() {
