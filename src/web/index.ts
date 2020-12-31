@@ -1,6 +1,6 @@
 
 
-import * as idbkv from  "idb-keyval" 
+//import * as idbkv from  "idb-keyval" 
 
 //import localforage from "localforage" 
 
@@ -21,5 +21,5 @@ export {util,
 	components, 
 	apis, 
 	//localforage, 
-	idbkv,
+	//idbkv,
 	cryptocurrency } 

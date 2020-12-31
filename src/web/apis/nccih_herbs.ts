@@ -75,6 +75,30 @@ export async function get_info_for_herb(url : string) {
 } 
 
 
+export async function get_all_herb_data() {
+    
+    /* 
+       should auto cache to indexedDB because I added caching to the hyperloop 
+       client directly
+       see below for previous implementation using my local storage api 
+    */ 
+
+    let herb_links = fp.map_get(await get_herbs(), "link") 
+    // get promises for the actual data
+    let promises = herb_links.map(get_info_for_herb)
+    // wait for all of them 
+    log("Waiting for all links..")
+    let results = await window.Promise.all(promises)
+    return results 
+    
+} 
+
+
+/* 
+   
+   OLD 
+   
+
 export async function get_and_cache_herb_data(lsk: string) {
     
     let herb_links = fp.map_get(await get_herbs(), "link") 
@@ -116,3 +140,6 @@ export async function get_all_herb_data() {
     } 
     
 } 
+   
+   
+   */ 

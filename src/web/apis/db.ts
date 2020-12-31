@@ -9,21 +9,28 @@ import * as idbkv from "./idbkv_mod.ts"
 import * as common from "../../common/util/index.ts" ; //common utilities  
 
 /* 
-   Main API -- see https://github.com/jakearchibald/idb-keyval 
-   It says: 
+   Main API DB api inspired by (https://github.com/jakearchibald/idb-keyval) 
+
+   The main interface is 
+   test_db = GET_DB("test")  
+   let { 
+     set_with_ttl, 
+     get , 
+     keys, 
+   } = test_db 
    
-   By default, the methods above use an IndexedDB database named keyval-store and an object store named keyval. You can create your own store, and pass it as an additional parameter to any of the above methods:
+   Note that any client which uses this api, MUST call START_CACHE_CHECK(interval) in order to get 
+   automatic TTL functionality 
    
-   Below we always use the 'TIDYSCRIPTS_WEB' db name but change the store based on the 'name' param 
 */ 
 
-const log = common.Logger("db")  // get logger 
+export const log = common.Logger("db")  // get logger 
 const date = common.Date 
 
 
 export const LOCAL_DB_HANDLE_CACHE : any = {} 
 //export const CACHE_CHECK_INTERVAL = 1000*60*5  //5 min 
-export const CACHE_CHECK_INTERVAL = 1000*5 
+export var CACHE_CHECK_INTERVAL = 1000*5 
 
 export const default_store_name = "main_store" 
 export const default_db_header  = "TIDYSCRIPTS_WEB_" 
@@ -42,11 +49,13 @@ export const default_db_header  = "TIDYSCRIPTS_WEB_"
     new idbkv.Store('TIDYSCRIPTSWEB_' + name , 'main_store' ) 
 */
 
-export function GET_DB(name : string) { 
+export function GET_DB(name : string,verbose=true) { 
 
     //first attempt to get from a local handle cache 
     if (LOCAL_DB_HANDLE_CACHE[name] ) { 
-	log(`Returning db from local cache: ${name}`)
+	if (verbose)  { 
+	    log(`getting db from local cache: ${name}`) 
+	} 
 	return LOCAL_DB_HANDLE_CACHE[name]
     } 
     
@@ -59,14 +68,26 @@ export function GET_DB(name : string) {
     function keys() {return idbkv.keys(store) } 
     function clear() {return idbkv.clear(store) } 
     
+    /* will this recursive stuff work ? */ 
+    async function set_with_ttl(ops : { id : string, ttl_ms : number, value : any }) {
+	let {id, ttl_ms, value} = ops ; 
+	let expiration = ttl_ms + date.ms_now()
+	log(`In db "${name}" setting "${id}" with ttl_ms ${ttl_ms}, expiration = ${expiration}`)    
+	await set(id,value) 
+	await TTL.set(expiration, { db_id : name , del_id : id }) 
+	log("done setting with ttl \\(^.^)/")
+    } 
+    
     let result =  { 
-	store, set, get, del, keys, clear 
+	store, set, get, del, keys, clear , set_with_ttl 
     }  
     
     //cache it then return it 
     LOCAL_DB_HANDLE_CACHE[name] = result 
     
-    log(`Returning db: ${name}`)    
+    if (verbose) { 
+	log(`getting db: ${name}`)    
+    } 
     return result 
 } 
 
@@ -77,40 +98,58 @@ export function GET_DB(name : string) {
 
 export var TTL = GET_DB("TTL") ;  
 
-
-
-function START_CACHE_CHECK() { 
-    setInterval( async function() {
-	
-	log("checking ttl cache") 
-	
-	let all = await TTL.keys()
-	
-	log(`Num ttl keys: ${all.length}`)
-	
-	let expired = all.filter( (k : number) => k < date.ms_now() ) 
-	
-	log(`num expired = ${expired.length}`) 
-	
-      for ( var id of expired ) { 
-	  
-	  log(`removing id: ${id}`) 
-      
-          let {db_id, del_id} = TTL.get(id) 
-	  //get the db handle 
-	  let dbh = GET_DB(db_id) 
-	  //and then delete the entry 
-	  await dbh.del(del_id)  
-	  //and then delete the TTL entry as well 
-	  await TTL.del(id) 
-	  
-	  log("Done") 
-	  
-      } 
-      
-   } , CACHE_CHECK_INTERVAL ) 
-   
-   //TTL.set(time_now_epoch + time_to_live_ms , { db_id , kill_id } )    
+export function set_cache_check_interval(n : number) { 
+    CACHE_CHECK_INTERVAL  = n 
+    log("Updated cache check interval to " + n  + " ms" ) 
 } 
 
+
+export var cache_check_interval_id : any = null
+
+export function START_CACHE_CHECK(interval : number) {  
+    
+    if (cache_check_interval_id) { 
+	log("Already checking, will clear old interval.") 
+	STOP_CACHE_CHECK()
+    } 
+    
+    set_cache_check_interval(interval) 
+    
+    cache_check_interval_id = setInterval( async function() {
+	
+	let all = await TTL.keys()
+	let num = all.length 
+	let expired = all.filter( (k : number) => k < date.ms_now() ) 
+	let num_expired = expired.length 
+	
+	let  removed : any  = [] 
+	
+	for ( var id of expired ) { 
+	    
+	    //log(id) 
+	  
+            let {db_id, del_id} = await TTL.get(id) 
+	    //get the db handle 
+	    let dbh = GET_DB(db_id,false) 
+	    //and then delete the entry 
+	    await dbh.del(del_id)  
+	    //and then delete the TTL entry as well 
+	    await TTL.del(id) 
+	    removed.push( {db_id,del_id}) 
+	} 
+	
+	log(`CacheCheck |> ${num_expired}/${num} expired:`) 
+	if (num_expired > 0 ) { 
+	    log(removed)  
+	} 
+	
+   } , CACHE_CHECK_INTERVAL ) 
+   
+
+} 
+
+export function STOP_CACHE_CHECK() { 
+    clearInterval(cache_check_interval_id) 
+    log("Stopped cache check") 
+} 
 

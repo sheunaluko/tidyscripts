@@ -18,9 +18,11 @@ import * as audio_processing from "./audio_processing.ts"
 import * as voice_interface from "./voice_interface.ts" 
 import * as ws from "./ws.ts" 
 import * as http from "./base_http.ts" 
+import {ExternalLogger}  from "./ext_log.ts" 
 
 export {tts, 
 	ws , 
+	ExternalLogger, 
 	http , 
 	speech_recognition, 
 	sounds, 

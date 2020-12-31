@@ -1,3 +1,10 @@
+
+
+import {Logger} from "../../common/util/logger.ts" 
+
+const log = Logger("idbmod") 
+
+
 export class Store {
   readonly _dbp: Promise<IDBDatabase>;
 
@@ -10,7 +17,7 @@ export class Store {
       // First time setup: create an empty object store
       openreq.onupgradeneeded = () => {
 	  
-	  console.log(`creating store! : ${dbName},  ${storeName}`) 
+	  log(`creating store: ${dbName},  ${storeName}`) 
 	  
         openreq.result.createObjectStore(storeName);
       };
