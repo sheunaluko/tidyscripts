@@ -14,8 +14,12 @@ custom db name uses an underscore!!!  but was WRONG about that-- the problem was
 
 Wed Dec 30 15:45:57 CST 2020
 todo: 
-[ ] Have a more robust api for the event_logger (take it OUT of the hyperloop main function) 
-[ ] migrate react_dev_app to also use tidyscripts_web package via yalc link 
-[ ] test the caching status 
-[ ] remove caching from the NIH herbals library 
+[x] Have a more robust api for the event_logger (take it OUT of the hyperloop main function) 
+[x] migrate react_dev_app to also use tidyscripts_web package via yalc link 
+[x] test the caching status  
+[x] remove caching from the NIH herbals library 
+[ ] Check that caching is still working  (inspect indexedDB) 
+
+
+
 

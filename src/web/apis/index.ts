@@ -8,7 +8,8 @@ import * as key_presses from "./keypresses.ts"
 import * as bind_sounds_to_keys from "./bind_sounds_to_keys.ts" 
 import * as local_storage from "./local_storage.ts" 
 import * as db from "./db.ts" 
-import * as idbkv from "idb-keyval" 
+import * as db_tester from "./db_tester.ts" 
+//import * as idbkv from "idb-keyval" 
 
 
 export { 
@@ -19,7 +20,8 @@ export {
     local_storage, 
     bind_sounds_to_keys , 
     db, 
-    idbkv, 
+    db_tester, 
+    //idbkv, 
 } 
 
 

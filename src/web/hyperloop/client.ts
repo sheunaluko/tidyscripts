@@ -30,7 +30,7 @@ import * as common from "../../common/util/index.ts" ; //common utilities
 let log = common.Logger("hl_client")
 
 import * as wutil from "../util/index.ts" 
-
+import {ext_log} from "./ext_log.ts"  //import the hyperloop external logger 
 import * as cache  from "./client_cacher.ts"
 
 
@@ -397,30 +397,30 @@ export class Client {
   async call(ops : CallFunctionOps) { 
       
       //check the cache 
-      let { hit, value, call_id }  = await cache.check_cache_for_call_ops(ops) 
+      let { hit, value : cache_result, call_id }  = await cache.check_cache_for_call_ops(ops) 
       
       //return the cached value if there is a hit 
       if (hit) { 
 	  log("Returning cached value")
-	  return value 
+	  return {hit, data : cache_result } 
       } 
       
       log("No result in cache :o -> will request it") 
 	  
       //if not we proceed to obtain the value 
-      let result = await this.uncached_call(ops) 
+      let request_result = await this.uncached_call(ops) 
       
       //and then we determine its ttl using the cache rules 
       let ttl = cache.get_ttl(ops) 
       log(`Got result for call. TTL is -> ${ttl}`) 
       
-      // do it 
+      // set it with the ttl 
       if (ttl)  { 
-	  await cache.set_with_ttl( { id : call_id , ttl_ms : ttl , value : result }) 
-	  log("Set val in cache") 
+	  await cache.set_with_ttl( { id : call_id , ttl_ms : ttl , value : request_result }) 
+	  log("Set val + ttl in cache") 
       } 
       
-      return value 
+      return {hit, data : request_result}   
       
   }
 

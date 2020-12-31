@@ -23,31 +23,26 @@ const log = common.Logger("hlc_cacher")  // get logger
 declare var window : any  //get json 
 const JSON = window.JSON ; 
 
+/* caching params */ 
+
+const sec10 = 1000*10 
+const min1  = 1000*60
+const hr1   = 1000*60*60 
+const DEFAULT_HL_CACHE_TIME = hr1 
+const DEFAULT_HL_CACHE_CHECK_INTERVAL  = min1 
 
 // get handle on the db 
-const {store, set, get, del, keys, clear } = DB.GET_DB('HL_CLIENT') 
+const {store, set, get, del, keys, clear, set_with_ttl } = DB.GET_DB('HL_CLIENT') 
+
+// start the cache checking (if already started this will just restart it with the specified interval)  
+DB.START_CACHE_CHECK(DEFAULT_HL_CACHE_CHECK_INTERVAL) 
+
+export  { 
+    set_with_ttl ,  //import api 
+} 
 
 
 
-/* 
-  Can consider moving this function into db.ts if I am reusing it 
-  OR I can create a cacher base class which implements these sorts of functions ? 
- */
-export async function set_with_ttl( ops : { id : string, ttl_ms : number, value : any }) { 
-    
-    let {id, ttl_ms, value} = ops ; 
-    
-    let expiration = ttl_ms + date.ms_now()
-    
-    log(`Setting ${id} with ttl_ms ${ttl_ms}, expiration = ${expiration}`)    
-    
-    await set(id,value) 
-    
-    await DB.TTL.set(expiration, { db_id : 'HL_CLIENT' , del_id : id }) 
-    
-    log("Updated TTL with expiration, db_id, and del_id") 
-    
-}
 
 interface CallFunctionOps {
     id: string;
@@ -77,12 +72,11 @@ export async function check_cache_for_call_ops(x : CallFunctionOps) {
     }
 } 
 
-const sec10 = 1000*10 
 
 export var http_json_rules = [ 
-    [ new RegExp("query.wikidata.org/sparql") , sec10 ] , 
-    [ new RegExp("id.nlm.nih.gov/mesh/sparql") , sec10 ] , 
-    [ new RegExp("www.nccih.nih.gov")  , 6*sec10 ] , 
+    [ new RegExp("query.wikidata.org/sparql") , DEFAULT_HL_CACHE_TIME ] , 
+    [ new RegExp("id.nlm.nih.gov/mesh/sparql") , DEFAULT_HL_CACHE_TIME ] , 
+    [ new RegExp("www.nccih.nih.gov")  , DEFAULT_HL_CACHE_TIME  ] , 
 ] 
 
 
@@ -105,7 +99,28 @@ export var ttl_rules : any  = {
 	
 	log("No match found... so return null")
 	return null 
-    } 
+    } , 
+    
+ "sattsys.hyperloop.http" : function ( args : any ) { 
+	
+	let url = args.url 
+	log("Finding ttl match for " + url)
+	// so we will filter based on the url 
+	// for now the main apis the I am querying are 
+	for (var x  of http_json_rules) { 
+	    let [re , ttl ] = x 
+	    if ( url.match(re) != null ) {
+		//there is a match so we return the ttl 
+		log(`Found match with ${re.toString()} and returning ttl=${ttl}`) 
+		return ttl 
+	    } 
+	} 
+	
+	log("No match found... so return null")
+	return null 
+    }     
+    
+    
 } 
 
 
