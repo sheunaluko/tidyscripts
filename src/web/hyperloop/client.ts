@@ -83,6 +83,7 @@ export class Client {
     ops : ClientOps 
     conn  : any 
     log: any 
+    secure : boolean 
 
     function_table : { [k:string ] : any} 
     lobby : { [k:string ] : any}     //for async call_identifiers
@@ -100,6 +101,7 @@ export class Client {
         this.lobby = {} 
         this.function_table = {} 
         this.conn = null 
+	this.secure = ops.secure 
 
         
         //registration promise will be set in connect and can be awaited for better async
@@ -113,10 +115,10 @@ export class Client {
 
 
 
-    async connect(secure : boolean = true) { 
+    async connect() {  //removed the secure option here because should just use class member 
 	
 	var url = null ; 
-	if (secure) { 
+	if (this.secure) { 
 	    url = `wss://${this.ops.host}:${this.ops.port}`
 	} else { 
             url = `ws://${this.ops.host}:${this.ops.port}`;	    

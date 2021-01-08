@@ -15,11 +15,14 @@ import * as apis from "./apis/index.ts"
 
 import * as components from "./components/index.ts"
 
+import * as parameters from "./parameters.ts" 
+
 export {util,
 	wikidata,
 	hyperloop, 
 	components, 
 	apis, 
+	parameters , 
 	//localforage, 
 	//idbkv,
 	cryptocurrency } 

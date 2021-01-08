@@ -9,11 +9,15 @@ let debug = common.debug
 
 interface WikiDataOps { 
     action : string ,
-    sites : string, 
-    titles : string, 
-    props : string, 
-    languages : string,
-    format : string, 
+    sites? : string, 
+    titles? : string, 
+    props? : string, 
+    languages? : string,
+    language? : string , 
+    format? : string,  
+    search? : string, 
+    limit? : number, 
+    
 } 
 
 export async function qwikidata(ops : WikiDataOps ) { 
@@ -27,7 +31,6 @@ interface WikiEntitySearchOps {
 } 
 
 export async function WikiEntities(ops : WikiEntitySearchOps) { 
-    
     return qwikidata({ 
 	action : "wbgetentities", 
 	sites  : "enwiki" , 
@@ -38,19 +41,23 @@ export async function WikiEntities(ops : WikiEntitySearchOps) {
     }) 
 } 
 
-//todo 
-//enable abve search with ids 
 
-// - 
-export async function wikidata_search_meshid(did : string)  { 
-    //will check if there exists an Q entity where meshid is in statement 
-    //(use sparql) 
-    
-    //if not then return false 
-    
-    //if yes then we retrive the properties of the Q entity and return them 
-    
+export async function WikidataSearch(strang : string) { 
+    return qwikidata({ 
+	action : "wbsearchentities", 
+	search :  strang, 
+	language : 'en',
+	format : 'json', 
+	limit : 50 , 
+    }) 
 } 
+
+export async function WikidataSearchAsList(query : string) {
+    let result  = await WikidataSearch(query) 
+    
+    return result.result.value.search //lol 
+} 
+
 
 
 let instance_of_template = `
@@ -589,3 +596,30 @@ export async function default_props_for_qids(qids : string[]) {
     
 } 
 
+
+
+
+/* 
+ EDITING UTILITIES   
+ */ 
+     
+
+export async  function get_csrf_token() { 
+    let res = await hlm.http_json("https://www.wikidata.org/w/api.php", {action : "query", format : "json" , meta : "tokens"})
+    return (res as any).result.value.query.tokens.csrftoken //access the returned token 
+} 
+    
+
+
+export async function create_wikidata_item(label : string) { 
+    let tok = await get_csrf_token() 
+    let res = await hlm.post_json("https://www.wikidata.org/w/api.php",
+				  {action : 'wbeditentity' , 
+				   format : 'json' ,
+				   new    : 'item' , 
+				   token  : tok , 
+				   data : `{\"labels\":{\"en\":{\"language\":\"en\",\"value\":\"${label}\"}}}` }) 
+    
+    debug.add("create_wiki_item" , res) 
+    return res 
+} 
