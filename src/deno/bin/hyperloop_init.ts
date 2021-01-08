@@ -49,16 +49,16 @@ log("Client connected")
 let default_providers = [ 
     { 
 	id : "sattsys.hyperloop.http_json" , 
-	handler : async function(url : string ) { 
-	    let result = await base_http_json(url) 
+	handler : async function(args : any ) { 
+	    let result = await base_http_json(args.url) 
 	    return result 
 	} ,  
 	args_info : [["url","string"]] 
     } , 
     { 
 	id : "sattsys.hyperloop.http" , 
-	handler : async function(url : string ) { 
-	    let result = await base_http(url) 
+	handler : async function(args : any ) { 
+	    let result = await base_http(args.url) 
 	    return result 
 	} ,  
 	args_info : [["url","string"]] 
@@ -66,8 +66,8 @@ let default_providers = [
     
     { 
 	id : "sattsys.hyperloop.post_json" , 
-	handler : async function(url : string, msg : object ) { 
-	    let result = await post_json_get_json(url,msg)
+	handler : async function(args : any ) { 
+	    let result = await post_json_get_json(args.url,args.msg)
 	    return result 
 	} ,  
 	args_info : [["url","string"] , ["msg" , "json argument to POST"]]

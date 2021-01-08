@@ -26,6 +26,9 @@ export var log = common.Logger("dutil")
 
 export async function base_http_json(url : string) : AsyncResult<object> {
 
+    console.log("\n HTTP DEBUG!!!\n") 
+    console.log("Url is = " + url) 
+    
     log(`Requesting url: ${url}`)
     
     const res = await fetch(url, {method : "POST"}) ;
@@ -98,10 +101,8 @@ export async function post_json_get_json(url : string, msg  : any) : AsyncResult
     log(`Requesting url: ${url}`)
     log(msg)
     
-    
-    
 	let result = await fetch(url,{
-	    method : 'GET' , 
+	    method : 'POST' , 
 	    headers : { 
 		'Content-Type' : 'application/json', 
 	    } , 
@@ -109,12 +110,14 @@ export async function post_json_get_json(url : string, msg  : any) : AsyncResult
 	    
 	})
 	
+    
+    console.log("\n\nPOST RESULT\n\n")
+    console.log(result) 
+    
 	let json = await result.json() 
 	return Success(json) 
 	
-	
     //return Error({description: "unknown post error"}) 
-
     
 } 
 

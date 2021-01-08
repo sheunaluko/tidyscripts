@@ -618,7 +618,7 @@ export async function create_wikidata_item(label : string) {
 				   format : 'json' ,
 				   new    : 'item' , 
 				   token  : tok , 
-				   data : `{\"labels\":{\"en\":{\"language\":\"en\",\"value\":\"${label}\"}}}` }) 
+				   data : "{\"labels\":{\"en\":{\"language\":\"en\",\"value\":\"" + label +"\"}}}" }) 
     
     debug.add("create_wiki_item" , res) 
     return res 
