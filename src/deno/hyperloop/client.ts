@@ -188,7 +188,7 @@ export class Client {
       args.log = this.log;
     }
 
-    this.log("Args is:")
+    this.log("Args are:")
     this.log(args)
 
     var _msg = null;
