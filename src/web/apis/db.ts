@@ -106,18 +106,10 @@ export function set_cache_check_interval(n : number) {
 
 export var cache_check_interval_id : any = null
 
-export function START_CACHE_CHECK(interval : number) {  
+
+export async function do_cache_check() {
     
-    if (cache_check_interval_id) { 
-	log("Already checking, will clear old interval.") 
-	STOP_CACHE_CHECK()
-    } 
-    
-    set_cache_check_interval(interval) 
-    
-    cache_check_interval_id = setInterval( async function() {
-	
-	let all = await TTL.keys()
+    	let all = await TTL.keys()
 	let num = all.length 
 	let expired = all.filter( (k : number) => k < date.ms_now() ) 
 	let num_expired = expired.length 
@@ -142,10 +134,20 @@ export function START_CACHE_CHECK(interval : number) {
 	if (num_expired > 0 ) { 
 	    log(removed)  
 	} 
-	
-   } , CACHE_CHECK_INTERVAL ) 
-   
 
+} 
+
+export function START_CACHE_CHECK(interval : number) {  
+    
+    if (cache_check_interval_id) { 
+	log("Already checking, will clear old interval.") 
+	STOP_CACHE_CHECK()
+    } 
+    
+    set_cache_check_interval(interval) 
+    
+    cache_check_interval_id = setInterval(do_cache_check,CACHE_CHECK_INTERVAL) 
+   
 } 
 
 export function STOP_CACHE_CHECK() { 

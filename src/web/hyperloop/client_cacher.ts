@@ -73,12 +73,20 @@ export async function check_cache_for_call_ops(x : CallFunctionOps) {
 } 
 
 
+
 export var http_json_rules = [ 
     [ new RegExp("query.wikidata.org/sparql") , DEFAULT_HL_CACHE_TIME ] , 
+    [ new RegExp("wikidata.org/w/api.php\\?action=wbeditentity"), null] ,  //no caching for wiki edits 
+    [ new RegExp("wikidata.org/w/api.php\\?action=query&format=json&meta=tokens"), null] ,  //no token caching 
+    [ new RegExp("wikidata.org/w/api") , DEFAULT_HL_CACHE_TIME ] ,     
     [ new RegExp("id.nlm.nih.gov/mesh/sparql") , DEFAULT_HL_CACHE_TIME ] , 
     [ new RegExp("www.nccih.nih.gov")  , DEFAULT_HL_CACHE_TIME  ] , 
 ] 
 
+
+export var post_json_rules = [ 
+    [ new RegExp("wikidata.org/w/api.php\\?action=wbeditentity"), null] ,  //no caching for wiki edits 
+] 
 
 
 export var ttl_rules : any  = {  
@@ -88,11 +96,15 @@ export var ttl_rules : any  = {
 	log("Finding ttl match for " + url)
 	// so we will filter based on the url 
 	// for now the main apis the I am querying are 
-	for (var x  of http_json_rules) { 
-	    let [re , ttl ] = x 
+	for (var i =0 ; i < http_json_rules.length ; i++) { 
+
+
+	    let [re , ttl ] = http_json_rules[i] 
+	    log("Checking rule: " + (re as any).toString() ) 
+ 	    
 	    if ( url.match(re) != null ) {
 		//there is a match so we return the ttl 
-		log(`Found match with ${re.toString()} and returning ttl=${ttl}`) 
+		log(`Found match with ${(re as any).toString()} and returning ttl=${ttl}`) 
 		return ttl 
 	    } 
 	} 
@@ -111,14 +123,38 @@ export var ttl_rules : any  = {
 	    let [re , ttl ] = x 
 	    if ( url.match(re) != null ) {
 		//there is a match so we return the ttl 
-		log(`Found match with ${re.toString()} and returning ttl=${ttl}`) 
+		log(`Found match with ${(re as any).toString()} and returning ttl=${ttl}`) 
 		return ttl 
 	    } 
 	} 
 	
 	log("No match found... so return null")
 	return null 
-    }     
+ }    , 
+    
+    
+
+ "sattsys.hyperloop.post_json" : function ( args : any ) { 
+	
+	let url = args.url 
+	log("Finding ttl match for " + url)
+	// so we will filter based on the url 
+	for (var x  of post_json_rules) { 
+	    let [re , ttl ] = x 
+	    if ( url.match(re) != null ) {
+		//there is a match so we return the ttl 
+		log(`Found match with ${(re as any).toString()} and returning ttl=${ttl}`) 
+		return ttl 
+	    } 
+	} 
+	
+	log("No match found... so return null")
+	return null 
+    }         
+    
+
+
+    
     
     
 } 
