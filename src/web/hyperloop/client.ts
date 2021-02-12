@@ -1,7 +1,3 @@
-
-
-
-
 /* 
 Wed Mar 18 23:58:08 2020 => Sat Aug  8 17:22:59 PDT 2020
 
@@ -32,6 +28,7 @@ let log = common.Logger("hl_client")
 import * as wutil from "../util/index.ts" 
 import {ext_log} from "./ext_log.ts"  //import the hyperloop external logger 
 import * as cache  from "./client_cacher.ts"
+import * as params from "../parameters.ts" 
 
 
 /* 
@@ -458,3 +455,4 @@ export async function test_client() {
     
 } 
 				    
+

@@ -16,6 +16,7 @@
 
 import * as DB from "../apis/db.ts" 
 import * as common from "../../common/util/index.ts" ; //common utilities  
+import * as params from "../parameters.ts" ; // params 
 
 const date = common.Date 
 const log = common.Logger("hlc_cacher")  // get logger 
@@ -35,7 +36,13 @@ const DEFAULT_HL_CACHE_CHECK_INTERVAL  = min1
 const {store, set, get, del, keys, clear, set_with_ttl } = DB.GET_DB('HL_CLIENT') 
 
 // start the cache checking (if already started this will just restart it with the specified interval)  
-DB.START_CACHE_CHECK(DEFAULT_HL_CACHE_CHECK_INTERVAL) 
+//
+if ( params.defaults['cache.enabled'] ) {
+    log("Enabled cache checking") 
+    DB.START_CACHE_CHECK(DEFAULT_HL_CACHE_CHECK_INTERVAL) 
+} else { 
+    log("Cache checking disabled") 
+} 
 
 export  { 
     set_with_ttl ,  //import api 

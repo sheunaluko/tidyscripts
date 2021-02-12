@@ -305,6 +305,18 @@ export class Server {
      ws.send(JSON.stringify(msg)) 
  }
 
+ 
+ /*
+   Broadcast a message to all connected clients 
+ */
+    broad_cast(msg : object) {
+	//
+    } 
+    
+   
+    
+    
+    
 
  reply_no_function(ws : any,call_identifier : string) { 
      let msg = { 

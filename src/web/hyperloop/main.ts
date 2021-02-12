@@ -51,9 +51,9 @@ export async function default_client_ready(){
 export async function get_default_client(ops? : client.ClientOps) { 
 
     let default_ops = { 
-	host : (await params.aget("hyperloop.default_host")) ,  
-	port : (await params.aget("hyperloop.default_port")) , 
-	secure : (await params.aget("hyperloop.default_wss")) , 
+	host : (await params.aget("hyperloop.host")) ,  
+	port : (await params.aget("hyperloop.port")) , 
+	secure : (await params.aget("hyperloop.wss")) , 
 	id : "sattsys.hyperloop.client." + wutil.uuid() ,
     }     
     
@@ -212,16 +212,21 @@ export async function post_json(url : string, post_msg : object ) {
 
 //reconfigure hyperloop to connect to different host and port indefinitely 
 export async function configure_endpoint(host : string, port : number , wss : boolean) {
-    params.setp("hyperloop.default_host" , host) 
-    params.setp("hyperloop.default_port" , port) 
-    params.setp("hyperloop.default_wss" , wss) 
+    params.setp("hyperloop.host" , host) 
+    params.setp("hyperloop.port" , port) 
+    params.setp("hyperloop.wss" , wss) 
     log(`Reconfigured hyperloop endpoint to | ${host}:${port} (wss=${wss}) indefinitely`) 
 } 
 
 //reset host/port configuration 
 export async function reset_endpoint() {
-    await params.remove_from_db("hyperloop.default_host")  
-    await params.remove_from_db("hyperloop.default_port")      
-    await params.remove_from_db("hyperloop.default_wss")
+    await params.remove_from_db("hyperloop.host")  
+    await params.remove_from_db("hyperloop.port")      
+    await params.remove_from_db("hyperloop.wss")
     log("Reset hyperloop endpoints to whatever the default was...") 
+} 
+
+//local dev 
+export async function configure_local() {
+    configure_endpoint("localhost", 9500, false) 
 } 
