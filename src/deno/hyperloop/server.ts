@@ -309,11 +309,22 @@ export class Server {
  /*
    Broadcast a message to all connected clients 
  */
-    broad_cast(msg : object) {
-	//
+    broadcast(data : any) {
+	let msg = { 
+	    silent : true, 
+	    type : 'broadcast' , 
+	    data 
+	} 
+	
+	let ids = Object.keys(this.clients_by_id) 
+	
+	for (var id of ids) { 
+	    this.send_msg(msg, this.clients_by_id[id])
+	} 
+
+	//this.log("Sent client broadcast!") 
+	
     } 
-    
-   
     
     
     

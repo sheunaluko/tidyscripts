@@ -1,3 +1,11 @@
+/* 
+
+   MAIN FILE FOR STARTING AND CONFIGURING A HYPERLOOP SERVER 
+   
+   This also includes an example of periodic broadcast to all connected clients. 
+   
+*/
+
 
 import * as hl from "../hyperloop/index.ts" 
 
@@ -78,6 +86,23 @@ let default_providers = [
 
 //register the functions 
 default_providers.map((r: any)=> hc1.register_function(r) ) 
+
+
+//create a loop and broadcast the number of connected clients 
+setInterval( function() {
+    
+    //for now this broadcast is a semi-hack for keeping the connection alive over VPN, but evenetually will 
+    //use it fo realz! 
+    
+    let num_connected_clients = Object.keys(hl_server.clients_by_id).length 
+    let data = { num_connected_clients } 
+    hl_server.broadcast(data) 
+    
+    //log(`Broadcasted to ${num_connected_clients} clients`) 
+    
+    //console.log(hl_server.clients_by_id) 
+    
+} , 10000) 
 
 export default { 
     hc1 , 
