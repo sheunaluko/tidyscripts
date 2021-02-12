@@ -151,8 +151,10 @@ export class Client {
 	       
 	       
                let msg = JSON.parse(_msg) 
-               that.log("got message:") 
-               that.log(msg)
+	       if (! msg.silent) { 
+		   that.log("got message:") 
+		   that.log(msg)
+	       } 
                switch (msg.type) {
 		       
 		   case "call" : 
@@ -168,6 +170,12 @@ export class Client {
 		   case "return_value" : 
                        that.handle_return_value(msg) 
                        break 
+		       
+	   
+		   case "broadcast" : 
+		       that.handle_broadcast(msg) 
+		       break 		       
+		       
 		       
 		   default:
 		       that.log("Unrecognized message type:");
@@ -191,6 +199,11 @@ export class Client {
     }
     
 
+    handle_broadcast(msg : {data : any}) { 
+	let { data } = msg ; 
+	//this.log("Got broadcast") 
+	//this.log(data) 
+    } 
 
   async handle_call(msg: { args: any; call_identifier: string; id: string }) {
     this.log("Received call request");

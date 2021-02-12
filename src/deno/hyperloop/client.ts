@@ -130,8 +130,10 @@ export class Client {
          "message",
          function message(_msg: string) {
            let msg = JSON.parse(_msg) 
-           that.log("got message:") 
-           that.log(msg)
+	     if (! msg.silent) { 
+		   that.log("got message:") 
+		   that.log(msg)
+	       } 	     
            switch (msg.type) {
              
              case "call" : 
@@ -147,6 +149,10 @@ export class Client {
             case "return_value" : 
                 that.handle_return_value(msg) 
                 break 
+		   
+	    case "broadcast" : 
+		   that.handle_broadcast(msg) 
+		   break 
    
              default:
                that.log("Unrecognized message type:");
@@ -252,6 +258,14 @@ export class Client {
 
     }
 
+    
+    handle_broadcast(msg : { data : any}) {
+	//ignore it! 
+	//this.log("Got broadcast: ")
+	//this.log(msg.data) 
+    } 
+    
+    
   send(msg: object) {
     if (!this.conn) {
       throw "Ws connection has not been initialized";
