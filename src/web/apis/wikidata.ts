@@ -293,75 +293,7 @@ export async function data_about_entities(entities : string[]) {
 
 
 
-// DIRECT QUERY (Doesnt work because of CORS) 
-export async function direct() {
-    
-    let msg = { 
-	action : "wbgetentities" , 
-	ids : "Q4" , 
-	titles : "", 
-	sites : "enwiki" , 
-    }
-    
-    return new Promise( (resolve: any, reject : any) => {
-	
-	var xhr = new XMLHttpRequest();
-	var url = "https://query.wikidata.org/w/api.php";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.onreadystatechange = function () {
-	    if (xhr.readyState === 4 && xhr.status === 200) {
-		var json = JSON.parse(xhr.responseText);
-		resolve(json)
-	    }
-	};
-	var data = JSON.stringify(msg)
-	xhr.send(data);
-	
-    }) 
-    
-}
-    
 
-
-
-
-let x_template = `
-SELECT ?item ?itemLabel ?prop ?propValLabel
-WHERE 
-{
-  
-  VALUES ?prop { PROP_IDS } 
-  
-  
-  ?item wdt:P486 "MESH_ID" ; 
-        ?prop ?propVal . 
-  
-
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-}
-` 
-
-export async function x() {
-    
-    let prop_ids = ["wdt:P486",  "wdt:P492"]
-    let mesh_id = "D008180"
-    
-    let tmp = await sparql_template_fn( {
-	template : x_template , 
-	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
-		     ["MESH_ID",  mesh_id], 
-		    ], 
-	url_base : "https://query.wikidata.org/sparql", 
-	url_params : { 
-	    format : 'json' 
-	} 
-    }) 
-    
-    let bindings=  tmp.result.value.results.bindings
-    return bindings
-    
-} 
 
 
 
@@ -388,9 +320,9 @@ WHERE
 }
 ` 
 
-
-
-
+/* 
+   Looks up wikidata properties for a list of MESH ids 
+*/   
 export async function default_props_for_ids(mesh_ids : string[]) {
     
     await default_props_ready() 
