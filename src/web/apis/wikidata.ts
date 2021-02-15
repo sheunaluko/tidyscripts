@@ -643,7 +643,7 @@ export async function reverse_props_for_qids(qids : string[] , props  : string[]
     let prop_ids = props.map( (id:string)=>"wdt:" + id)
 
     let tmp = await sparql_template_fn( {
-	template : props_qids_template , 
+	template : reverse_props_qids_template , 
 	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
 		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
 		    ], 
