@@ -81,7 +81,7 @@ export function update_at(o : {[k:string] : any}, path : string[], fn : (x : any
     let lk = last(path) as string
     ref[lk] = fn(ref[lk])
 
-    return clone(o)
+    return clone(o) //this could be unideal -- maybe should be cloning first? 
 
 }
 
@@ -92,7 +92,14 @@ export function map_items(o : {[k:string] : any}) {
     return zip2(ks,vs) 
 } 
 
+
 export var dict_to_list = map_items 
+
+export function map_over_dic_values(o : any , f : (x :any) => any) {
+    let vs = values(o) 
+    let new_vs = map(vs,f) 
+    return zip_map(keys(o), new_vs) 
+} 
 
 /* ARRAYS  */
 
@@ -104,6 +111,19 @@ export function clone_array(o : any) {
 export function first<T>(arr : T[]) : T {
     return arr[0]
 }
+
+export function second<T>(arr : T[]) : T {
+    return arr[1]
+}
+
+export function third<T>(arr : T[]) : T {
+    return arr[2]
+}
+
+export function fourth<T>(arr : T[]) : T {
+    return arr[3]
+}
+
 
 export function last<T>(arr : T[]) : T {
     let len = arr.length
@@ -165,7 +185,7 @@ export function range(n : number,end : any = null): number[] {
     } 
 }
 
-export function map<I,O>(arr : I[] , mapper : (x : I) => O): O[] {
+export function map(arr : any[] , mapper : (x : any) => any): any[] {
     return arr.map(mapper)
 }
 
@@ -287,7 +307,7 @@ export function zip2(a1 : any[], a2 : any[]) {
 export var zip = zip2 
 
 export function list_to_dict(kvs : any) {
-    let result = [] 
+    let result : any  = {}
     for ( var [k,v] of kvs ) {
 	result[k] = v 
     } 

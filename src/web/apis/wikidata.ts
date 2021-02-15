@@ -529,6 +529,188 @@ export async function default_props_for_qids(qids : string[]) {
 } 
 
 
+/* 
+   
+   GET A SET OF PROPERTIES AND THEIR LABELS FOR A SET OF QIDS 
+   More or less duplicate of above more general 
+   
+ */
+
+
+
+
+let props_qids_template =` 
+SELECT ?item ?prop ?propVal ?propValLabel 
+WHERE 
+{
+  
+  VALUES ?prop { PROP_IDS } . 
+
+  VALUES ?item { Q_IDS }  . 
+  
+  ?item  ?prop ?propVal . 
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+` 
+
+// EDIT BELOW TO BETTER PARSE THE ABOVE -- maybe think about a more generic solution ? The reason i've been resisting this 
+// is because of the uniqueness of parsing the returned bindings each time ... though it basically looks like 
+// each of the items in the select clause appears as a key in each obect in the returned array [{},{},...] 
+
+export async function props_for_qids(qids : string[] , props  : string[]) {
+    
+    let prop_ids = props.map( (id:string)=>"wdt:" + id)
+
+    let tmp = await sparql_template_fn( {
+	template : props_qids_template , 
+	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
+		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
+		    ], 
+	url_base : "https://query.wikidata.org/sparql", 
+	url_params : { 
+	    format : 'json' 
+	} 
+    }) 
+
+    var  bindings : any = null 
+    try { 
+	bindings = tmp.result.value.results.bindings    
+    } catch (e) { 
+	log("Error extracting bindings!")
+	log(e) 
+	debug.add("wikidata.props_for_qids.tmp" , tmp) 
+	bindings = [] ; 
+    } 
+    
+    //*
+    var to_return : any = {} 
+    
+    for (var binding of bindings) {
+	
+	let {item, 
+	     prop, 
+	     propVal,
+	     propValLabel} = binding
+	
+	let prop_id = (fp.last(prop.value.split("/")) as string)
+	let item_id = (fp.last(item.value.split("/")) as string) 
+	let match_id = fp.last(propVal.value.split("/"))		
+	let match_label = propValLabel.value 
+	
+	if (! to_return[item_id] ) {
+	    to_return[item_id] = {} 
+	} 
+	
+	let payload = {
+	    item_id, 
+	    prop_id, 
+	    match_id , 
+	    match_label, 	    
+	} 
+	    
+	if (to_return[item_id][prop_id]) {
+	    to_return[item_id][prop_id].push(payload) 	    
+	} else { 
+	    to_return[item_id][prop_id] = [payload]
+	}
+	
+    } 
+    
+    return to_return 
+    
+} 
+
+let reverse_props_qids_template =` 
+SELECT ?item ?prop ?propVal ?propValLabel 
+WHERE 
+{
+  
+  VALUES ?prop { PROP_IDS } . 
+
+  VALUES ?item { Q_IDS }  . 
+  
+  ?propVal  ?prop ?item . 
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+}
+` 
+
+//same as above but reverse the prop qid relationship 
+//for example given prop="symptoms" and qid="Q_cough_", will find DISEASE -symptoms-> COUGH 
+export async function reverse_props_for_qids(qids : string[] , props  : string[]) {
+    
+    let prop_ids = props.map( (id:string)=>"wdt:" + id)
+
+    let tmp = await sparql_template_fn( {
+	template : props_qids_template , 
+	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
+		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
+		    ], 
+	url_base : "https://query.wikidata.org/sparql", 
+	url_params : { 
+	    format : 'json' 
+	} 
+    }) 
+
+    var  bindings : any = null 
+    try { 
+	bindings = tmp.result.value.results.bindings    
+    } catch (e) { 
+	log("Error extracting bindings!")
+	log(e) 
+	debug.add("wikidata.props_for_qids.tmp" , tmp) 
+	bindings = [] ; 
+    } 
+    
+    //*
+    var to_return : any = {} 
+    
+    for (var binding of bindings) {
+	
+	let {item, 
+	     prop, 
+	     propVal,
+	     propValLabel} = binding
+	
+	let prop_id = (fp.last(prop.value.split("/")) as string)
+	let item_id = (fp.last(item.value.split("/")) as string) 
+	let match_id = fp.last(propVal.value.split("/"))		
+	let match_label = propValLabel.value 
+	
+	if (! to_return[item_id] ) {
+	    to_return[item_id] = {} 
+	} 
+	
+	let payload = {
+	    item_id, 
+	    prop_id, 
+	    match_id , 
+	    match_label, 	    
+	} 
+	    
+	if (to_return[item_id][prop_id]) {
+	    to_return[item_id][prop_id].push(payload) 	    
+	} else { 
+	    to_return[item_id][prop_id] = [payload]
+	}
+	
+    } 
+    
+    return to_return 
+    
+} 
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* 
