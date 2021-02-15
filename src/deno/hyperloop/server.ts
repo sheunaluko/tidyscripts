@@ -147,7 +147,7 @@ export class Server {
         ws.on(
           "close",
           function close() {
-            that.handle_close({ ws });
+            that.handle_close(ws);
           }.bind(that)
         );
       }.bind(that)
@@ -167,7 +167,7 @@ export class Server {
     this.log("Received register request from:" + id);
     this.log("Saving client");
     this.clients_by_id[id] =  ws 
-    this.log("Appending id to ws instance data") 
+    this.log("Appending id to ws instance data")  //this is cool! 
     ws.hyperloop_id = id 
 
     //send ack 
@@ -319,7 +319,19 @@ export class Server {
 	let ids = Object.keys(this.clients_by_id) 
 	
 	for (var id of ids) { 
-	    this.send_msg(msg, this.clients_by_id[id])
+	    //this.log("Broadcasting to " + id) 
+	    
+	    //for some reason the error here is not getting caught - will investigate if further 
+	    //issues
+	    //I wasnt deregistering clients on close so was trying to broadcast to disconnected
+	    //clients - added this try catch but still got errors 
+	    //implemented removing client and error went away 
+	    try { 
+		this.send_msg(msg, this.clients_by_id[id])
+	    } catch (e :any) {
+		this.log(`Error in broadcast for client [${id}]`)
+		this.log(e) 
+	    } 
 	} 
 
 	//this.log("Sent client broadcast!") 
@@ -358,7 +370,9 @@ export class Server {
     this.log("Ackldged register for client") 
  }
 
-  handle_close(ws: any) {
-    this.log("Handling close");
+    handle_close(ws : any) {
+    this.log("Handling close for id= " + ws.hyperloop_id);
+    delete this.clients_by_id[ws.hyperloop_id]
   }
+    
 }
