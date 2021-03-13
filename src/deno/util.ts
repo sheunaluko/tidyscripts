@@ -95,7 +95,7 @@ export var get_json_get_json = base_http_json ;
 
 
 
-export async function post_json_get_json(url : string, msg  : any) : AsyncResult<object> {
+export async function post_json_get_json(url : string, msg  : any) : AsyncResult<object> {Ani
 
     
     log(`Requesting url: ${url}`)

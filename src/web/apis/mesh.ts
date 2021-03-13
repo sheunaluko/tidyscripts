@@ -133,6 +133,132 @@ export async function sparql_template_fn(ops : SparqlTemplateOps) {
     
 } 
 
+export async function descendants_of_tree_code(args : any) { 
+    
+    let {code, offset, limit, exclude} = args ; 
+    
+    limit = (limit  || 1000) 
+    offset = (offset || 0 )  
+    
+    var exclude_filters = "" 
+    if (exclude){ 
+	exclude_filters = exclude.map( (e:string)=> {
+	    return   `FILTER( !strStarts( ?treeLabel, "${e}" )) . `
+	}).join("\n") + "\n" 
+    } 
+    
+    let separator = "|"
+    
+    let sparql = ` 
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX meshv: <http://id.nlm.nih.gov/mesh/vocab#>
+PREFIX mesh: <http://id.nlm.nih.gov/mesh/>
+
+SELECT  ?meshID (GROUP_CONCAT(distinct ?meshLabel ; separator = "${separator}") as ?meshLabels) (GROUP_CONCAT(distinct ?treeLabel ; separator = "${separator}") AS ?treeLabels)
+FROM <http://id.nlm.nih.gov/mesh>
+WHERE { 
+  ?meshID meshv:treeNumber ?treeNode . 
+  ?meshID rdfs:label ?meshLabel .
+  ?treeNode rdfs:label ?treeLabel .            
+  FILTER( strStarts( ?treeLabel, "${code}" ) ) .
+  ${exclude_filters}
+}
+GROUP BY ?meshID 
+
+`
+    log(sparql) 
+    
+    let url_params = { 
+	query: sparql , 
+	format : 'JSON' , 
+	offset  
+    }
+    
+    let url_base  =  "https://id.nlm.nih.gov/mesh/sparql" 
+    
+    let value = await hlm.http_json(url_base, url_params) 
+    
+    debug.add("sparql.desc" , value) 
+    
+    return value 
+    
+} 
+
+/* 
+
+SELECT  ?meshD ?treeLabel
+FROM <http://id.nlm.nih.gov/mesh>
+WHERE { 
+  ?meshD meshv:treeNumber ?treeNode. 
+  ?treeNode rdfs:label ?treeLabel .            
+  FILTER( strStarts( ?treeLabel, "C" ) ) 
+  FILTER( !strStarts( ?treeLabel, "C22" ) ) 
+  FILTER( !strStarts( ?treeLabel, "C23" ) ) 
+
+}
+*/ 
+
+
+export async function all_sparql_results(fn : any, args : any) {
+    // loops to get all sparql results 
+    let offset = 0 ; 
+    let all_results = [] ; 
+    let max_calls = 2000 ; 
+    let limit = 1000; 
+    
+    while (true) { //meh ...  
+	
+	let new_args = {...args, offset,limit}
+	let value = await fn(new_args) 
+	
+	//get the bindings ... 
+	let bindings = value.result.value.results.bindings //lol 
+	//add them 
+	all_results.push(bindings) 
+	
+	// DETERMINE STOP CONDITIONS
+	if (bindings.length < limit) {  
+	    log(`Finished after ${all_results.length} calls`)
+	    break  
+	}
+	
+	if (--max_calls == 0) { 
+	    log("Ran out of calls!") 
+	    break 
+	} 
+	
+	// IF CONTINUE 
+	offset = offset + limit 
+    } 
+    
+    all_results = fp.flat_once(all_results) 
+    debug.add("sparql.all_desc", all_results) 
+    return all_results
+    
+} 
+
+
+export async function all_descendants_of_tree_code(args:any) {
+    return all_sparql_results( descendants_of_tree_code, args ) 
+}
+
+export async function all_mesh_diseases() {
+    //exclude C22 (Animal Diseases)
+    //exclude C23 (Pathological Conditions, Signs and Symptoms) 
+    return all_descendants_of_tree_code({code:"C", exclude: ["C22" , "C23"] })
+} 
+
+export async function all_mesh_conditions_signs_symptoms() { 
+    return all_descendants_of_tree_code({code:"C23"})    
+} 
+
+
+
+
+
 
 var custom_search_template = `
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -257,6 +383,7 @@ export async function mesh_ancestors(did : string) {
 	inference : true, 
 	format : 'JSON' , 
     }
+    
     let url_base = "https://id.nlm.nih.gov/mesh/sparql" 
     let value = await hlm.http_json(url_base,url_params) 
     
