@@ -31,7 +31,7 @@ export async function base_http_json(url : string) : AsyncResult<object> {
     
     log(`Requesting url: ${url}`)
     
-    const res = await fetch(url, {method : "POST"}) ;
+    const res = await fetch(url, {method : "GET"}) ;
 
     let status = res.status ; 
     let headers = res.headers ; 
@@ -62,7 +62,7 @@ export async function base_http(url : string) : AsyncResult<string> {
 
     log(`Requesting url: ${url}`)
     
-    const res = await fetch(url, {method : "POST"}) ;
+    const res = await fetch(url, {method : "GET"}) ;
 
     let status = res.status ; 
     let headers = res.headers ; 
