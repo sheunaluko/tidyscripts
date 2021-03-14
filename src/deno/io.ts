@@ -1,6 +1,8 @@
 
-import {path} from "./base_imports.ts"
+import * as base from "./base_imports.ts"
 import {Date} from "../common/util/index.ts" 
+
+
 
 export function fileExistsSync(fname : string)  : boolean { 
   try {
@@ -38,19 +40,34 @@ export function appendTextFileSync(path: string, data: string) {
     
     const encoder = new TextEncoder();
     const _data = encoder.encode(data);
-    
     Deno.writeFileSync(path, _data, {append: true});  // add data to the end of the file
+} 
 
+
+export async function writeTextFile(ops : any) {
+    let {path, data, append} = ops ; 
+    
+    var log = console.log
+    
+    log(`Request to write: ${path},${data},${append}`)
+    
+    let pdir = base.path.dirname(path) 
+    
+    await Deno.mkdir(pdir, { recursive: true }); 
+    
+    log(`Ensured dir: ${pdir}`)
+    
+    await Deno.writeFile(path, new TextEncoder().encode(data), {append} );
+    
+    log(`Done`) 
     
 } 
 
+
 export async function appendTextFile(path: string, data: string) {  
-    
     const encoder = new TextEncoder();
     const _data = encoder.encode(data);
-    
     await Deno.writeFile(path, _data, {append: true});  // add data to the end of the file
-
 } 
 
 export function readJSONFileSync(path: string) {  
@@ -76,6 +93,7 @@ export function get_logger(name : string, file? : string) {
 } 
     
 
-
+// - 
+let path = base.path 
 export {path} 
     

@@ -1,28 +1,28 @@
 /* 
-
    MAIN FILE FOR STARTING AND CONFIGURING A HYPERLOOP SERVER 
-   
    This also includes an example of periodic broadcast to all connected clients. 
-   
 */
 
 
-import * as hl from "../hyperloop/index.ts" 
+import * as hl from "../../src/deno/hyperloop/index.ts" 
 
 import {AsyncResult, 
 	Success, 
-	Error} from "../../common/util/types.ts" 
+	Error} from "../../src/common/util/types.ts" 
 
 import {base_http_json , 
 	base_http, 
 	post_json_get_json , 
-       } from "../util.ts"  
+       } from "../../src/deno/util.ts"  
+
+import * as cutil from "../../src/common/util/index.ts" 
+import { io, 
+	 base, 
+	 util,
+       }  from "../../src/deno/index.ts" 
 
 
-
-import * as common from "../../common/util/index.ts" 
-
-let log = common.Logger("hli") 
+let log = cutil.Logger("hli") 
 
 
 // 1) start a hyperloop server  
@@ -38,7 +38,7 @@ log("Server initiated")
 
 
 //pause 
-let _ = await common.asnc.wait(2000) 
+let _ = await cutil.asnc.wait(2000) 
 
 
 
@@ -53,8 +53,15 @@ await hc1.connect()
 log("Client connected") 
 
 // 3) register the default providers  
+type ParamPair = [string, string]  ; 
 
-let default_providers = [ 
+interface Provider {
+    id :string, 
+    handler : (args: any) => Promise<any>, 
+    args_info : ParamPair[] ,
+} 
+
+let default_providers : Provider[] = [ 
     { 
 	id : "sattsys.hyperloop.http_json" , 
 	handler : async function(args : any ) { 
@@ -79,13 +86,47 @@ let default_providers = [
 	    return result 
 	} ,  
 	args_info : [["url","string"] , ["msg" , "json argument to POST"]]
+    } , 
+    { 
+	id : "local.hyperloop.write_text"  , 
+	handler : async function(args:any) {
+	    
+	    
+	    let {path,data,append} = args ; 
+	    
+	    let hl_dir = Deno.env.get("HYPERLOOP_DIR")  ; 
+	    
+	    log(`dir=${hl_dir}, path=${path}, append=${append}`) 
+	    
+	    if (hl_dir) {
+		
+		if (path.includes("..")){
+		    log("Detected escape path!") 
+		    return {error : "Access denied: Remove any double dots from fname" }
+		} 
+		
+		log("Building args") 
+		let new_args = {...args, path : base.path.join(hl_dir,"public_fs", path)}
+		log(new_args) 
+		log("Calling write function") 
+		await io.writeTextFile(new_args) 		
+		
+		return { error  : false } 
+		
+	    } else { 
+		return {error:  "Access denied: No HYPERLOOP_DIR set on server"} 
+	    } 
+	    
+
+	}, 
+	args_info : [["append" , "boolean"],["data", "string"],["path","string"]]
     } 
     
 ] 
 
 
 //register the functions 
-default_providers.map((r: any)=> hc1.register_function(r) ) 
+default_providers.map((r: Provider)=> hc1.register_function(r) ) 
 
 
 //create a loop and broadcast the number of connected clients 

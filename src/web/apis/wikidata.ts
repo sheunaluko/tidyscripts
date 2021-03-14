@@ -80,6 +80,26 @@ export async function wikidata_instances_of_id(id : string) {
 } 
 
 
+export async function risk_factors_with_meshids(){
+    let query = ` 
+select ?meshID   (group_concat(?b) as ?diseases)
+where { 
+  ?b wdt:P5642 ?a . 
+  ?a wdt:P486 ?meshID .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+} 
+group by ?meshID
+`
+    let url_params = { 
+	query ,
+	format : 'json' , 
+    }
+    let url_base = "https://query.wikidata.org/sparql"
+    let value = await hlm.http_json(url_base,url_params) 
+    return value.result.value.results.bindings
+}
+
+
 
 interface SparqlTemplateOps { 
     template : string, 

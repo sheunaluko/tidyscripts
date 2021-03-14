@@ -204,6 +204,22 @@ export async function post_json(url : string, post_msg : object ) {
 } 
 
 
+export async function write_file(args : { path : string, data : string , append :boolean }  ) {
+
+    let client = await get_default_client() 
+    log("Request to write to path: " + args.path) 
+    
+    let {hit,data} = await client.call( { id:"local.hyperloop.write_text",
+					  args }) 
+    //should never return a cache 'hit' 
+    log(data) 
+    
+    return data 
+} 
+
+
+
+
 
 /* 
  Extra utils for development purposes   

@@ -1,0 +1,16 @@
+# only allow running when HYPERLOOP_DIR and TIDYSCRIPTS_DIR are set
+# note that this feature was added when I enabled 
+# the hyperloop service to write to disk (Sun Mar 14 11:42:41 PDT 2021) 
+# because of this, the deno service will have write access to HYPERLOOP_DIR/.public_fs
+# so plan security accordingly! 
+echo "Hyperloop dir=${HYPERLOOP_DIR:?Please set HYPERLOOP_DIR and TIDYSCRIPTS_DIR env vars prior to launch.}"
+echo "Tidyscripts dir=${TIDYSCRIPTS_DIR:?Please set HYPERLOOP_DIR and TIDYSCRIPTS_DIR env vars prior to launch.}"
+
+# launch deno 
+deno run --allow-env --allow-net "--allow-write=${HYPERLOOP_DIR}/public_fs" "${TIDYSCRIPTS_DIR}/bin/deno/hyperloop_init.ts"
+
+
+
+
+
+

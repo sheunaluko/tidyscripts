@@ -1,0 +1,4 @@
+
+
+1. allow web and deno to share common/hyperloop_client 
+2. upgrade hyperloop client to cover failure modes of function (wrap execution with try/catch) 
