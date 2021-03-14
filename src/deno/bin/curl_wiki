@@ -1,1 +1,0 @@
-curl --header "Content-Type: application/json" --request POST --data '{"action": "wbgetentities","format": "json","ids": "Q4|Q5","sites":"enwiki","titles": "","props": "descriptions", "languages": "en"}' https://www.wikidata.org/w/api.php
