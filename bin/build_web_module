@@ -12,7 +12,7 @@ cp -r src/common/* build/web/src/common
 # and then strip the files of the .ts  extensions (within the import statements IN the file) 
 echo "Removing .ts extensions" 
 cd build/web ; 
-grep -RiIl '.ts"'  .  | xargs sed -i.bak 's/.ts"/"/g'
+grep -RiIl '.ts"'  .  | xargs sed -i.bak 's/\.ts"/"/g'
 cd ../..
 
 # create the tsconfig 

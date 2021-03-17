@@ -16,7 +16,10 @@ import * as common from "../../common/util/index.ts" ; //common utilities
 import * as wutil from "../util/index.ts" 
 import {ext_log} from "./ext_log.ts"  //import the hyperloop external logger 
 import * as params from  "../parameters.ts" 
+export {ext_log} //and export it too 
+import * as client_cacher from "./client_cacher.ts" 
 
+export {client_cacher} 
 
 const log = common.Logger("hlm") 
 

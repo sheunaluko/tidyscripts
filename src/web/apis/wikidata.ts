@@ -574,10 +574,10 @@ WHERE
 }
 ` 
 
-// EDIT BELOW TO BETTER PARSE THE ABOVE -- maybe think about a more generic solution ? The reason i've been resisting this 
-// is because of the uniqueness of parsing the returned bindings each time ... though it basically looks like 
-// each of the items in the select clause appears as a key in each obect in the returned array [{},{},...] 
-
+// ---- 
+/* 
+   Note... if a result has no bidnings then there will be NO entry for it in the keys 
+ */
 export async function props_for_qids(qids : string[] , props  : string[]) {
     
     let prop_ids = props.map( (id:string)=>"wdt:" + id)
