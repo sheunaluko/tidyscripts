@@ -49,5 +49,3 @@ while (true) {
     log("Respawning web server: @" + (new Date()))     
 } 
 
-export PATH=~/.local/bin:"$PATH"
-export PATH=~/.local/bin:"$PATH"
