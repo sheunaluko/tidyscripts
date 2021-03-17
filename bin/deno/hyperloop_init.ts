@@ -45,7 +45,9 @@ let _ = await cutil.asnc.wait(2000)
 // 2) create and connect a hyperloop client 
 
 let hc1 = new hl.client.Client({host : "127.0.0.1" , 
-				id : "hc1" ,  //how is this id used? must it be unique? 
+				//the below ID does not have to be unique 
+				//for msgs to be routed successfully 				
+				id : "hc1" ,  
 				port : s_ops.port ,  }) 
 
 await hc1.connect() 

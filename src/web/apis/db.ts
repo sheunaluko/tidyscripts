@@ -45,7 +45,7 @@ export const default_db_header  = "TIDYSCRIPTS_WEB_"
  option 2 : could keep track existing databases / object stores and dynamically update them to get new handle  -- wil figure this out 
  
  
- option 3 [ ] ill implement --- simply create new database for each ONE! 
+ option 3 [x] ill implement --- simply create new database for each ONE! 
     new idbkv.Store('TIDYSCRIPTSWEB_' + name , 'main_store' ) 
 */
 

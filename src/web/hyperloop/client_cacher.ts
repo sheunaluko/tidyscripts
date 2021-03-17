@@ -26,11 +26,11 @@ const JSON = window.JSON ;
 
 /* caching params */ 
 
-const sec10 = 1000*10 
-const min1  = 1000*60
-const hr1   = 1000*60*60 
-const DEFAULT_HL_CACHE_TIME = hr1 
-const DEFAULT_HL_CACHE_CHECK_INTERVAL  = min1 
+export const sec10 = 1000*10 
+export const min1  = 1000*60
+export const hr1   = 1000*60*60 
+export const DEFAULT_HL_CACHE_TIME = hr1 
+export const DEFAULT_HL_CACHE_CHECK_INTERVAL  = min1 
 
 // get handle on the db 
 const {store, set, get, del, keys, clear, set_with_ttl } = DB.GET_DB('HL_CLIENT') 
@@ -97,6 +97,9 @@ export var post_json_rules = [
 
 
 export var ttl_rules : any  = {  
+    
+    
+    //rules for http json requests 
     "sattsys.hyperloop.http_json" : function ( args : any ) { 
 	
 	let url = args.url 
@@ -157,11 +160,7 @@ export var ttl_rules : any  = {
 	
 	log("No match found... so return null")
 	return null 
-    }         
-    
-
-
-    
+ }, 
     
     
 } 
