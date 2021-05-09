@@ -24,6 +24,8 @@ import * as common from "../../common/util/index.ts" ; //common utilities
    
 */ 
 
+declare var window : any ; 
+
 export const log = common.Logger("db")  // get logger 
 const date = common.Date 
 
@@ -43,7 +45,6 @@ export const default_db_header  = "TIDYSCRIPTS_WEB_"
  will use. 
  
  option 2 : could keep track existing databases / object stores and dynamically update them to get new handle  -- wil figure this out 
- 
  
  option 3 [x] ill implement --- simply create new database for each ONE! 
     new idbkv.Store('TIDYSCRIPTSWEB_' + name , 'main_store' ) 
@@ -67,6 +68,7 @@ export function GET_DB(name : string,verbose=true) {
     function del(key:string) {return idbkv.del(key,store) } 
     function keys() {return idbkv.keys(store) } 
     function clear() {return idbkv.clear(store) } 
+    function get_db_store() { return store } 
     
     /* will this recursive stuff work ? */ 
     async function set_with_ttl(ops : { id : string, ttl_ms : number, value : any }) {
@@ -79,7 +81,7 @@ export function GET_DB(name : string,verbose=true) {
     } 
     
     let result =  { 
-	store, set, get, del, keys, clear , set_with_ttl 
+	store, set, get, del, keys, clear , set_with_ttl , get_db_store , 
     }  
     
     //cache it then return it 
@@ -154,4 +156,12 @@ export function STOP_CACHE_CHECK() {
     clearInterval(cache_check_interval_id) 
     log("Stopped cache check") 
 } 
+
+
+
+
+export function deleteDB(name : string) {  
+    return window.indexedDB.deleteDatabase(default_db_header +  name) ; 
+} 
+
 

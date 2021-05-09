@@ -3,6 +3,13 @@
 type dic = { [k:string] : any }
 
 
+// need to implement deep copy 
+export function shallow_copy(o : any) {
+    if ( is_array(o) ) { return clone_array(o) }
+    if ( is_map(o) ) { return clone(o) }    
+    return o 
+} 
+
 
 
 /* MAPS  */
@@ -146,6 +153,7 @@ export function all_true(arr : boolean[]) : boolean {
 }
 
 export function any_true(arr : boolean[]) : boolean {
+    if (is_empty(arr)) {return false}  ; 
     return arr.reduce( (a,b)=> (a || b) )
 }
 
@@ -159,7 +167,12 @@ export function any_false(arr : boolean[]): boolean {
 
 
 export function repeat<T>(thing : T, num : number) : string[]{
-    return (Array(num) as any).fill(thing)
+    let arr = [] ; 
+    for (var i of range(num) ) {
+	arr.push(shallow_copy(thing))
+    } 
+    return arr 
+    
 }
 
 export function range(n : number,end : any = null): number[] {

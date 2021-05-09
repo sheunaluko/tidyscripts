@@ -19,8 +19,6 @@ hc.call({id , args}).then( (result : any) => console.log(result) )
 */
 
 
-
-
 //import * as util from "../utils/index";
 import * as common from "../../common/util/index.ts" ; //common utilities  
 let log = common.Logger("hl_client")
@@ -30,6 +28,11 @@ import {ext_log} from "./ext_log.ts"  //import the hyperloop external logger
 import * as cache  from "./client_cacher.ts"
 import * as params from "../parameters.ts" 
 
+
+export function clear_db() {
+    cache.delete_db() 
+    log("Cleared db") 
+} 
 
 /* 
  CLIENT IMPLEMENTATION  
