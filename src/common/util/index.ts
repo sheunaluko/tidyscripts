@@ -13,9 +13,10 @@ import * as channel from "./channel.ts"
 import * as debug from "./debug.ts" 
 import * as stdio from "./stdio.ts" 
 import * as std_fns from "./std_fns.ts" 
+import * as params from "./params.ts"
 
 // module exports 
-export {Logger, Date, fp , types , asnc , dsp , perf , channel, debug, stdio, std_fns  }  
+export {Logger, Date, fp , types , asnc , dsp , perf , channel, debug, stdio, std_fns, params  }  
 
 // functions 
 let log = Logger("cutil") ; 

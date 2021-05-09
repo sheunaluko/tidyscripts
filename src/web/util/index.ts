@@ -60,3 +60,22 @@ export function uuid() {
 };
 
 
+
+
+
+
+export function automate_input(id : string, q : string) { 
+    
+    /* 
+       Interesting discussion here about programmatically triggering onChange for react input elements 
+       https://hustle.bizongo.in/simulate-react-on-change-on-controlled-components-baa336920e04
+     */ 
+    let input = (document.getElementById(id) as any) 
+    if (input) { 
+	var nativeInputValueSetter = (Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value") as any).set;
+	nativeInputValueSetter.call(input, q);
+	var inputEvent = new Event('input', { bubbles: true});
+	input.dispatchEvent(inputEvent);
+    } 
+    
+} 

@@ -53,7 +53,23 @@ type IOProcessArgTuple = [IOProcess,IOArgs]
 type IORunningPipeline = IOProcessArgTuple[] 
 
 
+/* 
+   This implements a simple pipeline of IOProcesses and allows messages to flow through them
+   
+   Another variation that would be interesting is being able to swap out or update an IOProcess in 
+   the middle of execution. To achieve this, instead of directly wiring the IOProcess stdin and 
+   stdout to eachother, you would allow each IOP (IOProcess) to have its own independent ones
+   Then there would be a Router object which specified the routing map, for example 
+   
+   while (true) { data = await ch1.stdout.read() ; GET_CH_1_ROUTE().write(data)  }
+   NOrmally GET_CH_1_ROUTE() would return ch2.stdin , but if ch2 has been replaced 
+   then the NEW input channel will be returned 
+   
+   Can generate a UUID for each process and autopopulate a shared Mapping 
+   { uuid : IOChannel } . Then updates can be done by mutating the mapping and 
+   GET_CH_*UUID*_ROUTE = (uuid) => MAPPING[uuid] 
 
+ */
 function RunIOPipeline(iop : IOPipeline, globalIO : IOArgs ) : IORunningPipeline {  
     
     let {stdin, stdout, stderr} = globalIO; 

@@ -6,22 +6,35 @@ const log = Logger("idbmod")
 
 
 export class Store {
+    
+    
   readonly _dbp: Promise<IDBDatabase>;
+   _db : any  = null ; 
 
   constructor(dbName = 'keyval-store', readonly storeName = 'keyval') {
-    this._dbp = new Promise((resolve, reject) => {
-      const openreq = indexedDB.open(dbName, 1);
-      openreq.onerror = () => reject(openreq.error);
-      openreq.onsuccess = () => resolve(openreq.result);
+      
+      // -- 
+      this._dbp = new Promise((resolve, reject) => {
+	  
+	  //ref 
+	  let that = this //because of callback contexts 
+	  
+	  const openreq = indexedDB.open(dbName, 1);
+	  openreq.onerror = () => reject(openreq.error);
+	  
+	  openreq.onsuccess = function() { 
+	      resolve(openreq.result);	    
+	      that._db  = openreq.result ; 
+	  } 
 
-      // First time setup: create an empty object store
-      openreq.onupgradeneeded = () => {
+	  // First time setup: create an empty object store
+	  openreq.onupgradeneeded = () => {
+	      log(`creating store: ${dbName},  ${storeName}`) 
+              openreq.result.createObjectStore(storeName);
+	  };
 	  
-	  log(`creating store: ${dbName},  ${storeName}`) 
-	  
-        openreq.result.createObjectStore(storeName);
-      };
-    });
+      });
+      
   }
 
   _withIDBStore(type: IDBTransactionMode, callback: ((store: IDBObjectStore) => void)): Promise<void> {
@@ -30,13 +43,19 @@ export class Store {
 	//debug 
 	//console.log("The store name is: " + this.storeName) 
 	//console.log(this) 
-	
       const transaction = db.transaction(this.storeName, type);
       transaction.oncomplete = () => resolve();
       transaction.onabort = transaction.onerror = () => reject(transaction.error);
       callback(transaction.objectStore(this.storeName));
     }));
   }
+    
+  get_db() { 
+      return this._db
+  } 
+
+    
+    
 }
 
 let store: Store;

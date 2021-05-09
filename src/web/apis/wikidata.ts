@@ -11,6 +11,7 @@ interface WikiDataOps {
     action : string ,
     sites? : string, 
     titles? : string, 
+    ids? : string, 
     props? : string, 
     languages? : string,
     language? : string , 
@@ -39,6 +40,20 @@ export async function WikiEntities(ops : WikiEntitySearchOps) {
 	languages : 'en',
 	format : 'json', 
     }) 
+} 
+
+export async function QidLabels(qids : string[]) {
+    
+    return qwikidata({ 
+	action : "wbgetentities", 
+	sites  : "enwiki" , 
+	ids : qids.join("|"),
+	props : "labels", 
+	languages : 'en',
+    })
+    
+    //https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q42&props=labels&languages=en
+    
 } 
 
 
@@ -129,7 +144,7 @@ export async function sparql_template_fn(ops : SparqlTemplateOps) {
     
     //return sparql 
     log("sparql template fn using:")
-    console.log(sparql) 
+    log(sparql) 
     
     //prep url params 
     url_params[param_key || 'query'] = sparql 
@@ -392,7 +407,7 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	    qDescription = description.value 
 	} catch (e) {
 	    log("Error reading item description")
-	    console.log(binding) 
+	    log(binding) 
 	    qDescription = description
 	} 
 	let mesh_id = mesh.value 
@@ -505,7 +520,7 @@ export async function default_props_for_qids(qids : string[]) {
 	    qDescription = description.value 
 	} catch (e) {
 	    log("Error reading item description")
-	    console.log(binding) 
+	    log(binding) 
 	    qDescription = description
 	} 
 	let mesh_id = mesh.value 
@@ -640,6 +655,7 @@ export async function props_for_qids(qids : string[] , props  : string[]) {
     return to_return 
     
 } 
+
 
 let reverse_props_qids_template =` 
 SELECT ?item ?prop ?propVal ?propValLabel 

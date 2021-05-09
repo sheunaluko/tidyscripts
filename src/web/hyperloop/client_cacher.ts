@@ -31,9 +31,17 @@ export const min1  = 1000*60
 export const hr1   = 1000*60*60 
 export const DEFAULT_HL_CACHE_TIME = hr1 
 export const DEFAULT_HL_CACHE_CHECK_INTERVAL  = min1 
+export const db_name = "HL_CLIENT" 
 
 // get handle on the db 
-const {store, set, get, del, keys, clear, set_with_ttl } = DB.GET_DB('HL_CLIENT') 
+
+export var  db = DB.GET_DB(db_name) 
+const {store, set, get, del, keys, clear, set_with_ttl } = db 
+
+
+export function delete_db() {
+    return DB.deleteDB(db_name) 
+} 
 
 // start the cache checking (if already started this will just restart it with the specified interval)  
 //

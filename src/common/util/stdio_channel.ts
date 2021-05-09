@@ -92,7 +92,7 @@ export class IOChannel {
     
     clear_waiting(data : IOPacket) : void {
 	//will clear the awaiting queue by sending 'data'
-	//any promises that are waiting will get nulls 
+	//any promises that are waiting will get data
 	for (var i =0 ; i < this.promise_que.length ; i ++ ){ 
 	    let [resolve,reject] = (this.promise_que.shift() as promiseEntry )
 	    resolve(data) 

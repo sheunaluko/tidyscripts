@@ -27,7 +27,7 @@ export var log = function(m : any ) {
     } 
 } 
 
-function PT2IOProcess(packet_transformer : PacketTransformer) : IOProcess { 
+export function PT2IOProcess(packet_transformer : PacketTransformer) : IOProcess { 
     
     return async function(args : IOArgs)  {
 	
@@ -58,7 +58,7 @@ function PT2IOProcess(packet_transformer : PacketTransformer) : IOProcess {
     
 }
 
-function DT2IOProcess(data_transformer : DataTransformer) : IOProcess  { 
+export function DT2IOProcess(data_transformer : DataTransformer) : IOProcess  { 
     let packet_transformer = function(p : IODataPacket) {
 	log("Data transformer: ")
 	log(p) 

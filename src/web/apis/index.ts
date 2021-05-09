@@ -9,6 +9,7 @@ import * as bind_sounds_to_keys from "./bind_sounds_to_keys.ts"
 import * as local_storage from "./local_storage.ts" 
 import * as db from "./db.ts" 
 import * as db_tester from "./db_tester.ts" 
+import * as db_fns from "./db_fns.ts" 
 //import * as idbkv from "idb-keyval" 
 
 
@@ -21,6 +22,7 @@ export {
     bind_sounds_to_keys , 
     db, 
     db_tester, 
+    db_fns, 
     //idbkv, 
 } 
 
