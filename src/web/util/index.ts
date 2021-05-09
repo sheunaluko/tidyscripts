@@ -20,6 +20,8 @@ import * as ws from "./ws.ts"
 import * as http from "./base_http.ts" 
 import {ExternalLogger}  from "./ext_log.ts" 
 
+declare var window : any ; 
+
 export {tts, 
 	ws , 
 	ExternalLogger, 
@@ -61,6 +63,11 @@ export function uuid() {
 
 
 
+
+export async function define(promise : Promise, id : string ) { 
+    window[id] = await promise ; 
+    log(`Defined ${id} on the window object :)`)
+} 
 
 
 
