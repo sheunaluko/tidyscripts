@@ -64,7 +64,7 @@ export function uuid() {
 
 
 
-export async function define(promise : Promise, id : string ) { 
+export async function define(promise : Promise<any>, id : string ) { 
     window[id] = await promise ; 
     log(`Defined ${id} on the window object :)`)
 } 

@@ -7,6 +7,7 @@
 
 import * as idbkv from "./idbkv_mod.ts" 
 import * as common from "../../common/util/index.ts" ; //common utilities  
+import * as dbio from "./dbio.ts" 
 
 /* 
    Main API DB api inspired by (https://github.com/jakearchibald/idb-keyval) 
@@ -69,6 +70,7 @@ export function GET_DB(name : string,verbose=true) {
     function keys() {return idbkv.keys(store) } 
     function clear() {return idbkv.clear(store) } 
     function get_db_store() { return store } 
+    function ready() { return store._dbp }     
     
     /* will this recursive stuff work ? */ 
     async function set_with_ttl(ops : { id : string, ttl_ms : number, value : any }) {
@@ -81,7 +83,7 @@ export function GET_DB(name : string,verbose=true) {
     } 
     
     let result =  { 
-	store, set, get, del, keys, clear , set_with_ttl , get_db_store , 
+	store, set, get, del, keys, clear , set_with_ttl , get_db_store , ready 
     }  
     
     //cache it then return it 
@@ -162,6 +164,22 @@ export function STOP_CACHE_CHECK() {
 
 export function deleteDB(name : string) {  
     return window.indexedDB.deleteDatabase(default_db_header +  name) ; 
+} 
+
+export async function exportDBString(name : string) {  
+    let dta = GET_DB(name) 
+    let idb = dta.get_db_store()._db 
+    //
+    return await dbio.exportToJson(idb) 
+} 
+
+export async function importFromJson(name : string , jsn : string) {  
+    let dta = GET_DB(name) 
+    
+    await dta.ready() // be patient computer! 
+    let idb = dta.get_db_store()._db 
+    //
+    return await dbio.importFromJson(idb, jsn) 
 } 
 
 
