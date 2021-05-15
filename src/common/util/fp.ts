@@ -27,8 +27,9 @@ export function keys(a : dic) : string[] {
 export function values(a : dic) : any[] {
     let ks = keys(a)
     let cloned = clone(a) 
-    if (is_empty(ks)) {return []}
-    return map(ks,(k:string)=>cloned[k])
+    if (is_empty(ks)) {return []} else { 
+	return map(ks,(k:string)=>cloned[k])
+    } 
 }
 
 export function merge_dictionary(a : dic, b : dic )  : dic { 

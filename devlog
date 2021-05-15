@@ -1,3 +1,6 @@
+To Remember: 
+- Errors and null values are getting cached -- need to fix this eventually !
+
 
 Thu Dec 10 20:41:17 EST 2020 
 Moved to yalc instead of yarn link. This helped resolve some weird react hook errors when trying to package a react component in tidyscripts for import into MedKit (voice panel). Also, had to set react as a peerDependency in the web module package.json, but interestingly just installed react and material ui stuff in the parent directory of tiyscripts as usual. I think that during the build step the build/web director is using these modules actually. Hmm... 
@@ -19,6 +22,9 @@ todo:
 [x] test the caching status  
 [x] remove caching from the NIH herbals library 
 [ ] Check that caching is still working  (inspect indexedDB) 
+
+
+
 
 
 

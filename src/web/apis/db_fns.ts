@@ -135,7 +135,7 @@ export async function qid_retrieval_function( ids : string[]) {
 
 export async function cached_qid_request( ids : string[]) {
     let ops = { 
-	db_id :  "mesh_ids" , 
+	db_id :  "qid_labels" , 
 	ttl_ms : 1000*60*60*24*7 ,  // 1 week 
 	retrieval_fn  : qid_retrieval_function  ,  
 	ids 
