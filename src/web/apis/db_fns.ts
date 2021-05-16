@@ -76,6 +76,9 @@ export async function cached_db_id_request( ops : CDIR_OP ) {
 export async function mesh_retrieval_function( ids : string[]) { 
     
     let tmp_results = await  wiki.props_for_qids(ids,["P486"])
+    
+    console.log(tmp_results) 
+    
     let results : RetrievalResult = {}  ;     
     
     for (var qid of ids) { 
