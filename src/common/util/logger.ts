@@ -6,7 +6,9 @@ export function Logger(name : string) {
     return function(v : any ) { 
 	
 	if (params.suppress_log) {
-	    return 
+	    if (!params.log_pass.includes(name)) {
+		return 
+	    }
 	} 
 	
 	if (typeof v === "object" ) { 
