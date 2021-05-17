@@ -6,6 +6,11 @@ let hlm = hyperloop.main
 let fp = common.fp 
 let debug = common.debug
 
+declare var window : any ;
+
+export function test_throw(){
+    throw new TypeError("!!") 
+} 
 
 interface WikiDataOps { 
     action : string ,
@@ -95,6 +100,28 @@ export async function wikidata_instances_of_id(id : string) {
 } 
 
 
+function handle_bindings(ops : any){
+    let { sparql_res , debug_id } = ops 
+    
+    var  bindings : any = null 
+    try { 
+	bindings = sparql_res.result.value.results.bindings    
+    } catch (e) { 
+	log(e) 
+	debug.add(debug_id , sparql_res)  
+	let msg = `Error extracting bindings! -- please check debug.get("${debug_id}")`
+	log(msg)		
+	log(sparql_res.result.error) 
+	throw new TypeError(msg)
+	bindings = [] ; 
+    } 
+    
+    return bindings 
+} 
+
+
+
+
 export async function risk_factors_with_meshids(){
     let query = ` 
 select ?meshID   (group_concat(?b) as ?diseases)
@@ -145,6 +172,7 @@ export async function sparql_template_fn(ops : SparqlTemplateOps) {
     //return sparql 
     log("sparql template fn using:")
     log(sparql) 
+    //console.log(sparql)
     
     //prep url params 
     url_params[param_key || 'query'] = sparql 
@@ -271,7 +299,7 @@ export var ID_TO_PREDICATE : any = {}
 export var PREDICATES_READY = false 
 
 export async function all_predicates() {
-    let tmp = await sparql_template_fn( {
+    let sparql_res = await sparql_template_fn( {
 	template : all_predicates_template , 
 	replacers : [], 
 	url_base : "https://query.wikidata.org/sparql", 
@@ -280,7 +308,9 @@ export async function all_predicates() {
 	} 
     }) 
     
-    let bindings=  tmp.result.value.results.bindings
+    let debug_id = "all_predicates" 
+    let bindings = handle_bindings({sparql_res, debug_id})
+    
     
     ALL_PREDICATES = bindings.map((x:any)=>[x.itemLabel.value,x.itemDescription,x.item.value])
     
@@ -355,6 +385,8 @@ WHERE
 }
 ` 
 
+
+
 /* 
    Looks up wikidata properties for a list of MESH ids 
 */   
@@ -365,7 +397,7 @@ export async function default_props_for_ids(mesh_ids : string[]) {
     let prop_ids = fp.values(PREDICATE_TO_ID).map( (id:string)=>"wdt:" + id)
 
     
-    let tmp = await sparql_template_fn( {
+    let sparql_res = await sparql_template_fn( {
 	template : prop_id_template , 
 	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
 		     ["MESH_IDS",  mesh_ids.map((id:string)=>'"' + id + '"').join(" ") ], 
@@ -376,15 +408,8 @@ export async function default_props_for_ids(mesh_ids : string[]) {
 	} 
     }) 
 
-    var  bindings : any = null 
-    try { 
-	bindings = tmp.result.value.results.bindings    
-    } catch (e) { 
-	log("Error extracting bindings!")
-	log(e) 
-	debug.add("wikidata.default_props_for_ids.tmp" , tmp) 
-	bindings = [] ; 
-    } 
+    let debug_id = "default_props_for_ids" 
+    let bindings = handle_bindings({sparql_res, debug_id})
     
     //*
     var to_return : any = {} 
@@ -477,7 +502,7 @@ export async function default_props_for_qids(qids : string[]) {
     let prop_ids = fp.values(PREDICATE_TO_ID).map( (id:string)=>"wdt:" + id)
 
     
-    let tmp = await sparql_template_fn( {
+    let sparql_res = await sparql_template_fn( {
 	template : prop_qid_template , 
 	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
 		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
@@ -488,15 +513,9 @@ export async function default_props_for_qids(qids : string[]) {
 	} 
     }) 
 
-    var  bindings : any = null 
-    try { 
-	bindings = tmp.result.value.results.bindings    
-    } catch (e) { 
-	log("Error extracting bindings!")
-	log(e) 
-	debug.add("wikidata.default_props_for_qids.tmp" , tmp) 
-	bindings = [] ; 
-    } 
+    let debug_id = "default_props_for_qids" 
+    let bindings = handle_bindings({sparql_res, debug_id})
+    
     
     //*
     var to_return : any = {} 
@@ -587,36 +606,44 @@ WHERE
 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
 }
-` 
+`
+
+
+
 
 // ---- 
 /* 
    Note... if a result has no bidnings then there will be NO entry for it in the keys 
  */
-export async function props_for_qids(qids : string[] , props  : string[]) {
+export async function props_for_qids(all_qids : string[] , props  : string[]) {
     
     let prop_ids = props.map( (id:string)=>"wdt:" + id)
+    
+    //pattern for breaking up the sparql query so I dont get 'URI too long error' 
+    let sets_of_qids = fp.partition( all_qids , 200 ) ; 
+    let all_bindings = [] 
+    
+    for (var qids of sets_of_qids) {
 
-    let tmp = await sparql_template_fn( {
-	template : props_qids_template , 
-	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
-		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
-		    ], 
-	url_base : "https://query.wikidata.org/sparql", 
-	url_params : { 
-	    format : 'json' 
-	} 
-    }) 
+	let sparql_res = await sparql_template_fn( {
+	    template : props_qids_template , 
+	    replacers : [["PROP_IDS", prop_ids.join(" ") ], 
+			 ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
+			], 
+	    url_base : "https://query.wikidata.org/sparql", 
+	    url_params : { 
+		format : 'json' 
+	    } 
+	}) 
 
-    var  bindings : any = null 
-    try { 
-	bindings = tmp.result.value.results.bindings    
-    } catch (e) { 
-	log("Error extracting bindings!")
-	log(e) 
-	debug.add("wikidata.props_for_qids.tmp" , tmp) 
-	bindings = [] ; 
-    } 
+	
+	let debug_id = "props_for_qids" 
+	let bindings = handle_bindings({sparql_res, debug_id})
+	all_bindings.push(bindings) 
+    }
+    //and merge the bindings 
+    var bindings = fp.flat_once(all_bindings) 
+    
     
     //*
     var to_return : any = {} 
@@ -678,7 +705,7 @@ export async function reverse_props_for_qids(qids : string[] , props  : string[]
     
     let prop_ids = props.map( (id:string)=>"wdt:" + id)
 
-    let tmp = await sparql_template_fn( {
+    let sparql_res = await sparql_template_fn( {
 	template : reverse_props_qids_template , 
 	replacers : [["PROP_IDS", prop_ids.join(" ") ], 
 		     ["Q_IDS",  qids.map((id:string)=> "wd:" + id ).join(" ") ], 
@@ -689,15 +716,8 @@ export async function reverse_props_for_qids(qids : string[] , props  : string[]
 	} 
     }) 
 
-    var  bindings : any = null 
-    try { 
-	bindings = tmp.result.value.results.bindings    
-    } catch (e) { 
-	log("Error extracting bindings!")
-	log(e) 
-	debug.add("wikidata.props_for_qids.tmp" , tmp) 
-	bindings = [] ; 
-    } 
+    let debug_id = "reverse_for_qids" 
+    let bindings = handle_bindings({sparql_res, debug_id})
     
     //*
     var to_return : any = {} 

@@ -1,9 +1,11 @@
-
 import  {Logger } from "./logger.ts" 
 
 
+let init_log_pass : string[] = [] ; 
+
 export var params = { 
     suppress_log : false , 
+    log_pass : init_log_pass , 
 } 
 
 
@@ -20,3 +22,10 @@ export function enable_log() {
     params.suppress_log = false ; 
     log("Enabling logs")    
 } 
+
+export function filter_log(ids : string[]) {
+    log(`Filtering logs: ${JSON.stringify(ids)}`)        
+    params.log_pass = ids ; 
+    params.suppress_log = true; 
+} 
+
