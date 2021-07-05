@@ -80,6 +80,9 @@ export function readJSONFile(path: string) {
     return JSON.parse(txt.replace(/\s+/g,"")) 
 } 
 
+export function read_text(path : string) {
+    return Deno.readTextFileSync(path) 
+} 
 
 export function get_logger(name : string, file? : string) {
     return function(m : any){ 

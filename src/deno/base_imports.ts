@@ -6,6 +6,8 @@ import {
 
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
+import { hmac } from "https://deno.land/x/hmac@v2.0.1/mod.ts";
+
 
 import * as path from "https://deno.land/std/path/mod.ts";
 
@@ -22,5 +24,5 @@ export {
     WebSocket , 
     WebSocketServer, 
     v4 , 
-
+    hmac, 
 } 
