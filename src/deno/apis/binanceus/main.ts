@@ -18,24 +18,26 @@ let account_ep = base_ep + "/api/v3/account"
 let api_k_path = Deno.env.get("BUS_API_K_PATH")
 let api_s_path = Deno.env.get("BUS_API_S_PATH")
 
-export var apik = io.read_text(api_k_path).trim()
-let apis = io.read_text(api_s_path).trim() 
+export var apik = io.read_text(api_k_path as string).trim()
+let apis = io.read_text(api_s_path as string).trim() 
     
 export async function get_account_info() {
 
     log(`apik=${apik}, apis=${apis}`) 
     log(`account endpoint= ${account_ep}`) 
     
-    let req_body = `recvWindow=5000&timestamp=${new Date.getTime()}` ; 
+    let req_body = `recvWindow=5000&timestamp=${new Date().getTime()}` ; 
     let sig = hmac('sha256', apis, req_body , 'utf8', 'hex') ; 
     let req_body_w_sig = `${req_body}&signature=${sig}` ;
     
     log(`req+sig=${req_body_w_sig}`) 
+    
+    let final_ep = `${account_ep}?${req_body_w_sig}` ; 
+    log(`final_ep=${final_ep}`) ; 
 
-    let res = await fetch(account_ep, { 
+    let res = await fetch(final_ep, { 
 	method : 'GET', 
 	headers: { 'X-MBX-APIKEY' : `${apik}` } , 
-	body : req_body_w_sig 
     })
     
     console.log(res) 
