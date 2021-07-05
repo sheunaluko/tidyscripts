@@ -15,8 +15,8 @@ let log = cutil.Logger("bus_main")
 let base_ep = "https://api.binance.us" 
 let account_ep = base_ep + "/api/v3/account" 
 
-let api_k_path = "/Users/oluwa/.local_only/bus_api_key"
-let api_s_path = "/Users/oluwa/.local_only/bus_api_sec"
+let api_k_path = Deno.env.get("BUS_API_K_PATH")
+let api_s_path = Deno.env.get("BUS_API_S_PATH")
 
 export var apik = io.read_text(api_k_path).trim()
 let apis = io.read_text(api_s_path).trim() 
