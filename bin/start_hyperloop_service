@@ -7,7 +7,7 @@ echo "Hyperloop dir=${HYPERLOOP_DIR:?Please set HYPERLOOP_DIR and TIDYSCRIPTS_DI
 echo "Tidyscripts dir=${TIDYSCRIPTS_DIR:?Please set HYPERLOOP_DIR and TIDYSCRIPTS_DIR env vars prior to launch.}"
 
 # launch deno 
-deno run --allow-env --allow-run "${TIDYSCRIPTS_DIR}/bin/deno/hyperloop_restarter.ts"
+deno run --allow-env --allow-run --allow-read "${TIDYSCRIPTS_DIR}/bin/deno/hyperloop_restarter.ts"
 
 
 
