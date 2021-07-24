@@ -35,6 +35,7 @@ const cmd = ["deno",
 	     "run" ,
 	     "--allow-env",
 	     "--allow-net",
+	     "--allow-read",	     
 	     "--allow-write=${HYPERLOOP_DIR}/public_fs",
 	      hyperloop_init_path]
 
