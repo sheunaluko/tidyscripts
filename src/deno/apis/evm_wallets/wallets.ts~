@@ -1,0 +1,6 @@
+
+var foo = 400  ; 
+
+export {
+    foo 
+} 

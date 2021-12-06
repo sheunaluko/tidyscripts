@@ -1,7 +1,6 @@
 
 import { 
     assertEquals, 
-    assertArrayContains, 
     path , 
     WebSocket,
     WebSocketServer
@@ -16,8 +15,8 @@ import {AsyncResult,
 
 export {common, 
 	assertEquals,
-	path ,
-	assertArrayContains}
+	path } 
+
 
 
 export var log = common.Logger("dutil") 

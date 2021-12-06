@@ -61,14 +61,25 @@ export async function writeTextFile(ops : any) {
     
     log(`Done`) 
     
-} 
+}
 
+
+export async function ensure_dir(d : string) {
+    await Deno.mkdir(d, { recursive: true });     
+} 
 
 export async function appendTextFile(path: string, data: string) {  
     const encoder = new TextEncoder();
     const _data = encoder.encode(data);
     await Deno.writeFile(path, _data, {append: true});  // add data to the end of the file
 } 
+
+
+export function writeBytesToFile(fname : string, _bytes : any) { Deno.writeFileSync(fname, _bytes) }  
+export function readBytesFromFile(fname : string){ return  Deno.readFileSync(fname) }
+export function encode(s : string) { return new TextEncoder().encode(s) }
+export function decode(b : any) { return new TextDecoder().decode(b) } 
+
 
 export function readJSONFileSync(path: string) {  
     let txt = Deno.readTextFileSync(path) 
