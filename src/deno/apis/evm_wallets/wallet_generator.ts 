@@ -1,0 +1,10 @@
+
+
+//import * as config from "./config.ts"
+//import { ethers } from "https://cdn.ethers.io/lib/ethers-5.4.6.esm.min.js"
+
+var foo : string = 20 ; 
+
+export {
+    foo 
+} 
