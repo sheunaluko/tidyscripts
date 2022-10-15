@@ -46,7 +46,7 @@ async function generate_random_json_wallet(metadata :  any) {
 
     //write a metadata file
     if ( num == undefined ) { num = -1 } 
-    let _metadata = { name :( name || "unknown" ) , number : num } 
+    let _metadata = { name : ( name || "unknown" ) , number : num } 
     let meta_fname = io.path.join(wallet_base, "metadata.json")
     log(`[${wid}] Writing wallet metadata`)                
     await io.writeTextFile( { path : meta_fname, data : JSON.stringify(_metadata) , append :false })
@@ -76,7 +76,9 @@ async function load_wallets() {
     for (var s of subds ){
 	wallets.push( parse_wallet(s)) 
     }
-    return Promise.all(wallets)
+    
+    LOADED_WALLETS  = await Promise.all(wallets)
+    return LOADED_WALLETS 
 }
 
 var LOADED_WALLETS : any  = null ;
@@ -126,6 +128,7 @@ export {
     generate_random_json_wallet ,
     generate_numbered_wallets , 
     load_wallets ,
+    get_loaded_wallets, 
     parse_wallet,
     wallet_subdirectories,
     LOADED_WALLETS , 

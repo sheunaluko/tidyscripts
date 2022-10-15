@@ -1,0 +1,46 @@
+# Build script for the web module 
+
+# make all the directories 
+echo "Making build directory" 
+mkdir -p build/web/src/{web,common}
+
+# copy in the neccesary files 
+echo "Copying files into build directory" 
+cp -r src/web/* build/web/src/web 
+cp -r src/common/* build/web/src/common 
+
+# and then strip the files of the .ts  extensions (within the import statements IN the file) 
+echo "Removing .ts extensions" 
+cd build/web ; 
+grep -RiIl '.ts"'  .  | xargs sed -i.bak 's/\.ts"/"/g'
+cd ../..
+
+# create the tsconfig 
+echo "Creating tsconfig file" 
+cp bin/.build_assets/tsconfig.json build/web 
+
+# and then we compile the typescript app 
+echo "Compiling  typescript" 
+cd build/web 
+tsc --jsx "react"
+
+echo "Finished compiling!"
+echo "Adding package.json" 
+cp ../../bin/.build_assets/package.json ./package.json 
+
+echo "Publishing to yalc" 
+yalc push 
+
+cd ../.. 
+
+echo "Finished building module, enjoy :)" 
+
+
+
+
+
+
+
+
+
+
