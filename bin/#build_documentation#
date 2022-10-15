@@ -1,0 +1,38 @@
+# Build script for the web module 
+
+#clear docs
+echo "Clearing docs directory" 
+rm -rf docs 
+
+# make all the directories 
+echo "Making docs directory" 
+mkdir -p docs/{web,common,deno}
+
+# copy in the neccesary files 
+echo "Copying files into docs directory" 
+cp -r src/common/* docs/common
+cp -r src/web/* docs/web
+cp -r src/deno/* docs/deno
+
+# and then strip the files of the .ts  extensions (within the import statements IN the file) 
+echo "Removing .ts extensions from within files" 
+cd docs/ ; 
+grep -RiIl '.ts"'  .  | xargs sed -i.bak 's/\.ts"/"/g'
+cd ..
+
+#  run typedoc
+echo "Running typedoc..."
+
+# this should build the documentation for the web, common, and deno modules 
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,55 @@
+
+/* 
+   Config file 
+   Sun Dec  5 12:40:50 CST 2021
+
+*/
+
+import * as io from "../../io" 
+import * as cutil from "../../../common/util/index" 
+n
+let log = (x:any) => cutil.Logger("config")
+
+import {aes_encrypt, aes_decrypt} from '../../custom_crypto.ts' ; 
+
+/* 
+   Read env vars 
+*/ 
+let EVM_CONFIG_FNAME = Deno.env.get("EVM_CONFIG_FNAME")
+let EVM_CONFIG_PASSW = Deno.env.get("ENV_CONFIG_PASSW")
+
+/* 
+   Load encrypted config file 
+*/
+
+var config = {
+    wallets : [] 
+}
+
+function default_config(){
+    log(`Configuration will be default=>`)
+    log(config) 
+} 
+
+if (!io.fileExistsSync(EVM_CONFIG_FNAME)){
+    log(`Could not find the encrypted config file at loc=${EVM_CONFIG_FNAME}`)
+    default_config() 
+} else {
+    //attempt to decrypt the file
+    if (!EVM_CONFIG_PASSW) {
+	log(`Config file exists but there is no provided EVM_CONFIG_PASSW for decryption`)
+	default_config() 
+    } else {
+	//the file exists and the password is there ...
+	//we read the text, decrypt it, then JSON.parse it
+	let raw = io.read_text(EVM_CONFIG_FNAME)
+	let json_str = aes_decrypt(raw, EVM_CONFIG_PASSW)
+	let parsed_config = JSON.parse(json_str) 
+	config = parsed_config 
+    } 
+    
+} 
+
+export {
+    config , 
+} 

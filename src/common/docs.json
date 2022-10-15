@@ -1,0 +1,6370 @@
+[
+  {
+    "kind": "function",
+    "name": "Logger",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/logger.ts",
+      "line": 5,
+      "col": 0
+    },
+    "functionDef": {
+      "params": [
+        {
+          "kind": "identifier",
+          "name": "name",
+          "optional": false,
+          "tsType": {
+            "repr": "string",
+            "kind": "keyword",
+            "keyword": "string"
+          }
+        }
+      ],
+      "returnType": null,
+      "isAsync": false,
+      "isGenerator": false,
+      "typeParams": []
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "channel",
+    "location": {
+      "filename": "./channel.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "class",
+          "name": "Channel",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+            "line": 9,
+            "col": 0
+          },
+          "classDef": {
+            "isAbstract": false,
+            "constructors": [
+              {
+                "accessibility": null,
+                "name": "constructor",
+                "params": [],
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 15,
+                  "col": 4
+                }
+              }
+            ],
+            "properties": [
+              {
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                },
+                "readonly": false,
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "value_que",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 12,
+                  "col": 4
+                }
+              },
+              {
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "promiseEntry",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "promiseEntry"
+                    }
+                  }
+                },
+                "readonly": false,
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "promise_que",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 13,
+                  "col": 4
+                }
+              }
+            ],
+            "indexSignatures": [],
+            "methods": [
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "read",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": {
+                    "repr": "Promise",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": [
+                        {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      ],
+                      "typeName": "Promise"
+                    }
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 23,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "write",
+                "kind": "method",
+                "functionDef": {
+                  "params": [
+                    {
+                      "kind": "identifier",
+                      "name": "data",
+                      "optional": false,
+                      "tsType": {
+                        "repr": "any",
+                        "kind": "keyword",
+                        "keyword": "any"
+                      }
+                    }
+                  ],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 46,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "flush",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 60,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "log_data",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": null,
+                  "isAsync": true,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+                  "line": 75,
+                  "col": 4
+                }
+              }
+            ],
+            "extends": null,
+            "implements": [],
+            "typeParams": [],
+            "superTypeParams": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "Date",
+    "location": {
+      "filename": "./dates.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "function",
+          "name": "to_iso",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 9,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "iso_now",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 13,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "to_iso_day_filename",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 18,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "iso_day_filename",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 22,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "to_ms",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 26,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "ms_now",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 28,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "dates_eq",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 30,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d1",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "d2",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "copy_date",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 34,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "day_string",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 36,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "round_date",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 40,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "in_date",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "t",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "Date",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "Date"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "shift_date",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 76,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "in_date",
+                "optional": false,
+                "tsType": {
+                  "repr": "Date",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Date"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "amt",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "t",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "Date",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "Date"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "times_in_ms",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 118,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "Logger",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+            "line": 3,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/logger.ts",
+            "imported": "Logger"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "stdio",
+    "location": {
+      "filename": "./stdio.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "class",
+          "name": "IOChannel",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+            "line": 21,
+            "col": 0
+          },
+          "classDef": {
+            "isAbstract": false,
+            "constructors": [
+              {
+                "accessibility": null,
+                "name": "constructor",
+                "params": [],
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 27,
+                  "col": 4
+                }
+              }
+            ],
+            "properties": [
+              {
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                },
+                "readonly": false,
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "value_que",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 23,
+                  "col": 4
+                }
+              },
+              {
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "promiseEntry",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "promiseEntry"
+                    }
+                  }
+                },
+                "readonly": false,
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "promise_que",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 24,
+                  "col": 4
+                }
+              }
+            ],
+            "indexSignatures": [],
+            "methods": [
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "read",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": {
+                    "repr": "Promise",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": [
+                        {
+                          "repr": "IOPacket",
+                          "kind": "typeRef",
+                          "typeRef": {
+                            "typeParams": null,
+                            "typeName": "IOPacket"
+                          }
+                        }
+                      ],
+                      "typeName": "Promise"
+                    }
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 32,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "write",
+                "kind": "method",
+                "functionDef": {
+                  "params": [
+                    {
+                      "kind": "identifier",
+                      "name": "data",
+                      "optional": false,
+                      "tsType": {
+                        "repr": "IOPacket",
+                        "kind": "typeRef",
+                        "typeRef": {
+                          "typeParams": null,
+                          "typeName": "IOPacket"
+                        }
+                      }
+                    }
+                  ],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 55,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "write_data",
+                "kind": "method",
+                "functionDef": {
+                  "params": [
+                    {
+                      "kind": "identifier",
+                      "name": "data",
+                      "optional": false,
+                      "tsType": {
+                        "repr": "IOData",
+                        "kind": "typeRef",
+                        "typeRef": {
+                          "typeParams": null,
+                          "typeName": "IOData"
+                        }
+                      }
+                    }
+                  ],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 69,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "write_EOF",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 81,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "clear_buffer",
+                "kind": "method",
+                "functionDef": {
+                  "params": [],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 87,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "clear_waiting",
+                "kind": "method",
+                "functionDef": {
+                  "params": [
+                    {
+                      "kind": "identifier",
+                      "name": "data",
+                      "optional": false,
+                      "tsType": {
+                        "repr": "IOPacket",
+                        "kind": "typeRef",
+                        "typeRef": {
+                          "typeParams": null,
+                          "typeName": "IOPacket"
+                        }
+                      }
+                    }
+                  ],
+                  "returnType": {
+                    "repr": "void",
+                    "kind": "keyword",
+                    "keyword": "void"
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 93,
+                  "col": 4
+                }
+              },
+              {
+                "accessibility": null,
+                "optional": false,
+                "isAbstract": false,
+                "isStatic": false,
+                "name": "connect",
+                "kind": "method",
+                "functionDef": {
+                  "params": [
+                    {
+                      "kind": "identifier",
+                      "name": "that_chan",
+                      "optional": false,
+                      "tsType": {
+                        "repr": "IOChannel",
+                        "kind": "typeRef",
+                        "typeRef": {
+                          "typeParams": null,
+                          "typeName": "IOChannel"
+                        }
+                      }
+                    }
+                  ],
+                  "returnType": {
+                    "repr": "IOChannel",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "IOChannel"
+                    }
+                  },
+                  "isAsync": false,
+                  "isGenerator": false,
+                  "typeParams": []
+                },
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+                  "line": 103,
+                  "col": 4
+                }
+              }
+            ],
+            "extends": null,
+            "implements": [],
+            "typeParams": [],
+            "superTypeParams": []
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IOErrorPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 17,
+            "col": 0
+          },
+          "interfaceDef": {
+            "extends": [],
+            "methods": [],
+            "properties": [
+              {
+                "name": "type",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 18,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOPacketType.Error",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOPacketType.Error"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "msg",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 19,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                },
+                "typeParams": []
+              },
+              {
+                "name": "metadata",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 20,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                },
+                "typeParams": []
+              }
+            ],
+            "callSignatures": [],
+            "indexSignatures": [],
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOData",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 23,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "any",
+              "kind": "keyword",
+              "keyword": "any"
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOMetadata",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 25,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "any",
+              "kind": "keyword",
+              "keyword": "any"
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IOEOFPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 27,
+            "col": 0
+          },
+          "interfaceDef": {
+            "extends": [],
+            "methods": [],
+            "properties": [
+              {
+                "name": "type",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 28,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOPacketType.EOF",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOPacketType.EOF"
+                  }
+                },
+                "typeParams": []
+              }
+            ],
+            "callSignatures": [],
+            "indexSignatures": [],
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IODataPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 31,
+            "col": 0
+          },
+          "interfaceDef": {
+            "extends": [],
+            "methods": [],
+            "properties": [
+              {
+                "name": "type",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 32,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOPacketType.Data",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOPacketType.Data"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "data",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 33,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOData",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOData"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "metadata",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 34,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": true,
+                "tsType": {
+                  "repr": "IOMetadata",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOMetadata"
+                  }
+                },
+                "typeParams": []
+              }
+            ],
+            "callSignatures": [],
+            "indexSignatures": [],
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 37,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "parenthesized",
+              "parenthesized": {
+                "repr": "",
+                "kind": "union",
+                "union": [
+                  {
+                    "repr": "IOEOFPacket",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "IOEOFPacket"
+                    }
+                  },
+                  {
+                    "repr": "IODataPacket",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "IODataPacket"
+                    }
+                  },
+                  {
+                    "repr": "IOErrorPacket",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "IOErrorPacket"
+                    }
+                  }
+                ]
+              }
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "IOArgs",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 39,
+            "col": 0
+          },
+          "interfaceDef": {
+            "extends": [],
+            "methods": [],
+            "properties": [
+              {
+                "name": "stdin",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 40,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOChannel",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOChannel"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "stdout",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 41,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOChannel",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOChannel"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "stderr",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 42,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "IOChannel",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOChannel"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "extra",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+                  "line": 43,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": true,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                },
+                "typeParams": []
+              }
+            ],
+            "callSignatures": [],
+            "indexSignatures": [],
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOProcess",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 47,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "Promise",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": [
+                      {
+                        "repr": "void",
+                        "kind": "keyword",
+                        "keyword": "void"
+                      }
+                    ],
+                    "typeName": "Promise"
+                  }
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "args",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "IOArgs",
+                      "kind": "typeRef",
+                      "typeRef": {
+                        "typeParams": null,
+                        "typeName": "IOArgs"
+                      }
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOPipeline",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 49,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "IOProcess",
+                "kind": "typeRef",
+                "typeRef": {
+                  "typeParams": null,
+                  "typeName": "IOProcess"
+                }
+              }
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IOProcessArgTuple",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 51,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "tuple",
+              "tuple": [
+                {
+                  "repr": "IOProcess",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOProcess"
+                  }
+                },
+                {
+                  "repr": "IOArgs",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOArgs"
+                  }
+                }
+              ]
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "IORunningPipeline",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 53,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "IOProcessArgTuple",
+                "kind": "typeRef",
+                "typeRef": {
+                  "typeParams": null,
+                  "typeName": "IOProcessArgTuple"
+                }
+              }
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "enum",
+          "name": "IOPacketType",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 11,
+            "col": 0
+          },
+          "enumDef": {
+            "members": [
+              {
+                "name": "Data"
+              },
+              {
+                "name": "Error"
+              },
+              {
+                "name": "EOF"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "RunIOPipeline",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 73,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "iop",
+                "optional": false,
+                "tsType": {
+                  "repr": "IOPipeline",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOPipeline"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "globalIO",
+                "optional": false,
+                "tsType": {
+                  "repr": "IOArgs",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "IOArgs"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "IORunningPipeline",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "IORunningPipeline"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "EOF",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 109,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOChannel",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "line": 8,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio_channel.ts",
+            "imported": "IOChannel"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "std_fns",
+    "location": {
+      "filename": "./std_fns.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "variable",
+          "name": "debug",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 21,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": {
+              "repr": "false",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "set_debug",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 22,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "boolean",
+                  "kind": "keyword",
+                  "keyword": "boolean"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "log",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 24,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "PT2IOProcess",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 30,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "packet_transformer",
+                "optional": false,
+                "tsType": {
+                  "repr": "PacketTransformer",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "PacketTransformer"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "IOProcess",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "IOProcess"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "DT2IOProcess",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 61,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "data_transformer",
+                "optional": false,
+                "tsType": {
+                  "repr": "DataTransformer",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "DataTransformer"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "IOProcess",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "IOProcess"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "split",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 75,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "index",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 76,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "to_number",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 77,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "inc",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 78,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "logger_stdout",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 80,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "tag",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "IOChannel",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "IOChannel"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "string_producer",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 100,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "text",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "sep",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "IOProcess",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "IOProcess"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "import",
+          "name": "fp",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 1,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "imported": null
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOProcess",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 2,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOProcess"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOArgs",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 2,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOArgs"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 2,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOPacket"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOData",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 2,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOData"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IODataPacket",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 2,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IODataPacket"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOPacketType",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 10,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOPacketType"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "IOChannel",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+            "line": 10,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+            "imported": "IOChannel"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "asnc",
+    "location": {
+      "filename": "./async.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "function",
+          "name": "wait_until",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/async.ts",
+            "line": 7,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "f",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "boolean",
+                      "kind": "keyword",
+                      "keyword": "boolean"
+                    },
+                    "params": [],
+                    "typeParams": []
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "timeout",
+                "optional": true,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "rate",
+                "optional": true,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "wait",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/async.ts",
+            "line": 30,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "t",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "params",
+    "location": {
+      "filename": "./params.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "variable",
+          "name": "params",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+            "line": 6,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "suppress_log",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+            "line": 16,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "enable_log",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+            "line": 21,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "filter_log",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+            "line": 26,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "ids",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "string",
+                    "kind": "keyword",
+                    "keyword": "string"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "import",
+          "name": "Logger",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+            "line": 1,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/logger.ts",
+            "imported": "Logger"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "fp",
+    "location": {
+      "filename": "./fp.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "function",
+          "name": "shallow_copy",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 7,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "clone",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 17,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "dic",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "dic"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "keys",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 23,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "string",
+                "kind": "keyword",
+                "keyword": "string"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "values",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 27,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "merge_dictionary",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 35,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "dic",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "dic"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "merge_dictionaries",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 39,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "ds",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "dic",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "dic"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "dic",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "dic"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "get",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 43,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "any",
+              "kind": "keyword",
+              "keyword": "any"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "set",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 49,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "dic",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "dic"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "set_im",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 54,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "dic",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "dic"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "getter",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 60,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "o",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "dic",
+                      "kind": "typeRef",
+                      "typeRef": {
+                        "typeParams": null,
+                        "typeName": "dic"
+                      }
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "setter",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 67,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "o",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "dic",
+                      "kind": "typeRef",
+                      "typeRef": {
+                        "typeParams": null,
+                        "typeName": "dic"
+                      }
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "setter_im",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 73,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "dic",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "dic"
+                  }
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "o",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "dic",
+                      "kind": "typeRef",
+                      "typeRef": {
+                        "typeParams": null,
+                        "typeName": "dic"
+                      }
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_empty_map",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 79,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "update_at",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 84,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "typeLiteral",
+                  "typeLiteral": {
+                    "methods": [],
+                    "properties": [],
+                    "callSignatures": [],
+                    "indexSignatures": [
+                      {
+                        "readonly": false,
+                        "params": [
+                          {
+                            "kind": "identifier",
+                            "name": "k",
+                            "optional": false,
+                            "tsType": {
+                              "repr": "string",
+                              "kind": "keyword",
+                              "keyword": "string"
+                            }
+                          }
+                        ],
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "path",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "string",
+                    "kind": "keyword",
+                    "keyword": "string"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "fn",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "any",
+                      "kind": "keyword",
+                      "keyword": "any"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "x",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map_items",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 96,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "typeLiteral",
+                  "typeLiteral": {
+                    "methods": [],
+                    "properties": [],
+                    "callSignatures": [],
+                    "indexSignatures": [
+                      {
+                        "readonly": false,
+                        "params": [
+                          {
+                            "kind": "identifier",
+                            "name": "k",
+                            "optional": false,
+                            "tsType": {
+                              "repr": "string",
+                              "kind": "keyword",
+                              "keyword": "string"
+                            }
+                          }
+                        ],
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "dict_to_list",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 104,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map_over_dic_values",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 106,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "f",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "any",
+                      "kind": "keyword",
+                      "keyword": "any"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "x",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "clone_array",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 114,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "first",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 119,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "second",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 123,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "third",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 127,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "fourth",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 131,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "last",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 136,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "nth",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 141,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "T",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": null,
+                      "typeName": "T"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "T",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": null,
+                "typeName": "T"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "indexer",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 145,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "i",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "all_true",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 152,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "boolean",
+                    "kind": "keyword",
+                    "keyword": "boolean"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "any_true",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 156,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "boolean",
+                    "kind": "keyword",
+                    "keyword": "boolean"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "all_false",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 161,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "boolean",
+                    "kind": "keyword",
+                    "keyword": "boolean"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "any_false",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 165,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "boolean",
+                    "kind": "keyword",
+                    "keyword": "boolean"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "repeat",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 170,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "thing",
+                "optional": false,
+                "tsType": {
+                  "repr": "T",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "T"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "num",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "string",
+                "kind": "keyword",
+                "keyword": "string"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "range",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 179,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "assign",
+                "left": {
+                  "kind": "identifier",
+                  "name": "end",
+                  "optional": false,
+                  "tsType": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                },
+                "right": "[UNSUPPORTED]",
+                "tsType": null
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "number",
+                "kind": "keyword",
+                "keyword": "number"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 202,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "mapper",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "any",
+                      "kind": "keyword",
+                      "keyword": "any"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "x",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "enumerate",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 207,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "",
+                "kind": "tuple",
+                "tuple": [
+                  {
+                    "repr": "number",
+                    "kind": "keyword",
+                    "keyword": "number"
+                  },
+                  {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                ]
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "enumermap",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 217,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "os",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "f",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "any",
+                      "kind": "keyword",
+                      "keyword": "any"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "i",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "number",
+                          "kind": "keyword",
+                          "keyword": "number"
+                        }
+                      },
+                      {
+                        "kind": "identifier",
+                        "name": "o",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "concat",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 226,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map_get",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 230,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "object",
+                    "kind": "keyword",
+                    "keyword": "object"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "k",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map_set",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 234,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "object",
+                    "kind": "keyword",
+                    "keyword": "object"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "k",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "map_set_im",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 238,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "object",
+                    "kind": "keyword",
+                    "keyword": "object"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "k",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_zero",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 242,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "len",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 244,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_empty_array",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 248,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_empty",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 253,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "not_empty",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 257,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "filter",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 260,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "fn",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "boolean",
+                      "kind": "keyword",
+                      "keyword": "boolean"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "a",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "filter_key",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 264,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "os",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "object",
+                    "kind": "keyword",
+                    "keyword": "object"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "k",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "fn",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "fnOrConstructor",
+                  "fnOrConstructor": {
+                    "constructor": false,
+                    "tsType": {
+                      "repr": "boolean",
+                      "kind": "keyword",
+                      "keyword": "boolean"
+                    },
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "a",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "any",
+                          "kind": "keyword",
+                          "keyword": "any"
+                        }
+                      }
+                    ],
+                    "typeParams": []
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "object",
+                "kind": "keyword",
+                "keyword": "object"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "filter_key_equals",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 268,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "os",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "object",
+                    "kind": "keyword",
+                    "keyword": "object"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "k",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "remove_empty",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 272,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "any_is_array",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 276,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "flat_once",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 280,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "recursive_flat",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 285,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "recursive_flat_remove_empty",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 293,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "any",
+                "kind": "keyword",
+                "keyword": "any"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "partition",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 297,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "num",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "zip2",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 313,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a1",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "a2",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "zip",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 321,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "list_to_dict",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 323,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "kvs",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "zip_map",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 331,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a1",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "a2",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_null",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 338,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_undefined",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 339,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_something",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 340,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_array",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 342,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_string",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 346,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_object",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 350,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_map",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 354,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "is_empty_string",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 361,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "o",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "substring",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 366,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "str",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "s",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "e",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "string",
+              "kind": "keyword",
+              "keyword": "string"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "nchars",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 370,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "str",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "join",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 374,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arr",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "string",
+                    "kind": "keyword",
+                    "keyword": "string"
+                  }
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "ch",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "joiner",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 379,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "ch",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "s",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "",
+                      "kind": "array",
+                      "array": {
+                        "repr": "string",
+                        "kind": "keyword",
+                        "keyword": "string"
+                      }
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "split",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 385,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "s",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "ch",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "format",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 389,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "s",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "_replacers",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "any",
+                    "kind": "keyword",
+                    "keyword": "any"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "add",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 404,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "subtract",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 405,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "multiply",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 406,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "divide",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 407,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "adder",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 409,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "x",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "number",
+                      "kind": "keyword",
+                      "keyword": "number"
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "subtractor",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 414,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "x",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "number",
+                      "kind": "keyword",
+                      "keyword": "number"
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "divider",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 419,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "x",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "number",
+                      "kind": "keyword",
+                      "keyword": "number"
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "multiplier",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 424,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "n",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "fnOrConstructor",
+              "fnOrConstructor": {
+                "constructor": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                },
+                "params": [
+                  {
+                    "kind": "identifier",
+                    "name": "x",
+                    "optional": false,
+                    "tsType": {
+                      "repr": "number",
+                      "kind": "keyword",
+                      "keyword": "number"
+                    }
+                  }
+                ],
+                "typeParams": []
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "diff",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 431,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "number",
+                    "kind": "keyword",
+                    "keyword": "number"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "",
+              "kind": "array",
+              "array": {
+                "repr": "number",
+                "kind": "keyword",
+                "keyword": "number"
+              }
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "equals",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 441,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "a",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "b",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "boolean",
+              "kind": "keyword",
+              "keyword": "boolean"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "make_debouncer",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "line": 449,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "d",
+                "optional": false,
+                "tsType": {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "cb",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "debug",
+    "location": {
+      "filename": "./debug.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "variable",
+          "name": "db",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+            "line": 6,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "typeLiteral",
+              "typeLiteral": {
+                "methods": [],
+                "properties": [],
+                "callSignatures": [],
+                "indexSignatures": [
+                  {
+                    "readonly": false,
+                    "params": [
+                      {
+                        "kind": "identifier",
+                        "name": "k",
+                        "optional": false,
+                        "tsType": {
+                          "repr": "string",
+                          "kind": "keyword",
+                          "keyword": "string"
+                        }
+                      }
+                    ],
+                    "tsType": {
+                      "repr": "any",
+                      "kind": "keyword",
+                      "keyword": "any"
+                    }
+                  }
+                ]
+              }
+            },
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "function",
+          "name": "add",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+            "line": 10,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "id",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              },
+              {
+                "kind": "identifier",
+                "name": "val",
+                "optional": false,
+                "tsType": {
+                  "repr": "any",
+                  "kind": "keyword",
+                  "keyword": "any"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "get",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+            "line": 14,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "id",
+                "optional": false,
+                "tsType": {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "variable",
+          "name": "log",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+            "line": 22,
+            "col": 0
+          },
+          "variableDef": {
+            "tsType": null,
+            "kind": "var"
+          }
+        },
+        {
+          "kind": "import",
+          "name": "Logger",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+            "line": 3,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/logger.ts",
+            "imported": "Logger"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "types",
+    "location": {
+      "filename": "./types.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "typeAlias",
+          "name": "Indexer",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 2,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "union",
+              "union": [
+                {
+                  "repr": "string",
+                  "kind": "keyword",
+                  "keyword": "string"
+                },
+                {
+                  "repr": "number",
+                  "kind": "keyword",
+                  "keyword": "number"
+                }
+              ]
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "enum",
+          "name": "Status",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 4,
+            "col": 0
+          },
+          "enumDef": {
+            "members": [
+              {
+                "name": "Ok"
+              },
+              {
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "None",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 9,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "",
+              "kind": "union",
+              "union": [
+                {
+                  "repr": "null",
+                  "kind": "keyword",
+                  "keyword": "null"
+                },
+                {
+                  "repr": "undefined",
+                  "kind": "keyword",
+                  "keyword": "undefined"
+                }
+              ]
+            },
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "interface",
+          "name": "Result",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 14,
+            "col": 0
+          },
+          "interfaceDef": {
+            "extends": [],
+            "methods": [],
+            "properties": [
+              {
+                "name": "status",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+                  "line": 15,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": false,
+                "tsType": {
+                  "repr": "Status",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "Status"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "value",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+                  "line": 16,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": true,
+                "tsType": {
+                  "repr": "T",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "T"
+                  }
+                },
+                "typeParams": []
+              },
+              {
+                "name": "error",
+                "location": {
+                  "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+                  "line": 17,
+                  "col": 4
+                },
+                "params": [],
+                "computed": false,
+                "optional": true,
+                "tsType": {
+                  "repr": "ErrorObject",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "ErrorObject"
+                  }
+                },
+                "typeParams": []
+              }
+            ],
+            "callSignatures": [],
+            "indexSignatures": [],
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "AsyncResult",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 20,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "Promise",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": [
+                  {
+                    "repr": "Result",
+                    "kind": "typeRef",
+                    "typeRef": {
+                      "typeParams": [
+                        {
+                          "repr": "T",
+                          "kind": "typeRef",
+                          "typeRef": {
+                            "typeParams": null,
+                            "typeName": "T"
+                          }
+                        }
+                      ],
+                      "typeName": "Result"
+                    }
+                  }
+                ],
+                "typeName": "Promise"
+              }
+            },
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "typeAlias",
+          "name": "AsyncResults",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 22,
+            "col": 0
+          },
+          "typeAliasDef": {
+            "tsType": {
+              "repr": "Promise",
+              "kind": "typeRef",
+              "typeRef": {
+                "typeParams": [
+                  {
+                    "repr": "",
+                    "kind": "array",
+                    "array": {
+                      "repr": "Result",
+                      "kind": "typeRef",
+                      "typeRef": {
+                        "typeParams": [
+                          {
+                            "repr": "T",
+                            "kind": "typeRef",
+                            "typeRef": {
+                              "typeParams": null,
+                              "typeName": "T"
+                            }
+                          }
+                        ],
+                        "typeName": "Result"
+                      }
+                    }
+                  }
+                ],
+                "typeName": "Promise"
+              }
+            },
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "function",
+          "name": "Error",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 26,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "e",
+                "optional": false,
+                "tsType": {
+                  "repr": "ErrorObject",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "ErrorObject"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "function",
+          "name": "Success",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+            "line": 33,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "arg",
+                "optional": false,
+                "tsType": {
+                  "repr": "T",
+                  "kind": "typeRef",
+                  "typeRef": {
+                    "typeParams": null,
+                    "typeName": "T"
+                  }
+                }
+              }
+            ],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": [
+              {
+                "name": "T"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "dsp",
+    "location": {
+      "filename": "./dsp.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "function",
+          "name": "power",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dsp.ts",
+            "line": 11,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [
+              {
+                "kind": "identifier",
+                "name": "x",
+                "optional": false,
+                "tsType": {
+                  "repr": "",
+                  "kind": "array",
+                  "array": {
+                    "repr": "number",
+                    "kind": "keyword",
+                    "keyword": "number"
+                  }
+                }
+              }
+            ],
+            "returnType": {
+              "repr": "number",
+              "kind": "keyword",
+              "keyword": "number"
+            },
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        },
+        {
+          "kind": "import",
+          "name": "fp",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dsp.ts",
+            "line": 7,
+            "col": 0
+          },
+          "importDef": {
+            "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+            "imported": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "namespace",
+    "name": "perf",
+    "location": {
+      "filename": "./performance.ts",
+      "line": 1,
+      "col": 0
+    },
+    "namespaceDef": {
+      "elements": [
+        {
+          "kind": "function",
+          "name": "ms",
+          "location": {
+            "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/performance.ts",
+            "line": 5,
+            "col": 0
+          },
+          "functionDef": {
+            "params": [],
+            "returnType": null,
+            "isAsync": false,
+            "isGenerator": false,
+            "typeParams": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "kind": "import",
+    "name": "Logger",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 5,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/logger.ts",
+      "imported": "Logger"
+    }
+  },
+  {
+    "kind": "import",
+    "name": "types",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 6,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/types.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "Date",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 7,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dates.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "fp",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 8,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/fp.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "asnc",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 9,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/async.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "dsp",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 10,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/dsp.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "perf",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 11,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/performance.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "channel",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 12,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/channel.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "debug",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 13,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/debug.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "stdio",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 14,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/stdio.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "std_fns",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 15,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/std_fns.ts",
+      "imported": null
+    }
+  },
+  {
+    "kind": "import",
+    "name": "params",
+    "location": {
+      "filename": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/index.ts",
+      "line": 16,
+      "col": 0
+    },
+    "importDef": {
+      "src": "file:///Users/sheunaluko/dev/tidyscripts/src/common/util/params.ts",
+      "imported": null
+    }
+  }
+]
