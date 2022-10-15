@@ -1,26 +1,27 @@
-
 {
-  "compilerOptions": {
-    "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "outDir" : "lib" , 
-    "jsx" : "react" , 
-    "skipLibCheck": true,
-    "sourceMap" : true, 
-    "declaration": true, 
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+  "compilerOptions": {                        
+    "target": "es2017",                               
+    "module": "ESNext",                           
+    "outDir": "./dist",                             
+    "rootDir": "./",                             
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",      
+    "moduleResolution": "node",
+    "resolveJsonModule": true, 
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "dist",    
   },
-  "include": [
-      "src", 
+  "exclude":[
+    "./node_modules"
   ],
-    
+  "files" : [
+    "./packages/ts_common/src/index.ts" ,
+    "./packages/ts_node/src/index.ts" ,
+    "./docs.ts" ,    
+  ],
+  "typedocOptions": {
+        "entryPoints": ["./docs.ts"],
+        "out": "docs"
+    }
 }

@@ -1,29 +1,39 @@
-# Tidyscripts
-##### A tidy collection of web and server (deno) typescript libraries 
+# Tidyscripts 🧘🏾‍♂️
+A documented and clean collection of typescript code for composability and re-use. Created and maintained by Sheun Aluko, MD-MS. 
 
-- Both web and server code share a common codebase at src/common, allowing the effective re-use of typescript code! 
-- There is an automated build script at bin/rebuild which will run the typescript compiler then package the web libraries (including their src/common dependencies) into a npm package ready for distribution or use locally via "yarn|npm link"
-- Deno files can be imported directly from the src/deno folders without any necessary compilation 
 
-#### Currently included libraries: 
+## About 
+This repository includes libraries for cryptogrophy, functional programming, graphing, financial/cryptocurrency analysis, and much more!
 
-##### Common
-- Functional programming with objects, strings, arrays 
-- Date object manipuluation 
-- Asynchronous helper functions (wait, wait_until, etc) 
-- Loggers
-- Custom Types (Result,AsyncResult,etc)
+### Usage
 
-##### Browser
-- Speech recognition and text to speech libraries (chrome) 
-- Sound generation 
-- Cryptocurrency apis (websocket feeds to the Binance Exchange) 
-- Hyperloop client 
-- Wikidata Queries 
-- Medical Subject Headings (MeSH) Queries 
+#### Web library
+For import into react project or other website.
+In your project directory simply run: 
+`npm install tidyscripts_web`
 
-##### Deno 
-- HTTP requests
-- Hyperloop Server and Client 
-- File IO 
+#### Node library
+For import by node process.
+In your project directory simply run: 
+`npm install tidyscripts_node`
 
+### Local building
+
+Working ....
+
+### Start node repl
+``` ./bin/nrepl ```
+
+### Generate docs
+``` npx typedoc ```
+
+### Build packages 
+``` npx lerna run build ```
+
+### Sync git repository
+``` ./bin/sync COMMIT_MSG ``` 
+
+## Contact
+Twitter - @shayaluko\
+Instagram - @sheunaluko\
+Linked In - sheun-aluko
