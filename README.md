@@ -17,18 +17,14 @@ For import by node process.
 In your project directory simply run: 
 `npm install tidyscripts_node`
 
-### Local building
+## Local Development
 
-Working ....
-
-### Start node repl
-``` ./bin/nrepl ```
 
 ### Generate docs
 ``` npx typedoc ```
 
 ### Build packages 
-``` npx lerna run build ```
+``` npm run build ```
 
 ### Sync git repository
 ``` ./bin/sync COMMIT_MSG ``` 
