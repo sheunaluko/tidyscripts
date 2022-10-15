@@ -1,0 +1,19 @@
+{
+  "name": "tidyscripts_common",
+  "version": "1.0.0",
+  "description": "Common (can run on browser and web) code/apis for typescript projects",
+  "main": "dist/index.js",
+  "types" : "dist/index.d.ts" , 
+  "scripts": {
+    "build": "npx webpack --config webpack.config.cjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sheun Aluko",
+  "license": "ISC",
+  "dependencies": {
+    "@types/ramda": "^0.28.16",
+    "@uniswap/sdk": "^3.0.3",
+    "ethers": "^5.7.1",
+    "ramda": "^0.28.0"
+  }
+}

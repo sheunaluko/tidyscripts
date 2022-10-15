@@ -1,0 +1,25 @@
+{
+  "name": "tidyscripts_node",
+  "version": "1.0.0",
+  "description": "Common (can run on browser and web) code/apis for typescript projects",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf ./dist; tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sheun Aluko",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.18.2",
+    "extract-zip": "^2.0.1",
+    "puppeteer": "^19.0.0",
+    "tidyscripts_common": "*"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.14",
+    "@types/uuid": "^8.3.4",
+    "@types/ws": "^8.5.3",
+    "webpack-cli": "^4.10.0"
+  }
+}
