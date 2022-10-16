@@ -1,0 +1,5 @@
+dir="packages"; 
+#find $dir -name "*.js" -type f -delete
+find $dir -name "#*" -type f -delete 
+find $dir -name "*~" -type f -delete 
+#find $dir -name "*.d.ts" -type f -delete 

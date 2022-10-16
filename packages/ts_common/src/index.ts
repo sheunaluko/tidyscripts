@@ -3,7 +3,8 @@ import * as logger from './logger'
 import * as R from 'ramda'
 import * as trading from './trading/index'
 import * as web3 from './web3/index'
-import * as utils from './utils' 
+import * as util from './util/index'
+import * as asnc from "./async" 
 
 export   { 
     fp,
@@ -11,7 +12,9 @@ export   {
     R,
     trading ,
     web3,
-    utils, 
+    
+    util ,
+    asnc, 
 }
 
 

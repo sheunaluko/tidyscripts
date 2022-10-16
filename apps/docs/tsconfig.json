@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {                        
+    "target": "es2017",                               
+    "module": "ESNext",                           
+    "outDir": "./dist",                             
+    "rootDir": "../../",                             
+    "strict": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true, 
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "dist",    
+  },
+  "exclude":[
+    "./node_modules"
+  ],
+  "files" : [
+    "../../packages/ts_common/src/index.ts" ,
+    "../../packages/ts_node/src/index.ts" ,
+    "./docs.ts" ,    
+  ],
+  "typedocOptions": {
+        "entryPoints": ["./docs.ts"],
+        "out": "../../apps/ts_next_app/public/docs",
+	"name" : "Tidyscripts Docs" , 
+    }
+}

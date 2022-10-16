@@ -14,14 +14,5 @@
   },
   "exclude":[
     "./node_modules"
-  ],
-  "files" : [
-    "./packages/ts_common/src/index.ts" ,
-    "./packages/ts_node/src/index.ts" ,
-    "./docs.ts" ,    
-  ],
-  "typedocOptions": {
-        "entryPoints": ["./docs.ts"],
-        "out": "docs"
-    }
+  ]
 }

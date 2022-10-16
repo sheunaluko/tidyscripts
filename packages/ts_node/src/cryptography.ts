@@ -41,7 +41,7 @@ export function hmac(params : HmacParams) {
  * This is a wrapper around the builtin scrypt function using util.promisify 
  * @param password - the password 
  * @param salt  - the salt 
- * @param legnth - the lenght of the encryption key 
+ * @param legnth - the length of the encryption key 
  */
 export async function async_scrypt(password : string, salt : string, length : number) {
     let f =  util.promisify(scrypt) ;

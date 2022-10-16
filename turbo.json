@@ -9,10 +9,13 @@
       // dependencies and devDependencies
       // `build` tasks  being completed first
       // (the `^` symbol signifies `upstream`).
-      "dependsOn": ["^build"],
+      "dependsOn": ["docs", "^build" ],
       // note: output globs are relative to each package's `package.json`
       // (and not the monorepo root)
       "outputs": [".next/**", "dist/**"]
+    } ,
+    "docs" : {
+      "outputs" : ["../../apps/ts_next_app/public/docs/**"] 
     }
   }
 }

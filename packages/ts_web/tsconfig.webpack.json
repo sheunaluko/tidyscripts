@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {                        
+    "target": "es2017",                               
+    "module": "ESNext",                           
+    "outDir": "./dist",                             
+    "rootDir": "./src",                             
+    "strict": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true, 
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "dist",    
+  },
+  "exclude":[
+    "./node_modules"
+  ],
+  "files" : [
+    "./src/index.ts" 
+    ]
+}
