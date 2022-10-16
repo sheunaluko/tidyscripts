@@ -70,7 +70,7 @@ const Home: NextPage = (props : any) => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Created by Sheun Aluko MD-MS, using {' '}
+          Tidyscripts {' '}
           <span className={styles.logo}>
 	    {(()=> {
 	      let y = 20 ;
@@ -78,7 +78,7 @@ const Home: NextPage = (props : any) => {
 	      return (
 		<Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
           </span>
-	  {'   '}     Tidyscripts
+	  {'   '}     Copyright © 2022 Sheun Aluko, MD. All rights reserved. 
         </a>
       </footer>
     </div>
