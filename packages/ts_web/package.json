@@ -11,6 +11,7 @@
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
+    "webpack-cli": "^4.10.0", 
     "tidyscripts_common" : "*" 
   }
 }
