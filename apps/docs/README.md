@@ -6,8 +6,8 @@ The holy grail of typescript development lies before you. The Tidyscripts monore
 
 Tidyscripts includes libraries for cryptography, functional programming, graphing, financial/cryptocurrency analysis, and much more.
 
-### Usage
 
+### Usage
 
 #### Web library
 For import into react project or other website.

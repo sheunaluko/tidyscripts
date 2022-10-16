@@ -1,15 +1,10 @@
 
 
-/* 
+
+/**
+   
  Main voice interface for controlling speech recognition and tts at high level 
- */
-
-import * as sr from "./speech_recognition" 
-import * as tts from "./tts" 
-import * as ap from "./audio_processing" 
-
-
-/* 
+ 
  audio_processing.ts    | connects to microphone and detects when there is sound occuring 
  speech_recognition.ts  | starts and stops speech recognition and provides recognition results 
  tts.ts                 | will perform speech synthesis given a string 
@@ -26,10 +21,18 @@ import * as ap from "./audio_processing"
  To use, simply call initialize_recognition() , and the recognition results will be available by 
  listending to the window.addEventListener( 'tidyscripts_web_speech_recognition_result' , (e) => e.detail ) handler 
  
- For tts, call speak(text) 
- 
- 
-*/ 
+ For tts, call speak(text)  
+
+ * @packageDocumentation
+ */
+
+
+
+import * as sr from "./speech_recognition" 
+import * as tts from "./tts" 
+import * as ap from "./audio_processing" 
+
+
 
 export var recognition : any  = null 
 
