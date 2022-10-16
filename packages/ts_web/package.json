@@ -1,17 +1,19 @@
 {
   "name": "tidyscripts_web",
-  "version": "1.0.0",
+  "version": "2.0.8",
   "description": "Web code/apis for typescript projects",
   "main": "dist/index.js",
-  "types" : "dist/index.d.ts" , 
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npx webpack --config webpack.config.cjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "patch_package": "npm version patch;",
+    "publish_package": "npm publish ; "
   },
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
-    "webpack-cli": "^4.10.0", 
-    "tidyscripts_common" : "*" 
+    "webpack-cli": "^4.10.0",
+    "tidyscripts_common": "*"
   }
 }
