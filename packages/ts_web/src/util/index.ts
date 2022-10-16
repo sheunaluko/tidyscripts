@@ -53,3 +53,6 @@ export async function define(promise : Promise<any>, id : string ) {
 } 
 
 
+export function hello() {
+  console.log("hiiii!") 
+} 
