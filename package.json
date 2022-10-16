@@ -1,18 +1,20 @@
 {
   "name": "Tidyscripts",
   "private": true,
-  "scripts" : {
+  "scripts": {
     "build": "turbo run build && turbo run docs",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "dev": "turbo run dev",
-    "docs" : "turbo run docs"  
+    "docs": "turbo run docs", 
+    "publish": "turbo run publish_package"
   },
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "devDependencies": {
+    "@changesets/cli": "^2.25.0",
     "lerna": "^6.0.1",
     "ts-loader": "^9.4.1",
     "turbo": "^1.5.6",
