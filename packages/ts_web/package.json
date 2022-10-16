@@ -11,6 +11,6 @@
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
-
+    "tidyscripts_common" : "*" 
   }
 }
