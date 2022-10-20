@@ -31,6 +31,10 @@ export function wait_until(f : ()=> boolean, timeout? : number, rate? : number){
     return p
 }
 
+/**
+ * Waits t milliseconds before continuing execution 
+ * 
+ */
 export function wait(t : number) {
     return new Promise( (res,rej) => {
 	setTimeout( function(){
