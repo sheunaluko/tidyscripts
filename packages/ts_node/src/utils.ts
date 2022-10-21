@@ -14,3 +14,8 @@ export async function get_dom(url : string) {
   let dom  = new JSDOM(html) ;
   return dom.window.document ; 
 }
+
+/**
+ * 
+ * 
+ */
