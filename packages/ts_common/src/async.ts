@@ -8,6 +8,15 @@ export enum status {
     TIMEOUT ,
 } 
 
+/**
+ * Waits until the specified function "f" returns true to resume executation.
+ * Checks every "rate" milliseconds to see if f is true. 
+ * Timeouts after "timeout" ms and returns "True" for timeout  
+ * ``` 
+ * let timeout = await wait_until( f, 2000, 500 ) ;
+ * if (timeout) { ... }  else {  }  ; 
+ * ``` 
+ */
 export function wait_until(f : ()=> boolean, timeout? : number, rate? : number){
     var t_start = ms() 
     rate = rate || 200 ; 
@@ -33,7 +42,9 @@ export function wait_until(f : ()=> boolean, timeout? : number, rate? : number){
 
 /**
  * Waits t milliseconds before continuing execution 
- * 
+ * ``` 
+ * await wait(500) ; //"sleeps" for 500ms 
+ * ```
  */
 export function wait(t : number) {
     return new Promise( (res,rej) => {

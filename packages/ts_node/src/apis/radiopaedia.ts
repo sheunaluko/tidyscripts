@@ -4,6 +4,8 @@
 */
 
 import {R, logger, asnc} from 'tidyscripts_common' ;
+import * as http from "../http"
+
 import {get_dom} from  "../utils" ;
 export {get_dom} ;
 
@@ -150,4 +152,21 @@ export async function  get_all_cases() {
   log("Completed processing all available pages")
 
   return cases   
+}
+
+
+/**
+ * Returns information for a study's stacks 
+ * 
+ */
+export async function get_study_stacks(study : number) {
+  let url = `https://radiopaedia.org/studies/${study}/stacks`;  
+} 
+
+
+/**
+ * Retrives the radiopaedia case list as a json object  
+ */
+export async function get_json_cases() {
+  return await http.get_json("https://www.tidyscripts.com/api/radiopaedia/all_cases") ; 
 }
