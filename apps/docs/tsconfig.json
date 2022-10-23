@@ -23,6 +23,6 @@
   "typedocOptions": {
         "entryPoints": ["./docs.ts"],
         "out": "../../apps/ts_next_app/public/docs",
-	"name" : "Tidyscripts Docs" , 
+	"name" : "Tidyscripts Docs" 	
     }
 }
