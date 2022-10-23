@@ -1,4 +1,7 @@
-import * as R from 'ramda' ; 
+import * as R from 'ramda' ;
+import {get_logger} from './logger' ; 
+
+const log = get_logger({id:"fp"}) ; 
 
 const mapIndexed_ = R.addIndex(R.map);
 
@@ -587,7 +590,9 @@ export function equals(a : any, b :any ) : boolean {
 
 
 
-
+/**
+ * Creates a debouncer function 
+ */
 export function make_debouncer(d : number, cb : any ){
 
     var state :any =  {
@@ -609,3 +614,76 @@ export function make_debouncer(d : number, cb : any ){
 
 
 }
+
+
+type fxn = (o : object) => any  ; 
+
+export interface FunctionDictionary {
+  [k:string] : fxn , 
+}
+
+
+/**
+ * Takes an object whos keys are fields in a dictionary and values are functions and calls each function with a supplied argument and assings the result to the corresping key of the return object
+ * @param fd - The "function dictionary" that maps keys to a transformer function 
+ * @param arg  - The argument to the transformer function 
+ * @returns ret - An object whose keys index the corresponding result of the transformer function
+ * ```
+ * let fd = { 'a' : ()=>"hi" , 'b' : (e)=>e.toLowerCase } 
+ * let res = apply_function_dictionary_to_object(fd, "HELLO") 
+ * //returns { 'a' : "hi" , 'b' : "hello" } 
+ * ```
+ */
+export function apply_function_dictionary_to_object(fd : FunctionDictionary, o : object ) {
+  let ret : any  = {} ;
+  let errors : any  = [] ; 
+  R.keys(fd).map( (k:any)=> {
+    try { 
+      ret[k] = fd[k](o) ;
+    } catch (e) {
+      errors.push(e) ;  
+      ret[k] = null ;  
+    } 
+  })
+
+  if (errors.length) {
+    log(`Error while applying function to dictionary`)
+    log(errors) ;
+    log(ret) ; 
+  }  
+  return ( ret as any )   
+} 
+
+
+/**
+ * Same as apply_function_dictionary_to_object however assumes asynchronous transformer functions. Takes an object whos keys are fields in a dictionary and values are functions and calls each function with a supplied argument and assings the result to the corresping key of the return object
+ * @param fd - The "function dictionary" that maps keys to a transformer function 
+ * @param arg  - The argument to the transformer function 
+ * @returns ret - An object whose keys index the corresponding result of the transformer function
+ * ```
+ * let fd = { 'a' : ()=>"hi" , 'b' : (e)=>e.toLowerCase } 
+ * let res = apply_function_dictionary_to_object(fd, "HELLO") 
+ * //returns { 'a' : "hi" , 'b' : "hello" } 
+ * ```
+ */
+export async function async_apply_function_dictionary_to_object(fd : FunctionDictionary, o : object ) {
+  let ret : any  = {} ;
+  let errors : any  = [] ; 
+  let results = R.keys(fd).map( async (k:any)=> {
+    try { 
+      ret[k] = await fd[k](o) ;
+    } catch (e) {
+      errors.push(e) ;  
+      ret[k] = null ;  
+    } 
+  })
+
+  await Promise.all(results) ; 
+
+  if (errors.length) {
+    log(`Error while applying function to dictionary`)
+    log(errors) ;
+    log(ret) ; 
+  }  
+  return ( ret as any )   
+} 
