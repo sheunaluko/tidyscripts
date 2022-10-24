@@ -5,6 +5,7 @@ import * as coinbase from "./coinbase"
 import * as ethers from "./ethers/index"
 import * as binance from "./binance/index"
 import * as radiopaedia from "./radiopaedia"
+import * as pubmed from './pubmed'
 
 export {
     debank  ,
@@ -13,5 +14,6 @@ export {
     ethers,
     radiopaedia, 
     binance,
+    pubmed,
     bokeh, 
 } 

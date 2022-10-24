@@ -165,4 +165,15 @@ export async function unzip_to_directory(fname : string,  target : string) {
 } 
 
 
+
+/**
+ * Prints the contents of the file into stdout 
+ */
+export function cat(fp : string) {
+  log(read_text(fp)) ; 
+}
+
+
+
+
 export {fs, path}  ; 
