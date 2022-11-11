@@ -18,4 +18,12 @@ export function is_node() {
 } 
 
 
+/**
+ * Performs fetch request and then converts the result to json 
+ */
+export async function get_json(url : string){
+    let res =  await fetch( url )  ; 
+    return await res.json() ; 
+}
+
   
