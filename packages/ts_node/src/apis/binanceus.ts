@@ -51,6 +51,44 @@ export async function get_price(symbol: string) {
     return Number ( (await node.http.get_json(url) as any).price ) 
 }
 
+
+/**
+ * Gets the user asset balances, and retrieves the current asset prices to compute 
+ * the usd value of each and all balances  
+ */
+export async function get_user_balances_with_values(params: UserDataParams){
+    let balances = await get_user_balances(params) ; 
+    let num_errors = 0 ; 
+    for (var bal of balances) { 
+        let symbol  = bal.symbol as string ; 
+        let amount  = bal.amount as number ;
+        let price = 0 ; 
+        if ( symbol == "USD") { bal.price  = 1 ; bal.usd_value = bal.amount ; continue }
+        let dic : any = { 
+            'BUSD' : 'BUSDUSD' , 
+            'USDT' : 'USDTUSD' , 
+            'HNT'  : 'HNTUSDT' ,
+        }
+        let market = dic[symbol] ; 
+        market = market || `${symbol}BUSD` ; 
+        try { 
+            price = await get_price(market) ; 
+        } catch (e) { log(`Error requesting BUSD price for ${symbol}`) ; num_errors += 1;    }
+        bal.price = price ; 
+        bal.usd_value = price * amount ; 
+    }
+    log(`Num errors: ${num_errors}`)
+    return balances ; 
+}
+
+/**
+ * Returns net worth of binanceus account in USD 
+ */
+export async function get_user_total_usd_value(params : UserDataParams){
+    let balances = await get_user_balances_with_values(params) ; 
+    return balances.map((x:any)=>x.usd_value).reduce(common.R.add) ; 
+}
+
 export type OrderType = "LIMIT" | "MARKET" | "STOP_LOSS" | "STOP_LOSS_LIMIT" | "TAKE_PROFIT" | "TAKE_PROFIT_LIMIT" | "LIMIT_MAKER" ;  
 
 export interface MarketOrderParams  {
