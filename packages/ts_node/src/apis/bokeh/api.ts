@@ -1,6 +1,9 @@
-/* 
-   A nodejs interface to Bokeh plotting 
-   Uses a websocket server to relay plotting instructions to a browser window 
+/**
+ * A nodejs interface to Bokeh plotting 
+ * Uses a websocket server to relay plotting instructions to a browser window 
+ *
+ *
+ * @packageDocumentation 
 */
 import { WebSocketServer } from 'ws';
 import express from 'express'
@@ -25,8 +28,6 @@ var _interface : any  = null ;
  */
 export function get_interface() {
 
-    console.log("Need to fix that html route! app.get(/)"); process.exit(1) ; 
-    
     if (_interface ) { return _interface  }  
 
     let port = last_port++ ; 

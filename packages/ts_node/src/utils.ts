@@ -5,6 +5,10 @@ import get_pixels from "get-pixels" ;
 import {logger,fp} from "tidyscripts_common" ;
 import * as htmlparser2 from "htmlparser2" ; 
 import * as domutils from "domutils" ; 
+import * as node_util from "util" ; 
+import {exec} from "child_process" ; 
+
+export var async_exec = node_util.promisify(exec) ;  
 
 export { 
   domutils 

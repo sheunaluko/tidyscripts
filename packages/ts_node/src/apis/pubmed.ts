@@ -11,15 +11,18 @@
  */
 
 import {fp,logger} from "tidyscripts_common" ; 
-import {read_text} from "../io" ; 
+import {read_text, path } from "../io" ; 
 import {
     parse_xml, 
     dom_path_by_child_name, 
     dom_path_sub_nodes, 
     dom_children,
-    dom_sub_nodes
+    dom_sub_nodes,
+    async_exec
 } from "../utils" ; 
 import * as domutils from "domutils"  ; 
+import * as http from "../http" ;  
+
 
 const log = logger.get_logger({id: "pubmed"}) ; 
 
@@ -148,6 +151,15 @@ export function get_mesh_headings(a : Article){
     return mesh_headings.map(parse_mesh_heading)
 }
   
+
+/**
+ * Gets the journal title from an article 
+ */
+export function get_journal(a : Article){
+    let p = [ 'medlinecitation', 'medlinejournalinfo', 'medlineta' ] ; 
+    let x = dom_path_by_child_name( p , a ) ; 
+    return dom_sub_nodes(x) ; 
+}
  
 
 const article_extractors : any = { 
@@ -156,6 +168,7 @@ const article_extractors : any = {
     'date'  : get_date , 
     'authors' : get_authors, 
     'mesh_headings' : get_mesh_headings  , 
+    'journal' : get_journal , 
 }
 
 /**
@@ -193,9 +206,9 @@ export function parse_article(a : Article){ return fp.apply_function_dictionary_
  * }
  * ```
  */
-export function get_parsed_articles(fpath : string): any{    
+export function get_parsed_articles(fpath : string, xml : any): any{    
     log(`Parsing ${fpath}`) 
-    let xml = parse_pubmed_baseline_file(fpath) ; 
+    xml = xml || parse_pubmed_baseline_file(fpath) ;    
     let num = num_articles(xml)  ; 
     let result : any = Array(num).fill(null) ;  
     for (var i = 0 ; i < num ; i++){ 
@@ -206,4 +219,62 @@ export function get_parsed_articles(fpath : string): any{
         }
     }
     return result 
+}
+
+
+
+export var default_data_dir = "."
+
+/**
+ * Returns the base name of a pubmed .gz file given a number 
+ */
+export function get_base_name(num : string){ return `pubmed22n${num}.xml.gz` ; }
+
+/**
+ * Turns a number into a pubmed ftp url 
+ */
+export function get_ftp_url(num : string){ 
+    return `https://ftp.ncbi.nlm.nih.gov/pubmed/baseline/${get_base_name(num)}` ; 
+}
+
+/**
+ * 
+ */
+export function set_default_data_dir(dir : string){
+    default_data_dir = dir ; 
+}
+
+/**
+ * Downloads a pubmed xml file given the file numbe and optional directory 
+ * to save the file too. If dir is unset then the `default_data_dir` is used 
+ * which can be set by calling `set_default_data_dir` 
+ * 
+ * Note: this executes a shell command and assumes that "curl" is available
+ * If it is not, the command will fail. 
+ * 
+ */
+export async function download_pubmed_xml_file(num : number, dir : string){
+    let num_str = (num).toLocaleString('en-US', {minimumIntegerDigits: 4, useGrouping:false})
+    dir = dir || default_data_dir ; 
+    let url = get_ftp_url(num_str) ; 
+    let fn = path.join(dir,get_base_name(num_str)); 
+    log(`Downloading web asset ${url} to local file: ${fn}`) ; 
+    let cmd1 = `curl -o ${fn} "${url}"`
+    log(`Using cmd: ${cmd1}`) ; 
+    await async_exec(cmd1) ;
+
+    //--
+    let cmd2 = `gzip -d ${fn}` ; 
+    log(`Decompressing gzip using command: ${cmd2}` ) ;  
+    await async_exec(cmd2) ; 
+
+    /*
+    let cmd3 = `rm ${fn}` ; 
+    log(`Removing gzip using command: ${cmd3}` ) ;  
+    await async_exec(cmd3) ;  
+    */
+
+
+    log(`Done`) ; 
+
 }
