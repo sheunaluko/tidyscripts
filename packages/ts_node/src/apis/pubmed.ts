@@ -11,7 +11,7 @@
  */
 
 import {fp,logger} from "tidyscripts_common" ; 
-import {read_text, path } from "../io" ; 
+import {read_text, path , exists} from "../io" ; 
 import {
     parse_xml, 
     dom_path_by_child_name, 
@@ -21,7 +21,8 @@ import {
     async_exec
 } from "../utils" ; 
 import * as domutils from "domutils"  ; 
-import * as http from "../http" ;  
+import * as http from "../http" ;
+import * as pubmed_mongo from "./pubmed_mongo" ; 
 
 
 const log = logger.get_logger({id: "pubmed"}) ; 
@@ -82,13 +83,14 @@ type Article = any ;
 
 /** 
   * Extracts the date from the article object
+  * Returns a date object 
   */
  export function get_date(article : Article){ 
-     let dte =  dom_path_by_child_name(["medlinecitation", "datecompleted"], article) 
-     let year = dom_path_sub_nodes(["year"],dte) ; 
-     let month = dom_path_sub_nodes(["month"], dte) ; 
-     let day = dom_path_sub_nodes(["day"],dte) ;  
-     return { year, month,day }
+   let dte =  dom_path_by_child_name(["medlinecitation", "datecompleted"], article) ; 
+   let year = Number(dom_path_sub_nodes(["year"],dte) ) ; 
+   let month = Number(dom_path_sub_nodes(["month"], dte));
+   let day = Number(dom_path_sub_nodes(["day"],dte) ) ; 
+   return new Date( year, month -1, day  ) ; 
  }
 
 
@@ -223,18 +225,27 @@ export function get_parsed_articles(fpath : string, xml : any): any{
 
 
 
-export var default_data_dir = "."
+export var default_data_dir : any  = "." ;
+export var default_mongo_url : any  = null  ; 
 
 /**
  * Returns the base name of a pubmed .gz file given a number 
  */
-export function get_base_name(num : string){ return `pubmed22n${num}.xml.gz` ; }
+export function get_base_gz_name(num : string){ return `pubmed22n${num}.xml.gz` ; }
+
+
+/**
+ * Returns the base name of a pubmed xml file on disk given a number 
+ */
+export function get_base_xml_name(num : string){ return `pubmed22n${num}.xml` ; }
+
+
 
 /**
  * Turns a number into a pubmed ftp url 
  */
 export function get_ftp_url(num : string){ 
-    return `https://ftp.ncbi.nlm.nih.gov/pubmed/baseline/${get_base_name(num)}` ; 
+    return `https://ftp.ncbi.nlm.nih.gov/pubmed/baseline/${get_base_gz_name(num)}` ; 
 }
 
 /**
@@ -243,6 +254,11 @@ export function get_ftp_url(num : string){
 export function set_default_data_dir(dir : string){
     default_data_dir = dir ; 
 }
+export function set_default_mongo_url(url: string){ 
+    default_mongo_url = url ;  
+}
+
+
 
 /**
  * Downloads a pubmed xml file given the file numbe and optional directory 
@@ -254,27 +270,41 @@ export function set_default_data_dir(dir : string){
  * 
  */
 export async function download_pubmed_xml_file(num : number, dir : string){
+
+  dir = dir || default_data_dir ; //--use default 
+  
+  // ---   If already exists 
+  let fname = get_pubmed_file_path(num,dir) ; 
+  if (exists(fname)) {  log(`${fname} exists`); return ;  }
+  
+  // ---  IF does not exist 
+  let num_str = (num).toLocaleString('en-US', {minimumIntegerDigits: 4, useGrouping:false})
+  dir = dir || default_data_dir ; 
+  let url = get_ftp_url(num_str) ; 
+  let fn = path.join(dir,get_base_gz_name(num_str)); 
+  log(`Downloading web asset ${url} to local file: ${fn}`) ; 
+  let cmd1 = `curl -o ${fn} "${url}"`
+  log(`Using cmd: ${cmd1}`) ; 
+  await async_exec(cmd1) ;
+  //--
+  let cmd2 = `gzip -d ${fn}` ; 
+  log(`Decompressing gzip using command: ${cmd2}` ) ;  
+  await async_exec(cmd2) ;
+  // --- Note that the above command deletes the gzip file 
+  log(`Done`) ; 
+}
+
+
+
+/**
+ * 
+ */
+function get_pubmed_file_path(num : number, dir : string) {
     let num_str = (num).toLocaleString('en-US', {minimumIntegerDigits: 4, useGrouping:false})
-    dir = dir || default_data_dir ; 
-    let url = get_ftp_url(num_str) ; 
-    let fn = path.join(dir,get_base_name(num_str)); 
-    log(`Downloading web asset ${url} to local file: ${fn}`) ; 
-    let cmd1 = `curl -o ${fn} "${url}"`
-    log(`Using cmd: ${cmd1}`) ; 
-    await async_exec(cmd1) ;
-
-    //--
-    let cmd2 = `gzip -d ${fn}` ; 
-    log(`Decompressing gzip using command: ${cmd2}` ) ;  
-    await async_exec(cmd2) ; 
-
-    /*
-    let cmd3 = `rm ${fn}` ; 
-    log(`Removing gzip using command: ${cmd3}` ) ;  
-    await async_exec(cmd3) ;  
-    */
+    return path.join( dir , get_base_xml_name(num_str) ) ; 
+} 
 
 
-    log(`Done`) ; 
-
+export {
+  pubmed_mongo 
 }
