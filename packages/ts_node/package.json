@@ -1,6 +1,6 @@
 {
   "name": "tidyscripts_node",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Code/apis for typescript projects that run in the Node.js runtime",
   "main": "dist/index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "get-pixels": "^3.3.3",
     "htmlparser2": "^8.0.1",
     "jsdom": "^20.0.1",
+    "mongodb": "^4.12.0",
     "puppeteer": "^19.0.0",
     "tidyscripts_common": "*"
   },
