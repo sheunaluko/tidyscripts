@@ -1,6 +1,6 @@
 import {ethers} from "ethers" ;
 import * as pbl from "../trading/portfolio_balancer_lib" ; 
-import UNISWAP from "@uniswap/sdk" ; 
+import * as UNISWAP from "@uniswap/sdk" ; 
 import * as abis from  "./abis/index" ;
 import {toEth} from "./utils" 
 import {SmartWallet,

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "umd",
+    "outDir": "./url_dist", 
+    "moduleResolution": "node",
+    "strict": false,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "sourceMap": false
+  },
+  "files": [
+    "./src/url_index.ts"
+  ]
+}
