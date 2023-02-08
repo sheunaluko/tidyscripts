@@ -1,4 +1,5 @@
-<!doctype html>
+
+export var HTML_TEXT = '<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -86,7 +87,6 @@
 	      figure_options, 
 	  }  = msg ;
 
-
 	  //extract the data source
 	  let data = data_cache[source_id] ;
 	  let source = new Bokeh.ColumnDataSource({data })
@@ -160,3 +160,4 @@
 </body>
 
 </html>
+'

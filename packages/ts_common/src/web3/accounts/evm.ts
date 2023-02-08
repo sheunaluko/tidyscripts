@@ -17,6 +17,10 @@
  * @returns 
  */
 export async function get_account_info(account : string, chain_id :number){
-    let res =  await fetch( `https://account.metafi.codefi.network/accounts/${account}?chainId=${chain_id}&includePrices=true`)
+    let url = `https://account.metafi.codefi.network/accounts/${account}?chainId=${chain_id}&includePrices=true`
+    let res =  await fetch(url);
+    console.log(url) 
+    //@ts-ignore
+    global.res = res  ; 
     return await res.json() ; 
 }

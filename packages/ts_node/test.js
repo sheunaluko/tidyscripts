@@ -1,0 +1,14 @@
+
+
+async function foo() { 
+ console.log("!") 
+} 
+
+var c = 30; 
+
+module.exports = { 
+	foo : foo , 
+         a : 20 , 
+       b : 30 , 
+	c , 
+} 
