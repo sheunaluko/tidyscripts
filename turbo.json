@@ -29,7 +29,7 @@
       "outputs": []
     } ,
     "docs" : {
-      "outputs" : ["../../apps/ts_next_app/public/docs/**"] 
+      "outputs" : ["../apps/ts_next_app/public/docs/**"] 
     }
   }
 }

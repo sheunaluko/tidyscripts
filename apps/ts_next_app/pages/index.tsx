@@ -47,7 +47,7 @@ const Home: NextPage = (props : any) => {
         </p>
 
         <div className={styles.grid}>
-          <a href="/docs" className={styles.card}>
+          <a href="/docs/index.html" className={styles.card}>
             <h2>Documentation &rarr;</h2>
             <p>Explore Tidyscripts features and API.</p>
           </a>
