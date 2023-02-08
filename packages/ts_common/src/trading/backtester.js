@@ -1,3 +1,6 @@
+/*
+   File for running backtests usings a portfolio balancer
+*/
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -49,190 +52,227 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-(function (factory) {
-    if (typeof module === "object" && typeof module.exports === "object") {
-        var v = factory(require, exports);
-        if (v !== undefined) module.exports = v;
+import * as pbl from "./portfolio_balancer_lib";
+/**
+ * Class for running a backtest. See below for usage example.
+ * @example
+ * ```
+ * // 1. First create the backtester options
+ * let ops = {
+ *    base_asset : "ETH",
+ *    quote_asset : "BUSD",
+ *    data : [ {p :1450 , t : "ISO_DATE" }...],
+ *    initial_portfolio : {
+ *      base_balance : 20 ,
+ *      quote_balance : 0 ,
+ *    } ,
+ *   logger_id : "ETHUSDC" ,
+ *   fee : 0.001 ,
+ *   slippage : 0.01,
+ *   target_precision  : 0.05,
+ *   target_ratio : 0.6,
+ * }
+ *
+ * // 2. Then create the backtester
+ * let backtester = new BacktestBalancer(ops) ;
+ *
+ * // 3. Then run the backtest
+ * await backtester.backtest() ;
+ *
+ * // 4. Then extract the backtest metrics and use them in a graph, analysis, etc...
+ * let  {
+ *  hodl_porfolio_series,
+ *  balance_portfolio_series,
+ *  rebalances
+ * } = backtester  ;
+ * ```
+ *
+ */
+var BacktestBalancer = /** @class */ (function (_super) {
+    __extends(BacktestBalancer, _super);
+    function BacktestBalancer(p) {
+        var _this = _super.call(this, p) || this;
+        _this.data = p.data;
+        _this.current_index = -1;
+        _this.portfolio = Object.assign({}, p.initial_portfolio);
+        _this.initial_portfolio = Object.assign({}, p.initial_portfolio);
+        _this.rebalances = [];
+        _this.slippage = p.slippage;
+        _this.fee = p.fee;
+        _this.transactions_costs = {
+            fees: {
+                base: 0,
+                quote: 0,
+            },
+            slippage: {
+                base: 0,
+                quote: 0,
+            }
+        };
+        _this.balance_portfolio_series = [];
+        _this.hodl_portfolio_series = [];
+        _this.ratio_series = [];
+        return _this;
     }
-    else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./portfolio_balancer_lib"], factory);
-    }
-})(function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.BacktestBalancer = void 0;
-    var pbl = require("./portfolio_balancer_lib");
-    var BacktestBalancer = (function (_super) {
-        __extends(BacktestBalancer, _super);
-        function BacktestBalancer(p) {
-            var _this = _super.call(this, p) || this;
-            _this.data = p.data;
-            _this.current_index = -1;
-            _this.portfolio = Object.assign({}, p.initial_portfolio);
-            _this.initial_portfolio = Object.assign({}, p.initial_portfolio);
-            _this.rebalances = [];
-            _this.slippage = p.slippage;
-            _this.fee = p.fee;
-            _this.transactions_costs = {
-                fees: {
-                    base: 0,
-                    quote: 0,
-                },
-                slippage: {
-                    base: 0,
-                    quote: 0,
+    BacktestBalancer.prototype.get_quote_balance = function (qa) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.portfolio.quote_balance];
+            });
+        });
+    };
+    BacktestBalancer.prototype.get_base_balance = function (ba) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.portfolio.base_balance];
+            });
+        });
+    };
+    BacktestBalancer.prototype.get_base_price = function (ba, qa) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, (this.data[this.current_index]).p];
+            });
+        });
+    };
+    BacktestBalancer.prototype.do_market_trade = function (trade_type, base_amt) {
+        return __awaiter(this, void 0, void 0, function () {
+            var base_price, current_data, p, t, new_base, new_quote, new_base_amt, new_quote_amt;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.get_base_price("", "")];
+                    case 1:
+                        base_price = _a.sent();
+                        current_data = this.data[this.current_index];
+                        if (base_price != current_data.p) {
+                            this.log("Sanity check failed! - there is a problem with price indexing");
+                            process.exit(1);
+                        }
+                        p = current_data.p, t = current_data.t;
+                        //- 
+                        switch (trade_type) {
+                            case pbl.MarketTradeType.BUY:
+                                //market BUY the base token
+                                new_base = base_amt * (1 - this.fee);
+                                new_quote = -(base_amt * p) * (1 + this.slippage);
+                                //update the transactions cost object
+                                this.transactions_costs.fees.base += base_amt * this.fee;
+                                this.transactions_costs.slippage.quote += (base_amt * p) * (this.slippage);
+                                break;
+                            case pbl.MarketTradeType.SELL:
+                                //market SELL the base token		
+                                new_base = -base_amt;
+                                new_quote = (base_amt * p) * (1 - this.fee) * (1 - this.slippage);
+                                //update the transactions cost object
+                                this.transactions_costs.fees.quote += (base_amt * p) * (this.fee);
+                                this.transactions_costs.slippage.quote += (base_amt * p) * (this.slippage);
+                                break;
+                        }
+                        new_base_amt = this.portfolio.base_balance += new_base;
+                        new_quote_amt = this.portfolio.quote_balance += new_quote;
+                        //first we update the portfolio object
+                        this.portfolio = {
+                            base_balance: new_base_amt,
+                            quote_balance: new_quote_amt
+                        };
+                        //now we update the rebalances array 
+                        this.rebalances.push({
+                            index: this.current_index,
+                            p: p,
+                            t: t,
+                            trade_type: trade_type,
+                            base_amt: base_amt,
+                            quote_amt: (base_amt * p),
+                            portfolio: this.get_portfolio_value_and_time(this.portfolio, p, t),
+                            hodl_portfolio: this.get_portfolio_value_and_time(this.initial_portfolio, p, t),
+                            cummulative_transactions_costs: {
+                                raw: Object.assign({}, this.transactions_costs),
+                                values: this.get_transactions_costs_values(this.transactions_costs, p)
+                            },
+                        });
+                        return [2 /*return*/, { error: false, info: null }
+                            //fin 
+                        ];
                 }
-            };
-            _this.balance_portfolio_series = [];
-            _this.hodl_portfolio_series = [];
-            _this.ratio_series = [];
-            return _this;
-        }
-        BacktestBalancer.prototype.get_quote_balance = function (qa) {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    return [2, this.portfolio.quote_balance];
-                });
             });
-        };
-        BacktestBalancer.prototype.get_base_balance = function (ba) {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    return [2, this.portfolio.base_balance];
-                });
+        });
+    };
+    BacktestBalancer.prototype.symbol_generator = function (ba, qa) { return "BACKTESTER"; };
+    BacktestBalancer.prototype.process_data = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, p, t;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        this.current_index += 1;
+                        return [4 /*yield*/, this.balance_portfolio()
+                            /*
+                              pretty elegant, huh?
+                              A portfolio balance may or may not have happened.
+                              Either way, for post-analysis we will keep track of the portfolio series overtime
+                            */
+                        ];
+                    case 1:
+                        _b.sent();
+                        _a = this.data[this.current_index], p = _a.p, t = _a.t;
+                        this.hodl_portfolio_series.push(this.get_portfolio_value_and_time(this.initial_portfolio, p, t));
+                        this.balance_portfolio_series.push(this.get_portfolio_value_and_time(this.portfolio, p, t));
+                        this.ratio_series.push(this.Params.target_ratio);
+                        return [2 /*return*/];
+                }
             });
+        });
+    };
+    BacktestBalancer.prototype.get_portfolio_value_and_time = function (portfolio, p, t) {
+        var value = portfolio.base_balance * p + portfolio.quote_balance;
+        return {
+            base_balance: portfolio.base_balance,
+            quote_balance: portfolio.quote_balance,
+            value: value,
+            p: p,
+            t: t
         };
-        BacktestBalancer.prototype.get_base_price = function (ba, qa) {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    return [2, (this.data[this.current_index]).p];
-                });
+    };
+    BacktestBalancer.prototype.get_transactions_costs_values = function (tc, p) {
+        var fees = tc.fees, slippage = tc.slippage;
+        var fee_cost = fees.base * p + fees.quote;
+        var slippage_cost = slippage.base * p + slippage.quote;
+        var total = fee_cost + slippage_cost;
+        return {
+            fee_cost: fee_cost,
+            slippage_cost: slippage_cost,
+            total: total
+        };
+    };
+    BacktestBalancer.prototype.backtest = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var len, x;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.log("Starting backtest...");
+                        len = this.data.length;
+                        x = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(x < len)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.process_data()];
+                    case 2:
+                        _a.sent();
+                        if ((x % 100) == 0) {
+                            this.log("Progress = ".concat(x, "/").concat(len));
+                        }
+                        _a.label = 3;
+                    case 3:
+                        x++;
+                        return [3 /*break*/, 1];
+                    case 4:
+                        this.log("Done");
+                        return [2 /*return*/];
+                }
             });
-        };
-        BacktestBalancer.prototype.do_market_trade = function (trade_type, base_amt) {
-            return __awaiter(this, void 0, void 0, function () {
-                var base_price, current_data, p, t, new_base, new_quote, new_base_amt, new_quote_amt;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4, this.get_base_price("", "")];
-                        case 1:
-                            base_price = _a.sent();
-                            current_data = this.data[this.current_index];
-                            if (base_price != current_data.p) {
-                                this.log("Sanity check failed! - there is a problem with price indexing");
-                                process.exit(1);
-                            }
-                            p = current_data.p, t = current_data.t;
-                            switch (trade_type) {
-                                case pbl.MarketTradeType.BUY:
-                                    new_base = base_amt * (1 - this.fee);
-                                    new_quote = -(base_amt * p) * (1 + this.slippage);
-                                    this.transactions_costs.fees.base += base_amt * this.fee;
-                                    this.transactions_costs.slippage.quote += (base_amt * p) * (this.slippage);
-                                    break;
-                                case pbl.MarketTradeType.SELL:
-                                    new_base = -base_amt;
-                                    new_quote = (base_amt * p) * (1 - this.fee) * (1 - this.slippage);
-                                    this.transactions_costs.fees.quote += (base_amt * p) * (this.fee);
-                                    this.transactions_costs.slippage.quote += (base_amt * p) * (this.slippage);
-                                    break;
-                            }
-                            new_base_amt = this.portfolio.base_balance += new_base;
-                            new_quote_amt = this.portfolio.quote_balance += new_quote;
-                            this.portfolio = {
-                                base_balance: new_base_amt,
-                                quote_balance: new_quote_amt
-                            };
-                            this.rebalances.push({
-                                index: this.current_index,
-                                p: p,
-                                t: t,
-                                trade_type: trade_type,
-                                base_amt: base_amt,
-                                quote_amt: (base_amt * p),
-                                portfolio: this.get_portfolio_value_and_time(this.portfolio, p, t),
-                                hodl_portfolio: this.get_portfolio_value_and_time(this.initial_portfolio, p, t),
-                                cummulative_transactions_costs: {
-                                    raw: Object.assign({}, this.transactions_costs),
-                                    values: this.get_transactions_costs_values(this.transactions_costs, p)
-                                },
-                            });
-                            return [2, { error: false, info: null }];
-                    }
-                });
-            });
-        };
-        BacktestBalancer.prototype.symbol_generator = function (ba, qa) { return "BACKTESTER"; };
-        BacktestBalancer.prototype.process_data = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                var _a, p, t;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            this.current_index += 1;
-                            return [4, this.balance_portfolio()];
-                        case 1:
-                            _b.sent();
-                            _a = this.data[this.current_index], p = _a.p, t = _a.t;
-                            this.hodl_portfolio_series.push(this.get_portfolio_value_and_time(this.initial_portfolio, p, t));
-                            this.balance_portfolio_series.push(this.get_portfolio_value_and_time(this.portfolio, p, t));
-                            this.ratio_series.push(this.Params.target_ratio);
-                            return [2];
-                    }
-                });
-            });
-        };
-        BacktestBalancer.prototype.get_portfolio_value_and_time = function (portfolio, p, t) {
-            var value = portfolio.base_balance * p + portfolio.quote_balance;
-            return {
-                base_balance: portfolio.base_balance,
-                quote_balance: portfolio.quote_balance,
-                value: value,
-                p: p,
-                t: t
-            };
-        };
-        BacktestBalancer.prototype.get_transactions_costs_values = function (tc, p) {
-            var fees = tc.fees, slippage = tc.slippage;
-            var fee_cost = fees.base * p + fees.quote;
-            var slippage_cost = slippage.base * p + slippage.quote;
-            var total = fee_cost + slippage_cost;
-            return {
-                fee_cost: fee_cost,
-                slippage_cost: slippage_cost,
-                total: total
-            };
-        };
-        BacktestBalancer.prototype.backtest = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                var len, x;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            this.log("Starting backtest...");
-                            len = this.data.length;
-                            x = 0;
-                            _a.label = 1;
-                        case 1:
-                            if (!(x < len)) return [3, 4];
-                            return [4, this.process_data()];
-                        case 2:
-                            _a.sent();
-                            if ((x % 100) == 0) {
-                                this.log("Progress = ".concat(x, "/").concat(len));
-                            }
-                            _a.label = 3;
-                        case 3:
-                            x++;
-                            return [3, 1];
-                        case 4:
-                            this.log("Done");
-                            return [2];
-                    }
-                });
-            });
-        };
-        return BacktestBalancer;
-    }(pbl.PortfolioBalancer));
-    exports.BacktestBalancer = BacktestBalancer;
-});
+        });
+    };
+    return BacktestBalancer;
+}(pbl.PortfolioBalancer));
+export { BacktestBalancer };

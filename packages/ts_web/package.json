@@ -8,7 +8,13 @@
     "build": "npx webpack --config webpack.config.cjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch_package": "npm version patch;",
-    "publish_package": "npm publish ; "
+    "publish_package": "npm publish ; " ,
+    "build_all": "npm run build:es2015 && npm run build:esm && npm run build:cjs && npm run build:umd && npm run build:umd:min",
+    "build:es2015": "tsc --module es2015 --target es2015 --outDir dist/es2015",
+    "build:esm": "tsc --module es2015 --target es5 --outDir dist/esm --declaration false --p url_tsconfig.json",
+    "build:cjs": "tsc --module commonjs --target es5 --outDir dist/cjs",
+    "build:umd": "rollup dist/esm/index.js --format umd --name Tidyscripts --sourceMap --output dist/umd/tidyscripts.js",
+    "build:umd:min": "cd dist/umd && uglifyjs --compress --mangle --sonurce-map --screw-ie8 --comments --o tidyscripts.min.js -- tidyscripts.js && gzip tidyscripts.min.js -c > tidyscripts.min.js.gz"
   },
   "author": "Sheun Aluko",
   "license": "ISC",
