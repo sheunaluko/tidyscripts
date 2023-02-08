@@ -11,7 +11,7 @@ export   {
     logger,
     R,
     trading ,
-    web3,
+    //web3,
     util ,
     asnc, 
 }

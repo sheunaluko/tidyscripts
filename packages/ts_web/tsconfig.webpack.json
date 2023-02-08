@@ -3,7 +3,7 @@
     "target": "es2017",                               
     "module": "ESNext",                           
     "outDir": "./dist",                             
-    "rootDir": "./src",                             
+    "rootDir": "../",                             
     "strict": true,
     "moduleResolution": "node",
     "resolveJsonModule": true, 
