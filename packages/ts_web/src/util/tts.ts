@@ -3,7 +3,7 @@
  Fri Jul  3 02:13:20 PDT 2020
 */
 
-import * as common from "../../../ts_common/src/index" 
+import * as common from "tidyscripts_common"
 let {asnc, fp } = common ; 
 
 

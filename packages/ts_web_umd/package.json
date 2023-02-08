@@ -1,0 +1,15 @@
+{
+  "name": "tidyscripts_web_umd",
+  "version": "1.0.0",
+  "description": "Tidyscripts_web packaged for umd (script tag) distribution",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "npx webpack --config webpack.config.cjs; cp dist/tidyscripts_web_umd.js ../../apps/ts_next_app/public"
+  },
+  "author": "Sheun Aluko",
+  "license": "ISC",
+  "dependencies": {
+    "tidyscripts_web": "*",
+    "ts-loader": "^9.4.2"
+  }
+}

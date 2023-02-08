@@ -1,3 +1,9 @@
+/**
+ * API to query evm-based account (public key) information
+ * Uses consensys.net codefi api
+ *
+ * @packageDocumentation
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,35 +40,29 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-(function (factory) {
-    if (typeof module === "object" && typeof module.exports === "object") {
-        var v = factory(require, exports);
-        if (v !== undefined) module.exports = v;
-    }
-    else if (typeof define === "function" && define.amd) {
-        define(["require", "exports"], factory);
-    }
-})(function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.get_account_info = void 0;
-    function get_account_info(account, chain_id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var url, res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        url = "https://account.metafi.codefi.network/accounts/".concat(account, "?chainId=").concat(chain_id, "&includePrices=true");
-                        return [4, fetch(url)];
-                    case 1:
-                        res = _a.sent();
-                        console.log(url);
-                        global.res = res;
-                        return [4, res.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
+/**
+ * Returns account info for an evm based account, running on the blockchain network with the provided chain_id.
+ * Uses the consensys.net codefi api to retrieve the data.
+ * @param account - Public key of the account to query
+ * @param chain_id  n
+ * @returns
+ */
+export function get_account_info(account, chain_id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var url, res;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    url = "https://account.metafi.codefi.network/accounts/".concat(account, "?chainId=").concat(chain_id, "&includePrices=true");
+                    return [4 /*yield*/, fetch(url)];
+                case 1:
+                    res = _a.sent();
+                    console.log(url);
+                    //@ts-ignore
+                    global.res = res;
+                    return [4 /*yield*/, res.json()];
+                case 2: return [2 /*return*/, _a.sent()];
+            }
         });
-    }
-    exports.get_account_info = get_account_info;
-});
+    });
+}
