@@ -32,7 +32,9 @@ import * as sr from "./speech_recognition"
 import * as tts from "./tts" 
 import * as ap from "./audio_processing" 
 
+import {logger} from "tidyscripts_common"
 
+var log = logger.get_logger({id : "voice_interface"}) ; 
 
 export var recognition : any  = null 
 
@@ -57,11 +59,11 @@ export function initialize_recognition(ops? : sr.RecognitionOps) {
     ops.onEnd = function() {
 	
 	if (recognition_state == RecognitionState.STOPPING) {
-	    console.log("Recognition stopped") 
+	    log("Recognition stopped") 
 	    recognition_state = RecognitionState.STOPPED 
 	} else { 
 	    recognition_state = RecognitionState.PAUSED 
-	    console.log("Recognition paused") 
+	    log("Recognition paused") 
 	} 
 	
 	//any other on end callbacks 
@@ -84,7 +86,7 @@ export function pause_recognition() {
 
 export function stop_recognition() {
     if (recognition) {
-	console.log("Stopping recognition")
+	log("Stopping recognition")
 	recognition_state = RecognitionState.STOPPING
 	recognition.abort()
 	recognition = null
@@ -101,14 +103,14 @@ export async function start_recognition() {
 
     //if tts is speaking then we should wait     
     if (tts.is_speaking()) {
-	console.log("Wont start recognition while tts active")
+	log("Wont start recognition while tts active")
     }
     
     if (recognition) {
 	recognition.start() 
     } else { 
 	initialize_recognition()
-	console.log("Recognition initialized without args") 
+	log("Recognition initialized without args") 
     } 
     recognition_state = RecognitionState.LISTENING
 } 
@@ -130,23 +132,44 @@ export var default_voice : string | null = null
 
 export function set_default_voice(v : string) {
     default_voice = v 
+}
+
+export function set_default_tts_rate(n :number) {
+  tts.set_default_rate(n) ; 
 } 
 
-export async function speak_with_voice(text :string,voiceURI : string | null) {
+export function set_default_voice_from_name_preference_list(l : string[]) {
+  for (var voice of l ) {
+    let match = tts.get_voice_by_name(voice) ;
+    if (match ) {
+      set_default_voice(match.voiceURI) ; log(`Set default voice to: ${match.name}`); return 
+    } else {
+      //
+    } 
+  }
+  log(`Unable to set default voice to any matching name in provided list`) ; 
+} 
+
+export async function speak_with_voice(text :string,voiceURI : string | null,rate : number) {
     if (recognition) {
 	let thresh  = stop_recognition_and_detection() 
-	tts.speak({text, voiceURI})
+      tts.speak({text, voiceURI , rate})
 	await tts.finished_speaking()
 	start_recognition_and_detection(thresh) 
     } else { 
-	tts.speak({text, voiceURI})
+      tts.speak({text, voiceURI, rate})
 	await tts.finished_speaking()
     } 
     return     
 } 
 
 export async function speak(text : string) {
-    speak_with_voice(text,default_voice) 
+  speak_with_voice(text,default_voice, tts.default_rate) 
+}
+
+export async function speak_with_rate(text : string, rate : number) {
+  speak_with_voice(text,default_voice, rate)   
 } 
 
 
+export {tts, sr, ap  } ; 

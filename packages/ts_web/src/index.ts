@@ -2,6 +2,7 @@ import * as util from "./util/index"
 import * as cryptocurrency from "./cryptocurrency/index" 
 import * as apis from "./apis/index" 
 import * as components from "./components/index"
+import * as umd from "./umd/index"
 
 import * as common from "tidyscripts_common" 
 
@@ -10,6 +11,7 @@ export {
     components, 
     apis, 
     cryptocurrency,
-    common , 
+    common ,
+    umd 
 }
 
