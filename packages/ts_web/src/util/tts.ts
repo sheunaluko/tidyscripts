@@ -4,8 +4,9 @@
 */
 
 import * as common from "tidyscripts_common"
-let {asnc, fp } = common ; 
+let {asnc, fp , logger } = common ; 
 
+let log = logger.get_logger({id:"tts"})
 
 declare var window : any ;
 
@@ -40,6 +41,9 @@ interface SpeechOps {
     rate? : number , 
 } 
 
+export function get_voices() {
+  return tts().getVoices()  ; 
+}
 
 export function get_voice(vuri : string) {
     let tmp = tts().getVoices().filter( (v:any)=> v.voiceURI == vuri ) 
@@ -48,13 +52,42 @@ export function get_voice(vuri : string) {
     } else { 
 	return null 
     } 
+}
+
+export function get_voice_by_name(name : string) {
+    let tmp = tts().getVoices().filter( (v:any)=> v.name == name ) 
+    if (tmp.length > 0 ) {
+	return tmp[0] 
+    } else { 
+	return null 
+    } 
+}
+
+export function voices_ready() {
+  try { 
+    return (tts().getVoices().length > 0 )  
+  } catch (e : any) {
+    return false
+  } 
+}
+
+export async function wait_until_voices_ready() {
+  await common.asnc.wait_until(voices_ready, 3000, 200 ) ;
+  log("voices_ready") ; 
+} 
+
+export var default_rate : number  = 1 ; 
+
+export function set_default_rate(n : number) {
+  default_rate = n ;
+  log("Default rate set to: " + n )
 } 
 
 export async function _speak(ops : SpeechOps) {  
     
     let { 
 	voiceURI  , 
-	rate = 1 , 
+        rate = default_rate , 
 	text 
     }  = ops 
     
@@ -91,12 +124,12 @@ export function speak(ops : SpeechOps) {
      
     let { 
 	voiceURI , 
-	rate = 1 , 
+        rate = default_rate , 
 	text 
     }  = ops 
     
-    console.log("Request to speak  =:> " + text) 
-    console.log("With voice =:> " + voiceURI) 
+    log("Request to speak  =:> " + text) 
+    log("With voice =:> " + voiceURI) 
     /*chunk up the text by word length */ 
     let chunks = fp.map(fp.partition(fp.split(text," "), 20),fp.joiner(" "))
     

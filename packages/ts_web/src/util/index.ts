@@ -6,7 +6,8 @@ import * as audio_processing from "./audio_processing"
 import * as voice_interface from "./voice_interface" 
 import * as ws from "./ws" 
 
-declare var window : any ; 
+declare var window : any ;
+
 
 
 export {
@@ -50,7 +51,18 @@ export function uuid() {
 export async function define(promise : Promise<any>, id : string ) { 
     window[id] = await promise ; 
     log(`Defined ${id} on the window object :)`)
-} 
+}
+
+
+export function addScript(src : string) {
+  return new Promise((resolve, reject) => {
+    const s = window.document.createElement('script');
+    s.setAttribute('src', src);
+    s.addEventListener('load', resolve);
+    s.addEventListener('error', reject);
+    document.body.appendChild(s);
+  });
+}
 
 
 export function hello() {
