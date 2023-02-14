@@ -23,17 +23,8 @@ export default async function handler(
   var text : any ;
   var response : any ; 
 
-  try {
-    log("Try block")
-    response = await send_message(prompt as string, Number(max_tokens) ) ;    
-    text = response.data.choices[0].text;
-    log(`Got text: ${text}`) ;
-    await res.status(200).json({text})     
-  } catch (e : any)  {
-    text = "API Error" ;
-    log(`API error!`)
-    await res.status(200).json({text}) 
-  }
-
+  response = await send_message(prompt as string, Number(max_tokens) ) ;    
+  text = response.data.choices[0].text;
+  res.status(200).json({text})     
 
 }
