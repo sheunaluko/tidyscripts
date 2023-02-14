@@ -1,6 +1,6 @@
 {
   "name": "tidyscripts_node",
-  "version": "1.0.11",
+  "version": "1.0.14",
   "description": "Code/apis for typescript projects that run in the Node.js runtime",
   "main": "dist/index.js",
   "scripts": {

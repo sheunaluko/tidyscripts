@@ -6,14 +6,16 @@ import * as ethers from "./ethers/index"
 import * as binance from "./binance/index"
 import * as radiopaedia from "./radiopaedia"
 import * as pubmed from './pubmed'
+import * as openai from "./openai"
 
 export {
-    debank  ,
-    binanceus  ,
-    coinbase ,
-    ethers,
-    radiopaedia, 
-    binance,
-    pubmed,
-    bokeh, 
+  debank  ,
+  binanceus  ,
+  coinbase ,
+  ethers,
+  radiopaedia, 
+  binance,
+  pubmed,
+  bokeh,
+  openai
 } 
