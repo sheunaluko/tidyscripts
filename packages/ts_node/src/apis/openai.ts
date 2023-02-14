@@ -22,7 +22,8 @@ export const client = new OpenAIApi(configuration);
 export async function list_engines() {
   let result = (await client.listEngines() ) as any 
   return result 
-} 
+}
+
 
 
 
@@ -32,11 +33,17 @@ export async function list_engines() {
  * Much more to come!
  */
 export async function send_message(message: string, max_tokens : number, context?: string): Promise<any> {
-  const response = await client.createCompletion({
+  log(`Using org: ${configuration.organization}`) ;
+  log(`Using key: ${configuration.apiKey}`) ;
+  let reqObj = {
     model: 'text-davinci-003',
     prompt: message,
     max_tokens, 
-   } as any); 
+  }
+
+  log('using req object:') ;
+  console.log(reqObj) 
+  const response = await client.createCompletion(reqObj as any); 
   return response
 }
 
