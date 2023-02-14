@@ -32,7 +32,7 @@ export async function list_engines() {
  * Uses the DaVinci 003 Model
  * Much more to come!
  */
-export async function send_message(message: string, max_tokens : number, context?: string): Promise<any> {
+export async function send_message(message: string, max_tokens : number): Promise<any> {
   log(`Using org: ${configuration.organization}`) ;
   log(`Using key: ${configuration.apiKey}`) ;
   let reqObj = {
