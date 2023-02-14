@@ -4,7 +4,6 @@ node_modules/
 **/.turbo/
 **/dist/
 **/node_modules/
-apps/ts_next_app/public/docs
 packages/ts_node/resources
 
 .turbo

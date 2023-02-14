@@ -1,6 +1,6 @@
 {
   "name": "tidyscripts_web_umd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tidyscripts_web packaged for umd (script tag) distribution",
   "main": "src/index.ts",
   "scripts": {

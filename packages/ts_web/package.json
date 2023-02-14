@@ -1,6 +1,6 @@
 {
   "name": "tidyscripts_web",
-  "version": "2.0.15",
+  "version": "2.0.17",
   "description": "Web code/apis for typescript projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,7 @@
     "build": "npx webpack --config webpack.config.cjs",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch_package": "npm version patch;",
-    "publish_package": "npm publish ; " ,
+    "publish_package": "npm publish ; ",
     "build_all": "npm run build:es2015 && npm run build:esm && npm run build:cjs && npm run build:umd && npm run build:umd:min",
     "build:es2015": "tsc --module es2015 --target es2015 --outDir dist/es2015",
     "build:esm": "tsc --module es2015 --target es5 --outDir dist/esm --declaration false --p url_tsconfig.json",
