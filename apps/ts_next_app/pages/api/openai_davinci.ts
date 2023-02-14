@@ -40,11 +40,8 @@ export default async function handler(
 
   response = await send_message(prompt as string, Number(max_tokens) ) ;    
   text = response.data.choices[0].text;
+  log(`Got response: ${text}`); 
   res.status(200).json({text})     
 
 }
 
-
-export const config = {
-  runtime: 'edge', // this is a pre-requisite
-};
