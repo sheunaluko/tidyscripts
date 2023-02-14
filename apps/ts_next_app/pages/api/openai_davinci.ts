@@ -17,19 +17,15 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
 
-  let url = `https://tidyscripts.com/${req.url}`
-  console.log(url)
-  //console.log(tsn.common.R.keys(req.url) ) ; 
-  const params = new URL(url).searchParams;
-  console.log(params) 
-  const max_tokens  = Number(params.get("max_tokens"));
-  const prompt = params.get("prompt");
+  var params = req.query ; 
+  var {max_tokens,prompt} = params ; 
 
   var text : any ;
   var response : any ; 
+
   try {
-    log(`Using ${max_tokens} tokens for prompt: ${prompt}`)
-    response = await send_message(prompt, max_tokens ) ;    
+    log("Try block")
+    response = await send_message(prompt as string, Number(max_tokens) ) ;    
     text = response.data.choices[0].text;
     log(`Got text: ${text}`) ; 
   } catch (e : any)  {
@@ -37,5 +33,5 @@ export default async function handler(
     log(`API error!`)
   }
 
-  res.status(200).json({text}) 
+  await res.status(200).json({text}) 
 }
