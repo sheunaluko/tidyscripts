@@ -18,7 +18,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
 
-  res.setHeader('Access-Control-Allow-Credentials', true)
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Origin', '*')
   // another common pattern
   // res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
