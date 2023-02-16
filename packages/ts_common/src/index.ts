@@ -5,6 +5,7 @@ import * as trading from './trading/index'
 import * as web3 from './web3/index'
 import * as util from './util/index'
 import * as asnc from "./async"
+import * as apis from "./apis"
 
 const log = logger.get_logger({id : "common"}) ; 
 
@@ -27,6 +28,8 @@ export async function get_json_from_url(url : string, data : any ) {
   return response.json();
 }
 
+
+
 export   { 
     fp,
     logger,
@@ -35,6 +38,7 @@ export   {
     web3,
     util ,
   asnc,
+  apis ,
 }
 
 

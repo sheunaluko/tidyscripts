@@ -1,0 +1,147 @@
+/**
+ * AI Diagnostics (Aidx) 
+ * Interface to a general purpose clinical decision support library that leverages AI 
+ * This library was built with the help of ChatGPT Research preview, and makes use of the Openai API 
+ * to begin with. 
+ * @Copyright Sheun Aluko 2023 
+ */
+
+import { get_json_from_url } from "../index"
+import * as debug from "../util/debug" 
+
+
+type ApiResult = {error : boolean, data : any} 
+
+export async function ask_ai(prompt : string , max_tokens : number) : Promise<ApiResult> {
+  try {
+    let res = await get_json_from_url("https://www.tidyscripts.com/api/openai_davinci" , {prompt , max_tokens}) ;
+    return { error : false, data : JSON.parse(res.text) } 
+  } catch (error) {
+    debug.add("api_error" , error) ;
+    debug.log("api_error experienced") ; 
+    return { error : true , data : "api error"  } 
+  } 
+} 
+
+type PatientData = {
+  demographics: {
+    age: number,
+    gender?: string,
+    ethnicity?: string,
+    occupation?: string
+  },
+  symptoms: string[],
+  lab_values: {
+    lab : string ,
+    value : any 
+  }[],
+  medical_history: string[],
+  medications: {
+    medication : string,
+    dose : { value : string, frequency : string } 
+  }[],
+  tests: {
+    test: string,
+    result: string
+  }[],
+  physical_exam: string[]
+}
+
+export const example_patient: PatientData = {
+  demographics: {
+    age: 35,
+    gender: "Male",
+    ethnicity: "Caucasian",
+    occupation: "Software Engineer"
+  },
+  symptoms: ["Fever", "Cough", "Fatigue"],
+  lab_values: [
+    {
+      lab: "Magnesium",
+      value: 1.5
+    },
+    {
+      lab: "Calcium",
+      value: 9.2
+    },
+    {
+      lab: "Potassium",
+      value: 4.0
+    },
+    {
+      lab: "Sodium",
+      value: 138
+    }
+  ],
+  medical_history: ["Asthma", "Seasonal Allergies"],
+  medications: [
+    {
+      medication: "Albuterol",
+      dose: {
+        value: "2 puffs",
+        frequency: "as needed"
+      }
+    },
+    {
+      medication: "Fluticasone",
+      dose: {
+        value: "1 spray",
+        frequency: "daily"
+      }
+    }
+  ],
+  tests: [
+    {
+      test: "Chest X-ray",
+      result: "Negative"
+    }
+  ],
+  physical_exam: ["Mild wheezing on auscultation"]
+}
+
+
+/**
+ * Generate the text prompt from the patient data 
+ * 
+ */
+export function generate_prompt(patient_data : PatientData ) {
+   // Extract patient data fields from the input
+  const { demographics, symptoms, lab_values, medical_history, medications, tests, physical_exam } = patient_data;
+
+  // Construct an OpenAI prompt using the extracted data fields
+  const prompt = `
+    Given the following patient information:
+    Demographics: ${JSON.stringify(demographics)}
+    Symptoms: ${JSON.stringify(symptoms)}
+    Lab values: ${JSON.stringify(lab_values)}
+    Medical history: ${JSON.stringify(medical_history)}
+    Medications: ${JSON.stringify(medications)}
+    Tests: ${JSON.stringify(tests)}
+    Physical exam: ${JSON.stringify(physical_exam)}
+
+    Please generate a list of the most likely diagnoses, along with their likelihood and any potential further workup needed to confirm or exclude each diagnosis.
+    The returned value should be a stringified JSON object that is an Array of objects that each have  "diagnosis", "likelihood", and "suggested_workup" fields. 
+    The suggested_workup field should be an array of strings where each string is a single suggested workup, such as "echocardiogram" or "chest x-ray" or "Basic metabolic panel (BMP)".
+    The likelihood field should be a number from 0 to 1 that estimates the probability that this is the diagnosis. 
+    The returned array should have atleast 5 elements, and should include up to 10 if the 10th would still occur with a reasonable probability. 
+  `;
+
+  return prompt ; 
+} 
+
+/**
+ * Performs AI Clinical Decision support 
+ * 
+ */
+export async function ai_cds(patient_data: PatientData): Promise<ApiResult> {
+
+  let prompt = generate_prompt(patient_data) ; 
+  let ddx = await ask_ai(prompt, 2048) ;
+
+  return ddx
+}
+
+
+
+
+
