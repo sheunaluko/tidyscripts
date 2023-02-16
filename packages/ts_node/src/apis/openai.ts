@@ -34,7 +34,7 @@ export async function list_engines() {
  */
 export async function send_message(message: string, max_tokens : number): Promise<any> {
   log(`Using org: ${configuration.organization}`) ;
-  log(`Using key: ${configuration.apiKey}`) ;
+  log(`Using key: ${configuration.apiKey ? true : false}`) ;
   let reqObj = {
     model: 'text-davinci-003',
     prompt: message,

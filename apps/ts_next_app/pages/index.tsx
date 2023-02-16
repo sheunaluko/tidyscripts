@@ -42,8 +42,7 @@ const Home: NextPage = (props : any) => {
         </h1>
 
         <p className={styles.description}>
-          An elegant tool for {' '}
-          <code className={styles.code}>builders</code>
+          An elegant tool for serious builders. 
         </p>
 
         <div className={styles.grid}>
@@ -78,7 +77,7 @@ const Home: NextPage = (props : any) => {
 	      return (
 		<Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
           </span>
-	  {'   '}     Copyright © 2022 Sheun Aluko, MD. All rights reserved. 
+	  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
         </a>
       </footer>
     </div>
