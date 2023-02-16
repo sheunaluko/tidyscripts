@@ -24,6 +24,10 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@chakra-ui/react": "^2.5.1",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "framer-motion": "^6.5.1",
     "openai": "^3.1.0",
     "tw": "^0.1.2",
     "ws": "^8.12.0"
