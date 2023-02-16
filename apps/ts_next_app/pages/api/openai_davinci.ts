@@ -12,7 +12,10 @@ type Data = {
   text: any , 
 }
 
-
+/**
+ * This is a vercel serverless function 
+ * 
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
