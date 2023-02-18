@@ -4,7 +4,8 @@ import * as speech_recognition from "./speech_recognition"
 import * as sounds from "./sounds" 
 import * as audio_processing from "./audio_processing" 
 import * as voice_interface from "./voice_interface" 
-import * as ws from "./ws" 
+import * as ws from "./ws"
+import * as dom from "./dom"
 
 declare var window : any ;
 
@@ -16,7 +17,8 @@ export {
     speech_recognition, 
     sounds, 
     voice_interface , 
-    audio_processing
+  audio_processing,
+  dom
 } 
 
 let log = common.logger.get_logger({id:"wutil"}) 
