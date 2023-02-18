@@ -60,12 +60,26 @@ const Home: NextPage = (props : any) => {
               See the source. 
             </p>
           </a>
+
+	  <a
+            href="/applab/aidx"
+            className={styles.card}
+          >
+            <h2>AI Diagnostics [Aidx] &rarr;</h2>
+            <p>
+              Aidx performs clinical decision support using Artifical Intelligence, and is powered by OpenAI and Tidyscripts
+            </p>
+          </a>
+	  
+
+
+	  
         </div>
       </main>
 
       <footer className={styles.footer}>
         <a
-          href="https://sheunaluko.com"
+          href="https://www.tidyscripts.com"
           target="_blank"
           rel="noopener noreferrer"
         >
