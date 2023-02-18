@@ -7,13 +7,33 @@
  */
 
 import { get_json_from_url } from "../index"
-import * as debug from "../util/debug" 
+import * as debug from "../util/debug"
+declare var Math : any ; 
 
-type ApiResult = {error : boolean, data : any}
+export type ApiResult = {error : boolean, data : any} 
 
+/**
+ * Cleans the response from the OpenAI API 
+ * Assums the json starts with { or [ and attempts to trim the superfluous text 
+ * before that, and also replaces newline and escape characters. 
+ */
 export function clean_json_string(jstring : string) {
   debug.add("pre_clean" , jstring) ;
-  let cleaned = jstring.split("\n").join("").replace(/  /g,"") ; 
+  let cleaned = jstring.split("\n").join("").replace(/  /g,"").replace(",\}","\}") ;
+  let bIndex = cleaned.indexOf("{") ;
+  let aIndex = cleaned.indexOf("[") ;
+  var cleanIndex = 0 ; 
+
+  if (bIndex < 0 ) {
+    cleanIndex = aIndex; 
+  } else if (aIndex < 0 ) {
+    cleanIndex = bIndex ; 
+  } else {
+    cleanIndex = Math.min(bIndex,aIndex)    ; 
+  } 
+    
+  cleaned = cleaned.slice(cleanIndex,cleaned.length) ;
+  debug.log(`extracting json starting at index ${cleanIndex}=${cleaned[cleanIndex]}`)
   debug.add("post_clean" , cleaned) ;
   debug.log(`Cleaned ${jstring} to \n\n\n ${cleaned}`) ; 
   return cleaned 
@@ -194,7 +214,11 @@ type PatientData = {
 }
 
 The repsonse should be a json string. 
-Here is an example response: 
+Only include the optional fields in the response if that information is explicity present in the one_liner or hp
+Do not include any text in the response other than the json string itself 
+
+
+EXAMPLE RESPONSE: 
 
 {
   "demographics": {
@@ -246,7 +270,6 @@ Here is an example response:
   ],
   "physical_exam": ["Mild wheezing on auscultation"]
 }
-
 `
     let api_result = await ask_ai(prompt, 2048) ;
     var patient_data = (api_result.data as PatientData) ; 

@@ -19,7 +19,8 @@
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
-    "webpack-cli": "^4.10.0",
-    "tidyscripts_common": "*"
+    "react-inspector": "^6.0.1",
+    "tidyscripts_common": "*",
+    "webpack-cli": "^4.10.0"
   }
 }
