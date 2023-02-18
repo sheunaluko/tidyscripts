@@ -238,44 +238,44 @@ const test_cases = [
 
 	<Flex flexDirection="column" align="center">
 
-	<Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
-	  Generate Structured Medical Data
-	</Button>
+	  <Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
+	    Generate Structured Medical Data
+	  </Button>
 
-	<Box style={{marginTop : "30px" }}>
-	  {
-	    (function() {
-	      let spinner = ( <Spinner style={{marginTop : "30px" }}
-				       thickness='4px'
-				       speed='0.65s'
-				       emptyColor='gray.200'
-				       color='blue.500'
-				       size='xl' 	/> )
-	      let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
-	      return ( getting_query ? spinner : data ) 
-	    })()
-	  }			       
-	</Box>
+	  <Box style={{marginTop : "30px" }}>
+	    {
+	      (function() {
+		let spinner = ( <Spinner style={{marginTop : "30px" }}
+					 thickness='4px'
+					 speed='0.65s'
+					 emptyColor='gray.200'
+					 color='blue.500'
+					 size='xl' 	/> )
+		let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
+		return ( getting_query ? spinner : data ) 
+	      })()
+	    }			       
+	  </Box>
 
-	<Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
-	  Generate Differential and Workup
-	</Button>
+	  <Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
+	    Generate Differential and Workup
+	  </Button>
 
 
-	<Box style={{marginTop : "30px" }}>
-	  {
-	    (function() {
-	      let spinner = ( <Spinner style={{marginTop : "30px" }}
-				       thickness='4px'
-				       speed='0.65s'
-				       emptyColor='gray.200'
-				       color='blue.500'
-				       size='xl' 	/> )
-	      let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
-	      return ( getting_cds ? spinner : data ) 
-	    })()
-	  }			       
-	</Box>
+	  <Box style={{marginTop : "30px" }}>
+	    {
+	      (function() {
+		let spinner = ( <Spinner style={{marginTop : "30px" }}
+					 thickness='4px'
+					 speed='0.65s'
+					 emptyColor='gray.200'
+					 color='blue.500'
+					 size='xl' 	/> )
+		let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
+		return ( getting_cds ? spinner : data ) 
+	      })()
+	    }			       
+	  </Box>
 
 	</Flex>
 	
@@ -284,9 +284,7 @@ const test_cases = [
 
       <footer className={styles.footer}>
         <a
-          href="https://sheunaluko.com"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="https://www.tidyscripts.com"	  
         >
           Tidyscripts {' '}
           <span className={styles.logo}>
