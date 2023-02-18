@@ -3,7 +3,7 @@ import {useEffect, useState} from 'react' ;
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../../styles/Home.module.css'
-import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, Select} from '@chakra-ui/react'
+import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, Select, Flex} from '@chakra-ui/react'
 
 import {ObjectInspector } from 'react-inspector';
 
@@ -54,11 +54,14 @@ const test_cases = [
   } ,
   { one_liner : "78 female with history of scleroderma, ESRD, HTN who presents with weight loss" ,
     hp : "The patient has been experiencing decreased appetite and general weakness for the last several months. Her weight is stable from 2 years ago. Her physical exam is remarkable for cachexia, clear lung fields bilaterally, mild lower extremity edema, no abdominal pain. Her creatinine lab value is 3.3. Her hemoglobin lab value is 9.0." 
-  } , 
+  } ,
+  { one_liner : "55 year old, female, with history of diabetes and hypertension, who is presenting with acute onset of altered mental status" ,
+    hp : "Her symptoms are remarkable for gait instability, altered, mental status, dizziness, and headache. Her physical exam is remarkable for altered, mental status, normal, muscular strength, dysmetria, normal reflexes. Her laboratory values are remarkable for sodium of 145, potassium at 3.8, blood glucose of 164, creatinine of 1.2, lactate of 1.9, white blood cell count of 6.0. Her home medication’s include aspirin, 81 mg daily, lisinopril 10 mg daily, met Forman 1 g twice today, and Eliquis, 5 mg twice a day."
+  } 
 ] ;
 
 
-const Home: NextPage = (props : any) => {
+    const Home: NextPage = (props : any) => {
 
   useEffect(  ()=> {init()} , [] ) ; //init script 
 
@@ -200,14 +203,14 @@ const Home: NextPage = (props : any) => {
   const default_inspector_expansion = ['$', '$.*','$.*.*'] ; 
   
   return (
-    <div className={styles.container}>
+    <Box style={{padding : "20px"}} >
       <Head>
         <title>Tidyscripts</title>
         <meta name="description" content="AIDX (Ai Diagnostics)" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
+      <Box  >
         <h1 className={styles.title}>
           Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
         </h1>
@@ -223,23 +226,17 @@ const Home: NextPage = (props : any) => {
 	  }
 	</Select>
 	
-        <div className={styles.grid}>
+        <Box>
 	  
-          <a href="#" className={styles.card}>
-            <h2>One Liner</h2>
-            <Textarea id={ONE_LINER_ID} /> 
-          </a>
+          <h1>One Liner:</h1>
+          <Textarea id={ONE_LINER_ID} /> 
 
-          <a
-            href="#"
-            className={styles.card}
-          >
-            <h2>H&P</h2>
-            <Textarea id={HP_ID}/>
-          </a>
+          <h1>H&P:</h1>
+          <Textarea id={HP_ID}/>
 
-	  
-        </div>
+        </Box>
+
+	<Flex flexDirection="column" align="center">
 
 	<Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
 	  Generate Structured Medical Data
@@ -279,9 +276,11 @@ const Home: NextPage = (props : any) => {
 	    })()
 	  }			       
 	</Box>
+
+	</Flex>
 	
 	
-      </main>
+      </Box>
 
       <footer className={styles.footer}>
         <a
@@ -300,9 +299,9 @@ const Home: NextPage = (props : any) => {
 	  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
         </a>
       </footer>
-    </div>
+    </Box>
   )
-}
+    }
 
 export default Home
 
