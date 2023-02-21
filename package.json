@@ -2,7 +2,7 @@
   "name": "Tidyscripts",
   "private": true,
   "scripts": {
-    "build": "turbo run docs && turbo run build",
+    "build": "turbo run build && turbo run docs",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "dev": "turbo run dev",
