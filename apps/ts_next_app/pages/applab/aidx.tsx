@@ -1,12 +1,28 @@
 import type { NextPage } from 'next'
-import {useEffect, useState} from 'react' ; 
+
+import {useEffect, useState } from 'react' ;
+import React from 'react' ; 
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../../styles/Home.module.css'
-import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, Select, Flex} from '@chakra-ui/react'
+import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, useDisclosure, Select, Flex, Icon} from '@chakra-ui/react'
+import { PhoneIcon, AddIcon, WarningIcon, SettingsIcon } from '@chakra-ui/icons'
+import {
+  Drawer,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+} from '@chakra-ui/react'
+
+
+import LocalStorageUi from "./LocalStorageUi"
+
+
 
 import {ObjectInspector } from 'react-inspector';
-
 
 import * as tsn from "tidyscripts_node" ;
 import * as tsw from "tidyscripts_web"  ; 
@@ -43,7 +59,7 @@ async function init() {
   })
 
 
-} 
+}
 
 /**
  * Define the test cases 
@@ -56,18 +72,27 @@ const test_cases = [
     hp : "The patient has been experiencing decreased appetite and general weakness for the last several months. Her weight is stable from 2 years ago. Her physical exam is remarkable for cachexia, clear lung fields bilaterally, mild lower extremity edema, no abdominal pain. Her creatinine lab value is 3.3. Her hemoglobin lab value is 9.0." 
   } ,
   { one_liner : "55 year old, female, with history of diabetes and hypertension, who is presenting with acute onset of altered mental status" ,
-    hp : "Her symptoms are remarkable for gait instability, altered, mental status, dizziness, and headache. Her physical exam is remarkable for altered, mental status, normal, muscular strength, dysmetria, normal reflexes. Her laboratory values are remarkable for sodium of 145, potassium at 3.8, blood glucose of 164, creatinine of 1.2, lactate of 1.9, white blood cell count of 6.0. Her home medication’s include aspirin, 81 mg daily, lisinopril 10 mg daily, met Forman 1 g twice today, and Eliquis, 5 mg twice a day."
+    hp : "Her symptoms are remarkable for gait instability, altered, mental status, dizziness, and headache. Her physical exam is remarkable for altered, mental status, normal, muscular strength, dysmetria, normal reflexes. Her laboratory values are remarkable for sodium of 145, potassium at 3.8, blood glucose of 164, creatinine of 1.2, lactate of 1.9, white blood cell count of 6.0. Her home medication’s include aspirin, 81 mg daily, lisinopril 10 mg daily, metformin 1g twice daily, and Eliquis, 5 mg twice a day."
   } 
 ] ;
 
 
+
+
+
     const Home: NextPage = (props : any) => {
 
-  useEffect(  ()=> {init()} , [] ) ; //init script 
+      useEffect(  ()=> {init()} , [] ) ; //init script
 
-  let init_state = false ; 
-  
-  var [getting_query , set_getting_query]  = useState( init_state ) ;
+
+      const { isOpen, onOpen, onClose } = useDisclosure()
+      const btnRef : any  = React.useRef()
+
+
+      
+      let init_state = false ; 
+      
+      var [getting_query , set_getting_query]  = useState( init_state ) ;
   var [getting_cds   , set_getting_cds]    = useState( init_state ) ;
   var [structured_patient_data   , set_structured_patient_data]     = useState( {} as any ) ;
   var [diagnostic_response_data  , set_diagnostic_response_data]    = useState( {} as any ) ;       
@@ -200,105 +225,156 @@ const test_cases = [
     set_case(index) ; 
   } 
 
-  const default_inspector_expansion = ['$', '$.*','$.*.*'] ; 
-  
-  return (
-    <Box style={{padding : "20px"}} >
-      <Head>
-        <title>Tidyscripts</title>
-        <meta name="description" content="AIDX (Ai Diagnostics)" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <Box  >
-        <h1 className={styles.title}>
-          Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
-        </h1>
-
-        <p className={styles.description}>
-          Clinical Decision Support powered by Artificial Intelligence
-        </p>
+      const default_inspector_expansion = ['$', '$.*','$.*.*'] ;
 
 
-	<Select placeholder='Select and edit a case or input your own one-liner and free-text H&P below:' onChange={handle_case_selection} style={{marginBottom : "20px"}} >
-	  {
-	    (tsw.common.fp.range(test_cases.length)).map( (x:any) => (<option key={x} value={x}>Case {x+1}: {test_cases[x].one_liner.slice(0,60)}...</option>)) 
-	  }
-	</Select>
-	
-        <Box>
+      var drawerToast = function() {
+	toast({
+	  title: 'Hey there!' , 
+	  description: "Tidyscripts stores data locally in your browser's storage, and your data never leaves your device. We are comitted to providing value to  you without compromising on your security or privacy",
+	  status: 'info',
+	  duration: 5000,
+	  isClosable: true,
+	})
+      } 
+      
+      return (
+	<Box style={{padding : "20px"}} >
+
+	  <Drawer
+            isOpen={isOpen}
+            placement='right'
+            onClose={onClose}
+            finalFocusRef={btnRef}
+	  >
+            <DrawerOverlay />
+            <DrawerContent>
+              <DrawerCloseButton />
+              <DrawerHeader>Settings</DrawerHeader>
+
+              <DrawerBody>
+		<h1>
+    {'Use the dropdown menu to edit your stored data. If you need to create new local data or settings, please use the "Add a new key" button below.'  }
+		</h1>
+		<LocalStorageUi />
+              </DrawerBody>
+
+	      {/*
+		  <DrawerFooter>
+		  <Button variant='outline' mr={3} onClick={onClose}>
+		  Cancel
+		  </Button>
+		  <Button colorScheme='blue'>Save</Button>
+		  </DrawerFooter>
+		*/}
+	      
+            </DrawerContent>
+	  </Drawer>
+
 	  
-          <h1>One Liner:</h1>
-          <Textarea id={ONE_LINER_ID} /> 
+	  <Head>
+            <title>Tidyscripts</title>
+            <meta name="description" content="AIDX (Ai Diagnostics)" />
+            <link rel="icon" href="/favicon.ico" />
+	  </Head>
 
-          <h1>H&P:</h1>
-          <Textarea id={HP_ID}/>
+	  <Box  >
+            <h1 className={styles.title}>
+              Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
+            </h1>
 
-        </Box>
+            <p className={styles.description}>
+              Clinical Decision Support powered by Artificial Intelligence
+            </p>
 
-	<Flex flexDirection="column" align="center">
+	    
+	    <Select placeholder='Select and edit a case or input your own one-liner and free-text H&P below:' onChange={handle_case_selection} style={{marginBottom : "20px"}} >
+	      {
+		(tsw.common.fp.range(test_cases.length)).map( (x:any) => (<option key={x} value={x}>Case {x+1}: {test_cases[x].one_liner.slice(0,60)}...</option>)) 
+	      }
+	    </Select>
+	    
+            <Box>
+	      
+              <h1>One Liner:</h1>
+              <Textarea id={ONE_LINER_ID} /> 
 
-	  <Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
-	    Generate Structured Medical Data
-	  </Button>
+              <h1>H&P:</h1>
+              <Textarea id={HP_ID}/>
 
-	  <Box style={{marginTop : "30px" }}>
-	    {
-	      (function() {
-		let spinner = ( <Spinner style={{marginTop : "30px" }}
-					 thickness='4px'
-					 speed='0.65s'
-					 emptyColor='gray.200'
-					 color='blue.500'
-					 size='xl' 	/> )
-		let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
-		return ( getting_query ? spinner : data ) 
-	      })()
-	    }			       
+            </Box>
+
+	    <Flex flexDirection="column" align="center">
+
+	      <Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
+		Generate Structured Medical Data
+	      </Button>
+
+	      <Box style={{marginTop : "30px" }}>
+		{
+		  (function() {
+		    let spinner = ( <Spinner style={{marginTop : "30px" }}
+					     thickness='4px'
+					     speed='0.65s'
+					     emptyColor='gray.200'
+					     color='blue.500'
+					     size='xl' 	/> )
+		    let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
+		    return ( getting_query ? spinner : data ) 
+		  })()
+		}			       
+	      </Box>
+
+	      <Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
+		Generate Differential and Workup
+	      </Button>
+
+
+	      <Box style={{marginTop : "30px" }}>
+		{
+		  (function() {
+		    let spinner = ( <Spinner style={{marginTop : "30px" }}
+					     thickness='4px'
+					     speed='0.65s'
+					     emptyColor='gray.200'
+					     color='blue.500'
+					     size='xl' 	/> )
+		    let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
+		    return ( getting_cds ? spinner : data ) 
+		  })()
+		}			       
+	      </Box>
+
+	    </Flex>
+	    
+
+	    <Flex direction="column" align="center" style={{marginTop : "100px"}} >
+	      <Button ref={btnRef} colorScheme='teal' onClick={function(){onOpen(); drawerToast()}} >
+		<Icon as={SettingsIcon} boxSize={4} />
+		Settings
+	      </Button>
+	    </Flex>
+
+	    
 	  </Box>
 
-	  <Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
-	    Generate Differential and Workup
-	  </Button>
-
-
-	  <Box style={{marginTop : "30px" }}>
-	    {
-	      (function() {
-		let spinner = ( <Spinner style={{marginTop : "30px" }}
-					 thickness='4px'
-					 speed='0.65s'
-					 emptyColor='gray.200'
-					 color='blue.500'
-					 size='xl' 	/> )
-		let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
-		return ( getting_cds ? spinner : data ) 
-	      })()
-	    }			       
-	  </Box>
-
-	</Flex>
-	
-	
-      </Box>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://www.tidyscripts.com"	  
-        >
-          Tidyscripts {' '}
-          <span className={styles.logo}>
-	    {(()=> {
-	      let y = 20 ;
-	      let x = Math.floor(1*y) ; 
-	      return (
-		<Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
-          </span>
-	  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
-        </a>
-      </footer>
-    </Box>
-  )
+	  <footer className={styles.footer}>
+            <a
+              href="https://www.tidyscripts.com"	  
+            >
+              Tidyscripts {' '}
+              <span className={styles.logo}>
+		{(()=> {
+		  let y = 20 ;
+		  let x = Math.floor(1*y) ; 
+		  return (
+		    <Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
+              </span>
+	      {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
+            </a>
+	  </footer>
+	</Box>
+      )
     }
 
 export default Home

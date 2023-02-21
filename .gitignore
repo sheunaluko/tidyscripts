@@ -6,5 +6,7 @@ node_modules/
 **/node_modules/
 packages/ts_node/resources
 
+apps/ts_next_app/public/docs/**
+ 
 .turbo
 todo
