@@ -159,7 +159,7 @@ export function generate_prompt(patient_data : PatientData ) {
     The returned value should be a stringified JSON object that is an Array of objects that each have  "diagnosis", "likelihood", and "suggested_workup" fields. 
     The suggested_workup field should be an array of strings where each string is a single suggested workup, such as "echocardiogram" or "chest x-ray" or "Basic metabolic panel (BMP)".
     The likelihood field should be a number from 0 to 1 that estimates the probability that this is the diagnosis. 
-    The returned array should have atleast 5 elements, and should include up to 10 if the 10th would still occur with a reasonable probability. 
+    The returned array should have atleast 6 elements that are ranked with the highist likelihood first, and should include up to 10 if the 10th would still occur with a reasonable probability. 
   `;
 
   return prompt ; 
