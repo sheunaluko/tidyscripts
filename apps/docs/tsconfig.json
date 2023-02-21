@@ -22,7 +22,7 @@
   ],
   "typedocOptions": {
         "entryPoints": ["./docs.ts"],
-        "out": "../../apps/ts_next_app/public/docs",
+        "out": "../../.vercel/output/static/docs",
 	"name" : "Tidyscripts Docs" ,
 	"exclude" : "**/node_modules/**" , 
     }
