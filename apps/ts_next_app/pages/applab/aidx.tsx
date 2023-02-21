@@ -18,7 +18,7 @@ import {
 } from '@chakra-ui/react'
 
 
-import LocalStorageUi from "./LocalStorageUi"
+import LocalStorageUi from "./local_storage_ui"
 
 
 

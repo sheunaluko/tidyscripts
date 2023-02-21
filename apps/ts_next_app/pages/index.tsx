@@ -41,7 +41,8 @@ declare var window : any ;
 
 const card_style : any  = {
   padding : "10px" ,
-  marginBottom : "10px" , 
+  marginBottom : "10px" ,
+  cursor : 'pointer' , 
 } 
 
 const AllLinks = () => {
@@ -72,7 +73,7 @@ const AllLinks = () => {
           </Card >
 	</Link>
 
-	<Link href="/applab/LocalUi">
+	<Link href="/applab/local_storage_ui">
           <Card style={card_style}>
             <h2>LocalStorage Editor &rarr;</h2>
             <p>User Interface for editing the LocalStorage object!</p>

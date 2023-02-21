@@ -33,7 +33,12 @@ export const get = (key: string): any => {
 };
 
 export const set = (key: string, value: any): void => {
-  const serializedValue = JSON.stringify(value);
+  var serializedValue : string = "" ; 
+  if (typeof(value) == 'string') {
+    serializedValue = value ; 
+  } else { 
+    serializedValue = JSON.stringify(value);
+  } 
   localStorage.setItem(key, serializedValue);
 };
 
@@ -67,7 +72,7 @@ const LocalStorageUi = () => {
 
   const handleKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedKey(e.target.value);
-    setNewValue(get(e.target.value));
+    setNewValue(JSON.stringify(get(e.target.value))  );
   };
 
   const handleValueChange = (
