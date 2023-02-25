@@ -1,14 +1,32 @@
-
-
-
 /**
    
- Main voice interface for controlling speech recognition and tts at high level 
+ Main voice interface for controlling (Web Browser) speech recognition and tts at high level. 
+
+ **Warning:** Please note that only Chrome and Safari currently support the browser Speech Recognition API. You CANNOT use Brave, Firefox, or other browsers. 
+
+
+ \
+ ```audio_processing.ts``` 
+
+
+ Connects to microphone and detects when there is sound occuring 
+
+ \
+ ```speech_recognition.ts```
+
+
+ Starts and stops speech recognition and provides recognition results 
+
+ \
+ ```tts.ts```
+
+
+ Performs speech synthesis given a string 
+
+
+
  
- audio_processing.ts    | connects to microphone and detects when there is sound occuring 
- speech_recognition.ts  | starts and stops speech recognition and provides recognition results 
- tts.ts                 | will perform speech synthesis given a string 
- 
+
  This file combines the three aforementioned libraries to create an out of the box seamless 
  voice/ tts experience. 
  
@@ -90,8 +108,9 @@ export function stop_recognition() {
 	recognition_state = RecognitionState.STOPPING
 	recognition.abort()
 	recognition = null
+	ap.stop()	
     } 
-    ap.stop()
+
 } 
 
 export async function start_recognition() {
