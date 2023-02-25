@@ -8,17 +8,18 @@ import styles from '../../styles/Home.module.css'
 import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, useDisclosure, Select, Flex, Icon} from '@chakra-ui/react'
 import { PhoneIcon, AddIcon, WarningIcon, SettingsIcon } from '@chakra-ui/icons'
 import {
-  Drawer,
-  DrawerBody,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
+    Drawer,
+    DrawerBody,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerOverlay,
+    DrawerContent,
+    DrawerCloseButton,
 } from '@chakra-ui/react'
 
 
 import LocalStorageUi from "./local_storage_ui"
+import RL from './RotatingLogo' ; 
 
 
 
@@ -363,13 +364,7 @@ const test_cases = [
               href="https://www.tidyscripts.com"	  
             >
               Tidyscripts {' '}
-              <span className={styles.logo}>
-		{(()=> {
-		  let y = 20 ;
-		  let x = Math.floor(1*y) ; 
-		  return (
-		    <Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
-              </span>
+		<RL /> 
 	      {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
             </a>
 	  </footer>

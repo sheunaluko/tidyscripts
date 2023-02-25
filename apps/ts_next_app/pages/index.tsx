@@ -24,7 +24,7 @@ import {
   Card,
 } from "@chakra-ui/react";
 
-
+import RL from './applab/RotatingLogo' ; 
 
 const msgs = ["Tidyscripts", "ok"]  ;
 
@@ -47,40 +47,51 @@ const card_style : any  = {
 
 const AllLinks = () => {
   return (
-    <Box>
-      <Card style={card_style}>
-	<Link href="/docs/index.html">
-          <Card style={card_style}>
-            <h2>Documentation &rarr;</h2>
-            <p>Explore Tidyscripts features and API.</p>
-          </Card >
-	</Link>
+      <Box>
+	  <Card style={card_style}>
+	      <Link href="/docs/index.html">
+		  <Card style={card_style}>
+		      <h2>Documentation &rarr;</h2>
+		      <p>Explore Tidyscripts features and API.</p>
+		  </Card >
+	      </Link>
 
-	<Link href="https://github.com/sheunaluko/tidyscripts">
-          <Card style={card_style}>
-            <h2>Github &rarr;</h2>
-            <p>See the source.</p>
-          </Card >
-	</Link>
+	      <Link href="https://github.com/sheunaluko/tidyscripts">
+		  <Card style={card_style}>
+		      <h2>Github &rarr;</h2>
+		      <p>See the source.</p>
+		  </Card >
+	      </Link>
 
-	<Link href="/applab/aidx">
-          <Card style={card_style}>
-            <h2>AI Diagnostics [Aidx] &rarr;</h2>
-            <p>
-              Aidx performs clinical decision support using Artifical Intelligence,
-              and is powered by OpenAI and Tidyscripts
-            </p>
-          </Card >
-	</Link>
+	      <Link href="/applab/aidx">
+		  <Card style={card_style}>
+		      <h2>AI Diagnostics [Aidx] &rarr;</h2>
+		      <p>
+			  Aidx performs clinical decision support using Artifical Intelligence,
+			  and is powered by OpenAI and Tidyscripts
+		      </p>
+		  </Card >
+	      </Link>
 
-	<Link href="/applab/local_storage_ui">
-          <Card style={card_style}>
-            <h2>LocalStorage Editor &rarr;</h2>
-            <p>User Interface for editing the LocalStorage object!</p>
-          </Card >
-	</Link>
-      </Card>
-    </Box>
+	      <Link href="/applab/vip">
+		  <Card style={card_style}>
+		      <h2>Voice Interface Panel [VIP] &rarr;</h2>
+		      <p>Configure browser Speech Recognition and Text-to-Speech</p>
+		  </Card >
+	      </Link>
+	      
+
+	      <Link href="/applab/local_storage_ui">
+		  <Card style={card_style}>
+		      <h2>LocalStorage Editor &rarr;</h2>
+		      <p>User Interface for editing the LocalStorage object!</p>
+		  </Card >
+	      </Link>
+
+	      
+	      
+	  </Card>
+      </Box>
   );
 };
 
@@ -123,14 +134,8 @@ const Home: NextPage = (props : any) => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Tidyscripts {' '}
-          <span className={styles.logo}>
-	    {(()=> {
-	      let y = 20 ;
-	      let x = Math.floor(1*y) ; 
-	      return (
-		<Image src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={x} height={y} />)})()}
-          </span>
+            Tidyscripts {' '}
+	    <RL />
 	  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
         </a>
       </footer>
