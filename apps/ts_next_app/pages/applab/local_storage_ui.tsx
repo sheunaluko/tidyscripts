@@ -58,17 +58,18 @@ const LocalStorageUi = () => {
   const [selectedKey, setSelectedKey] = useState("");
   const [newValue, setNewValue] = useState("");
   const [newKey, setNewKey] = useState("");
-  const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [stateToggle, setStateToggle] = useState(true );    
 
-  useEffect(() => {
-    const keys = Object.keys(localStorage);
-    const data = keys.map((key) => ({
-      key,
-      value: get(key),
-    }));
+    useEffect(() => {
+	const keys = Object.keys(localStorage);
+	const data = keys.map((key) => ({
+	    key,
+	    value: get(key),
+	}));
 
-    setStoredData(data);
-  }, []);
+	setStoredData(data);
+    }, []);
 
   const handleKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedKey(e.target.value);
@@ -130,77 +131,87 @@ const LocalStorageUi = () => {
   };
 
   return (
-    <><Box padding="20px">
+      <><Box padding="20px">
 
-      <br/>
-      
-      <FormControl>
-	<FormLabel htmlFor="keySelect">Choose the data to edit: </FormLabel>
-	<Select id="keySelect" value={selectedKey} onChange={handleKeyChange}>
-	  <option value="">Select data id</option>
-	  {storedData.map((data) => (
-	    <option key={data.key} value={data.key}>
-              {data.key}
-	    </option>
-	  ))}
-	</Select>
-      </FormControl>
-      {selectedKey && (
-	<Box mt={4}>
+	  <br/>
+
+	  
 	  <FormControl>
-	    <FormLabel htmlFor="valueInput">Value:</FormLabel>
-	    {Array.isArray(get(selectedKey)) ? (
-              <Box>
-		{get(selectedKey).map((value : any, index : any) => (
-		  <Input
-		    key={index}
-		    type="text"
-		    value={value}
-		    onChange={(e) => handleValueChange(e, index)}
-		  />
-		))}
+	      <FormLabel htmlFor="keySelect">Choose the data to edit: </FormLabel>
+	      <Select id="keySelect" value={selectedKey} onChange={handleKeyChange}>
+		  <option value="">Select data id</option>
+		  {storedData.map((data) => (
+		      <option key={data.key} value={data.key}>
+			  {data.key}
+		      </option>
+		  ))}
+	      </Select>
+	  </FormControl>
+	  {selectedKey && (
+	      <Box mt={4}>
+		  <FormControl>
+		      <FormLabel htmlFor="valueInput">Value:</FormLabel>
+		      {Array.isArray(get(selectedKey)) ? (
+			  <Box>
+			      {get(selectedKey).map((value : any, index : any) => (
+				  <Input
+				      key={index}
+				      type="text"
+				      value={value}
+				      onChange={(e) => handleValueChange(e, index)}
+				  />
+			      ))}
+			  </Box>
+		      ) : (
+			  <Input
+			      type="text"
+			      id="input"
+			      value={newValue}
+			      onChange={handleValueChange}
+			  />
+		      )}
+		      <br/>
+		      <br/>	    
+		  </FormControl>
+		  <Button onClick={handleSaveClick} ml={4}>
+		      Save
+		  </Button>
+		  <Button onClick={handleDeleteClick} ml={4}>
+		      Delete
+		  </Button>
               </Box>
-	    ) : (
-              <Input
-		type="text"
-		id="input"
-	      value={newValue}
-	      onChange={handleValueChange}
-              />
-	    )}
-	    <br/>
-	    <br/>	    
-          </FormControl>
-          <Button onClick={handleSaveClick} ml={4}>
-            Save
-          </Button>
-          <Button onClick={handleDeleteClick} ml={4}>
-            Delete
-          </Button>
-        </Box>
-      )}
-      <Button mt={4} onClick={handleNewKeyClick}>
-	Add new data
-      </Button>
-      <Modal isOpen={showModal} onClose={handleModalClose}>
-	<ModalOverlay />
-	<ModalContent>
-          <ModalHeader>Add new data</ModalHeader>
-          <ModalBody>
-            <FormControl>
-              <FormLabel htmlFor="newKeyInput">Id:</FormLabel>
-              <Input
-	      type="text"
-	      id="newKeyInput"
-	      value={newKey}
-	      onChange={(e) => setNewKey(e.target.value)}
-              />
-            </FormControl>
-          </ModalBody>
-          <Button onClick={handleNewKeySubmit}>Submit</Button>
-	</ModalContent>
-      </Modal></Box>
-    </>
+	  )}
+	  <Button mt={4} onClick={handleNewKeyClick}>
+	      Add new data
+	  </Button>
+
+
+	  <Button marginLeft="10px" mt={4} onClick={()=>{ setStateToggle( (a:any)=> (!a) ) }}> 
+	      Refresh Data
+	  </Button>	  
+	  
+	  <Modal isOpen={showModal} onClose={handleModalClose}>
+	      <ModalOverlay />
+	      <ModalContent>
+		  <ModalHeader>Add new data</ModalHeader>
+		  <ModalBody>
+		      <FormControl>
+			  <FormLabel htmlFor="newKeyInput">Id:</FormLabel>
+			  <Input
+			      type="text"
+			      id="newKeyInput"
+			      value={newKey}
+			      onChange={(e) => setNewKey(e.target.value)}
+			  />
+		      </FormControl>
+		  </ModalBody>
+		  <Button onClick={handleNewKeySubmit}>Submit</Button>
+	      </ModalContent>
+	  </Modal>
+
+	  
+      </Box>
+      </>
   );
 };
 

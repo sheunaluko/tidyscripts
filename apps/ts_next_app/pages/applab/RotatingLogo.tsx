@@ -15,15 +15,14 @@ import {
     Flex, 
     Image,
     Avatar,
-    shouldForwardProp
+    shouldForwardProp,
+    Link, 
 } from "@chakra-ui/react";
 
 import { chakra } from '@chakra-ui/react'
 import { motion, isValidMotionProp } from 'framer-motion'
 
 import * as tsw from 'tidyscripts_web'   
-
-
 
 const RL = () => {
 
@@ -39,7 +38,7 @@ const RL = () => {
     useEffect(() => {
     
     if (tsw.util.is_mobile() ) {
-       	set_logo_dims({x : "4em" , y : "2em"}) 
+       	set_logo_dims({x : "2em" , y : "2em"}) 
     } else {
 
     }
@@ -64,10 +63,9 @@ const RL = () => {
 		    justifyContent="center"
 		    alignItems="center"
 		    marginLeft="10px"
-		    marginRight="10px"		    
-		    
+		    marginRight="10px"
 		>
-		    <Image id="logo_img" src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={logo_dims.x} height={logo_dims.y} borderRadius="full" />
+		<Image id="logo_img" src="/tidyscripts_logo.png" alt="Tidyscripts Logo" width={logo_dims.x} height={logo_dims.y} borderRadius="full" />
 		</ChakraBox>
     );
 };
