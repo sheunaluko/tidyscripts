@@ -69,7 +69,7 @@ const LocalStorageUi = () => {
 	}));
 
 	setStoredData(data);
-    }, []);
+    }, [stateToggle]);
 
   const handleKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedKey(e.target.value);
