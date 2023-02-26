@@ -50,6 +50,8 @@ import * as sr from "./speech_recognition"
 import * as tts from "./tts" 
 import * as ap from "./audio_processing" 
 
+import * as LS from "../apis/local_storage" ; 
+
 import {logger} from "tidyscripts_common"
 
 var log = logger.get_logger({id : "voice_interface"}) ; 
@@ -144,13 +146,11 @@ export function stop_recognition_and_detection() {
 export function start_recognition_and_detection(t : number) {
     start_recognition() 
     ap.set_detection_threshold(t) 
-} 
-
-export var default_voice : string | null = null  
+}
 
 
-export function set_default_voice(v : string) {
-    default_voice = v 
+export function set_default_voice_uri(v : string) {
+    LS.store('default_voice_uri', v) 
 }
 
 export function set_default_tts_rate(n :number) {
@@ -161,7 +161,7 @@ export function set_default_voice_from_name_preference_list(l : string[]) {
   for (var voice of l ) {
     let match = tts.get_voice_by_name(voice) ;
     if (match ) {
-      set_default_voice(match.voiceURI) ; log(`Set default voice to: ${match.name}`); return 
+      set_default_voice_uri(match.voiceURI) ; log(`Set default voice to: ${match.name}`); return 
     } else {
       //
     } 
@@ -183,11 +183,13 @@ export async function speak_with_voice(text :string,voiceURI : string | null,rat
 } 
 
 export async function speak(text : string) {
-  speak_with_voice(text,default_voice, tts.default_rate) 
+    let voice_uri = LS.get('default_voice_uri') 
+    speak_with_voice(text,voice_uri, tts.default_rate) 
 }
 
 export async function speak_with_rate(text : string, rate : number) {
-  speak_with_voice(text,default_voice, rate)   
+    let voice_uri = LS.get('default_voice_uri') 
+    speak_with_voice(text,voice_uri, rate)   
 } 
 
 
