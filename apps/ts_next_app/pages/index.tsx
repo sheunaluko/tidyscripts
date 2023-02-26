@@ -49,7 +49,7 @@ const AllLinks = () => {
   return (
       <Box>
 	  <Card style={card_style}>
-	      <Link href="/docs/index.html">
+	      <Link href="/resources/docs/index.html">
 		  <Card style={card_style}>
 		      <h2>Documentation &rarr;</h2>
 		      <p>Explore Tidyscripts features and API.</p>
