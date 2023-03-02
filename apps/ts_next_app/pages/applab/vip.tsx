@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import {
     Box,
@@ -47,7 +47,7 @@ import LS_UI from './local_storage_ui' ;
 
 declare var speechSynthesis : any ;
 declare var window : any ;
-const tts_test_input_id = "voice_panel_test" 
+const tts_test_input_id = "voice_panel_test"  ; 
 
 
 export default function Component() { 
@@ -64,7 +64,11 @@ export default function Component() {
     const [enabledState, setEnabledState] = useState(vi_enabled()) 
     const [speechState, setSpeechState] = useState(false) 
     const [voicesState, setVoicesState] = useState([]) 
-    const [micInterval ,setMicInterval ] = useState(null as any) 
+    const [micInterval ,setMicInterval ] = useState(null as any)
+
+    const mic_max = useRef(0);
+
+
     
     
     let voice_result_handler =  async function(e :any) {
@@ -80,8 +84,8 @@ export default function Component() {
     
     var mic_handler =  async function(e :any) {
 	let power = e.detail
-	mic_max = Math.max(mic_max,power)
-	let val = 100*(power/mic_max)
+	mic_max.current = Math.max(mic_max.current,power)
+	let val = 100*(power/mic_max.current)
 	let t_now = performance.now() ;
 
 	if ( t_now-t_last > 50 ) { 
@@ -116,7 +120,7 @@ export default function Component() {
 	
 	var i  = setInterval(
 	    function() {
-		mic_max = 0 
+		mic_max.current = 0 
 	    } , 
 	    10*1000
 	)
@@ -132,7 +136,7 @@ export default function Component() {
     }, [])
 
     
-    var mic_max = 0  ; 
+
     
     
     const dm = "20px"

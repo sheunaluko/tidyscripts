@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import {useEffect} from 'react' ; 
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import styles from '../../styles/Home.module.css'
 import Link from 'next/link' ; 
 
 import * as tsn from "tidyscripts_node" ;
@@ -17,6 +17,7 @@ import {
   Modal,
   ModalBody,
   ModalContent,
+  
   ModalHeader,
   ModalOverlay,
   Select,
@@ -24,9 +25,10 @@ import {
   Card,
 } from "@chakra-ui/react";
 
-import RL from './applab/RotatingLogo' ; 
+import RL from './RotatingLogo' ; 
 
-const msgs = ["Tidyscripts", "ok"]  ;
+const msgs = ["App Lab", "ok"]  ;
+
 
 
 export async function getStaticProps(context :any) {
@@ -48,20 +50,9 @@ const card_style : any  = {
 const AllLinks = () => {
   return (
       <Box>
-	  <Card style={card_style}>
-	      <Link href="/resources/docs/index.html">
-		  <Card style={card_style}>
-		      <h2>Documentation &rarr;</h2>
-		      <p>Explore Tidyscripts features and API.</p>
-		  </Card >
-	      </Link>
 
-	      <Link href="https://github.com/sheunaluko/tidyscripts">
-		  <Card style={card_style}>
-		      <h2>Github &rarr;</h2>
-		      <p>See the source.</p>
-		  </Card >
-	      </Link>
+	  <Card style={card_style}>
+
 
 	      <Link href="/applab/aidx">
 		  <Card style={card_style}>
@@ -73,19 +64,32 @@ const AllLinks = () => {
 		  </Card >
 	      </Link>
 
-	      <Link href="/applab">
+	      <Link href="/applab/vip">
 		  <Card style={card_style}>
-		      <h2>App Lab &rarr;</h2>
-		      <p>A collection of powerful and portable web applications for Chrome and Safari
-
-		      </p>
+		      <h2>Voice Interface Panel [VIP] &rarr;</h2>
+		      <p>Configure browser Speech Recognition and Text-to-Speech</p>
 		  </Card >
 	      </Link>
-	      
+
+	      <Link href="/applab/log_input_panel">
+		  <Card style={card_style}>
+		      <h2>Log Input Panel [LIP] &rarr;</h2>
+		      <p>Store logs securely on your device</p>
+		  </Card >
+	      </Link>
+
+
+	      <Link href="/applab/local_storage_ui">
+		  <Card style={card_style}>
+		      <h2>LocalStorage Editor &rarr;</h2>
+		      <p>User Interface for editing the LocalStorage object of your device</p>
+		  </Card >
+	      </Link>
 
 	      
 	      
-	  </Card>
+	  </Card>	  
+
       </Box>
   );
 };
@@ -100,31 +104,31 @@ const Home: NextPage = (props : any) => {
     },[])
 
   return (
-      <div className={styles.container}>
-	  <Head>
-              <title>Tidyscripts</title>
-              <meta name="description" content="A typescript developer oasis" />
-              <link rel="icon" href="/favicon.ico" />
-	  </Head>
+    <div className={styles.container}>
+      <Head>
+        <title>Tidyscripts</title>
+        <meta name="description" content="A typescript developer oasis" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
 
-	  <main className={styles.main}>
-              <h1 className={styles.title}>
-		  Welcome to <a href="https://github.com/sheunaluko/tidyscripts"> { props.msg } </a>
-              </h1>
+      <main className={styles.main}>
+        <h1 className={styles.title}>
+          Welcome to the <a href="https://github.com/sheunaluko/tidyscripts"> { props.msg } </a>
+        </h1>
 
-              <p className={styles.description}>
-		  An elegant tool for serious builders. 
-              </p>
-
-
-              <Flex >
-		  <AllLinks />
-              </Flex>
-	      
-	  </main>
+        <p className={styles.description}>
+          An collection of powerful and portable web applications for Chrome and Safari
+        </p>
 
 
-      	  <footer className={styles.footer}>
+        <Flex >
+	  <AllLinks />
+        </Flex>
+	
+      </main>
+
+
+	  <footer className={styles.footer}>
               <a
 		  href="https://www.tidyscripts.com"	  
               >
@@ -134,8 +138,8 @@ const Home: NextPage = (props : any) => {
               </a>
 	  </footer>
 
-	  
-      </div>
+
+    </div>
   )
 }
 
