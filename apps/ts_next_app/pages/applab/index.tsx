@@ -1,5 +1,6 @@
 import type { NextPage } from 'next'
-import {useEffect} from 'react' ; 
+import {useEffect, Fragment} from 'react' ;
+
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../../styles/Home.module.css'
@@ -25,7 +26,7 @@ import {
   Card,
 } from "@chakra-ui/react";
 
-import RL from './RotatingLogo' ; 
+import TFooter from '../../components/Footer' ; 
 
 const msgs = ["App Lab", "ok"]  ;
 
@@ -117,7 +118,7 @@ const Home: NextPage = (props : any) => {
         </h1>
 
         <p className={styles.description}>
-          An collection of powerful and portable web applications for Chrome and Safari
+          A collection of powerful and portable web applications for Chrome and Safari
         </p>
 
 
@@ -128,15 +129,7 @@ const Home: NextPage = (props : any) => {
       </main>
 
 
-	  <footer className={styles.footer}>
-              <a
-		  href="https://www.tidyscripts.com"	  
-              >
-		  Tidyscripts {' '}
-		  <RL /> 
-		  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
-              </a>
-	  </footer>
+      <TFooter/>
 
 
     </div>

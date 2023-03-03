@@ -24,7 +24,7 @@ import {
   Card,
 } from "@chakra-ui/react";
 
-import RL from './applab/RotatingLogo' ; 
+import TFooter from '../components/Footer' ; 
 
 const msgs = ["Tidyscripts", "ok"]  ;
 
@@ -124,15 +124,7 @@ const Home: NextPage = (props : any) => {
 	  </main>
 
 
-      	  <footer className={styles.footer}>
-              <a
-		  href="https://www.tidyscripts.com"	  
-              >
-		  Tidyscripts {' '}
-		  <RL /> 
-		  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
-              </a>
-	  </footer>
+      	  <TFooter/> 
 
 	  
       </div>

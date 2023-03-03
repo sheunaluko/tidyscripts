@@ -19,7 +19,8 @@ import {
 
 
 import LocalStorageUi from "./local_storage_ui"
-import RL from './RotatingLogo' ; 
+
+import TFooter from '../../components/Footer' ; 
 
 
 
@@ -359,15 +360,8 @@ const test_cases = [
 	    
 	  </Box>
 
-	  <footer className={styles.footer}>
-            <a
-              href="https://www.tidyscripts.com"	  
-            >
-              Tidyscripts {' '}
-		<RL /> 
-	      {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved. 
-            </a>
-	  </footer>
+	  <TFooter /> 
+	  
 	</Box>
       )
     }
