@@ -39,7 +39,7 @@ import { chakra } from '@chakra-ui/react'
 import { motion, isValidMotionProp } from 'framer-motion'
 import * as tsw from "tidyscripts_web"
 
-import RL from '../../components/RotatingLogo' ;
+import RL from './RotatingLogo' ;
 
 
 
@@ -96,7 +96,7 @@ export default function Component() {
 		
 		<Box >
 		    
-		    <Text marginTop={0} marginBottom={dm}> Section FIVE      </Text>
+		    <Text marginTop={0} marginBottom={dm}> Section F i V e      </Text>
 		    
 		    
 		</Box>	    
