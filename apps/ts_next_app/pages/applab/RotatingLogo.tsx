@@ -33,12 +33,12 @@ const RL = () => {
 	shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop),
     });
     
-    let [logo_dims,set_logo_dims] = useState( { x : "2em" , y : "2em" } )  ; 
+    let [logo_dims,set_logo_dims] = useState( { x : "3cm" , y : "3cm" } )  ; 
     
     useEffect(() => {
     
     if (tsw.util.is_mobile() ) {
-       	set_logo_dims({x : "2em" , y : "2em"}) 
+       	//set_logo_dims({x : "2em" , y : "2em"}) 
     } else {
 
     }
