@@ -24,7 +24,7 @@ import { motion, isValidMotionProp } from 'framer-motion'
 
 import * as tsw from 'tidyscripts_web'   
 
-const RL = () => {
+const RL = (props: any) => {
 
     const ChakraBox = chakra(motion.div, {
 	/**
@@ -32,16 +32,25 @@ const RL = () => {
 	 */
 	shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop),
     });
+
+
+
     
-    let [logo_dims,set_logo_dims] = useState( { x : "2em" , y : "2em" } )  ; 
+    
+    let [logo_dims,set_logo_dims] = useState( { x : "30px" , y : "30px" } )  ;
+
     
     useEffect(() => {
-    
-    if (tsw.util.is_mobile() ) {
-       	set_logo_dims({x : "2em" , y : "2em"}) 
-    } else {
 
-    }
+	if (props.logo_dims) {
+	    set_logo_dims(props.logo_dims) 
+	} 
+
+	if (tsw.util.is_mobile() ) {
+       	    //set_logo_dims({x : "2em" , y : "2em"}) 
+	} else {
+
+	}
 
     }, []);
 
