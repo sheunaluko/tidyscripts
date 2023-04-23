@@ -1,6 +1,7 @@
 
 import puppeteer from 'puppeteer' ;
 import tidyscripts_common from 'tidyscripts_common'  ;
+import * as apis from "./apis/index"
 
 
 const log = console.log // tidyscripts_common.logger.get_logger({id: "puppeteer"}) ;
@@ -37,7 +38,7 @@ export async function new_page(ops :any) {
 
 
 
-export { puppeteer }
+export { puppeteer, apis }
 
 
 	

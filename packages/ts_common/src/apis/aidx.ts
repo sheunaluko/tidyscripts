@@ -272,6 +272,9 @@ EXAMPLE RESPONSE:
 }
 `
     let api_result = await ask_ai(prompt, 2048) ;
+    /*
+      Todo: check api_result.error and if true handle the UI :) 
+    */ 
     var patient_data = (api_result.data as PatientData) ; 
     return patient_data;
 
