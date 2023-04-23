@@ -3,9 +3,11 @@
 */
 import fs from 'fs';
 
-import * as io from "./io"
+import * as io from "./io" ; 
+import { Readable } from 'stream'  ;
+import { finished } from 'stream/promises' ; 
 
-//let log = common.logger.get_logger({id: "http"}) 
+
     
 export var debug = false ;
 
@@ -78,7 +80,7 @@ export async function download_url_to_file(url : string, fname : string) {
     io.ensure_parents(fname) ; 
     const fileStream = fs.createWriteStream(fname);
     await new Promise((resolve, reject) => {
-	let body = (res.body as any) ;
+	var body = Readable.fromWeb(res.body as any);
 	body.pipe(fileStream);
 	body.on("error", reject);
 	fileStream.on("finish", resolve);

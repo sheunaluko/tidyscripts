@@ -45,7 +45,7 @@ import * as tsw from "tidyscripts_web"
 
 import styles from "../../styles/Log_input_panel.module.css"
 
-import RL from '../../components/RotatingLogo.tsx' ; 
+import RL from '../../components/RotatingLogo' ; 
 
 
 interface LogObject {

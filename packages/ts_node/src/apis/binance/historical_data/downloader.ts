@@ -1,9 +1,8 @@
 
-import * as node from "../../../index"
 import * as common from "tidyscripts_common" 
+import { io, puppeteer , cryptography, http } from  "../../../index"
 
-var { io, puppeteer , cryptography, http } = node ;
-var {R} = common ; ;
+var {R} = common ; 
 
 
 
@@ -32,10 +31,10 @@ export function link_to_fpath(link : string) {
 export async function handle_link_object( dir  : string, lo : any ) {
     
     let { checksum_link , zip_link } = lo ;
-    let cpath = node.io.path.join( dir, link_to_fpath(checksum_link) )
-    let zpath = node.io.path.join( dir, link_to_fpath(zip_link) )
+    let cpath = io.path.join( dir, link_to_fpath(checksum_link) )
+    let zpath = io.path.join( dir, link_to_fpath(zip_link) )
     //download both links
-    if (node.io.exists(cpath) && node.io.exists(zpath) ) {
+    if (io.exists(cpath) && io.exists(zpath) ) {
 	log(`ALREADY EXISTS: ${cpath}`)
 	log(`ALREADY EXISTS: ${zpath}`)
 	
@@ -50,7 +49,7 @@ export async function handle_link_object( dir  : string, lo : any ) {
     
     log("Validating checksum...")
     let ccs = cryptography.file_checksum(zpath, 'sha256').trim() ;
-    let rcs = node.io.read_text(cpath).split(/\s/)[0].trim() ;
+    let rcs = io.read_text(cpath).split(/\s/)[0].trim() ;
     if ( ccs == rcs ) {
 	log("Checksums match!")  ; 
     } else {
@@ -59,15 +58,15 @@ export async function handle_link_object( dir  : string, lo : any ) {
 	log(`realchec=${rcs}`)
 
 	log("Deleting files...")
-	node.io.rm(cpath) ;
-	node.io.rm(zpath) ;
+	io.rm(cpath) ;
+	io.rm(zpath) ;
 	log("Trying again...")
 	await handle_link_object(dir, lo) ; 
     }
 
     //now that checksums match we can unzip the files
     log(`Unzipping ${zpath}`)
-    await node.io.unzip_to_directory(zpath,node.io.path.dirname(zpath))
+    await io.unzip_to_directory(zpath,io.path.dirname(zpath))
     log(`Done`)
     
 } 
@@ -107,6 +106,10 @@ export async function download_data_for_page(dir : string, p : string) {
  * and this will download the hourly kline data for that symbol. 
  * This includes downloading zip files, checking the checksums, and extracting the csvs. 
  * The data will be in a nested location within the suppplied top level directory. 
+ * For example, in the node command line just run this... 
+ * ```
+ * let _ = await ts.apis.binance.historical_data.downloader.download_hourly_kline_data_for_symbol("/path/to/data/crypto/historical", "ETHBTC")
+ * ```
  */
 export async function download_hourly_kline_data_for_symbol(dir : string, symbol : string) {
 
