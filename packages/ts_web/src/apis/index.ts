@@ -1,13 +1,15 @@
-import * as key_presses from "./keypresses"  
-import * as bind_sounds_to_keys from "./bind_sounds_to_keys" 
+import * as key_presses from "./keypresses"
+import * as bind_sounds_to_keys from "./bind_sounds_to_keys"
 import * as local_storage from "./local_storage"
-import * as openai from "./openai" 
+import * as openai from "./openai"
+import * as webtransport from "./webtransport"
 
-export { 
-  key_presses, 
-  local_storage, 
-  bind_sounds_to_keys ,
-  openai, 
-} 
+export {
+  key_presses,
+  local_storage,
+  bind_sounds_to_keys,
+  openai,
+  webtransport,
+}
 
 
