@@ -8,6 +8,7 @@ packages/ts_node/resources
 
 apps/ts_next_app/public/docs/**
 apps/ts_next_app/public/resources/docs/**
+apps/ts_next_app/.next/
  
 .turbo
 **/.vercel/output/** 
