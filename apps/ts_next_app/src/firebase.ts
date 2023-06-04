@@ -1,7 +1,7 @@
 // imports
 import * as tsw from "tidyscripts_web";
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithRedirect } from "firebase/auth";
+import { getAuth, signInWithRedirect, signOut } from "firebase/auth";
 import {
   GoogleAuthProvider,
   GithubAuthProvider,
@@ -34,35 +34,17 @@ const GithubProvider = new GithubAuthProvider();
 export function google_sign_in() { signInWithRedirect(auth, GoogleProvider) }
 export function facebook_sign_in() { signInWithRedirect(auth, FacebookProvider) }
 export function github_sign_in() { signInWithRedirect(auth, GithubProvider) }
-/*
 
-declare var window: any;
-export var scripts_loaded = false;
-export var app_initialized = false;
-export var app: any = null;
 
-export async function load_firebase() {
-  if (scripts_loaded) { log(`already loaded the firebase resources`) } else {
-    await tsw.apis.firebase.loader.load_all();
-    scripts_loaded = true;
-  }
-  //now the firebase resources are available in the global scope for all pages 
+/* Create signout functions for export */
+export function log_out() {
+  const auth = getAuth();
+  signOut(auth).then(() => {
+    // Sign-out successful.
+    log("User signed out")
+  }).catch((error) => {
+    // An error happened.
+    log("Signout error")
+  });
 }
 
-export async function init_firebase_app() {
-  await load_firebase();
-  app = window.firebase.initializeApp(firebaseConfig);
-  log(`Firebase app initialized`)
-  app_initialized = true;
-  return app
-}
-
-
-export async function firebase_app_initialized() {
-  if (app_initialized) { return true } else {
-    await init_firebase_app()
-    return true;
-  }
-}
-
-*/

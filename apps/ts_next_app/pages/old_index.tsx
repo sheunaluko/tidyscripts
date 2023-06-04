@@ -7,7 +7,6 @@ import Link from 'next/link' ;
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 
-import * as tsn from "tidyscripts_node" ;
 import * as tsw from "tidyscripts_web"  ;
 
 
@@ -28,19 +27,6 @@ import {
 } from "@chakra-ui/react";
 
 import TFooter from '../components/Footer' ; 
-
-const msgs = ["Tidyscripts", "ok"]  ;
-
-
-export async function getStaticProps(context :any) {
-  /*
-     Tidyscripts node library can run here inside getStaticProps
-     because this function runs on the server side! 
-  */
-  return {
-      props: {msg :  tsn.common.fp.first(msgs) },
-  }
-}
 
 declare var window : any ;
 
@@ -111,7 +97,7 @@ const Home: NextPage = (props : any) => {
   
   useEffect( ()=>{
     /*
-       Assign tidyscripts library and firebase to global window object
+       Assign tidyscripts library to window 
      */
     Object.assign(window, {
           tsw ,
@@ -128,7 +114,7 @@ const Home: NextPage = (props : any) => {
 
 	  <main className={styles.main}>
               <h1 className={styles.title}>
-		  Welcome to <a href="https://github.com/sheunaluko/tidyscripts"> { props.msg } </a>
+		  Welcome to <a href="https://github.com/sheunaluko/tidyscripts"> { "Tidyscripts" } </a>
               </h1>
 
               <p className={styles.description}>

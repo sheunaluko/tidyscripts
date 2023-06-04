@@ -1,5 +1,7 @@
+'use client';
+
 import type { NextPage } from 'next'
-import {useEffect, Fragment} from 'react' ;
+import { Fragment} from 'react' ;
 
 import Head from 'next/head'
 import Image from 'next/image'
@@ -18,7 +20,6 @@ import {
   Modal,
   ModalBody,
   ModalContent,
-  
   ModalHeader,
   ModalOverlay,
   Select,
@@ -27,23 +28,44 @@ import {
 } from "@chakra-ui/react";
 
 import RL from './RotatingLogo' ;
+import AuthWidget from './AuthWidget' 
+
 
 function Footer() { 
 
   return (
-	  <footer className={styles.footer}>
-              <Link
-		  href="/"
+    <footer className={styles.footer}>
+      <Flex style={{"cursor":"pointer"}}
+	    direction="row"
+	    alignItems="center"
+      >
 
-              >
-	      <Flex style={{"cursor":"pointer"}}
-	      	    direction="row"  >
-		  Tidyscripts {' '}
-		  <RL /> 
-		  {'   '}     Copyright © 2023 Sheun Aluko, MD. All rights reserved.    		  </Flex> 
-              </Link>
-	  </footer>
-	    )
+	<Link
+	  href="/"
+
+	>
+
+	  Tidyscripts
+	  {' '}
+	  <RL /> 
+	  {'   '}
+
+	</Link>
+
+
+	<span>
+	  Copyright © 2023 Sheun Aluko, MD. All rights reserved
+	</span>
+	{'   '}
+	<div style={{marginLeft : "5px"}}>
+	  <AuthWidget />
+	</div>
+	  
+      </Flex> 
+
+      
+    </footer>
+  )
 }
 
 
