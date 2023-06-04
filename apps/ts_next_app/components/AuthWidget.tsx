@@ -41,7 +41,7 @@ const logout = (
 )
 
 const login = (
-  <Button size="sm" onClick={function(){window.location="/login" }}>
+  <Button size="sm" onClick={function(){window.location.href="/login" }}>
     Log In
   </Button>
   
