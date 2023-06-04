@@ -1,0 +1,6 @@
+TIDYSCRIPTS NOTES
+-----------------
+
+
+1. Can utilize the .env files to configure the "localhost" vs "tidyscripts.com" api endpoints for seamless api testing while in development mode.
+

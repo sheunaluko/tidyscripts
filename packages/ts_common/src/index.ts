@@ -6,13 +6,14 @@ import * as web3 from './web3/index'
 import * as util from './util/index'
 import * as asnc from "./async"
 import * as apis from "./apis"
+import * as midi_encoder from "./midi_encoder"
 
-const log = logger.get_logger({id : "common"}) ; 
+const log = logger.get_logger({ id: "common" });
 
-export async function get_json_from_url(url : string, data : any ) {
+export async function get_json_from_url(url: string, data: any) {
 
   let full_url = `${url}?${new URLSearchParams(data)}`
-  log(`Querying with url= ${full_url}`) 
+  log(`Querying with url= ${full_url}`)
 
   const response = await fetch(full_url, {
     method: 'GET', // *GET, POST, PUT, DELETE, etc.
@@ -30,15 +31,16 @@ export async function get_json_from_url(url : string, data : any ) {
 
 
 
-export   { 
-    fp,
-    logger,
-    R,
-    trading ,
-    web3,
-    util ,
+export {
+  fp,
+  logger,
+  R,
+  trading,
+  web3,
+  util,
   asnc,
-  apis ,
+  apis,
+  midi_encoder,
 }
 
 
