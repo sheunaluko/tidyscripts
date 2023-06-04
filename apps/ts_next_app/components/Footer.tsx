@@ -5,7 +5,7 @@ import { Fragment} from 'react' ;
 
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import styles from '../styles/Layout.module.css'
 import Link from 'next/link' ; 
 
 import * as tsn from "tidyscripts_node" ;
@@ -25,6 +25,7 @@ import {
   Select,
   Flex , 
   Card,
+  Show
 } from "@chakra-ui/react";
 
 import RL from './RotatingLogo' ;
@@ -35,9 +36,9 @@ function Footer() {
 
   return (
     <footer className={styles.footer}>
-      <Flex style={{"cursor":"pointer"}}
-	    direction="row"
-	    alignItems="center"
+      <Flex 
+	direction="row"
+	alignItems="center"
       >
 
 	<Link
@@ -53,14 +54,17 @@ function Footer() {
 	</Link>
 
 
+	<Show above="sm">
 	<span>
-	  Copyright © 2023 Sheun Aluko, MD. All rights reserved
+	  Copyright © 2023 Sheun Aluko, MD
 	</span>
+	</Show>
+	
 	{'   '}
 	<div style={{marginLeft : "5px"}}>
 	  <AuthWidget />
 	</div>
-	  
+	
       </Flex> 
 
       

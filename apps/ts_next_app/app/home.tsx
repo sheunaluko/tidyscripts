@@ -42,7 +42,8 @@ const card_style : any  = {
 const AllLinks = () => {
   return (
     <Box>
-      <Card style={card_style}>
+
+      
 	<Link href="/resources/docs/index.html">
 	  <Card style={card_style}>
 	    <h2>Documentation &rarr;</h2>
@@ -88,7 +89,7 @@ const AllLinks = () => {
 
 	
 	
-      </Card>
+
     </Box>
   );
 };
