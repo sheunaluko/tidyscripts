@@ -5,11 +5,12 @@ import { Fragment} from 'react' ;
 
 import Head from 'next/head'
 import Image from 'next/image'
-import styles from '../styles/Layout.module.css'
+import styles from '../styles/Footer.module.css'
 import Link from 'next/link' ; 
 
-import * as tsn from "tidyscripts_node" ;
-import * as tsw from "tidyscripts_web"  ; 
+import * as tsw from "tidyscripts_web"  ;
+
+import Drawer from '../components/Drawer' ; 
 
 import {
   Box,
@@ -31,6 +32,12 @@ import {
 import RL from './RotatingLogo' ;
 import AuthWidget from './AuthWidget' 
 
+const Home = (
+  <Button size="sm" onClick={function(){window.location.href="/" }}>
+    Home
+  </Button>
+  
+)
 
 function Footer() { 
 
@@ -38,7 +45,7 @@ function Footer() {
     <footer className={styles.footer}>
       <Flex 
 	direction="row"
-	alignItems="center"
+		   alignItems="center"
       >
 
 	<Link
@@ -55,15 +62,23 @@ function Footer() {
 
 
 	<Show above="sm">
-	<span>
-	  Copyright © 2023 Sheun Aluko, MD
-	</span>
+	  <span>
+	    Copyright © 2023 Sheun Aluko, MD
+	  </span>
 	</Show>
 	
 	{'   '}
 	<div style={{marginLeft : "5px"}}>
 	  <AuthWidget />
 	</div>
+	<div style={{marginLeft : "5px"}}>
+	  {Home}
+	</div>
+	<div style={{marginLeft : "5px"}}>
+	  <Drawer /> 
+	</div>
+	
+
 	
       </Flex> 
 

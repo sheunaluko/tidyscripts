@@ -1,50 +1,20 @@
+'use client';
+
 import type { NextPage } from 'next'
 
 import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../../styles/Home.module.css'
+import styles from '../../../styles/Default.module.css'
 import { Button, ButtonGroup,Textarea, Spinner, Box, useToast, useDisclosure, Select, Flex, Icon} from '@chakra-ui/react'
 import { PhoneIcon, AddIcon, WarningIcon, SettingsIcon } from '@chakra-ui/icons'
-import {
-    Drawer,
-    DrawerBody,
-    DrawerFooter,
-    DrawerHeader,
-    DrawerOverlay,
-    DrawerContent,
-    DrawerCloseButton,
-} from '@chakra-ui/react'
-
-
-import LocalStorageUi from "./local_storage_ui"
-
-import TFooter from '../../components/Footer' ; 
-
-
 
 import {ObjectInspector } from 'react-inspector';
-
-import * as tsn from "tidyscripts_node" ;
-import * as tsw from "tidyscripts_web"  ; 
-
-//const {Box} = tsw.components.chakra_ui ; 
+import * as tsw from "tidyscripts_web"  ;
 
 const log = tsw.common.logger.get_logger({id:"aidx"}) ; 
-const msgs = ["aidx", "is" , "the" , "best"]  ;
-
-export async function getStaticProps(context :any) {
-  /*
-     This is where I can write nodejs code :) 
-   */
-  return {
-    props: {msg :  msgs.join(" ") },
-  }
-  
-}
 
 declare var window : any ;
+
 const ONE_LINER_ID = "one_liner" ;
 const HP_ID = "hp" ;
 const init_case_index = 0 ; 
@@ -82,19 +52,15 @@ const test_cases = [
 
 
 
-    const Home: NextPage = (props : any) => {
+const Component: NextPage = (props : any) => {
 
-      useEffect(  ()=> {init()} , [] ) ; //init script
-
-
-      const { isOpen, onOpen, onClose } = useDisclosure()
-      const btnRef : any  = React.useRef()
+  useEffect(  ()=> {init()} , [] ) ; //init script
 
 
-      
-      let init_state = false ; 
-      
-      var [getting_query , set_getting_query]  = useState( init_state ) ;
+  
+  let init_state = false ; 
+  
+  var [getting_query , set_getting_query]  = useState( init_state ) ;
   var [getting_cds   , set_getting_cds]    = useState( init_state ) ;
   var [structured_patient_data   , set_structured_patient_data]     = useState( {} as any ) ;
   var [diagnostic_response_data  , set_diagnostic_response_data]    = useState( {} as any ) ;       
@@ -227,164 +193,98 @@ const test_cases = [
     set_case(index) ; 
   } 
 
-      const default_inspector_expansion = ['$', '$.*','$.*.*'] ;
+  const default_inspector_expansion = ['$', '$.*','$.*.*'] ;
 
 
-      var drawerToast = function() {
-	toast({
-	  title: 'Hey there!' , 
-	  description: "Tidyscripts stores data locally in your browser's storage, and your data never leaves your device. We are comitted to providing value to  you without compromising on your security or privacy",
-	  status: 'info',
-	  duration: 5000,
-	  isClosable: true,
-	})
-      } 
+  var drawerToast = function() {
+    toast({
+      title: 'Hey there!' , 
+      description: "Tidyscripts stores data locally in your browser's storage, and your data never leaves your device. We are comitted to providing value to  you without compromising on your security or privacy",
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
+    })
+  } 
+  
+  return (
+    <Box style={{'width' : "100%" , 'overflowX' : 'hidden' }}>
+      <h1 className={styles.title}>
+        Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
+      </h1>
+
+      <p className={styles.description}>
+        Clinical Decision Support powered by Artificial Intelligence
+      </p>
+
       
-      return (
-	<Box style={{padding : "20px"}} >
+      <Select placeholder='Select and edit a case or input your own one-liner and free-text H&P below:' onChange={handle_case_selection} style={{marginBottom : "20px"}} >
+	{
+	  (tsw.common.fp.range(test_cases.length)).map( (x:any) => (<option key={x} value={x}>Case {x+1}: {test_cases[x].one_liner.slice(0,60)}...</option>)) 
+	}
+      </Select>
+      
+      <Box>
+	
+        <h1>One Liner:</h1>
+        <Textarea id={ONE_LINER_ID} /> 
 
-	  <Drawer
-            isOpen={isOpen}
-            placement='right'
-            onClose={onClose}
-            finalFocusRef={btnRef}
-	  >
-            <DrawerOverlay />
-            <DrawerContent>
-              <DrawerCloseButton />
-              <DrawerHeader>Settings</DrawerHeader>
+        <h1>H&P:</h1>
+        <Textarea id={HP_ID}/>
 
-              <DrawerBody>
-		<h1>
-    {'Use the dropdown menu to edit your stored data. If you need to create new local data or settings, please use the "Add a new key" button below.'  }
-		</h1>
-		<LocalStorageUi />
-              </DrawerBody>
+      </Box>
 
-	      {/*
-		  <DrawerFooter>
-		  <Button variant='outline' mr={3} onClick={onClose}>
-		  Cancel
-		  </Button>
-		  <Button colorScheme='blue'>Save</Button>
-		  </DrawerFooter>
-		*/}
-	      
-            </DrawerContent>
-	  </Drawer>
+      <Flex flexDirection="column" align="center">
 
-	  
-	  <Head>
-            <title>Tidyscripts</title>
-            <meta name="description" content="AIDX (Ai Diagnostics)" />
-            <link rel="icon" href="/favicon.ico" />
-	  </Head>
+	<Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
+	  Generate Structured Medical Data
+	</Button>
 
-	  <Box  >
-            <h1 className={styles.title}>
-              Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
-            </h1>
-
-            <p className={styles.description}>
-              Clinical Decision Support powered by Artificial Intelligence
-            </p>
-
-	    
-	    <Select placeholder='Select and edit a case or input your own one-liner and free-text H&P below:' onChange={handle_case_selection} style={{marginBottom : "20px"}} >
-	      {
-		(tsw.common.fp.range(test_cases.length)).map( (x:any) => (<option key={x} value={x}>Case {x+1}: {test_cases[x].one_liner.slice(0,60)}...</option>)) 
-	      }
-	    </Select>
-	    
-            <Box>
-	      
-              <h1>One Liner:</h1>
-              <Textarea id={ONE_LINER_ID} /> 
-
-              <h1>H&P:</h1>
-              <Textarea id={HP_ID}/>
-
-            </Box>
-
-	    <Flex flexDirection="column" align="center">
-
-	      <Button style={{marginTop : "30px"}} onClick={handle_getting_query}>
-		Generate Structured Medical Data
-	      </Button>
-
-	      <Box style={{marginTop : "30px" }}>
-		{
-		  (function() {
-		    let spinner = ( <Spinner style={{marginTop : "30px" }}
-					     thickness='4px'
-					     speed='0.65s'
-					     emptyColor='gray.200'
-					     color='blue.500'
-					     size='xl' 	/> )
-		    let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
-		    return ( getting_query ? spinner : data ) 
-		  })()
-		}			       
-	      </Box>
-
-	      <Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
-		Generate Differential and Workup
-	      </Button>
-
-
-	      <Box style={{marginTop : "30px" }}>
-		{
-		  (function() {
-		    let spinner = ( <Spinner style={{marginTop : "30px" }}
-					     thickness='4px'
-					     speed='0.65s'
-					     emptyColor='gray.200'
-					     color='blue.500'
-					     size='xl' 	/> )
-		    let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
-		    return ( getting_cds ? spinner : data ) 
-		  })()
-		}			       
-	      </Box>
-
-	    </Flex>
-	    
-
-	    <Flex direction="column" align="center" style={{marginTop : "100px"}} >
-	      <Button ref={btnRef} colorScheme='teal' onClick={function(){onOpen(); drawerToast()}} >
-		<Icon as={SettingsIcon} boxSize={4} />
-		Settings
-	      </Button>
-	    </Flex>
-
-	    
-	  </Box>
-
-	  <TFooter /> 
-	  
+	<Box style={{marginTop : "30px" }}>
+	  {
+	    (function() {
+	      let spinner = ( <Spinner style={{marginTop : "30px" }}
+				       thickness='4px'
+				       speed='0.65s'
+				       emptyColor='gray.200'
+				       color='blue.500'
+				       size='xl' 	/> )
+	      let data = ( <ObjectInspector data={structured_patient_data} expandPaths={default_inspector_expansion} /> ) 
+	      return ( getting_query ? spinner : data ) 
+	    })()
+	  }			       
 	</Box>
-      )
-    }
 
-export default Home
-
-
+	<Button style={{marginTop : "30px" }} onClick={handle_getting_cds}>
+	  Generate Differential and Workup
+	</Button>
 
 
-/*
-   TODO: 
-   - implement button click handlers:: 
+	<Box style={{marginTop : "30px" }}>
+	  {
+	    (function() {
+	      let spinner = ( <Spinner style={{marginTop : "30px" }}
+				       thickness='4px'
+				       speed='0.65s'
+				       emptyColor='gray.200'
+				       color='blue.500'
+				       size='xl' 	/> )
+	      let data = ( <ObjectInspector data={diagnostic_response_data} expandPaths={default_inspector_expansion}  /> ) 
+	      return ( getting_cds ? spinner : data ) 
+	    })()
+	  }			       
+	</Box>
 
-   -- [x ] handle_getting_query
-   tsw.common.apis.openai.aidx.generate_patient_data( {one_liner, hp })
-   Extract one_liner from  document.getElementById("one_liner").value
-   Extract hp from  document.getElementById("hp").value
-   
+      </Flex>
+      
 
-   -- [ ] handle getting_cds 
-   tsw.common.apis.openai.aidx.ai_cds( patient_data ) ; 
-   get patient_data from result of query above. 
+      
+      
+    </Box>
 
-   -- so first step is implementing and testing the first handler 
+  )
+}
 
- */
+export default Component
+
+
+

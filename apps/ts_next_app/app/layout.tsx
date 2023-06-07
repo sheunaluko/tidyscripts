@@ -2,7 +2,10 @@ import React from 'react' ;
 import { Metadata } from 'next';
 import ChakraProvider from './chakra_provider'
 import styles from '../styles/Layout.module.css'
-import TFooter from '../components/Footer' ;
+
+
+import Footer from '../components/Footer' ; //the footer component contains the drawer as well
+import Toast from '../components/Toast' 
 
 
 export const metadata: Metadata = {
@@ -28,12 +31,17 @@ export default function RootLayout({
 	    <main className={styles.main}>
 
               {children}
+
+
 	      
 	    </main>
 
+	    <Footer/>
+	    <Toast/> 
+	    
 	  </div>
 
-	  <TFooter/>
+
 	  
 	</ChakraProvider>
       </body>

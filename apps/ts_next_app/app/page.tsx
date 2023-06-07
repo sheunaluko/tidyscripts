@@ -1,6 +1,6 @@
-import Home from './home'
+import Index from './index'
 
 
 export default async function Page() {
-  return <Home /> 
+  return <Index /> 
 } 

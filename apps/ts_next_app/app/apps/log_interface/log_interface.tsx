@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from "react";
 
 import {
@@ -28,6 +30,7 @@ import {
     Textarea
 } from "@chakra-ui/react";
 
+
 import {
     Accordion,
     AccordionItem,
@@ -43,13 +46,12 @@ import { motion, isValidMotionProp } from 'framer-motion'
 import * as tsw from "tidyscripts_web"
 
 
-import styles from "../../styles/Log_input_panel.module.css"
-
-import RL from '../../components/RotatingLogo' ; 
+import styles from "../../../styles/Log_interface.module.css"
+import RL from "../../../components/RotatingLogo"
 
 
 interface LogObject {
-    category: string;
+  category: string;
     title: string;
     description: string;
     datetime: Date;
@@ -57,7 +59,7 @@ interface LogObject {
 }
 
 interface LogFormProps {
-    onSubmit: (log: LogObject) => void;
+    onSubmit?: (log: LogObject) => void;
 }
 
 export default function LogForm(props: LogFormProps) {
@@ -156,7 +158,7 @@ export default function LogForm(props: LogFormProps) {
 	    datetime,
 	    tags,
 	};
-	onSubmit(log);
+	(onSubmit as any)(log);
 	handleClearClick();
     };
 

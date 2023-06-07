@@ -1,3 +1,5 @@
+'use client' ;
+
 import React, { useState, useEffect, useRef } from "react";
 
 import {
@@ -28,21 +30,18 @@ import {
 } from "@chakra-ui/react";
 
 import {
-    Accordion,
-    AccordionItem,
-    AccordionButton,
-    AccordionPanel,
-    AccordionIcon,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from '@chakra-ui/react'
 
 import { chakra } from '@chakra-ui/react'
 import { motion, isValidMotionProp } from 'framer-motion'
 import * as tsw from "tidyscripts_web"
 
-import RL from './RotatingLogo' ;
-
-import LS_UI from './local_storage_ui' ; 
-
+import RL from "../../../components/RotatingLogo"
 
 
 declare var speechSynthesis : any ;
@@ -144,7 +143,6 @@ export default function Component() {
     
     return ( 
 	
-	<Container > 
 	    <Flex
 		direction="column" 
 		padding="20px">
@@ -245,10 +243,8 @@ export default function Component() {
 		</Box>	    
 		
 		
-		<LS_UI /> 
 	    </Flex> 
 	    
-	</Container> 
     )
 
 }

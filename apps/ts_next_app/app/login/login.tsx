@@ -49,22 +49,26 @@ const Component: NextPage = (props : any) => {
     
   },[])
 
+  let not_working = function() {
+    window.alert("Sorry! This type of login is not working yet, please login with Google") ; 
+  }
+  
   let LogInUI = function() {
     let m = '10px'
     return (
       <Flex direction="column" justifyContent="space-between">
-	Welcome to Tidyscripts!
+	<div>Welcome to Tidyscripts! </div>
 
 
 	<Button marginTop={m} marginBottom={m} onClick={firebase.google_sign_in}>
 	  Login with Google
 	</Button>
 
-	<Button  marginBottom={m}  onClick={firebase.facebook_sign_in}>
+	<Button  marginBottom={m}  onClick={not_working}>
 	  Login with Facebook
 	</Button>
 
-	<Button  marginBottom={m} onClick={firebase.github_sign_in}>
+	<Button  marginBottom={m} onClick={not_working}>
 	  Login with Github
 	</Button>
 
