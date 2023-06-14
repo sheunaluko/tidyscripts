@@ -2,6 +2,9 @@
 import * as tsw from "tidyscripts_web";
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithRedirect, signOut } from "firebase/auth";
+import { getFirestore, addDoc, collection } from "firebase/firestore";
+
+
 import {
   GoogleAuthProvider,
   GithubAuthProvider,
@@ -24,6 +27,7 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);// Initialize Cloud Firestore and get a reference to the service
 
 /* Configure providers */
 const GoogleProvider = new GoogleAuthProvider();
