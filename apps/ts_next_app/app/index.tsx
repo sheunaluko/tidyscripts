@@ -11,6 +11,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 
 import * as tsw from "tidyscripts_web"  ;
 import {toast_toast} from "../components/Toast"
+import * as firebase from "../src/firebase" 
 import useInit from "../hooks/useInit" 
 
 import {
@@ -109,7 +110,8 @@ const Home: NextPage = (props : any) => {
      */
     Object.assign(window, {
       tsw ,
-      toast_toast 
+      toast_toast,
+      firebase 
     })
 
     window.setTimeout( function(){

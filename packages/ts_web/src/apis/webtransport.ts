@@ -28,17 +28,18 @@ function encode_json_to_uint8(json: any) {
 
 
 /**
- * Given a transport object, will return a datagram writer
- * This does not need to be called directly; it is used internally 
+ * Given a web transport url, will return a datagram writer and the transport object 
+ * in a dictionary with keys (writer, tranport).
+ * Use writer.write(bytes) to send a datagram 
  */
-function get_datagram_writer(transport: any) {
+function get_datagram_writer(url: string) {
+  let transport = init(url);
   let writer = transport.datagrams.writable.getWriter();
-  return writer
+  return { writer, transport }
 }
 
 
 async function write_json_datagram(writer: any, json: any) {
-  //let writer = transport.datagrams.writable.getWriter();
   let u8 = encode_json_to_uint8(json)
   await writer.write(u8)
 }
@@ -57,17 +58,15 @@ async function write_json_datagram(writer: any, json: any) {
  *
  */
 function get_json_writer(url: string) {
-  let jr = get_datagram_writer(init(url));
-  if (false) {
-    write_json_datagram(jr, { 'status': 'init', 't': (new Date()) });;
-  }
-  (jr as any).write_json = async function(j: any) {
-    await jr.write(encode_json_to_uint8(j))
+  let { writer, transport } = get_datagram_writer(url);
+  (writer as any).write_json = async function(j: any) {
+    await writer.write(encode_json_to_uint8(j))
   }
 
-  return jr
+  return writer
 
 }
+
 
 export {
   init,
@@ -75,5 +74,4 @@ export {
   get_datagram_writer,
   write_json_datagram,
   get_json_writer,
-
 } 

@@ -4,6 +4,7 @@ import * as local_storage from "./local_storage"
 import * as openai from "./openai"
 import * as webtransport from "./webtransport"
 import * as firebase from "./firebase"
+import * as midi from "./midi/index"
 
 export {
   key_presses,
@@ -11,7 +12,9 @@ export {
   bind_sounds_to_keys,
   openai,
   webtransport,
-  firebase
+  firebase,
+  midi
+
 }
 
 

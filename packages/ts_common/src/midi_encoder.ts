@@ -25,7 +25,7 @@ export function note_off(c: number, k: number, velocity: number) {
   return Uint8Array.from([0b10000000 + c, k, velocity])
 }
 
-export function control_change(c: number, id: number, velocity: number) {
-  return Uint8Array.from([0b10110000 + c, id, velocity])
+export function control_change(c: number, id: number, value: number) {
+  return Uint8Array.from([0b10110000 + c, id, value])
 }
 
