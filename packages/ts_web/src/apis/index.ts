@@ -5,6 +5,7 @@ import * as openai from "./openai"
 import * as webtransport from "./webtransport"
 import * as firebase from "./firebase"
 import * as midi from "./midi/index"
+import * as sensor from "./sensor/index"
 
 export {
   key_presses,
@@ -13,7 +14,8 @@ export {
   openai,
   webtransport,
   firebase,
-  midi
+  midi,
+  sensor
 
 }
 

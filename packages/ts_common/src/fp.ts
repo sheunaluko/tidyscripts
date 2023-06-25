@@ -36,13 +36,29 @@ export function keys(a : dic) : string[] {
     return Object.keys(a)
 }
 
-export function values(a : dic) : any[] {
+
+/**
+ * Returns the values of the dictionary as a list after cloning them 
+ */
+export function values_cloned(a : dic) : any[] {
     let ks = keys(a)
     let cloned = clone(a) 
     if (is_empty(ks)) {return []} else { 
 	return map(ks,(k:string)=>cloned[k])
     } 
 }
+
+/**
+ * Returns the values of the dictionary as a list  
+ * 
+ */
+export function values(a : dic) : any[] {
+    let ks = keys(a)
+    if (is_empty(ks)) {return []} else { 
+	return map(ks,(k:string)=>a[k])
+    } 
+}
+
 
 export function merge_dictionary(a : dic, b : dic )  : dic { 
     return Object.assign(clone(a), b  ) 

@@ -78,6 +78,13 @@ const AllLinks = () => {
 	</Card >
       </Link>
 
+      <Link href="/apps/device_orientation">
+	<Card style={card_style}>
+	  <h2>Orientation Sensor &rarr;</h2>
+	  <p>User Interface for visualizing the device orientation</p>
+	</Card >
+      </Link>
+
       
 
     </Box>
