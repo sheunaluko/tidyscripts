@@ -1,11 +1,13 @@
 import * as dsp from './dsp'
 import * as performance from "./performance"
-import * as debug from "./debug" 
+import * as debug from "./debug"
+import * as bytes from "./bytes" 
 
 export {
     dsp ,
     debug,
-    performance 
+    performance ,
+    bytes 
 }
 
 

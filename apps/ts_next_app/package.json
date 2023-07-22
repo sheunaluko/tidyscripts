@@ -12,6 +12,7 @@
     "firebase": "^9.22.1",
     "firebaseui": "^0.600.0",
     "next": "^13.4.4",
+    "primereact": "^9.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-firebase-hooks": "^5.1.1",

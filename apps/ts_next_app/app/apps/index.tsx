@@ -85,6 +85,13 @@ const AllLinks = () => {
 	</Card >
       </Link>
 
+      <Link href="/apps/mimi">
+	<Card style={card_style}>
+	  <h2>MIMI &rarr;</h2>
+	  <p>Modular Interface for Midi Input</p>
+	</Card >
+      </Link>
+
       
 
     </Box>
