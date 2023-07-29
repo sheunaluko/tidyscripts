@@ -11,7 +11,7 @@ export {
 }
 
 
-
+declare var Date : any ; 
 
 
 //  - - https://github.com/flexdinesh/browser-or-node/blob/master/src/index.js
@@ -29,6 +29,14 @@ export function is_browser() {
  */
 export function is_node() {
     return ( typeof process !== "undefined" &&  process.versions != null &&   process.versions.node != null ) 
+} 
+
+
+/**
+ * Returns unix timestamp in ms
+ */
+export function unix_timestamp_ms() {
+    return Number(new Date()) 
 } 
 
 
