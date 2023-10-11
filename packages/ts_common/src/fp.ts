@@ -137,6 +137,58 @@ export function map_over_dic_values(o : any , f : (x :any) => any) {
     return zip_map(keys(o), new_vs) 
 } 
 
+
+/**
+ * Inverts a dictionary; in other words will return an array of objects where the value key is a 
+ * "leaf" value in the dictionary and the associated "path" key is an array of strings that are 
+ * the keys that lead to that value in the nested dictionary. 
+ * ``` 
+ * const dic = {
+ *    a : 1,
+ *    b : {  c : 2 } ,
+ *    d : { e : { f: 3 } ,
+ *	    y1 : { x1 : 20 ,
+ *	           x2 : 30,
+ *		   x3 : { b : 40 }  } } , 
+ * } 
+ *
+ * invert_dictionary(dic)  // =>  
+ * [
+ *  { value: 1, path: [ 'a' ] },
+ *  { value: 2, path: [ 'b', 'c' ] },
+ *  { value: 3, path: [ 'd', 'e', 'f' ] },
+ *  { value: 20, path: [ 'd', 'y1', 'x1' ] },
+ *  { value: 30, path: [ 'd', 'y1', 'x2' ] },
+ *  { value: 40, path: [ 'd', 'y1', 'x3', 'b' ] }
+ * ]
+ * ```
+ */
+export function invert_dictionary(dic : any, current_path : string[] = [] ) {
+    let keys = R.keys(dic) ;
+    let result : any = [ ] ; 
+    for (var k of keys ) {
+	let v = dic[k] ;
+	if ( is_map(v) ) {
+	    //value is a dictionary
+	    // @ts-ignore 
+	    let tmp = invert_dictionary(v, R.concat(current_path,[k]))
+	    tmp.map( (t:any) => result.push( t ) ) 
+	} else {
+	    //value is not a dictionary (it is a value)
+	    //first get the full path 
+	    let full_path = R.concat(current_path , [k])
+	    //then update the result
+	    result.push( { value : v , path : full_path }) 
+	} 
+	
+    }
+
+    return result 
+} 
+
+
+
+
 /* ARRAYS  */
 
 export function clone_array(o : any) {

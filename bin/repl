@@ -1,0 +1,10 @@
+dir=${PWD##*/}
+
+if [ $dir == "tidyscripts" ]
+then
+	./bin/tsnode ./bin/repl.ts
+else
+	./tsnode repl.ts
+fi
+
+

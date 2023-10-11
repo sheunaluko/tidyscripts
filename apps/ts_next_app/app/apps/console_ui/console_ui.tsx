@@ -92,7 +92,7 @@ const Component: NextPage = (props : any) => {
       <h1 className={styles.title}>   Console UI </h1>
 
       <InputGroup>
-	<InputLeftAddon children=">"  />
+	<InputLeftAddon> {">"} </InputLeftAddon>
 	<Input id="cmd_input" size="md"  placeholder='Input command' ></Input>
       </InputGroup>
 

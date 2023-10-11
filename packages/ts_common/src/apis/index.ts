@@ -1,7 +1,11 @@
 
-import * as aidx from "./aidx" 
+import * as aidx from "./aidx"
+import * as loinc from "./loinc"
+import * as medications from "./medications" 
 
 
 export {
-  aidx, 
+    aidx,
+    loinc,
+    medications, 
 } 

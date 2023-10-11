@@ -47,6 +47,15 @@ const AllLinks = () => {
 	</Card >
       </Link>
 
+      <Link href="/apps/medications">
+	<Card style={card_style}>
+	  <h2>Medications &rarr;</h2>
+	  <p>
+	    Helpful Clinical utilities for working with Medications  
+	  </p>
+	</Card >
+      </Link>	  
+
       <Link href="/apps/vip">
 	<Card style={card_style}>
 	  <h2>Voice Interface Panel [VIP] &rarr;</h2>
@@ -54,6 +63,8 @@ const AllLinks = () => {
 	</Card >
       </Link>
 
+
+      
       <Link href="/apps/log_interface">
 	<Card style={card_style}>
 	  <h2>Log Input Panel [LIP] &rarr;</h2>
@@ -66,7 +77,7 @@ const AllLinks = () => {
       <Link href="/apps/local_storage_interface">
 	<Card style={card_style}>
 	  <h2>Local Storage Interface &rarr;</h2>
-	  <p>User Interface for editing the LocalStorage object of your device's browser</p>
+	  <p>User Interface for editing the LocalStorage object of your devices browser</p>
 	</Card >
       </Link>
 
