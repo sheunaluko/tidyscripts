@@ -81,7 +81,7 @@ const Component: NextPage = (props : any) => {
   
   let MedSelect = function() {
     return (
-      <Stack spacing={3} sx={{ width: 500 }}>
+      <Stack spacing={3} >
 
 
 	<Autocomplete
@@ -131,7 +131,7 @@ const Component: NextPage = (props : any) => {
 
   let SeSelect = function() {
     return (
-      <Stack spacing={3} sx={{ width: 500 }}>
+      <Stack spacing={3} >
 
 
 	<Autocomplete
@@ -247,7 +247,7 @@ const Component: NextPage = (props : any) => {
       }
     }
 
-    return <Panel/> 
+    return <Panel key={name} /> 
   }
 
 
