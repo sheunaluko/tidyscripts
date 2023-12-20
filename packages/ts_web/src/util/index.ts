@@ -57,7 +57,7 @@ export async function define(promise: Promise<any>, id: string) {
 
 
 /**
- * Inject a script into the current web page 
+ * Add a script into the current web page 
  *
  */
 export function add_script(src: string) {
@@ -68,6 +68,32 @@ export function add_script(src: string) {
     s.addEventListener('error', reject);
     document.body.appendChild(s);
   });
+}
+
+
+/**
+ * Inject a script into the current web page 
+ *
+ */
+type InjectScriptOps = {
+    src : string,
+    attributes : { [k:string] : any } 
+} 
+export function inject_script(ops : InjectScriptOps ) {
+    return new Promise((resolve, reject) => {
+	const s = window.document.createElement('script');
+	s.setAttribute('src', ops.src);
+	let attributes = ops.attributes ;
+	if (attributes) {
+	    let a_keys = Object.keys(attributes)	  
+	    for (let key of a_keys) {
+		s.setAttribute(key, attributes[key])
+	    } 
+	}
+	s.addEventListener('load', resolve);
+	s.addEventListener('error', reject);
+	document.body.appendChild(s);
+    });
 }
 
 

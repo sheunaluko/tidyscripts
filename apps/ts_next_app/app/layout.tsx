@@ -26,9 +26,9 @@ export default function RootLayout({
       <body>
 	<ChakraProvider>
 
-	  <div className={styles.container}>
+	  <div style={{display: 'flex', flexDirection: 'column' , minHeight : "100vh" }}>
 
-	    <main className={styles.main}>
+	    <main className={styles.main} >
 
               {children}
 

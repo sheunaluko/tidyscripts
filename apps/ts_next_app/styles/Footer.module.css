@@ -14,7 +14,6 @@
 
 .footer {
   display: flex;
-  flex: 1;
   padding: 2rem 0;
   margin-left : 10px ;
   margin-right : 10px ;   
@@ -144,23 +143,6 @@
   align-items: center;
 }
 
-.footer {
-  display: flex;
-  flex: 1;
-  padding: 2rem 0;
-  margin-left : 10px ;
-  margin-right : 10px ;   
-  border-top: 1px solid #eaeaea;
-  justify-content: center;
-  align-items: center;
-}
-
-.footer a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
-}
 
 .title a {
   color: #0070f3;

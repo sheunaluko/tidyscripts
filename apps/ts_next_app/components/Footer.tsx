@@ -45,7 +45,7 @@ function Footer() {
     <footer className={styles.footer}>
       <Flex 
 	direction="row"
-		   alignItems="center"
+	  alignItems="center"
       >
 
 	<Link

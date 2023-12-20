@@ -34,78 +34,88 @@ const card_style : any  = {
 
 const AllLinks = () => {
   return (
-    <Box>
+      <Box>
 
 
-      <Link href="/apps/aidx">
-	<Card style={card_style}>
-	  <h2>AI Diagnostics [Aidx] &rarr;</h2>
-	  <p>
-	    Aidx performs clinical decision support using Artifical Intelligence,
-	    and is powered by OpenAI and Tidyscripts
-	  </p>
-	</Card >
-      </Link>
+	  <Link href="/apps/aidx">
+	      <Card style={card_style}>
+		  <h2>AI Diagnostics [Aidx] &rarr;</h2>
+		  <p>
+		      Aidx performs clinical decision support using Artifical Intelligence,
+		      and is powered by OpenAI and Tidyscripts
+		  </p>
+	      </Card >
+	  </Link>
 
-      <Link href="/apps/medications">
-	<Card style={card_style}>
-	  <h2>Medications &rarr;</h2>
-	  <p>
-	    Helpful Clinical utilities for working with Medications  
-	  </p>
-	</Card >
-      </Link>	  
-
-      <Link href="/apps/vip">
-	<Card style={card_style}>
-	  <h2>Voice Interface Panel [VIP] &rarr;</h2>
-	  <p>Configure browser Speech Recognition and Text-to-Speech</p>
-	</Card >
-      </Link>
+	  <Link href="/apps/medications">
+	      <Card style={card_style}>
+		  <h2>Medications &rarr;</h2>
+		  <p>
+		      Helpful Clinical utilities for working with Medications  
+		  </p>
+	      </Card >
+	  </Link>	  
 
 
-      
-      <Link href="/apps/log_interface">
-	<Card style={card_style}>
-	  <h2>Log Input Panel [LIP] &rarr;</h2>
-	  <p>Store logs securely on your device</p>
-	</Card >
-      </Link>
+	  <Link href="/apps/bokeh">
+	      <Card style={card_style}>
+		  <h2>Bokeh Interface &rarr;</h2>
+		  <p>
+		      Interface to the Bokeh graphing library
+		  </p>
+	      </Card >
+	  </Link>	  
+	  
+	  <Link href="/apps/vip">
+	      <Card style={card_style}>
+		  <h2>Voice Interface Panel [VIP] &rarr;</h2>
+		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
+	      </Card >
+	  </Link>
+
+
+	  
+	  <Link href="/apps/log_interface">
+	      <Card style={card_style}>
+		  <h2>Log Input Panel [LIP] &rarr;</h2>
+		  <p>Store logs securely on your device</p>
+	      </Card >
+	  </Link>
 
 
 
-      <Link href="/apps/local_storage_interface">
-	<Card style={card_style}>
-	  <h2>Local Storage Interface &rarr;</h2>
-	  <p>User Interface for editing the LocalStorage object of your devices browser</p>
-	</Card >
-      </Link>
+	  <Link href="/apps/local_storage_interface">
+	      <Card style={card_style}>
+		  <h2>Local Storage Interface &rarr;</h2>
+		  <p>User Interface for editing the LocalStorage object of your devices browser</p>
+	      </Card >
+	  </Link>
 
-      
-      <Link href="/apps/console_ui">
-	<Card style={card_style}>
-	  <h2>Console Interface &rarr;</h2>
-	  <p>User Interface for interacting with browser console (useful for debugging mobile apps)</p>
-	</Card >
-      </Link>
+	  
+	  <Link href="/apps/console_ui">
+	      <Card style={card_style}>
+		  <h2>Console Interface &rarr;</h2>
+		  <p>User Interface for interacting with browser console (useful for debugging mobile apps)</p>
+	      </Card >
+	  </Link>
 
-      <Link href="/apps/device_orientation">
-	<Card style={card_style}>
-	  <h2>Orientation Sensor &rarr;</h2>
-	  <p>User Interface for visualizing the device orientation</p>
-	</Card >
-      </Link>
+	  <Link href="/apps/device_orientation">
+	      <Card style={card_style}>
+		  <h2>Orientation Sensor &rarr;</h2>
+		  <p>User Interface for visualizing the device orientation</p>
+	      </Card >
+	  </Link>
 
-      <Link href="/apps/mimi">
-	<Card style={card_style}>
-	  <h2>MIMI &rarr;</h2>
-	  <p>Modular Interface for Midi Input</p>
-	</Card >
-      </Link>
+	  <Link href="/apps/mimi">
+	      <Card style={card_style}>
+		  <h2>MIMI &rarr;</h2>
+		  <p>Modular Interface for Midi Input</p>
+	      </Card >
+	  </Link>
 
-      
+	  
 
-    </Box>
+      </Box>
   );
 };
 
