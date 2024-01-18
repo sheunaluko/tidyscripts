@@ -5,7 +5,10 @@ import styles from '../styles/Layout.module.css'
 
 
 import Footer from '../components/Footer' ; //the footer component contains the drawer as well
-import Toast from '../components/Toast' 
+import Toast from '../components/Toast'
+
+import { Analytics } from '@vercel/analytics/react';
+
 
 
 export const metadata: Metadata = {
@@ -32,7 +35,7 @@ export default function RootLayout({
 
               {children}
 
-
+	      
 	      
 	    </main>
 
@@ -44,6 +47,7 @@ export default function RootLayout({
 
 	  
 	</ChakraProvider>
+	<Analytics />
       </body>
     </html>
   );

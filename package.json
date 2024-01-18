@@ -1,7 +1,7 @@
 {
   "name": "Tidyscripts",
   "private": true,
-  "type" : "module" , 
+  "type": "module",
   "scripts": {
     "build": "turbo run build && turbo run docs",
     "test": "turbo run test",
@@ -29,6 +29,7 @@
     "@chakra-ui/react": "^2.5.1",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@vercel/analytics": "^1.1.2",
     "framer-motion": "^6.5.1",
     "openai": "^3.1.0",
     "ts-node": "^10.9.1",
