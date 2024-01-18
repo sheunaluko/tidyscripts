@@ -51,7 +51,9 @@ let {
 
 let fp = tsw.common.fp;
 let log = tsw.common.logger.get_logger({id : "antibiogram"}) ; 
-let ABX_DB =  {} //tsw.apis.db.GET_DB("ABX") ; 
+var ABX_DB : any  =  null ;  //populated in useEffect hook 
+
+
 
 let sizes = { 
   w1 : "20%" , 
@@ -109,9 +111,10 @@ export default function Component() {
   React.useEffect( ()=>  {
 
     log("Loading all stored abx info...");
-    (async function go() {
-      //attempt to retrieve all the states
-      let block_states =  {}  // await ABX_DB.get("block_states")   
+      (async function go() {
+	  //attempt to retrieve all the states
+	ABX_DB = tsw.apis.db.GET_DB("ABX") ; 	
+        let block_states =  await ABX_DB.get("block_states")   
       setState( (s:any) => ( { 
 	...s, 
 	block_states : (block_states || {})
@@ -119,12 +122,14 @@ export default function Component() {
 
       Object.assign ( window, { 
 	sanford,
-	tsw 
+	  tsw ,
+	  state
       } ) 
 
       log("Done loading all stored abx info...")
       
-    })() 
+    })()
+      
   } , [] ) 
   
 
@@ -514,6 +519,16 @@ function LEGEND_BLOCK(i :string) {
   ) 
 } 
 
+/*
+
+   Current issue: there appear to be two sources for the susceptibility data; I need to look at the
+   sanford.ts file to see how the sus data is generated from the raw files to sort this out
+
+   The two formats are "preferred/resistant/susceptible/ variable" in the sus data object
+   And the "N", "V", "A', "R", "?", "X" from the Editor tsx (below) and from sanford guide 
+   
+ */
+
 
 function SELECT_BLOCK(abx : string, i :string) {
   
@@ -523,7 +538,8 @@ function SELECT_BLOCK(abx : string, i :string) {
     'A'  : 'green'  , 
     'R'  : 'blue' , 
     '?'  : 'gray' , 
-    'X' : 'gray' , 
+      'X' : 'gray' ,
+    
   } 
   
   let id = `${abx}_${i}` ;     
@@ -540,7 +556,7 @@ function SELECT_BLOCK(abx : string, i :string) {
 	    //update the state 
 	    new_state.block_states[id] = edit_mode 
 	    //update the state object in the background 
-	    //ABX_DB.set("block_states",new_state.block_states).then( ()=> console.log(`Edited block state for ${abx}_${i} to ${edit_mode} and saved to db`) ) 
+	    ABX_DB.set("block_states",new_state.block_states).then( ()=> console.log(`Edited block state for ${abx}_${i} to ${edit_mode} and saved to db`) ) 
 	    //and set it 
 	    return new_state
 	  }) 
@@ -549,8 +565,12 @@ function SELECT_BLOCK(abx : string, i :string) {
 	
 	//let mouse_over = select_click
 	let mouse_over = ()=>null ; 	    
-	
-	
+
+	  log(`Checking state for ${id}`)
+	  console.log(state.block_states[id] ) 
+
+	  
+	  
 	return ( 
 	  <Box style={{  
 	    height : sizes.row_height , 

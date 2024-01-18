@@ -22,7 +22,6 @@ export {
   sus_data, dics 
 }
 
-
 /* 
  Sanford Guide   
  */
@@ -165,3 +164,8 @@ export function convert_sus_data_to_id_pairs(sus_data : any) {
 } 
 
 
+export async function populate_antibiogram(abd : any) {
+    //abd -> antibiogram database
+    let id_pairs  = convert_sus_data_to_id_pairs(sus_data)  ;
+    return (await abd.set("block_states", id_pairs) ) ; 
+} 

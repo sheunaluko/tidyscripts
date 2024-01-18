@@ -1,5 +1,6 @@
 
-import { Configuration, OpenAIApi } from "openai";
+
+import {OpenAI} from "openai" ; 
 import {logger, util} from "tidyscripts_common" 
 
 const ORG = process.env.OPENAI_ORG
@@ -7,24 +8,14 @@ const API_KEY = process.env.OPENAI_API_KEY
 
 const log = logger.get_logger({id : "openai"}) ; 
 
+/*
 const configuration = new Configuration({
     organization: ORG, 
     apiKey: API_KEY, 
 });
+*/ 
 
-export const client = new OpenAIApi(configuration);
-
-
-/**
- *  List Engines 
- */
-
-export async function list_engines() {
-    let result = (await client.listEngines() ) as any 
-    return result 
-}
-
-
+export const client = new OpenAI(); //default for v4 is to use the env var 
 
 
 /**
@@ -33,8 +24,6 @@ export async function list_engines() {
  * Much more to come!
  */
 export async function send_message(message: string, max_tokens : number): Promise<any> {
-    log(`Using org: ${configuration.organization}`) ;
-    log(`Using key: ${configuration.apiKey ? true : false}`) ;
     let reqObj = {
 	model: 'text-davinci-003',
 	prompt: message,
@@ -43,7 +32,7 @@ export async function send_message(message: string, max_tokens : number): Promis
 
     log('using req object:') ;
     console.log(reqObj) 
-    const response = await client.createCompletion(reqObj as any); 
+    const response = await client.chat.completions.create(reqObj as any); 
     return response
 }
 
@@ -52,19 +41,17 @@ export async function send_message(message: string, max_tokens : number): Promis
  * Chat completions endpoint 
  */
 export async function chat_completion(messages: any, model : string, max_tokens : number): Promise<any> {
-    log(`Using org: ${configuration.organization}`) ;
-    log(`Using key: ${configuration.apiKey ? true : false}`) ;
     let t_start = util.unix_timestamp_ms()  ;
     
     try {
 
-	const chatCompletion = await client.createChatCompletion({
+	const chatCompletion = await client.chat.completions.create({
 	    model, 
 	    messages,
 	    max_tokens, 
 	});
 	let t_elapsed = util.unix_timestamp_ms() - t_start ;
-	let response  = chatCompletion.data.choices[0].message ; 
+	let response  = chatCompletion.choices[0].message ; 
 
 	return {  response, t_elapsed }
 	
