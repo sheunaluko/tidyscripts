@@ -10,12 +10,13 @@ const log = tsw.common.logger.get_logger({id:"bokeh_app"}) ;
 
 import {
     ThemeProvider,
-    defaultTheme,
+    createTheme,
     Box ,
     Button 
 } from "../../../src/mui" 
 
 declare var window : any ;
+declare var Bokeh : any  ; 
 
 
 export async function load_bokeh_scripts() {
@@ -48,11 +49,11 @@ function make_sin_plot() {
 
 
     let el = document.getElementById("bokeh_plot")
-    let { offsetWidth : width , offsetHeight : height  }  = el ; 
+    let { offsetWidth : width , offsetHeight : height  }  = (el as HTMLElement) ; 
     
     // create some data and a ColumnDataSource
     const x = Bokeh.LinAlg.linspace(-0.5, 20.5, 100);
-    const y = x.map(function (v) { return 5 * Math.sin(v)  +10   });
+    const y = x.map(function (v : any) { return 5 * Math.sin(v)  +10   });
     const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
 
     // create some ranges for the plot
@@ -98,7 +99,7 @@ function make_sin_plot() {
 function make_pie_plot() {
 
     let el = document.getElementById("bokeh_plot")
-    let { offsetWidth : width , offsetHeight : height  }  = el ; 
+    let { offsetWidth : width , offsetHeight : height  }  = (el as HTMLElement)  ; 
 
     const pie_data = {
 	labels: ['Work', 'Eat', 'Commute', 'Sport', 'Watch TV', 'Sleep'],
@@ -125,8 +126,9 @@ async function main(t : string) {
     }
 
     var el = document.querySelector("#bokeh_plot .bk-Plot")
-    if (el) {
-	document.getElementById("bokeh_plot").removeChild(el) ;
+  if (el) {
+    // @ts-ignore 
+	document.getElementById("bokeh_plot").removeChild(el as HTMLElement) ;
     }
     Bokeh.Plotting.show(p,document.getElementById("bokeh_plot"))
 
@@ -150,7 +152,7 @@ const Component: NextPage = (props : any) => {
     useEffect(  ()=> {init()} , [] ) ; //init script
 
     return (
-	<ThemeProvider theme={defaultTheme}>
+	<ThemeProvider theme={createTheme()}>
 	    <Box sx={{ flexGrow : 1,  width : "80%", flexDirection : 'column' , display : 'flex', justifyContent : 'space-between'}} >
 
 		<Box > 

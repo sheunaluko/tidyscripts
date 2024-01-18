@@ -48,7 +48,7 @@ function Component(props : any) {
     let [ touchT, setTouchT ] = React.useState(performance.now()) ;         
 
 
-    function handleStart(evt) {
+    function handleStart(evt :any) {
 	evt.preventDefault();
 
 	//first detect a double click
@@ -73,7 +73,7 @@ function Component(props : any) {
 	
     }
 
-    function handleMove(evt) {
+    function handleMove(evt :any) {
 	evt.preventDefault();
 	window.debug2 = evt;
 	//console.log(evt)
@@ -82,10 +82,12 @@ function Component(props : any) {
 	let currTouchX = te.pageX;
 	let currTouchY = te.pageY;
 
-	let xdiff = currTouchX - initTouchX ;
-	let ydiff = currTouchY - initTouchY ;
+      // @ts-ignore 
+      let xdiff = currTouchX - initTouchX ;
+      // @ts-ignore       
+      let ydiff = currTouchY - initTouchY ;
 
-	//log(`${initTouchX},${initTouchY},${currTouchX},${currTouchY},${xdiff},${ydiff}`)
+      //log(`${initTouchX},${initTouchY},${currTouchX},${currTouchY},${xdiff},${ydiff}`)
 
 	setValue(`${xdiff},${ydiff}`)
     }

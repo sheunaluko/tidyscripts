@@ -52,9 +52,9 @@ declare var window :any ;
 function Component(props : any) {
 
     let [value, setValue] = React.useState(0) ;
-    let [ initTouchX, setInitTouchX ] = React.useState(null) ;
-    let [ initTouchY, setInitTouchY ] = React.useState(null) ;
-    let [ initVal, setInitVal ] = React.useState(null) ;
+    let [ initTouchX, setInitTouchX ] = React.useState(null as any) ;
+    let [ initTouchY, setInitTouchY ] = React.useState(null as any) ;
+    let [ initVal, setInitVal ] = React.useState(null as any) ;
     let [ touchT, setTouchT ] = React.useState(performance.now()) ;         
     let [ tapX, setTapX ] = React.useState(null) ;
     let [ tapY, setTapY ] = React.useState(null) ;
@@ -65,7 +65,7 @@ function Component(props : any) {
     var svgRef = React.useRef(null) ; 
     let init = function() {
 	log("init")
-	let svgDim = svgRef.current.getBoundingClientRect() ;
+	let svgDim = (svgRef as any).current.getBoundingClientRect() ;
 	let sx = Math.round(svgDim.width/2)
 	let sy = Math.round(svgDim.height/2)
 	let r = Math.min(sx,sy) - 5 ;
@@ -79,7 +79,7 @@ function Component(props : any) {
     
 
     
-    function handleStart(evt) {
+    function handleStart(evt : any) {
 
 	//first detect a double click
 	let t = performance.now()
@@ -113,7 +113,7 @@ function Component(props : any) {
     }
 
     
-    function handleMove(evt) {
+    function handleMove(evt : any) {
 	evt.preventDefault();
 	window.debug2 = evt;
 	//console.log(evt)
@@ -140,7 +140,7 @@ function Component(props : any) {
 	    props.send_cc(newValue) ;
 	} 
 
-	let svgDim = svgRef.current.getBoundingClientRect() ;
+	let svgDim = (svgRef as any).current.getBoundingClientRect() ;
 	
 	let sx = Math.round(svgDim.width/2)
 	let sy = Math.round(svgDim.height/2)
@@ -164,8 +164,8 @@ function Component(props : any) {
 		alignItems="center"
 		style={{
 		    position : "absolute" ,
-		    left : tapX + 50 ,
-		    top : tapY - 20 ,
+		    left : tapX! + 50 ,
+		    top : tapY! - 20 ,
 		    borderWidth : "2px", 
 		    borderRadius : "10px", 
 		    padding : "6px" , 
@@ -243,7 +243,7 @@ export default Component  ;
 
 
 
-function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+function polarToCartesian(centerX : number, centerY : number, radius : number, angleInDegrees : number) {
     var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
 
     return {
@@ -252,7 +252,7 @@ function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
     };
 }
 
-function describeArc(x, y, radius, startAngle, endAngle){
+function describeArc(x : number, y : number, radius : number , startAngle : number , endAngle : number ){
 
     var start = polarToCartesian(x, y, radius, endAngle);
     var end = polarToCartesian(x, y, radius, startAngle);

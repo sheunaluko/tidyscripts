@@ -56,6 +56,12 @@ const AllLinks = () => {
 	      </Card >
 	  </Link>	  
 
+	  <Link href="/apps/microbiology">
+	      <Card style={card_style}>
+		  <h2>Microbiology &rarr;</h2>
+		  <p>Antiobiogram on Steroids (in progress)</p>
+	      </Card >
+	  </Link>	  
 
 	  <Link href="/apps/bokeh">
 	      <Card style={card_style}>

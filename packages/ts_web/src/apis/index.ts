@@ -6,6 +6,7 @@ import * as webtransport from "./webtransport"
 import * as firebase from "./firebase"
 import * as midi from "./midi/index"
 import * as sensor from "./sensor/index"
+import * as db from "./db" 
 
 export {
   key_presses,
@@ -15,8 +16,8 @@ export {
   webtransport,
   firebase,
   midi,
-  sensor
-
+  sensor,
+  db , 
 }
 
 

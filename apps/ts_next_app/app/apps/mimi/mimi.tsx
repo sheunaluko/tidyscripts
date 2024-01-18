@@ -111,7 +111,7 @@ const Component: NextPage = (props : any) => {
 	    wsurl = 'wss://localhost:8001' 
 	}
 
-	wsurl = 'ws://192.168.1.129:8001'
+	wsurl = 'ws://192.168.12.104:8001'
 	
 	ws_connection = new WebSocket(wsurl) ;
 	log("Connected?")	
@@ -209,7 +209,7 @@ const Component: NextPage = (props : any) => {
 	ws_connection.send(msg) ; 
     }
 
-    function send_cc_2(ch : number, num : number , value : number ) {
+    function send_cc_2(ch : number, num : number ) {
 	return function(value : number) { 
 	    let msg = cc(ch,num,value) ; 
 	    ws_connection.send(msg) ;
@@ -484,7 +484,7 @@ const Component: NextPage = (props : any) => {
 
 		}} > 
 
-		{ props.chs.map(
+	{ props.chs.map(
 		      (i:any) => <BusWidget channel_number={i} key={i}/>
 		  )}
 		
@@ -495,7 +495,7 @@ const Component: NextPage = (props : any) => {
 
     const MixerWidget = function() {
 	return (
-	    <Flex direction="row" align="center" height="40%" width="100%" align="stretch" >
+	    <Flex direction="row"  height="40%" width="100%" align="stretch" >
 		<Flex marginTop="5px" width="77%" direction="row" align="center" >
 		    <ChannelRack chs={tsw.common.fp.range(1,15)} />
 		</Flex>
@@ -559,6 +559,7 @@ const Component: NextPage = (props : any) => {
 	    </Flex>
 
 	    {
+		// @ts-ignore 
 		panel_dictionary[panel_state]
 	    } 
 

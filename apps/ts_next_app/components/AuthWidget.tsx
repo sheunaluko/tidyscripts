@@ -12,17 +12,6 @@ import * as firebase from  "../src/firebase"
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  Flex , 
-  Card,
   Spinner
 } from "@chakra-ui/react";
 
