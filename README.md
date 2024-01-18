@@ -1,5 +1,5 @@
 # Tidyscripts 🧘🏾‍♂️
-A documented and clean collection of typescript code for composability and re-use. Created and maintained by Sheun Aluko, MD-MS. 
+A documented and clean collection of typescript code for composability and re-use. Created and maintained by Doctor Sheun Aluko, MD-MS. 
 
 ## About
 
