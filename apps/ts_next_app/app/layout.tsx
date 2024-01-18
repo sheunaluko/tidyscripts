@@ -44,8 +44,6 @@ export default function RootLayout({
 	    
 	  </div>
 
-
-	  
 	</ChakraProvider>
 	<Analytics />
       </body>
