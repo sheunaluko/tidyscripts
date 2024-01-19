@@ -14,7 +14,7 @@ bin/local
 
 apps/ts_next_app/public/docs/**
 apps/ts_next_app/public/resources/docs/**
-apps/ts_next_app/.next/
+apps/ts_next_app/.next/** 
 apps/ts_next_app/todo
 apps/ts_next_app/old_pages
  
