@@ -1,3 +1,4 @@
+# Compile And Run Type Script 
 ./compile_ts "$1"
 echo running... 
 ./tsnode "$1" 
