@@ -1,0 +1,3 @@
+./compile_ts "$1"
+echo running... 
+./tsnode "$1" 

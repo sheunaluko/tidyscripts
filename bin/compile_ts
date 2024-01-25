@@ -1,0 +1,3 @@
+echo compiling "$1" 
+npx tsc --moduleResolution node --noEmit --esModuleInterop true --target esnext "$1"
+echo done 
