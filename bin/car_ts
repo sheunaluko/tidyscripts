@@ -1,4 +1,12 @@
-# Compile And Run Type Script 
-./compile_ts "$1"
-echo running... 
-./tsnode "$1" 
+# Compile And Run Type Script
+echo "Compiling $1" ; 
+cmd_output=$(./compile_ts "$1") ;
+res=$(echo $cmd_output | grep "error") ;
+#echo $res
+if [[ $res == *"error"* ]]; then
+    echo "Error detected ->"
+    echo $cmd_output 
+else 
+    echo "No error, proceeding with runtime"
+    ./tsnode "$1" 
+fi
