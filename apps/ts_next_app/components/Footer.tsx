@@ -63,7 +63,7 @@ function Footer() {
 
 	<Show above="sm">
 	  <span>
-	    Copyright © 2023 Sheun Aluko, MD
+	    Copyright © 2024 Sheun Aluko, MD
 	  </span>
 	</Show>
 	
