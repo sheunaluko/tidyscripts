@@ -1,18 +1,26 @@
 /*
- * Web Audio API (Fri Feb 16 08:05:41 CST 2024) 
+ * 
  * This is a rewrite/upgrade of the audio apis that I created in the past
  */
 import {logger,
 	fp,
+	asnc, 
 	util} from "tidyscripts_common"
+
+import * as bokeh from "./bokeh" 
+
+
 
 /* declarations  */
 declare var window : any ;
-const dsp = util.dsp ; 
+declare var Bokeh  : any ;
+const dsp = util.dsp ;
+const debug = util.debug; 
 
 /* initializations  */
 export var ctx : any = null ;
 export var stream : any = null ;
+export var analyser : any = null ;
 export var sound_event_detector : any = null ;
 const log = logger.get_logger({id : 'web_audio'}); 
 
@@ -99,20 +107,36 @@ export async function initialize_microphone() {
     let stream       = await get_audio_stream() ;
 
     let source       = ctx.createMediaStreamSource(stream);
-    let analyser     = ctx.createAnalyser(); analyser.fftSize = 2048;
-    data_array   = new Float32Array(analyser.frequencyBinCount);
+    analyser         = ctx.createAnalyser(); analyser.fftSize = 2048;
+    data_array       = new Float32Array(analyser.frequencyBinCount);
 
     source.connect(analyser);
 
-    // -
     function update() {
 	requestAnimationFrame(update);
 	analyser.getFloatTimeDomainData(data_array);
 	run_mic_callbacks(data_array);
     }
 
-    mic_initialized = true; 
+
+    mic_initialized = true;
     update() 
+
+}
+
+
+export var a1 = new Float32Array(1024)
+export var a2 = new Float32Array(1024) 
+
+export async function test_diff(ms : number) {
+    log(`testing diff with ${ms} ms`)  ;
+    analyser.getFloatTimeDomainData(a1) ;
+    //log(`Waiting ${ms} ms`)  ;    
+    window.setTimeout( function() {
+	analyser.getFloatTimeDomainData(a2) ;
+	let equal = (JSON.stringify(a1) == JSON.stringify(a2))
+	log(`Equality = ${equal}`)
+    }, ms) 
 }
 
 /*
@@ -158,9 +182,10 @@ export class SoundEventDetector extends window.EventTarget {
     sampling_rate : number;
     tmp_buffer  : any ;
     tmp_buffer_max_length : number;  
-    event_buffer  : any ;
     recording_event : boolean ;
-    event_start_time : number ; 
+    event_start_time : number ;
+    time_of_last_detection : number ;
+    media_recorder : any ; 
     
     constructor( ops : any ) {
 	super() 
@@ -179,9 +204,13 @@ export class SoundEventDetector extends window.EventTarget {
 	this.audio_buffer_size    = audio_buffer_size ; 
 	this.tmp_buffer = [ ];
 	this.tmp_buffer_max_length = 10 ; //this will get updated in init
-	this.event_buffer = [ ] ;
 	this.recording_event  = false;
-	this.event_start_time =  0 ; 
+	this.event_start_time =  0 ;
+	this.time_of_last_detection = performance.now() ;
+
+	this.media_recorder = null ; 
+	
+	
     }
 
     async init() {
@@ -196,9 +225,14 @@ export class SoundEventDetector extends window.EventTarget {
 
 	//prep the tmp_buffer object
 	let n_buffers = this.num_buffers_to_cover_margin() ; 
-	this.log(`To track a margin of ${this.margin} ms, tmp_buffer will need to hold ${n_buffers} audio_buffers of size ${this.audio_buffer_size} samples`) ;
+	//this.log(`To track a margin of ${this.margin} ms, tmp_buffer will need to hold ${n_buffers} audio_buffers of size ${this.audio_buffer_size} samples`) ;
+	this.log(`Created tmp buffer of size ${n_buffers}`); 
 	this.tmp_buffer_max_length = n_buffers ;
 	this.tmp_buffer = fp.range(0,n_buffers).map( (i:number) => new Float32Array(this.audio_buffer_size) )
+
+	let stream = await get_audio_stream() ; 
+	this.media_recorder = new window.MediaRecorder(stream) ;
+	this.log(`Initialized media recorder`) 
 
 	
     } 
@@ -222,11 +256,6 @@ export class SoundEventDetector extends window.EventTarget {
 
 	this.tmp_buffer.shift()    //remove first element of tmp_buffer
 	this.tmp_buffer.push(f32)  //add the current data to the tmp_buffer
-
-	if (this.recording_event) {
-	    this.event_buffer.push(f32) //if recording an event push to event_buffer 
-	}
-
 	this.analyze_tmp_buffer()  //perform analysis on the existing samples 	
 
 	return 
@@ -238,51 +267,65 @@ export class SoundEventDetector extends window.EventTarget {
 	 * Tmp buffer is Array of Float32Arrays where each is an individual audio buffer from 
 	 * the mic; lasting around 20ms 
 	 */
+
 	let tmp_buffer = this.tmp_buffer;
-	/*
-	console.log(JSON.stringify(tmp_buffer.map( (d:Float32Array)=> {
-		return (dsp.mean_abs(d) )
-	})));
-	*/
+
+	//The threshold is met if all audio_buffers in the tmp buffer
+	//have mean_abs intensity above the threshold 
+	let threshold_met = fp.all_true( tmp_buffer.map( (d:Float32Array)=> {
+	    return (dsp.mean_abs(d) > this.threshold) 
+	}))
+	
 
 	//There are two main states; either recording an event or waiting for an event
 	
 	if (this.recording_event) {
-	    //If an event is recorded we check to see if it is now quiet 
+
+	    //if an event is recording but the threshold is met then we continue recording
+	    //and update the var:
+	    if (threshold_met) {
+		this.time_of_last_detection = performance.now() ;
+		return ; 
+	    }
+	    
+	    //If an event is recording but threshold is not met we check to see if it is now quiet 
 	    let quiet_met = fp.all_true( tmp_buffer.map( (d:Float32Array)=> {
 		return (dsp.mean_abs(d) < this.threshold) 
 	    }))
-	    if (quiet_met) {
+
+	    let time_since_last_detection = (performance.now() - this.time_of_last_detection)
+	    let time_met = (time_since_last_detection > this.margin ) 
+	    
+	    if (quiet_met && time_met) {
 		this.log(`Detected quiet while recording event...`)
 		//if it is quiet then we should stop recording 
 		this.recording_event = false;
-		//we should also flatten the event_buffer into a single buffer
-		let final_event_f32 = dsp.flat_float32_array(this.event_buffer) ;
-		//then fire an event with the data
-		let evt = new window.Event("sound_event_ended", {
-		    data : final_event_f32 ,
-		    sampling_rate : this.sampling_rate ,
-		    duration : this.samples_to_ms(final_event_f32.length)  ,
-		    event_start_time : this.event_start_time
-		});
-		(this as any).dispatchEvent(evt) ; 
-		//then reset the event buffer
-		this.event_buffer = []
-		//voila 
-		this.log(`Completed and dispatched event.`); 
+		this.media_recorder.stop() ; 
+		this.log(`Stopped recording`); 
 	    } 
 	    
 	    
 	} else {
 	    //If an event is not being recorded we need to check if there is now sound 
-	    //The threshold is met if all audio_buffers in the tmp buffer
-	    //have max intensity above the threshold 
-	    let threshold_met = fp.all_true( tmp_buffer.map( (d:Float32Array)=> {
-		return (dsp.mean_abs(d) > this.threshold) 
-	    }))
 	    
 	    if (threshold_met) {
+		//start recording
+		let ref = this ; 
+		this.media_recorder.ondataavailable = function(e:any){
+		    //console.log("Data available")
+		    //console.log(e) 
+		    //debug.add('data', e) 
+		    let blob = e.data ; 
+		    //then fire an event with the data
+		    let evt = new window.CustomEvent("sound_event_ended", {
+			detail : blob, 
+		    }) ;
+		    
+		    ref.dispatchEvent(evt) ;
+		}
+		this.media_recorder.start() ;
 		this.log(`Detected event start`) ;
+		this.time_since_last_detection = performance.now() ; 
 		let evt = new window.Event("sound_event_started");
 		(this as any).dispatchEvent(evt) ; 
 		this.recording_event = true;
@@ -311,3 +354,42 @@ export class SoundEventDetector extends window.EventTarget {
     } 
     
 } 
+
+export async function plot_data(data : any , el : string) {
+
+    await bokeh.load_bokeh_scripts() ; 
+    
+    // create some data and a ColumnDataSource
+    const x = fp.range(0,data.length) 
+    const y = Array.from(data)
+    const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
+
+    let ops = {width: 300, height : 100}
+    const plot = new Bokeh.Plot(ops); 
+
+    // add axes to the plot
+    const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    const yaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    plot.add_layout(xaxis, "below");
+    plot.add_layout(yaxis, "left");
+
+    // add grids to the plot
+    const xgrid = new Bokeh.Grid({ ticker: xaxis.ticker, dimension: 0 });
+    const ygrid = new Bokeh.Grid({ ticker: yaxis.ticker, dimension: 1 });
+    plot.add_layout(xgrid);
+    plot.add_layout(ygrid);
+
+    // add a Line glyph
+    const line = new Bokeh.Line({
+	x: { field: "x" },
+	y: { field: "y" },
+	line_color: "#666699",
+	line_width: 2
+    });
+    plot.add_glyph(line, source);
+
+
+    Bokeh.Plotting.show(plot,document.getElementById(el)) ; 
+    
+
+}

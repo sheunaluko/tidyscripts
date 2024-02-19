@@ -6,7 +6,7 @@ import React from 'react' ;
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
 
-import * as dev from "../../../src/dev/index"
+
 
 import {
     ThemeProvider,
@@ -26,7 +26,7 @@ const dsp   = tsw.common.util.dsp ;
 const debug = tsw.common.util.debug ;
 const fp    = tsw.common.fp ;
 const dom   = tsw.util.dom ; 
-const wa    = dev.web_audio;  // tsw.apis.web_audio
+const wa    = tsw.apis.web_audio; 
 
 
 /**
