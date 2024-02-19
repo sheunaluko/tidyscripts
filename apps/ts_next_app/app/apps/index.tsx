@@ -36,7 +36,16 @@ const AllLinks = () => {
   return (
       <Box>
 
+	  <Link href="/apps/cortex">
+	      <Card style={card_style}>
+		  <h2>Cortex &rarr;</h2>
+		  <p>
+		      A next generation AI assistant 
+		  </p>
+	      </Card >
+	  </Link>
 
+	  
 	  <Link href="/apps/aidx">
 	      <Card style={card_style}>
 		  <h2>AI Diagnostics [Aidx] &rarr;</h2>

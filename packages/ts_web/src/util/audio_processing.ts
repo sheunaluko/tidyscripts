@@ -1,5 +1,6 @@
 
-import * as mic from "./browser_mic" 
+import * as mic from "./browser_mic"
+import * as media_recorder from "./media_recorder" 
 
 import * as common from "tidyscripts_common"
 
@@ -66,4 +67,8 @@ export function stop() {
     } 
     
     listeners = [] 
+} 
+
+export {
+    mic , media_recorder 
 } 

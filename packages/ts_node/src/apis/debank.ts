@@ -8,9 +8,11 @@ import * as R from 'ramda'
  *  Given a crypto currency address (EVM compatible), returns the users protocol assets across multiple
  *  EVM chains. 
  */
+// @ts-ignore
 export async function get_protocol_assets(u : string) {
     let url = 'https://openapi.debank.com/v1/user/complex_protocol_list?id=' + u  ;
-    let raw = await http.get_json(url) as any  
+    let raw = await http.get_json(url) as any
+    // @ts-ignore
     let parser = R.pipe(  R.map(R.prop('portfolio_item_list')) ,
 			  R.flatten,
 			  R.map(R.pipe(R.prop('detail'),R.values as any)),

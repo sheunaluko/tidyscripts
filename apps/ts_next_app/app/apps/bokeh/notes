@@ -1,0 +1,43 @@
+
+       Considerations 
+       - Refactor to use the webAudio API 
+
+
+       TODO:  
+       - Transfer Bokeh functionality into the web/api TS folder for modularity 
+       - Create a new app/cortex file to start work  
+       - Focus on functionality not UI (below three hypens are top down UI) 
+       - First recreate the audio_stream graph as top UI component of cortex  [MIC] 
+       - Create a UI with text based input and under it a bokeh graph that displays [COR] 
+          - the waveform of the resultant audio (using TS/openai TTS api) 
+       - Create a final UI which has numeric inputs (delay, scale) and under which  [PRED] 
+          - shows the result of "active cancellation" of the spoken waveform to the incoming mic 
+
+       - Lastly, the model can be "trained" to learn the parameters by a relatively simple process
+          - The sound [COR] is played (this triggers INITIALIZATION of the RUN) 
+          - Upon completion of the sound (with some small padding), [PRED] is analyzed 
+           - in particular; the parameters (delay, and GAIN) which minimize and objective function 
+           - are calculated (equation in microsoft notes) [can there be a derivative instead?] 
+           - and then applied  
+          - The process is repeated over several RUNS until there is "no" change in the params :) 
+
+       Considerations  -- 
+
+
+       Audio buffer information 
+       - its a Float32Array with 1024 samples  ?? 
+       - sample rate on dell is 48k 
+        
+
+- conider using sound normalization for audio alignment 
+- use GAIN node
+
+
+WebAudio API reading:
+
+- sould I modify open AI TTS to store the audio into an AudioBuffer?
+- want to have low level understanding of the audio encoding of the returned TTS audio AS well
+-- as the RECEIVED MIC input (and hve system for matching them)
+
+How to load AudioWorklet dynamically:
+https://github.com/WebAudio/web-audio-api-v2/issues/109

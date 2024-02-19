@@ -6,7 +6,9 @@ import * as webtransport from "./webtransport"
 import * as firebase from "./firebase"
 import * as midi from "./midi/index"
 import * as sensor from "./sensor/index"
-import * as db from "./db" 
+import * as db from "./db"
+import * as bokeh from "./bokeh" 
+import * as web_audio from "./web_audio"
 
 export {
   key_presses,
@@ -17,7 +19,10 @@ export {
   firebase,
   midi,
   sensor,
-  db , 
+  db ,
+  bokeh,
+  web_audio, 
+  
 }
 
 

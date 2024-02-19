@@ -10,7 +10,6 @@ import Toast from '../components/Toast'
 import { Analytics } from '@vercel/analytics/react';
 
 
-
 export const metadata: Metadata = {
   title: 'Tidyscripts',
   description : 'A typescript developer dream' 
@@ -24,8 +23,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
+    
   return (
-    <html lang="en">
+      <html lang="en">
       <body>
 	<ChakraProvider>
 

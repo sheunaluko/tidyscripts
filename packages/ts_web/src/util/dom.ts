@@ -1,6 +1,5 @@
 
 
-
 declare var document : any ; 
 
 
