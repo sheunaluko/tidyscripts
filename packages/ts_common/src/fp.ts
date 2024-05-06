@@ -175,7 +175,8 @@ export function invert_dictionary(dic : any, current_path : string[] = [] ) {
 	    tmp.map( (t:any) => result.push( t ) ) 
 	} else {
 	    //value is not a dictionary (it is a value)
-	    //first get the full path 
+	    //first get the full path
+	    // @ts-expect-error
 	    let full_path = R.concat(current_path , [k])
 	    //then update the result
 	    result.push( { value : v , path : full_path }) 
@@ -320,7 +321,10 @@ export function enumerate(x : any[]) {
  * @param prop The property to extract
  * @param list The list to act upon 
  */
-export function map_prop(prop : string, list : any[]) { return R.map(R.prop(prop))(list) }
+export function map_prop(prop : string, list : any[]) {
+    // @ts-expect-error
+    return R.map(R.prop(prop))(list)
+}
 
 /**
  * Given a list of objects, extract property 'prop' from each object 

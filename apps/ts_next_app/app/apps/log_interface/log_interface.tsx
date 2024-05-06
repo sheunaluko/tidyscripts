@@ -58,9 +58,7 @@ interface LogObject {
     tags: string[];
 }
 
-interface LogFormProps {
-    onSubmit?: (log: LogObject) => void;
-}
+type LogFormProps  = any ; 
 
 export default function LogForm(props: LogFormProps) {
     var { onSubmit } = props;

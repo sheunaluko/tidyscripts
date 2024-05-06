@@ -97,6 +97,8 @@ export function run_mic_callbacks(data : Float32Array) {
 export var mic_initialized = false;
 export var data_array : Float32Array ; 
 
+
+
 /*
  * Initialize microphone stream 
  */
@@ -123,7 +125,6 @@ export async function initialize_microphone() {
     update() 
 
 }
-
 
 export var a1 = new Float32Array(1024)
 export var a2 = new Float32Array(1024) 
@@ -172,7 +173,11 @@ export async function get_sound_event_detector(_ops : any) {
  * - margin: time spent below threshold before the event is ended 
  * - register_fn : function for linking to the microphone 
  */
-export class SoundEventDetector extends window.EventTarget {
+export var SoundEventDetector : any;
+
+if (typeof window !== 'undefined') {
+    SoundEventDetector = class extends window.EventTarget {
+        // Class implementation here
 
     threshold : number;
     margin : number;
@@ -352,8 +357,12 @@ export class SoundEventDetector extends window.EventTarget {
 	let margin_n_samples = this.ms_to_samples(this.margin) ;
 	return Math.ceil( margin_n_samples / this.audio_buffer_size ) ; 
     } 
-    
-} 
+
+
+	
+    };
+}
+
 
 export async function plot_data(data : any , el : string) {
 
@@ -393,3 +402,5 @@ export async function plot_data(data : any , el : string) {
     
 
 }
+
+

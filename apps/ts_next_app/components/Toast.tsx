@@ -14,8 +14,8 @@ import useInit from "../hooks/useInit" /* custom hook that wraps around useEffec
 type ToastArgs = UseToastOptions ;
 
 
-/* we need to let typescript now that window is a variable that exists, and give it type any so we can access arbitrary fields of the object */
-  declare var window : any ;
+/* we need to let typescript know that window is a variable that exists, and give it type any so we can access arbitrary fields of the object */
+declare var window : any ;
 
 
 
@@ -32,9 +32,11 @@ export function log_toast(args : ToastArgs) {
  * Helper function that can be imported to trigger toasts 
  */
 export function toast_toast(args : ToastArgs) {
-  let evt = new window.CustomEvent('toast', {detail : args })
-  window.dispatchEvent(evt)
-  log("Request to toast the toast!")
+    if (typeof window != 'undefined') { 
+	let evt = new window.CustomEvent('toast', {detail : args })
+	window.dispatchEvent(evt)
+	log("Request to toast the toast!")
+    }
 } 
 
 
@@ -52,17 +54,21 @@ export default function Component(props : any) {
   let init = async function() {
     /* this function runs once when the commponent loads in the useEffect scope below */
     /* the main goal of this function is to attach the toast event to window event listener */ 
-    /* now we can attach the event handler (see its definition above)  */ 
-    window.addEventListener('toast' , do_toast )
-    log("Added toast event handler to window") 
+      /* now we can attach the event handler (see its definition above)  */
+      if (typeof window != 'undefined') {       
+	  window.addEventListener('toast' , do_toast )
+	  log("Added toast event handler to window")
+      } 
   }
 
   let clean_up = async function() {
     /* this function runs once when the commponent is unmounted from the DOM */
     /* the main goal of this function is to detach the toast event to window event listener */
-    /* now we can attach the event handler (see its definition above)  */ 
-    window.removeEventListener('toast' , do_toast )
-    log("Removed toast event handler to window") 
+      /* now we can attach the event handler (see its definition above)  */
+      if (typeof window != 'undefined') {       
+	  window.removeEventListener('toast' , do_toast )
+	  log("Removed toast event handler to window")
+      } 
   } 
 
 

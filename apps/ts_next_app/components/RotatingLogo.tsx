@@ -24,7 +24,6 @@ import {
 import { chakra } from '@chakra-ui/react'
 import { motion, isValidMotionProp } from 'framer-motion'
 
-import * as tsw from 'tidyscripts_web'   
 
 const RL = (props: any) => {
 
@@ -36,8 +35,6 @@ const RL = (props: any) => {
     });
 
 
-
-    
     
     let [logo_dims,set_logo_dims] = useState( { x : "30px" , y : "30px" } )  ;
 
@@ -48,11 +45,6 @@ const RL = (props: any) => {
 	    set_logo_dims(props.logo_dims) 
 	} 
 
-	if (tsw.util.is_mobile() ) {
-       	    //set_logo_dims({x : "2em" , y : "2em"}) 
-	} else {
-
-	}
 
     }, []);
 

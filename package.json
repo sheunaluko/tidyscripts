@@ -15,28 +15,14 @@
     "apps/*"
   ],
   "devDependencies": {
-    "@changesets/cli": "^2.27.1",
-    "lerna": "^8.0.2",
     "ts-loader": "^9.5.1",
-    "turbo": "^1.11.3",
-    "typedoc": "^0.25.7",
-    "typescript": "^5.3.3",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "typedoc": "^0.25.7"
   },
   "dependencies": {
-    "@chakra-ui/icons": "^2.1.1",
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
-    "@google-cloud/text-to-speech": "^5.0.2",
-    "@langchain/openai": "^0.0.12",
     "@vercel/analytics": "^1.1.2",
-    "framer-motion": "^10.18.0",
-    "langchain": "^0.1.4",
-    "openai": "^4.24.7",
     "ts-node": "^10.9.2",
-    "tw": "^0.1.2",
-    "ws": "^8.16.0"
+    "turbo": "^1.13.2",
+    "typescript": "^5.4.5",
+    "vercel": "^32.3.0"
   }
 }

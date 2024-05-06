@@ -6,8 +6,14 @@ import React from 'react' ;
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
 
+import {
+    Box,
+    Button,
+    Input ,
+    Textarea,
+} from "@chakra-ui/react" 
 
-
+/*
 import {
     ThemeProvider,
     createTheme,
@@ -15,7 +21,8 @@ import {
     Button ,
     Input ,
     TextField,  
-} from "../../../src/mui" 
+} from "../../../src/mui"
+*/ 
 
 declare var window : any ;
 declare var Bokeh : any  ; 
@@ -123,7 +130,7 @@ const  Component: NextPage = (props : any) => {
     useEffect(  ()=> {init()} , [] ) ; //init script
 
     return (
-	<ThemeProvider theme={createTheme()}>
+
 	    <Box style={{ flexDirection : 'column' , display : 'flex'}} >
 
 		<Box > 
@@ -144,7 +151,7 @@ const  Component: NextPage = (props : any) => {
 				      flexDirection : "row",
 				      justifyContent: "space-between" ,
 				      alignItems : "center" }} >
-			    <TextField id='text_field' />
+			    <Textarea id='text_field' />
 			    <Button variant="outlined" onClick={on_submit}> Submit </Button>
 			</Box>
 		    </Box> 
@@ -182,7 +189,7 @@ const  Component: NextPage = (props : any) => {
 
 
 	    </Box>
-	</ThemeProvider> 
+
 
     )
 }

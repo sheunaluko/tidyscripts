@@ -13,9 +13,10 @@
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
-    "@types/ramda": "^0.28.16",
+    "@langchain/openai": "^0.0.28",
+    "@types/ramda": "^0.29.12",
     "@uniswap/sdk": "^3.0.3",
-    "ethers": "^5.7.1",
-    "ramda": "^0.28.0"
+    "openai": "^4.38.2",
+    "ramda": "^0.29.1"
   }
 }

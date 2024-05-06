@@ -49,13 +49,6 @@ const AllLinks = () => {
   return (
     <Box>
 
-      <Link href="/about">
-	<Card style={card_style}>
-	  <h2>About &rarr;</h2>
-	  <p>Tidyscripts explained concisely </p>
-	</Card >
-      </Link>
-      
       
       <Link href="/resources/docs/index.html">
 	<Card style={card_style}>
@@ -108,23 +101,26 @@ const Home: NextPage = (props : any) => {
     /*
        Assign tidyscripts library to window 
      */
-    Object.assign(window, {
-      tsw ,
-      toast_toast,
-      firebase 
-    })
 
-    window.setTimeout( function(){
-    toast_toast({
-      title : "Thank you for using Tidyscripts", 
-      description : "",
-      duration : 2000,
-      status : "success" , 
-      isClosable : true , 
-    })
-    }, 500) 
+      if (typeof window !== 'undefined') { 
+	  Object.assign(window, {
+	      tsw ,
+	      toast_toast,
+	      firebase 
+	  })
 
-    log("Index page init") 
+	  window.setTimeout( function(){
+	      toast_toast({
+		  title : "Thank you for using Tidyscripts", 
+		  description : "",
+		  duration : 2000,
+		  status : "success" , 
+		  isClosable : true , 
+	      })
+	  }, 500) 
+
+	  log("Index page init")
+      } 
 
   }
 

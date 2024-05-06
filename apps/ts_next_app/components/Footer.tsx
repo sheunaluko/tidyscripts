@@ -8,8 +8,6 @@ import Image from 'next/image'
 import styles from '../styles/Footer.module.css'
 import Link from 'next/link' ; 
 
-import * as tsw from "tidyscripts_web"  ;
-
 import Drawer from '../components/Drawer' ; 
 
 import {
@@ -30,10 +28,15 @@ import {
 } from "@chakra-ui/react";
 
 import RL from './RotatingLogo' ;
-import AuthWidget from './AuthWidget' 
+import AuthWidget from './AuthWidget'
+
+declare var window : any ; 
 
 const Home = (
-  <Button size="sm" onClick={function(){window.location.href="/" }}>
+    <Button size="sm" onClick={function(){
+	if (typeof window != "undefined") { 
+	window.location.href="/" }
+    }}>
     Home
   </Button>
   

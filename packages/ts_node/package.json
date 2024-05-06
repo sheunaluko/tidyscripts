@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@types/ramda": "^0.29.12",
     "child_process": "^1.0.2",
     "domutils": "^3.0.1",
     "express": "^4.18.2",
@@ -22,8 +23,11 @@
     "htmlparser2": "^8.0.1",
     "jsdom": "^20.0.1",
     "mongodb": "^4.12.0",
+    "openai": "^4.38.2",
     "puppeteer": "^19.0.0",
+    "ramda": "^0.29.1",
     "tidyscripts_common": "*",
+    "uuid": "^9.0.1",
     "ws": "^8.11.0"
   },
   "devDependencies": {

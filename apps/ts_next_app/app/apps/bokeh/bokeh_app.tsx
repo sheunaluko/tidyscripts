@@ -16,7 +16,8 @@ import {
     ThemeProvider,
     createTheme,
     Box ,
-    Button 
+    Button, 
+    Container, 
 } from "../../../src/mui" 
 
 declare var window : any ;
@@ -349,29 +350,12 @@ const Component: NextPage = (props : any) => {
 
     return (
 	<ThemeProvider theme={createTheme()}>
-	    <Box sx={{ flexGrow : 1,  width : "80%", flexDirection : 'column' , display : 'flex', justifyContent : 'space-between'}} >
 
-		<Box > 
-		    <h1 className={styles.title}>
-			<a href="https://github.com/sheunaluko/tidyscripts">Graphing </a> Interface 
-		    </h1>
-		</Box>
+	    <div> 
+		Hellow
+	    </div> 
 
-		<br />
-		<Box sx={{justifyContent : 'center' , display : 'flex' , flexDirection : 'row' , gap : "14px" }}>
-		    <Button onClick={()=>main("sin")} size="small" variant="outlined"> Sin Wave </Button>
-
-		    <Button onClick={()=>main("pie") } size="small" variant="outlined"> Pie Chart </Button>
-		    <Button onClick={()=>main("stream") } size="small" variant="outlined"> Audio Stream (realtime) </Button>
-
-		    <Button onClick={()=>main("streamMedia") } size="small" variant="outlined"> Audio Stream (MediaRecorder API) </Button>
-		    
-		</Box>
-		<br /> 
-
-		<Box id="bokeh_plot" sx={{flexGrow: 1}} />
-
-	    </Box>
+	    
 	</ThemeProvider> 
 
     )

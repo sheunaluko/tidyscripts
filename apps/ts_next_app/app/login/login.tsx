@@ -41,8 +41,10 @@ const Component: NextPage = (props : any) => {
   useEffect( ()=>{
 
     async function main() {
-      window.firebase = firebase; 
-    }
+        if (typeof window != "undefined" ) { 
+	      window.firebase = firebase; 
+          }
+    } 
 
     main() ;
 

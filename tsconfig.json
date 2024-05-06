@@ -10,7 +10,12 @@
     "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
-    "declarationDir": "dist",    
+    "declarationDir": "dist",
+    "jsx" : "react-jsx",   
+    "skipLibCheck": true,
+    "paths": {
+	"react": [ "./node_modules/@types/react" ]
+    }, 
   },
   "exclude":[
     "./node_modules"
