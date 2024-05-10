@@ -1,53 +1,102 @@
+
+
 import React from 'react' ;
 import { Metadata } from 'next';
 import ChakraProvider from './chakra_provider'
 import styles from '../styles/Layout.module.css'
 
 
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+import {theme} from "./theme"  ;
+
+
+import {Box} from  "../src/mui" 
+
 import Footer from '../components/Footer' ; //the footer component contains the drawer as well
-import Toast from '../components/Toast'
+//import Toast from '../components/Toast'
 
 import { Analytics } from '@vercel/analytics/react';
 
 
 export const metadata: Metadata = {
-  title: 'Tidyscripts',
-  description : 'A typescript developer dream' 
+    title: 'Tidyscripts',
+    description : 'Robust Typescript Software' 
 };
+
+declare var window ;
 
 
 export default function RootLayout({
-  // Layouts must accept a children prop.
-  // This will be populated with nested layouts or pages
-  children,
+    // Layouts must accept a children prop.
+    // This will be populated with nested layouts or pages
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
 
-    
-  return (
-      <html lang="en">
-      <body>
-	<ChakraProvider>
+    let footer_v_padding="20px";
+    let footer_h_padding="10px"; 
+    let main_v_padding="25px";
+    let main_h_padding="10px"; 
 
-	  <div style={{display: 'flex', flexDirection: 'column' , minHeight : "100vh" }}>
+    return (
+	<html lang="en">
+	    <head>
+		<meta name="viewport" content="initial-scale=1, width=device-width" />
+	    </head> 
+	    <body
+		style={{
+		    minHeight : "100vh", 
+		}}
+	    >
+		<ThemeProvider theme={theme}>
+		    <CssBaseline />
+		    <ChakraProvider>
 
-	    <main className={styles.main} >
+			<Box
+			    display='flex'
+			    flexDirection='column'
+			    style={{minHeight : "100vh" , minWidth :"100vw"}}
+			    paddingTop={main_v_padding}
+			    paddingBottom={main_v_padding}
+		            paddingLeft={main_h_padding}
+			    paddingRigt={main_h_padding}				
+			    
+			>
+			    
+			    <Box
+				display='flex'
+				flexGrow={1}
+				style={{width : "100%"}}				
+			    > 
+				<main
+				    style={{width : "100%"}}
+				>
+				    {children}
+				</main>
+			    </Box> 
 
-              {children}
 
-	      
-	      
-	    </main>
-
-	    <Footer/>
-	    <Toast/> 
-	    
-	  </div>
-
-	</ChakraProvider>
-	<Analytics />
-      </body>
-    </html>
-  );
+			    <Box
+				display="flex"
+				justifyContent="space-around"
+				paddingTop={footer_v_padding}
+				paddingBottom={footer_v_padding}
+				paddingLeft={footer_h_padding}
+				paddingRigt={footer_h_padding}				
+				
+			    > 
+				<Footer/>
+			    </Box> 
+			    
+			</Box> 
+			
+		    </ChakraProvider>
+		    <Analytics />
+		</ThemeProvider>
+	    </body>
+	</html>
+    );
 }

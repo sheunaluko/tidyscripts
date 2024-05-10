@@ -19,6 +19,12 @@ import {
 } from '@chakra-ui/react'
 
 
+import {theme,
+	secondary,
+	primary,
+	grey } from "../app/theme" 
+
+
 
 import * as tsw from "tidyscripts_web"  ; 
 const log = tsw.common.logger.get_logger({id:"drawer"}) ;
@@ -92,7 +98,13 @@ export default function Component(props : any) {
     </DrawerContent>
     </Drawer>
 
-    <Button ref={btnRef} size="sm"  onClick={function(){onOpen();  drawerToast()}} >
+    <Button
+	style={{
+	    backgroundColor : grey[50] , 
+	    color : primary 
+	}}
+
+	ref={btnRef} size="sm"  onClick={function(){onOpen();  drawerToast()}} >
       <Icon as={HamburgerIcon} boxSize={4} />
     </Button>
 

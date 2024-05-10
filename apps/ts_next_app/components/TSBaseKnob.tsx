@@ -10,10 +10,6 @@ import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 
 
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
-
-import { Knob } from 'primereact/knob' ; 
 
 import * as tsw from "tidyscripts_web"  ;
 

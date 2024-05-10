@@ -10,6 +10,17 @@ import * as firebase from  "../src/firebase"
 
 declare var window : any ; 
 
+
+import {
+    Typography 
+} from "../src/mui"
+
+import {theme,
+	secondary,
+	primary,
+	grey }  from "../app/theme"
+
+
 import {
   Box,
   Button,
@@ -25,13 +36,21 @@ const spinner = ( <Spinner style={{}}
 			   size='xs' 	/> )
 
 const logout = (
-    <Button size="sm" onClick={firebase.log_out}>
+    <Button size="sm" onClick={firebase.log_out}
+	    color={primary}
+	    colorScheme={secondary}
+    >
 	Log out 
     </Button>
 )
 
 const login = (
-    <Button size="sm" onClick={
+    <Button size="sm"
+	    style={{
+		backgroundColor : grey[50] , 
+		color : primary 
+	    }}
+	    onClick={
     function(){
 	if (typeof window != "undefined" ) { 
 	    window.location.href="/login"

@@ -5,8 +5,8 @@ import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 
-import Knob from "../../../components/Knob"
-import SmallKnob from "../../../components/small_knob"
+
+
 import TSKnob from "../../../components/TSKnob" 
 
 
@@ -283,6 +283,10 @@ const Component: NextPage = (props : any) => {
 	) 
     }
 
+
+
+    let MetaKnob = TSKnob ;
+
     let KnobWidget = function() {
 	return (
 	    <Grid
@@ -293,16 +297,12 @@ const Component: NextPage = (props : any) => {
 	    >
 
 		{ tsw.common.fp.range(15).map(
-		      (i:number) => <GridItem key={i}> <Knob send_cc={send_cc} id={i+1} />  </GridItem>
+		      (i:number) => <GridItem key={i}> <MetaKnob send_cc={send_cc} id={i+1} />  </GridItem>
 		  )} 
 	    </Grid>
 	) 
     }
 
-
-
-    let MetaKnob = TSKnob ;
-    //let MetaKnob = SmallKnob ;     
     
     let ChannelWidget = function(props : any) {
 

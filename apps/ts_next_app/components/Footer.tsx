@@ -11,83 +11,91 @@ import Link from 'next/link' ;
 import Drawer from '../components/Drawer' ; 
 
 import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  Flex , 
-  Card,
-  Show
-} from "@chakra-ui/react";
+    Button,
+} from "@chakra-ui/react"
+
+import {
+    Box ,
+    Typography 
+} from "../src/mui"
 
 import RL from './RotatingLogo' ;
 import AuthWidget from './AuthWidget'
 
+import {theme,
+	secondary,
+	primary,
+	grey} from "../app/theme" 
+
+
+
 declare var window : any ; 
 
 const Home = (
-    <Button size="sm" onClick={function(){
-	if (typeof window != "undefined") { 
+    <Button   
+    size="sm"
+    style={{
+	backgroundColor : grey[50]  , 
+	color : primary 
+    }}
+
+    onClick={function(){
 	window.location.href="/" }
-    }}>
+    }> 
     Home
-  </Button>
-  
+    </Button>
+    
 )
 
-function Footer() { 
+function Footer() {
 
-  return (
-    <footer className={styles.footer}>
-      <Flex 
-	direction="row"
-	  alignItems="center"
-      >
+    let CBox = function({children}) {
+	return (
+	    <Box margin="4px">
+		{children} 
+	    </Box>
+	) 
+    } 
 
-	<Link
-	  href="/"
-
+    return (
+	<Box
+	    display="flex" 
+		     flexDirection="row"
+		     alignItems="center"
 	>
 
-	  Tidyscripts
-	  {' '}
-	  <RL /> 
-	  {'   '}
+	    <CBox>
+		<Typography color={theme.palette.primary.main}> 
+		    Tidyscripts
+		</Typography>
+	    </CBox> 
 
-	</Link>
+	    <CBox>
+		<RL />
+	    </CBox>
 
+	    <CBox>
+		<Typography color={theme.palette.primary.main}> 		    
+		    Copyright © 2024 Sheun Aluko, MD		
+		</Typography>
 
-	<Show above="sm">
-	  <span>
-	    Copyright © 2024 Sheun Aluko, MD
-	  </span>
-	</Show>
-	
-	{'   '}
-	<div style={{marginLeft : "5px"}}>
-	  <AuthWidget />
-	</div>
-	<div style={{marginLeft : "5px"}}>
-	  {Home}
-	</div>
-	<div style={{marginLeft : "5px"}}>
-	  <Drawer /> 
-	</div>
-	
+	    </CBox>
 
-	
-      </Flex> 
+	    <CBox> 
+		<AuthWidget />
+	    </CBox>
 
-      
-    </footer>
-  )
+	    <CBox> 
+		{Home} 
+	    </CBox>
+	    
+	    <CBox> 
+		<Drawer /> 
+	    </CBox>
+
+	</Box> 
+
+    )
 }
 
 
