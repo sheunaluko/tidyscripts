@@ -1,6 +1,19 @@
 TIDYSCRIPTS NOTES
 -----------------
 
+0. Implementing presence
+- Could do this using a document => stats/active_clients in  Firestore
+  - and the vercel api/active_client endpoint 
+  - need a way to get a unique identifier from the vercel client request
+  - looks like I can use const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    	  - but also may want to include the (UserAgent) information as well (or else multiple devices behind same IP will not show) 
+  - First I get the ID; and a timestamp
+    - The next step is retrieving the JSON object that maps ID => timestamp; (retrieve usign Firestore admin sdk)
+      	  - update it with the current ID,timestampe
+	  - For each expired (T x 2) timestamp delete the ID,timestamp combo
+	  - Then return the JSON object back to stats/active_clients document
+  - In the layout there is a setInterval that runs every (T) seconds; and calls the api/active_client endpoint
+=> The above should more or less work 
 
 1. Can utilize the .env files to configure the "localhost" vs "tidyscripts.com" api endpoints for seamless api testing while in development mode.
 2. tsconfig has "skipLibCheck" to resolve langchain type error
@@ -10,7 +23,6 @@ TIDYSCRIPTS NOTES
 4. THe huge bug I was having stemmed from the fact that I was upgrading typescript and react and react dom inside the root directory but I needed to be doing inside the SUB directory where the error/incompatibility was occuring -- for example in the APP directory itself... 
 5. more errors (rendering and window etc... https://github.com/vercel/next.js/issues/58576
 6. I had to take out the web3 modules because of errors with ethers lib and typescript (they had upgraded from v4 to 6). I can look in github history to find the old source code
-
 
 
 
