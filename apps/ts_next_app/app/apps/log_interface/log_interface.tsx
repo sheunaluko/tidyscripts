@@ -111,7 +111,7 @@ export default function LogForm(props: LogFormProps) {
 	return function result_cleanup() {
 	    window.removeEventListener('tidyscripts_web_speech_recognition_result' , voice_result_handler)
 	}
-    }, [])
+    })
 
     const [category, setCategory] = useState("");
     const [title, setTitle] = useState("");

@@ -30,11 +30,11 @@ import {
 } from "@chakra-ui/react";
 
 import {
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
+    Accordion,
+    AccordionItem,
+    AccordionButton,
+    AccordionPanel,
+    AccordionIcon,
 } from '@chakra-ui/react'
 
 import { chakra } from '@chakra-ui/react'
@@ -66,7 +66,7 @@ export default function Component() {
     const [micInterval ,setMicInterval ] = useState(null as any)
 
     const mic_max = useRef(0);
-
+    
 
     
     
@@ -79,37 +79,40 @@ export default function Component() {
     }
 
     // ----------
-    var t_last = performance.now()  ;
+    var t_last = useRef(performance.now()) ; 
     
-    var mic_handler =  async function(e :any) {
-	let power = e.detail
-	mic_max.current = Math.max(mic_max.current,power)
-	let val = 100*(power/mic_max.current)
-	let t_now = performance.now() ;
-
-	if ( t_now-t_last > 50 ) { 
-	    setMicState(val)
-	    t_last = t_now ; 
-	}
-
-    }
     
-
-    var get_voices = async function(){
-	//wait until voices ready
-	let voices_ready = function() { 
-	    let voices = speechSynthesis.getVoices()
-	    return (voices.length > 0 ) 
-	}
-	await tsw.common.asnc.wait_until(voices_ready, 3000, 500 ) ; 
-	let voices = speechSynthesis.getVoices() ;
-	log(`Got ${voices.length} voices`) ; 
-	setVoicesState(voices)
-
-
-    } 
 
     useEffect( () => {
+
+	
+	var get_voices = async function(){
+	    //wait until voices ready
+	    let voices_ready = function() { 
+		let voices = speechSynthesis.getVoices()
+		return (voices.length > 0 ) 
+	    }
+	    await tsw.common.asnc.wait_until(voices_ready, 3000, 500 ) ; 
+	    let voices = speechSynthesis.getVoices() ;
+	    log(`Got ${voices.length} voices`) ; 
+	    setVoicesState(voices)
+
+
+	} 
+
+
+	let mic_handler =  async function(e :any) {
+	    let power = e.detail
+	    mic_max.current = Math.max(mic_max.current,power)
+	    let val = 100*(power/mic_max.current)
+	    let t_now = performance.now() ;
+
+	    if ( t_now-t_last.current > 50 ) { 
+		setMicState(val)
+		t_last.current = t_now ; 
+	    }
+
+	}
 
 	
 	tsw.apis.local_storage.set_storage_header("tidyscripts")
@@ -135,9 +138,7 @@ export default function Component() {
 	    window.removeEventListener("tidyscripts_web_mic" , mic_handler) 
 	    clearInterval(micInterval) 
 	} 
-    }, [])
-
-    
+    },  [micInterval, log])
 
     
     
@@ -146,69 +147,69 @@ export default function Component() {
     
     return ( 
 	
-	    <Flex
-		direction="column" 
-		padding="20px">
+	<Flex
+	    direction="column" 
+		       padding="20px">
 
-		<Flex direction="row" justifyContent="space-between">
-		    <Text fontSize="2xl"> Voice Interface Panel </Text>
-		    <RL/>
-		</Flex>
+	    <Flex direction="row" justifyContent="space-between">
+		<Text fontSize="2xl"> Voice Interface Panel </Text>
+		<RL/>
+	    </Flex>
 
-		<Divider marginTop={dm} marginBottom={dm} />
+	    <Divider marginTop={dm} marginBottom={dm} />
 
-		<Text marginTop={0} marginBottom={dm}> SPEECH RECOGNITION (SR)     </Text>
+	    <Text marginTop={0} marginBottom={dm}> SPEECH RECOGNITION (SR)     </Text>
 
-		<Flex direction="row" align="center" justifyContent="space-around">
-		    <Button  onClick={
-		    function(){
+	    <Flex direction="row" align="center" justifyContent="space-around">
+		<Button  onClick={
+		function(){
+		    
+		    
+		    if (vi_enabled()) {
 			
+			console.log("Stopping recog") 
+			vi.stop_recognition() 
+			setMicState(0) 
+			setEnabledState(false) 
+			setSpeechState(false)
 			
-			if (vi_enabled()) {
-			    
-			    console.log("Stopping recog") 
-			    vi.stop_recognition() 
-			    setMicState(0) 
-			    setEnabledState(false) 
-			    setSpeechState(false)
-			    
-			} else { 
-			    
-			    let onSpeechStart = function () {
-				setSpeechState(true)
-			    }
-			    vi.initialize_recognition({onSpeechStart})
-			    setEnabledState(true)
-			} 
-
-		    }
-		    }>
-			{ 
-			    vi_enabled()  ? <Text>Disable SR</Text> : <Text>Enable SR</Text> 
+		    } else { 
+			
+			let onSpeechStart = function () {
+			    setSpeechState(true)
 			}
-		    </Button>
+			vi.initialize_recognition({onSpeechStart})
+			setEnabledState(true)
+		    } 
 
-		    <Progress style={{flexGrow : 1, marginLeft : "10px"}} value={micState} />
+		}
+		}>
+		    { 
+			vi_enabled()  ? <Text>Disable SR</Text> : <Text>Enable SR</Text> 
+		    }
+		</Button>
 
-		</Flex>
+		<Progress style={{flexGrow : 1, marginLeft : "10px"}} value={micState} />
 
-		<Box marginTop={dm} > 
-		    <Text>  Recognition Result: {txtState} </Text> 
-		</Box>
+	    </Flex>
 
-		<Divider marginTop={dm} marginBottom={dm} />		
+	    <Box marginTop={dm} > 
+		<Text>  Recognition Result: {txtState} </Text> 
+	    </Box>
+
+	    <Divider marginTop={dm} marginBottom={dm} />		
+	    
+	    <Box >
 		
-		<Box >
+		<Text marginTop={0} marginBottom={dm}> TEXT TO SPEECH (TTS)     </Text>
+		
+		<Flex direction="row" justifyContent="space-around" > 
+		    <Button  onClick={()=> vi.speak( (document.getElementById(tts_test_input_id)! as any).value) }> 
+			Speak 
+		    </Button>
 		    
-		    <Text marginTop={0} marginBottom={dm}> TEXT TO SPEECH (TTS)     </Text>
+		    <Input  style={{flexGrow : 1 , marginLeft : "10px"}} id={tts_test_input_id}  defaultValue="I will speak this" />			    </Flex>
 		    
-		    <Flex direction="row" justifyContent="space-around" > 
-			<Button  onClick={()=> vi.speak( (document.getElementById(tts_test_input_id)! as any).value) }> 
-			    Speak 
-			</Button>
-			
-			<Input  style={{flexGrow : 1 , marginLeft : "10px"}} id={tts_test_input_id}  defaultValue="I will speak this" />			    </Flex>
-			
 		    <br /> 
 		    <br /> 			
 		    
@@ -216,24 +217,24 @@ export default function Component() {
 			
 			Select TTS Voice
 			
-			    <Box padding="10px" style={{maxHeight : "250px", marginTop: "2px", overflowY : "scroll"}}> 
-				
-				<List> 
-				    { 
-					voicesState.map( function(v : any) { 
-					    return ( 
-						<ListItem key={v.voiceURI}> 
-						    <VoiceItem v={Object.assign(v,{tsw})} />
-						</ListItem>
-					)})
-				    } 
-				</List>
-				
-			    </Box>
+			<Box padding="10px" style={{maxHeight : "250px", marginTop: "2px", overflowY : "scroll"}}> 
+			    
+			    <List> 
+				{ 
+				    voicesState.map( function(v : any) { 
+					return ( 
+					    <ListItem key={v.voiceURI}> 
+						<VoiceItem v={Object.assign(v,{tsw})} />
+					    </ListItem>
+				    )})
+				} 
+			    </List>
+			    
+			</Box>
 		    </Box>
-		</Box>	    
-	    </Flex> 
-	    
+	    </Box>	    
+	</Flex> 
+	
     )
 
 }
@@ -257,14 +258,14 @@ function VoiceItem(props : any) {
 		<Button  margin="10px" 		    
 			 onClick={()=> v.tsw.util.voice_interface.speak_with_voice( (document.getElementById(tts_test_input_id)! as any).value, v.voiceURI) }>Test</Button>
 		<Button margin="10px"
-			onClick={
-			()=>{
-			    let uri = v.voiceURI ; 
-			    console.log("Storing default uri: " + uri)
-			    v.tsw.apis.local_storage.store(uri, 'default_voice_uri') ;
-			    
-			}
-			}
+				onClick={
+				()=>{
+				    let uri = v.voiceURI ; 
+				    console.log("Storing default uri: " + uri)
+				    v.tsw.apis.local_storage.store(uri, 'default_voice_uri') ;
+				    
+				}
+				}
 		>Select</Button>	    	    	    
 	    </Flex>
 	    <Divider/>

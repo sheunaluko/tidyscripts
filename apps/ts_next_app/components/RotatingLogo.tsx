@@ -46,7 +46,7 @@ const RL = (props: any) => {
 	} 
 
 
-    }, []);
+    }, [props.logo_dims]);
 
     return (
 		<ChakraBox

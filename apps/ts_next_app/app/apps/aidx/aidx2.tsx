@@ -130,7 +130,7 @@ const Component: NextPage = (props : any) => {
     }
     
 
-    useEffect(  ()=> {init()} , [] ) ; //init script
+    useEffect(  ()=> {init()} ) ; //init script
 
     
 

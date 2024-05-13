@@ -74,7 +74,7 @@ export default function C(props : any){
 	on_change( cdata) 
 	log("Handled change:")
 	log(cdata) 
-    }, [state.classes,curr_mode])    
+    }, [state.classes,curr_mode, on_change])    
     
     return ( 
 	<Box> 

@@ -8,8 +8,6 @@ import { getAuth, signOut } from "firebase/auth";
 import * as tsw from "tidyscripts_web" 
 
 
-
-
 import {
   Box,
   Button,
@@ -31,7 +29,6 @@ import {
 declare var window : any ;
 
 const log = tsw.common.logger.get_logger({id:'login'})
-
 
 
 const Component: NextPage = (props : any) => {

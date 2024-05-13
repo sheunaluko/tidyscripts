@@ -31,7 +31,8 @@ import {theme,
 
 declare var window : any ; 
 
-const Home = (
+const Home = function() {
+    return ( 
     <Button   
     size="sm"
     style={{
@@ -44,18 +45,22 @@ const Home = (
     }> 
     Home
     </Button>
-    
-)
+    )
+    } 
+
 
 function Footer() {
 
-    let CBox = function({children}) {
+    let CBox = Box
+    /*
+    function({children} : any) {
 	return (
 	    <Box margin="4px">
 		{children} 
 	    </Box>
 	) 
-    } 
+    }
+    */ 
 
     return (
 	<Box
@@ -86,7 +91,7 @@ function Footer() {
 	    </CBox>
 
 	    <CBox> 
-		{Home} 
+		<Home/> 
 	    </CBox>
 	    
 	    <CBox> 

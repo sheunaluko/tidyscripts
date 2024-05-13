@@ -20,7 +20,7 @@ export default function useInit(args: any) {
 	return (clean_up as any)
 
 	
-    }, []);
+    }, [assign_to_window,init,clean_up]);
 
 }
 

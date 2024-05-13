@@ -352,7 +352,6 @@ const Component: NextPage = (props : any) => {
 	<ThemeProvider theme={createTheme()}>
 
 	    <div> 
-		Hellow
 	    </div> 
 
 	    
