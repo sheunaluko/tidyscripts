@@ -2,8 +2,7 @@
 import repl from  "repl"
 import node from "../packages/ts_node/dist/index"
 import common from "../packages/ts_common/dist/index" ;
-import * as local from "./local/index" 
-
+import * as dev from "./dev/index" 
 
 declare var global : any ;
 const R = common.R ;
@@ -21,7 +20,7 @@ async function init_repl() {
     if (!global.common) { global.common = common };
     if (!global.node  ) { global.node   = node   };
     if (!global.R     ) { global.R      = R      };
-    if (!global.local ) { global.local  = local  };     
+    if (!global.dev   ) { global.dev    = dev    };     
 
     log(welcome_msg)
     
@@ -37,5 +36,5 @@ export {
     get_logger , 
     R,
     init_repl ,
-    local, 
+    dev, 
 } 
