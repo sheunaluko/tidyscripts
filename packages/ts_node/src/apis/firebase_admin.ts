@@ -1,19 +1,22 @@
-
-
-import admin from "firebase-admin"
+import {initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import {getFirestore, Timestamp, FieldValue, Filter } from 'firebase-admin/firestore';
 import {read_json} from "../io"
 
-import { getFirestore, Timestamp, FieldValue, Filter } from "firebase-admin/firestore"
 
-
-export function get_app_from_keyfile(loc : string) {
-    let serviceAccount = read_json(loc) ;
-    return admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount)
+export function init_from_keyfile(loc : string) {
+    // - 
+    var serviceAccount = read_json(loc) ;
+    // - 
+    var app =  initializeApp({
+	credential: cert(serviceAccount)
     })
-} 
+    // - 
+    var db : any = null ;
+    db = getFirestore();
+    // -
+    return {
+	app,
+	db 
+    } 
+}
 
-export {
-    admin,
-    getFirestore 
-} 

@@ -2,7 +2,7 @@
 
 import type { NextPage } from 'next'
 import React,{useEffect} from 'react' ;
-import * as firebase from  "../../src/firebase"
+import * as firebase from  "../../../src/firebase"
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getAuth, signOut } from "firebase/auth";
 import * as tsw from "tidyscripts_web" 

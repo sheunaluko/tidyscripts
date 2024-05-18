@@ -53,7 +53,7 @@ const login = (
 	    onClick={
     function(){
 	if (typeof window != "undefined" ) { 
-	    window.location.href="/login"
+	    window.location.href="/apps/login"
 	}
 
     }}>

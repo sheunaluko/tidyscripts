@@ -25,7 +25,6 @@ import {
 } from "@chakra-ui/react";
 
 
-
 const card_style : any  = {
   padding : "10px" ,
   marginBottom : "10px" ,
@@ -35,7 +34,7 @@ const card_style : any  = {
 const AllLinks = () => {
   return (
       <Box>
-
+	  
 	  <Link href="/apps/cortex">
 	      <Card style={card_style}>
 		  <h2>Cortex &rarr;</h2>
@@ -140,8 +139,6 @@ const Component : NextPage = (props : any) => {
   return (
 
     <>
-
-      
         <h1 className={styles.title}>
           <a href="https://github.com/sheunaluko/tidyscripts"> Tidyscripts Apps </a>
         </h1>

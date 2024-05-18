@@ -9,11 +9,11 @@ const R = common.R ;
 const get_logger = common.logger.get_logger ; 
 const log = get_logger({id: 'repl'}) ; 
 
-
 let welcome_msg = ` 
 Welcome to the Tidyscripts REPL (Read Eval Print Loop)
-What exciting journey awaits you?
+What exciting journey awaits you??
 `
+
 
 async function init_repl() { 
 
@@ -31,7 +31,7 @@ async function init_repl() {
 }
 
 export {
-    node,
+      node,
     common,
     get_logger , 
     R,

@@ -4,6 +4,7 @@ import React from 'react'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
+import Link from 'next/link' ;
 import styles from '../styles/Home.module.css'
 import { useAuthState } from 'react-firebase-hooks/auth';
 import * as firebase from "../src/firebase"
@@ -18,7 +19,8 @@ declare var window : any ;
 
 import {
     Box,
-    Typography 
+    Typography ,
+    Card 
     
 } from "../src/mui" 
 
@@ -60,6 +62,15 @@ const Home: NextPage = (props : any) => {
 
   useInit({ init , clean_up })  //my wrapper around useEffect 
   
+    const card_style : any  = {
+	padding : "10px" ,
+	marginBottom : "10px" ,
+	cursor : 'pointer' , 
+    } 
+
+	  
+
+
   return (
 
       <Box
@@ -78,7 +89,19 @@ const Home: NextPage = (props : any) => {
               <Typography variant="h4" color={theme.palette.primary.main}>
 		  Elegant tools for serious builders and users
               </Typography>
-	  </Box> 
+	  </Box>
+
+	  <Link href="/apps/index">
+	      <Card style={card_style}>
+		  <h2>Apps &rarr;</h2>
+		  <p>
+		      App Library
+		  </p>
+	      </Card >
+	  </Link>
+
+	  
+
 
 	      
     </Box>
