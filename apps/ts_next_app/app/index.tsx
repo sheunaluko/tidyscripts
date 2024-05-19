@@ -20,7 +20,8 @@ declare var window : any ;
 import {
     Box,
     Typography ,
-    Card 
+    Card ,
+    Button
     
 } from "../src/mui" 
 
@@ -69,42 +70,54 @@ const Home: NextPage = (props : any) => {
     } 
 
 	  
-
-
   return (
 
       <Box
 	  display='flex'
 	  flexDirection='column'
 	  alignItems='center'
+	  style={{width: "100%", height: "100%"}}
+      >
+      <Box>
+          <Typography variant="h1" color={theme.palette.primary.main}>
+	      Tidyscripts
+          </Typography>
+      </Box> 
+
+      <Box> 
+          <Typography variant="h4" color={theme.palette.primary.main}>
+	      Powerful tools for serious builders and users
+          </Typography>
+      </Box>
+
+
+      <Box
+      	  display='flex'
+	  flexDirection='column'
+	  alignItems='center'
+	  justifyContent='space-around'
+	  flexGrow={1}
 	  style={{width: "100%"}}
       >
-	  <Box>
-              <Typography variant="h1" color={theme.palette.primary.main}>
-		  Tidyscripts
-              </Typography>
-	  </Box> 
+	  
+	  <Card
 
-	  <Box> 
-              <Typography variant="h4" color={theme.palette.primary.main}>
-		  Elegant tools for serious builders and users
-              </Typography>
-	  </Box>
-
-	  <Link href="/apps/index">
-	      <Card style={card_style}>
-		  <h2>Apps &rarr;</h2>
-		  <p>
+	      variant='outlined' >
+	      <Link href="/apps">
+		  <p style={{padding: "5px"}}>
 		      App Library
 		  </p>
-	      </Card >
-	  </Link>
+	      </Link>		  
+	  </Card>
 
 	  
+      </Box>
+
+      
 
 
-	      
-    </Box>
+      
+      </Box>
 
   )
 }

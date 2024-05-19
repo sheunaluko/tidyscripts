@@ -1,3 +1,9 @@
+/*
+   Note:  this API is currently non functional.
+   It is unclear why, however the json key is not resulting in succesful authentication to the server
+   Sat May 18 05:40:40 PM CDT 2024
+*/
+
 import {initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import {getFirestore, Timestamp, FieldValue, Filter } from 'firebase-admin/firestore';
 import {read_json} from "../io"
