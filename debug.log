@@ -1,0 +1,20 @@
+
+
+
+[ ] Directory Structures
+The huge bug I was having stemmed from the fact that I was upgrading typescript and react and react dom inside the root directory but I needed to be doing inside the SUB directory where the error/incompatibility was occuring -- for example in the APP directory itself... 
+
+[ ] MISC
+I had to take out the web3 modules because of errors with ethers lib and typescript (they had upgraded from v4 to 6). I can look in github history to find the old source code
+
+
+[ ] Server Side Rendering
+DEBUG HELL. FInally debugged the issue using CHAT GPT => It didnt actually quite figure it out but helped alot. 
+Ah, interesting! It sounds like the issue was related to the class definition of SoundEventDetector, which extends window.EventTarget. This extension would indeed attempt to access window immediately during the module's evaluation phase because class inheritance in JavaScript requires the parent class (window.EventTarget in this case) to be resolved when the class is defined, not when an instance is created.
+
+Since window.EventTarget is undefined on the server (where window doesn't exist), this would cause a "window not defined" error as soon as your module is parsed or imported in a server-side context within Next.js.
+
+[ ] Firestore | Wed May 29 20:59:57 CDT 2024 | time => 2 weeks? 
+Spent over 1 week trying to figure out why firestore was not working. Turns out it was because I renamed the database to "main" from (default) - and the client libraries try to connect to (default) by default. The error message I was getting from the client library was not helpful and so did not reveal this. I tried many things but finally I tried downgrading firebase library and at first it would not work at all. Then I upgraded to a more recent stable version and --> FINALLY GOT AN ERROR MESSAGE THAT WAS HELPFUL (database with id (default) was not found). THen I knew that it may be how the database was named. Interesting. I then changed the name of the database to (default) and it worked :)  I almost gave up many times on firebase -- i looked into supabase and looked into ATLAS with mongo. WOW. wtf. :/
+
+

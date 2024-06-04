@@ -1,18 +1,15 @@
-// imports
 import * as tsw from "tidyscripts_web";
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithRedirect, signOut } from "firebase/auth";
-import { getFirestore, addDoc, collection } from "firebase/firestore";
-
-
+import { getFirestore, addDoc, setDoc, doc, collection , getDoc } from "firebase/firestore";
+// - 
 import {
   GoogleAuthProvider,
   GithubAuthProvider,
   FacebookAuthProvider
 } from "firebase/auth";
-
+// - 
 const log = tsw.common.logger.get_logger({ id: 'firebase' });
-
 // Firebase config 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -24,10 +21,10 @@ const firebaseConfig = {
   appId: "1:292052354057:web:77fa4743a205deb40764d8",
   measurementId: "G-4SJGBBQWW2"
 };
-
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);// Initialize Cloud Firestore and get a reference to the service
+// - 
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);// Initialize Cloud Firestore and get a reference to the service
 
 /* Configure providers */
 const GoogleProvider = new GoogleAuthProvider();
@@ -57,7 +54,8 @@ export function log_out() {
  * Firestore functions  
  */
 
-export async function test_fb() {
+
+async function test_db() {
   try {
     const docRef = await addDoc(collection(db, "users"), {
       first: "Alan",
@@ -70,4 +68,17 @@ export async function test_fb() {
   } catch (e) {
     console.error("Error adding document: ", e);
   }
+} 
+
+export {
+    getFirestore,
+    addDoc,
+    setDoc,
+    getDoc , 
+    collection  ,
+    app,
+    auth,
+    db,
+    firebaseConfig ,
+    test_db, doc 
 } 

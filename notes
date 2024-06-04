@@ -17,6 +17,7 @@ To work on =>
 
 
 
+
 0. Implementing presence
 - Could do this using a document => stats/active_clients in  Firestore
   - and the vercel api/active_client endpoint 
@@ -35,14 +36,3 @@ To work on =>
 2. tsconfig has "skipLibCheck" to resolve langchain type error
 3. consider getting rid of RAMDA ... it appears that it needs 0.28.0 and @types 0.28.25  in order to be compatible with typescript 5.3.3 !!!
    -> I ended up changing the typescript version multiple times so this may not be relevant
-
-4. THe huge bug I was having stemmed from the fact that I was upgrading typescript and react and react dom inside the root directory but I needed to be doing inside the SUB directory where the error/incompatibility was occuring -- for example in the APP directory itself... 
-5. more errors (rendering and window etc... https://github.com/vercel/next.js/issues/58576
-6. I had to take out the web3 modules because of errors with ethers lib and typescript (they had upgraded from v4 to 6). I can look in github history to find the old source code
-
-
-
-7. DEBUG HELL. FInally debugged the issue using CHAT GPT => It didnt actually quite figure it out but helped alot. 
-Ah, interesting! It sounds like the issue was related to the class definition of SoundEventDetector, which extends window.EventTarget. This extension would indeed attempt to access window immediately during the module's evaluation phase because class inheritance in JavaScript requires the parent class (window.EventTarget in this case) to be resolved when the class is defined, not when an instance is created.
-
-Since window.EventTarget is undefined on the server (where window doesn't exist), this would cause a "window not defined" error as soon as your module is parsed or imported in a server-side context within Next.js.

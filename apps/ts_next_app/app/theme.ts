@@ -8,7 +8,10 @@ const roboto = Roboto({
     display: 'swap',
 });
 
-const theme = createTheme({
+
+const theme = createTheme() ; 
+
+const otherTheme = createTheme({
 
     palette: {
 	mode: 'light',
@@ -23,7 +26,7 @@ const theme = createTheme({
 	    main: '#ff9400',
 	},
 
-    }
+    } 
 
 })
 
