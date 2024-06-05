@@ -4,11 +4,14 @@ TIDYSCRIPTS NOTES
 
 
 To work on =>
-- firebase admin (integration into Tidyscripts node lib) 
+- firebase admin (integration into Tidyscripts node lib) n
 - firebase client integration into Tidyscripts web lib
    - react-firebase-hooks is an interesting library
-   - firebase is the required library 
-- remove firebaseConfig object from public github 
+   - firebase is the required library  
+- remove firebaseConfig object from public github
+
+Status => have largel completed integrating firebase client in TSW lib. Now need to get the admin functionality working and the
+firebaseConfig object out of the source code (and into environment var). For the env var I will then test it by pushing the code to production (but first will need to fix the microbiology, bokeh interface apps) -- maybe categorize them 
 
 
 - add theming to the menu bar  (decide if you want menu bar on the side or at the top of the app?)
