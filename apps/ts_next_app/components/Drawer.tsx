@@ -18,6 +18,7 @@ import {
   Card
 } from '@chakra-ui/react'
 
+import {give_feedback} from "../src/firebase" 
 
 import {theme,
 	secondary,
@@ -85,10 +86,27 @@ export default function Component(props : any) {
       <DrawerBody>
 
 	  <Card style={card_style}>
-	    <h2>Feedback</h2>
-	    <p onClick={
-	    dev_1
-	    }> Tell us how we can improve</p>
+	    <h1> Tell us how we can improve :)</h1>
+	    <br/> 
+	    <textarea id="feedback_text"></textarea>
+	    <br/> 	    
+	    <Button onClick={function(){
+		let el = (document.getElementById("feedback_text") as any)
+		let feedback = (el.value as any)
+		log(`Saving user feedback: ${feedback}`)
+		give_feedback(feedback as any)
+		toast_toast({
+		    title : 'Success' ,
+		    description : 'Thank you for your invaluable feedback. LFG' ,
+		    duration : 3000 , 
+		    status : 'success' ,
+		    isClosable : true, 
+		}) 
+
+	    }}>
+		Submit
+	    </Button> 
+
 	  </Card >
 	
 	
