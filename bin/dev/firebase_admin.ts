@@ -5,9 +5,9 @@ const fa = node.apis.firebase_admin
 const log = common.logger.get_logger({id: "dev:fba"})
 
 export function init() {
-    log("Loading keyfile...")
     let loc  = process.env['TIDYSCRIPTS_FIREBASE_KEY_LOC']
-    log(`Using file: ${loc}`) ;
+    log(`Loading keyfile from location: ${loc}`)
+    //log(`Using file: ${loc}`) ;
     // @ts-ignore 
     return fa.init_from_keyfile(loc) ;
 

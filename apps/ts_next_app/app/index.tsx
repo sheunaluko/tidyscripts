@@ -87,7 +87,7 @@ const Home: NextPage = (props : any) => {
 		style={{width: "100%"}}
 	    >
 		<Box
-		    variant='outlined' >
+		    style={{ borderStyle : "groove" }} >
 		    <Link href="/apps">
 			<p style={{padding: "5px"}}>
 			    App Library

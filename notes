@@ -1,8 +1,6 @@
 TIDYSCRIPTS NOTES
 -----------------
 
-
-
 To work on =>
 - firebase admin (integration into Tidyscripts node lib) n
 - firebase client integration into Tidyscripts web lib
@@ -10,7 +8,7 @@ To work on =>
    - firebase is the required library  
 - remove firebaseConfig object from public github
 
-Status => have largel completed integrating firebase client in TSW lib. Now need to get the admin functionality working and the
+Status => have largely completed integrating firebase client in TSW lib. Now need to get the admin functionality working and the
 firebaseConfig object out of the source code (and into environment var). For the env var I will then test it by pushing the code to production (but first will need to fix the microbiology, bokeh interface apps) -- maybe categorize them 
 
 

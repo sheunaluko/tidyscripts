@@ -7,7 +7,7 @@
 
 import { logger } from 'tidyscripts_common';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithRedirect, signOut } from "firebase/auth";
+import { getAuth, signInWithRedirect, signOut, Auth } from "firebase/auth";
 import { getFirestore, addDoc, setDoc, doc, collection , getDoc } from "firebase/firestore";
 import { GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider } from "firebase/auth";
 // - 
@@ -48,6 +48,12 @@ export function initialize_firebase_auth_firestore(config : any) {
     } 
 } 
 
+
+
+
+
+
+
 /* Providers */
 
 export {
@@ -79,4 +85,5 @@ export {
     setDoc,
     getDoc , 
     collection  ,
+    Auth, 
 } 
