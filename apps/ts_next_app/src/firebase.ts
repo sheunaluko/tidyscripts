@@ -1,17 +1,14 @@
+'use client';
+
 import * as tsw from "tidyscripts_web";
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithRedirect, signOut } from "firebase/auth";
-import { getFirestore, addDoc, setDoc, doc, collection , getDoc } from "firebase/firestore";
-// - 
-import {
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  FacebookAuthProvider
-} from "firebase/auth";
-// - 
-const log = tsw.common.logger.get_logger({ id: 'firebase' });
-// Firebase config 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+/* create logger */ 
+const log = tsw.common.logger.get_logger({id : 'firebase_instance'})  ; 
+
+/* load the firebase web client from tidyscripts  */
+const firebase = tsw.apis.firebase
+
+/* define the  Firebase config object  */ 
 const firebaseConfig = {
   apiKey: "AIzaSyByjw-kqCpeYXQpApAeUU3GAnh1WfSQd7I",
   authDomain: "tidyscripts.firebaseapp.com",
@@ -21,64 +18,32 @@ const firebaseConfig = {
   appId: "1:292052354057:web:77fa4743a205deb40764d8",
   measurementId: "G-4SJGBBQWW2"
 };
-// - 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);// Initialize Cloud Firestore and get a reference to the service
 
-/* Configure providers */
-const GoogleProvider = new GoogleAuthProvider();
-const FacebookProvider = new FacebookAuthProvider();
-const GithubProvider = new GithubAuthProvider();
+export var app  : any = null ;
+export var auth : any = null ;
+export var db   : any = null ;
 
-/* Create sign in functions for export */
-export function google_sign_in() { signInWithRedirect(auth, GoogleProvider) }
-export function facebook_sign_in() { signInWithRedirect(auth, FacebookProvider) }
-export function github_sign_in() { signInWithRedirect(auth, GithubProvider) }
+export function get_auth() { return auth }
+export function get_app() { return app } 
+export function get_db() { return db } 
+    
 
-
-/* Create signout functions for export */
-export function log_out() {
-  const auth = getAuth();
-  signOut(auth).then(() => {
-    // Sign-out successful.
-    log("User signed out")
-  }).catch((error) => {
-    // An error happened.
-    log("Signout error")
-  });
-}
-
-
-/**
- * Firestore functions  
- */
-
-
-async function test_db() {
-  try {
-    const docRef = await addDoc(collection(db, "users"), {
-      first: "Alan",
-      middle: "Mathison",
-      last: "Turing",
-      born: 1912
-    });
-
-    console.log("Document written with ID: ", docRef.id);
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
+export function initialized() {
+    return ( (app && auth && db) !== null ) 
 } 
 
-export {
-    getFirestore,
-    addDoc,
-    setDoc,
-    getDoc , 
-    collection  ,
-    app,
-    auth,
-    db,
-    firebaseConfig ,
-    test_db, doc 
+/* Function to Load the app, auth, and db objects */
+export function initialize() {
+    if (initialized())  { log(`Already initialized`) }
+    else {
+	log(`Initializing`)
+	let tmp = firebase.initialize_firebase_auth_firestore(firebaseConfig) ;
+	app = tmp.app ;
+	auth = tmp.auth ;
+	db = tmp.db 
+    } 
 } 
+
+initialize(); 
+
+

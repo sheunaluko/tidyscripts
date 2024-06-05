@@ -19,6 +19,7 @@
   "author": "Sheun Aluko",
   "license": "ISC",
   "dependencies": {
+    "firebase": "^10.12.2",
     "react-inspector": "^6.0.1",
     "tidyscripts_common": "*",
     "webpack-cli": "^4.10.0"

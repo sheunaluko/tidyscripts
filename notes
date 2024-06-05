@@ -1,14 +1,16 @@
 TIDYSCRIPTS NOTES
 -----------------
 
-Fri May 10 11:22:15 CDT 2024
-finished the bugs; here are my thoughts
-- implement more slowly; periodically build the web app to check that it still compiles (?automate this)
--
+
 
 To work on =>
 - firebase admin (integration into Tidyscripts node lib) 
 - firebase client integration into Tidyscripts web lib
+   - react-firebase-hooks is an interesting library
+   - firebase is the required library 
+- remove firebaseConfig object from public github 
+
+
 - add theming to the menu bar  (decide if you want menu bar on the side or at the top of the app?)
 - allow user to configure settings 
 - allow signed in user to sync notes accross browser instances

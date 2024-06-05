@@ -1,15 +1,16 @@
 'use client';
 
-
 import { Fragment} from 'react' ;
 import Link from 'next/link' ; 
-
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signOut } from "firebase/auth";
-import * as firebase from  "../src/firebase"
+import * as firebase_instance from "../src/firebase" ; 
+import * as tsw from "tidyscripts_web" 
+
+const {
+    log_out 
+}  = tsw.apis.firebase
 
 declare var window : any ; 
-
 
 import {
     Typography 
@@ -36,7 +37,8 @@ const spinner = ( <Spinner style={{}}
 			   size='xs' 	/> )
 
 const logout = (
-    <Button size="sm" onClick={firebase.log_out}
+    //
+    <Button size="sm" onClick={()=>log_out(firebase_instance.auth)} 
 	    color={primary}
 	    colorScheme={secondary}
     >
@@ -64,7 +66,7 @@ const login = (
 
 export default function Widget(props : any) { 
 
-  const [user, loading, error] = useAuthState(firebase.auth, {});
+  const [user, loading, error] = useAuthState(firebase_instance.auth, {});
 
   if (loading) { return spinner }
   if (user ) {return logout } else {

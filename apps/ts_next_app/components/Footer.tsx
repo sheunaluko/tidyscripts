@@ -52,15 +52,6 @@ const Home = function() {
 function Footer() {
 
     let CBox = Box
-    /*
-    function({children} : any) {
-	return (
-	    <Box margin="4px">
-		{children} 
-	    </Box>
-	) 
-    }
-    */ 
 
     return (
 	<Box

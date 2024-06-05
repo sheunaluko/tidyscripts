@@ -18,3 +18,8 @@ Since window.EventTarget is undefined on the server (where window doesn't exist)
 Spent over 1 week trying to figure out why firestore was not working. Turns out it was because I renamed the database to "main" from (default) - and the client libraries try to connect to (default) by default. The error message I was getting from the client library was not helpful and so did not reveal this. I tried many things but finally I tried downgrading firebase library and at first it would not work at all. Then I upgraded to a more recent stable version and --> FINALLY GOT AN ERROR MESSAGE THAT WAS HELPFUL (database with id (default) was not found). THen I knew that it may be how the database was named. Interesting. I then changed the name of the database to (default) and it worked :)  I almost gave up many times on firebase -- i looked into supabase and looked into ATLAS with mongo. WOW. wtf. :/
 
 
+
+Fri May 10 11:22:15 CDT 2024
+finished the bugs; here are my thoughts
+- implement more slowly; periodically build the web app to check that it still compiles (?automate this)
+

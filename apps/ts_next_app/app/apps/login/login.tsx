@@ -2,10 +2,15 @@
 
 import type { NextPage } from 'next'
 import React,{useEffect} from 'react' ;
-import * as firebase from  "../../../src/firebase"
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signOut } from "firebase/auth";
+import * as firebase_instance from "../../../src/firebase" ; 
 import * as tsw from "tidyscripts_web" 
+
+const {
+    GoogleAuthProvider ,
+    signInWithRedirect, 
+    log_out 
+}  = tsw.apis.firebase 
 
 
 import {
@@ -31,15 +36,23 @@ declare var window : any ;
 const log = tsw.common.logger.get_logger({id:'login'})
 
 
+/* configure providers */
+const GoogleProvider = new GoogleAuthProvider() ;
+function google_sign_in() {signInWithRedirect(firebase_instance.get_auth(), GoogleProvider) }
+
+
+/* component */ 
 const Component: NextPage = (props : any) => {
 
-  const [user, loading, error] = useAuthState(firebase.auth, {});
+  const [user, loading, error] = useAuthState(firebase_instance.auth, {});
 
   useEffect( ()=>{
 
+      
     async function main() {
         if (typeof window != "undefined" ) { 
-	      window.firebase = firebase; 
+	    window.firebase = tsw.apis.firebase;
+	    window.firebase_instance = firebase_instance; 	    
           }
     } 
 
@@ -59,7 +72,7 @@ const Component: NextPage = (props : any) => {
 	<div>Welcome to Tidyscripts! </div>
 
 
-	<Button marginTop={m} marginBottom={m} onClick={firebase.google_sign_in}>
+	<Button marginTop={m} marginBottom={m} onClick={google_sign_in}>
 	  Login with Google
 	</Button>
 
@@ -75,7 +88,6 @@ const Component: NextPage = (props : any) => {
 	  Home
 	</Button>
 	
-	
       </Flex>
     )
   }
@@ -89,7 +101,7 @@ const Component: NextPage = (props : any) => {
 	  Home
 	</Button>
 	
-	<Button onClick={firebase.log_out}>
+	<Button onClick={()=>log_out(firebase_instance.auth)}>
 	  Log out
 	</Button>
 	
