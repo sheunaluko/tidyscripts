@@ -2,6 +2,10 @@ TIDYSCRIPTS NOTES
 -----------------
 
 To work on =>
+
+[ ] fix the feedback button (connect it to the firebase.give_feedback) function 
+[ ] extract all dreams and store 
+
 - firebase admin (integration into Tidyscripts node lib) n
 - firebase client integration into Tidyscripts web lib
    - react-firebase-hooks is an interesting library
