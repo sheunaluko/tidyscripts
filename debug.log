@@ -23,3 +23,7 @@ Fri May 10 11:22:15 CDT 2024
 finished the bugs; here are my thoughts
 - implement more slowly; periodically build the web app to check that it still compiles (?automate this)
 
+
+Tue Jun  4 19:40:19 CDT 2024
+Noticed that firefox on linux is Google auth not working; but workin on chrome/linux and windows/edge.
+
