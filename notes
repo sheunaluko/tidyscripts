@@ -3,6 +3,8 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
+
+
 [ ] fix the feedback button (connect it to the firebase.give_feedback) function 
 [ ] extract all dreams and store 
 
