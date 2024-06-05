@@ -20,6 +20,8 @@ import Toast from '../components/Toast'
 
 import { Analytics } from '@vercel/analytics/react';
 
+import styles from "../styles/Layout.module.css" ; 
+
 
 export const metadata: Metadata = {
     title: 'Tidyscripts',
@@ -70,6 +72,7 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 			    >
 				<main
 				    style={{ width: '100%' }}
+				    className={styles.main} 
 				>
 				    {children}
 				</main>
