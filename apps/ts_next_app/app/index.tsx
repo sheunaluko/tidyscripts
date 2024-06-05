@@ -86,14 +86,14 @@ const Home: NextPage = (props : any) => {
 		flexGrow={1}
 		style={{width: "100%"}}
 	    >
-		<Card
+		<Box
 		    variant='outlined' >
 		    <Link href="/apps">
 			<p style={{padding: "5px"}}>
 			    App Library
 			</p>
 		    </Link>		  
-		</Card>
+		</Box>
 	    </Box>
 	</Box>
     )
