@@ -57,7 +57,10 @@ const Home: NextPage = (props : any) => {
 	padding : "10px" ,
 	marginBottom : "10px" ,
 	cursor : 'pointer' , 
-    } 
+    }
+
+    let R = "17px"
+    
     return (
 	<Box
 	    display='flex'
@@ -82,7 +85,7 @@ const Home: NextPage = (props : any) => {
 		display='flex'
 		flexDirection='column'
 		alignItems='center'
-		justifyContent='space-around'
+		justifyContent='top'
 		flexGrow={1}
 		style={{width: "100%"}}
 	    >
@@ -90,8 +93,10 @@ const Home: NextPage = (props : any) => {
 		    style={{
 			borderStyle : "solid",
 			borderWidth : 2,
-			borderRadius : "20px",
-			padding : "4px" 
+			borderRadius : R,
+			borderColor : "gray", 
+			padding : "4px"  ,
+			marginBottom : "15px" 
 		    }} >
 		    <Link href="/apps">
 			<p style={{padding: "5px"}}>
@@ -99,6 +104,25 @@ const Home: NextPage = (props : any) => {
 			</p>
 		    </Link>		  
 		</Box>
+
+		<Box
+		    style={{
+			borderStyle : "solid",
+			borderWidth : 2,
+			borderRadius : R,
+			borderColor : "gray", 			
+			padding : "4px" 
+		    }} >
+		    <Link href="/resources/docs/index.html">
+			<p style={{padding: "5px"}}>
+			    Docs 
+			</p>
+		    </Link>		  
+		</Box>
+
+
+
+		
 	    </Box>
 	</Box>
     )

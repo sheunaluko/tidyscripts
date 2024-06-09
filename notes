@@ -3,10 +3,11 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
-[ ] fix the feedback button (connect it to the firebase.give_feedback) function 
-[ ] extract all dreams and store 
+[ ... ] fix the feedback button (connect it to the firebase.give_feedback) function 
+[ ] extract all dreams and store
+[ ] fix mobile version of app and mobile login etc (will have to debug on mobile device)  
 
-- firebase admin (integration into Tidyscripts node lib) n
+- firebase admin (integration into Tidyscripts node lib)  
 - firebase client integration into Tidyscripts web lib
    - react-firebase-hooks is an interesting library
    - firebase is the required library  
@@ -24,6 +25,7 @@ firebaseConfig object out of the source code (and into environment var). For the
 
 [ ] create an ADMIN DASHBOARD 
 
+[ ] AI coding utilities -- see one note docs 
 
 
 

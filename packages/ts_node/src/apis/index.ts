@@ -5,7 +5,7 @@ import * as coinbase from "./coinbase"
 import * as binance from "./binance/index"
 import * as radiopaedia from "./radiopaedia"
 import * as pubmed from './pubmed'
-import * as openai from "./openai"
+import * as openai from "./openai/index"
 import * as firebase_admin from "./firebase_admin" 
 
 export {
