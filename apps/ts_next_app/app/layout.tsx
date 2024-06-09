@@ -44,7 +44,9 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 	    </Head> 
 	    <body
 		style={{
-		    minHeight : "100vh", 
+		    minHeight : "100vh",
+		    overflowX : "hidden" ,
+		    position : "relative" 
 		}}
 	    >
 		<ThemeProvider theme={theme}>

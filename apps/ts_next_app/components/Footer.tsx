@@ -12,6 +12,7 @@ import Drawer from '../components/Drawer' ;
 
 import {
     Button,
+    Show
 } from "@chakra-ui/react"
 
 import {
@@ -51,13 +52,13 @@ const Home = function() {
 
 function Footer() {
 
-    let CBox = Box
+    let CBox = Box 
 
     return (
 	<Box
 	    display="flex" 
-		     flexDirection="row"
-		     alignItems="center"
+	    flexDirection="row"
+	    alignItems="center"
 	>
 
 	    <CBox>
@@ -71,9 +72,11 @@ function Footer() {
 	    </CBox>
 
 	    <CBox>
-		<Typography color={theme.palette.primary.main}> 		    
-		    Copyright © 2024 Sheun Aluko, MD		
-		</Typography>
+		<Show above="md">
+		    <Typography color={theme.palette.primary.main}> 		    
+			Copyright © 2024 Sheun Aluko, MD		
+		    </Typography>
+		</Show>
 
 	    </CBox>
 
@@ -81,11 +84,11 @@ function Footer() {
 		<AuthWidget />
 	    </CBox>
 
-	    <CBox> 
+	    <CBox style={{marginLeft : "8px"}}> 
 		<Home/> 
 	    </CBox>
 	    
-	    <CBox> 
+	    <CBox style={{marginLeft : "8px"}}>  
 		<Drawer /> 
 	    </CBox>
 

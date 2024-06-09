@@ -65,14 +65,14 @@ const Home: NextPage = (props : any) => {
 	    alignItems='center'
 	    style={{width: "100%", height: "100%"}}
 	>
-	    <Box>
-		<Typography variant="h1" color={theme.palette.primary.main}>
+	    <Box className={styles.title}>
+		<Typography variant="h2" color={theme.palette.primary.main as any}>
 		    Tidyscripts
 		</Typography>
 	    </Box> 
 
-	    <Box> 
-		<Typography variant="h4" color={theme.palette.primary.main}>
+	    <Box className={styles.description}> 
+		<Typography variant="h4" color={theme.palette.secondary as any}>
 		    Powerful tools for serious builders and users
 		</Typography>
 	    </Box>
@@ -87,7 +87,12 @@ const Home: NextPage = (props : any) => {
 		style={{width: "100%"}}
 	    >
 		<Box
-		    style={{ borderStyle : "groove" }} >
+		    style={{
+			borderStyle : "solid",
+			borderWidth : 2,
+			borderRadius : "20px",
+			padding : "4px" 
+		    }} >
 		    <Link href="/apps">
 			<p style={{padding: "5px"}}>
 			    App Library
