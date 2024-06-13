@@ -26,3 +26,4 @@ backup
 .nx
 
 package-lock.json
+packages/ts_node/local

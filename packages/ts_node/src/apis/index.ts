@@ -6,7 +6,9 @@ import * as binance from "./binance/index"
 import * as radiopaedia from "./radiopaedia"
 import * as pubmed from './pubmed'
 import * as openai from "./openai/index"
-import * as firebase_admin from "./firebase_admin" 
+import * as firebase_admin from "./firebase_admin"
+import * as langchain from "./langchain"
+export * as bots from "./bots" 
 
 export {
 
@@ -17,5 +19,6 @@ export {
   binance,
   pubmed,
   bokeh,
-  openai
+  openai,
+  langchain
 } 
