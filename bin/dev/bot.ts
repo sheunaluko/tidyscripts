@@ -64,11 +64,27 @@ global.chat = bot.chat
 /*
    Ideas:
    - figure out better architecture for improving when and how the bot decides to use the tools
-   - that are available (
+   - that are available 
+
+   - in the future enable the bot to manage long running and parallel tasks? 
+   - 
+
+   VIDEO 
+     - I was surprised to find that he bot could chain several functions together 
+     - to accomplish multi step problems (i.e retriveve X and transform it then save it to disk) 
 
    Todo:
-   - implement the ability for the bot to run the function requested by the bot_brain and to 
-   - provide back the resultant information to the bot_brain  
+   - How can the bot have a scratchpad of informaion to work with?
+   - this is how (one way) => 
+   - Upgrade the brain protocol to ALWAYS receive and return JSON 
+     - include in the JSON a a metadata or context field which contains information 
+     - that can be used by the bot 
+   - downside=> the main downside of this is that the context information is passed back and forth 
+     - and will use up tokens.  
+     - solution? If instead the context was stored in the system message and this could be updated 
+       - that would likely be more efficient -> ACTUALLY the AI would have to output CHANGES to 
+         - context which would have to be sent to to update the SYSTEM_MSG  
+     = so maybe this upgrade is actually the way to go :) 
    
 
  */ 

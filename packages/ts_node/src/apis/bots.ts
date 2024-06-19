@@ -187,7 +187,7 @@ export function get_chat_bot(functions : Function[]) {
 
 export function get_chat_bot_brain(chat_bot_system_msg : string) {
 
-    const model = new ChatOpenAI({model : "gpt-4o"}) ; 
+    const model = new ChatOpenAI({model : "gpt-4o", temperature : 0}) ; 
 
     const messageHistories: Record<string, InMemoryChatMessageHistory> = {};
 

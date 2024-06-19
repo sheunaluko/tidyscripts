@@ -19,14 +19,14 @@ import tiktoken from "tiktoken";
 import ignore from "ignore";
 import * as fs from 'fs';
 import * as path from 'path';
-import * as tsw from "tidyscripts_web";
+import * as tsc from "tidyscripts_commom";
 import { OpenAI } from 'openai';
 
 // Create client
 export const openai = new OpenAI(); //default for v4 is to use the env var for API key
 
 // Create a logging object
-const log = tsw.common.logger.get_logger({ id: "directory_analyzer" });
+const log = tsc.logger.get_logger({ id: "directory_analyzer" });
 
 // Define the maximum tokens for the gpt-4o model
 const MAX_TOKENS = 128000;
