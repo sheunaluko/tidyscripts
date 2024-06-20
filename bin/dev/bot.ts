@@ -4,52 +4,46 @@ import common from "../../packages/ts_common/dist/index";
 
 const log = common.logger.get_logger({id : "bots_dev"}) ;
 
-declare var global : any ; 
+declare var global : any ;
+
+var PAGE_REF : any = null ;
+var PAGE_REF_NAME = "PAGE_REF" ;
+
+// --
 
 const functions = [
+
     {
-	"description" : "This function retrieves the most relevant and up-to-date information about the search_string from the internet" ,
-	"name" : "search_internet" ,
-	"args" : "search_string : string" ,
-	"return_type" : "string" ,
-	"fn" :  async function( args : {search_string : string} ) {
+	"description" : "Opens a puppeteer page. This can be used to search the internet and extract information. Returns true if it was opened successfully" ,
+	"name" : "open_browser_page" ,
+	"args" : "", 
+	"return_type" : "any" ,
+	"fn" :  async function() {
 	    
-	    /*
-	       this is where the search is performed!
-	       can swap out the desired search functionality as needed
-	     */
-	    
-	    log(`Request for search for ${JSON.stringify(args.search_string)}`)
-	    log("Will give back 100")
-	    return "The result is 100" 
+	    log(`Request to to open puppeteer page`)
+	    global[PAGE_REF_NAME] = await node.puppeteer.new_page({}) ; 
+	    log(`Completed. `) 
+	    return `${PAGE_REF_NAME} now is a reference to the opened browser page`
 	}
+	
     },
 
     {
-	"description" : "Writes a text file to disk given a file path and file contents. Returns true if the write was sucessful and false if it failed." ,
-	"name" : "write_file" ,
-	"args" : "path : string , content : string" ,
+	"description" : "Navigates the open page to a url. There MUST be an open page before this can be run" ,
+	"name" : "goto_url" ,
+	"args" : "url : string", 
 	"return_type" : "boolean" ,
-	"fn" :  async function( args : {path : string , content : string} ) {
+	"fn" :  async function(args : {url : string} ) {
 	    
-	    log(`Request to write file ${args.path} to disk`)
-	    log(`Writing content: ${args.content}`)
-	    
+	    log(`Request to go to URL `)
+	    await (global[PAGE_REF_NAME]).goto(args.url) ; 
+	    log(`Completed. `) 
 	    return true 
 	}
-    },
 
-    {
-	"description" : "Performs the special transformation" ,
-	"name" : "transform" ,
-	"args" : "input : string", 
-	"return_type" : "string" ,
-	"fn" :  async function( args : {input : string} ) {
-	    
-	    log(`Request to transform ${args.input}`)
-	    return "TRANSFORMED!" 
-	}
+	
     }, 
+    
     
     
 
@@ -88,3 +82,39 @@ global.chat = bot.chat
    
 
  */ 
+
+
+
+export var other_functions = [ 
+        {
+	"description" : "This function retrieves the most relevant and up-to-date information about the search_string from the internet" ,
+	"name" : "search_internet" ,
+	"args" : "search_string : string" ,
+	"return_type" : "string" ,
+	"fn" :  async function( args : {search_string : string} ) {
+	    
+	    /*
+	       this is where the search is performed!
+	       can swap out the desired search functionality as needed
+	     */
+	    
+	    log(`Request for search for ${JSON.stringify(args.search_string)}`)
+	    log("Will give back 100")
+	    return "The result is 100" 
+	}
+    },
+
+    {
+	"description" : "Writes a text file to disk given a file path and file contents. Returns true if the write was sucessful and false if it failed." ,
+	"name" : "write_file" ,
+	"args" : "path : string , content : string" ,
+	"return_type" : "boolean" ,
+	"fn" :  async function( args : {path : string , content : string} ) {
+	    
+	    log(`Request to write file ${args.path} to disk`)
+	    log(`Writing content: ${args.content}`)
+	    
+	    return true 
+	}
+    },
+]

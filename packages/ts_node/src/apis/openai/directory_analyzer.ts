@@ -18,8 +18,8 @@
 import tiktoken from "tiktoken";
 import ignore from "ignore";
 import * as fs from 'fs';
+import * as tsc  from "tidyscripts_common" ;
 import * as path from 'path';
-import * as tsc from "tidyscripts_commom";
 import { OpenAI } from 'openai';
 
 // Create client
