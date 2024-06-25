@@ -50,14 +50,14 @@ function count_tokens(text: string): number {
  * @param baseDir - The base directory for relative paths.
  * @returns A sorted list of tuples with file paths and their sizes.
  */
-function get_files_with_sizes(files, baseDir) {
-    const fileSizes = files.map(file => {
+function get_files_with_sizes(files: string[], baseDir: string): [string, number][] {
+    const fileSizes: [string, number][] = files.map((file: string): [string, number] => {
         const filePath = path.join(baseDir, file);
         const fileSize = fs.statSync(filePath).size;
         return [file, fileSize];
     });
 
-    fileSizes.sort((a, b) => b[1] - a[1]);
+    fileSizes.sort((a: [string, number], b: [string, number]) => b[1] - a[1]);
 
     return fileSizes;
 }

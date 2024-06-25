@@ -3,6 +3,9 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
+[ ] test generation of react user interfaces using OpenDevin
+[ ] test using llama3 model with open devin to save costs 
+
 [ ... ] fix the feedback button (connect it to the firebase.give_feedback) function 
 [ ] extract all dreams and store
 [ ] fix mobile version of app and mobile login etc (will have to debug on mobile device)  
