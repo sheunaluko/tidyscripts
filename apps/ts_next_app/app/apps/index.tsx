@@ -35,6 +35,17 @@ const AllLinks = () => {
   return (
       <Box>
 	  
+	      
+	  <Link href="/apps/cds">
+	      .
+	      <Card style={card_style}>
+		  <h2>CDS Tool &rarr;</h2>
+		  <p>
+		      Clinical Decision Support Tool 
+		  </p>
+	      </Card >
+	  </Link>
+
 	  <Link href="/apps/cortex">
 	      <Card style={card_style}>
 		  <h2>Cortex &rarr;</h2>
@@ -85,7 +96,7 @@ const AllLinks = () => {
 		  <h2>Voice Interface Panel [VIP] &rarr;</h2>
 		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
 	      </Card >
-	  </Link>
+	  </Link> 
 
 
 	  
