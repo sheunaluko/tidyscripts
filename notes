@@ -3,9 +3,18 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
-[ ] test generation of react user interfaces using OpenDevin
+
+[ ] add more money to OpenAI api
+[ ] remove BMP, demographics, and medications UIs for now
+[ ] Create tools for generating fake H&P (i.e specify components of HP and have ai generate all)
+[ ] create a function that takes an HP and runs each of the prompts on it (dont't forget to add the general prompt then the HP information and then the specific prompt )
+[ ] create an interface that allows user to enter H&P and then shows the suggesstions in auto expandded accordian. When user hits submit the HP input is collapsed the "REVIEW" accordian is expanded which has sub accordians for each of the prompts. They are auto expanded by default (there is a collapse all and expand all button) and there are loading indicators. 
+
+[ ] remove chakra ui from app and use only material ui 
+
+[x] test generation of react user interfaces using OpenDevin
 [ ] test using llama3 model with open devin to save costs
-[ ] software company 
+
 
 [ ... ] fix the feedback button (connect it to the firebase.give_feedback) function 
 [ ] extract all dreams and store

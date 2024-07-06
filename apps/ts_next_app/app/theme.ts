@@ -9,8 +9,7 @@ const roboto = Roboto({
 });
 
 
-const theme = createTheme({});
-
+const theme = createTheme();
 
 const otherTheme = createTheme({
 
@@ -27,7 +26,9 @@ const otherTheme = createTheme({
 	    main: '#ff9400',
 	},
 
-    } 
+    }  ,
+
+     shadows: Array(25).fill('none')
 
 })
 

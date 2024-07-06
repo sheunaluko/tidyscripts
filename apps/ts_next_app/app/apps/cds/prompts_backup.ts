@@ -42,7 +42,7 @@ In particular, here is a description of the current setting: REPLACE_context_of_
 `;
 
 export const general_output_prompt = `
-Your output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
+Your output will consist of a JSON object with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
 `;
 
 export const medication_review_prompt = `

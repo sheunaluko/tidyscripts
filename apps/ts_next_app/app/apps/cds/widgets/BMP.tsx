@@ -1,82 +1,50 @@
-'use client';
-import React from 'react';
-import Container from '@mui/material/Container'
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button } from '@mui/material';
 
-const testData = [
-    { name: 'Sodium', value: '140', unit: 'mmol/L' },
-    { name: 'Potassium', value: '4.2', unit: 'mmol/L' },
-    { name: 'Chloride', value: '102', unit: 'mmol/L' },
-    { name: 'Bicarbonate', value: '24', unit: 'mmol/L' },
-    { name: 'Blood Urea Nitrogen (BUN)', value: '15', unit: 'mg/dL' },
-    { name: 'Creatinine', value: '1.0', unit: 'mg/dL' },
-    { name: 'Glucose', value: '90', unit: 'mg/dL' },
-    { name: 'Calcium', value: '9.5', unit: 'mg/dL' },
-];
+import React, { useState } from 'react';
+import { Box, TextField, Button, Typography } from '@mui/material';
 
-const BMP = () => {
-    const [data, setData] = React.useState(testData);
-    const [anionGap, setAnionGap] = React.useState(null);
+const BMP: React.FC = () => {
+    const [data, setData] = useState([
+        { name: 'Sodium', value: '', unit: 'mmol/L' },
+        { name: 'Chloride', value: '', unit: 'mmol/L' },
+        { name: 'Bicarbonate', value: '', unit: 'mmol/L' }
+    ]);
+    const [anionGap, setAnionGap] = useState<number | null>(null);
 
-    const handleChange = (index, field, value) => {
+    const handleChange = (index: number, field: string, value: string) => {
         const newData = [...data];
-        newData[index][field] = value;
+        newData[index][field as keyof typeof newData[0]] = value;
         setData(newData);
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        const sodium = parseFloat(data.find(item => item.name === 'Sodium').value);
-        const chloride = parseFloat(data.find(item => item.name === 'Chloride').value);
-        const bicarbonate = parseFloat(data.find(item => item.name === 'Bicarbonate').value);
+        const sodium = parseFloat(data.find(item => item.name === 'Sodium')?.value || '0');
+        const chloride = parseFloat(data.find(item => item.name === 'Chloride')?.value || '0');
+        const bicarbonate = parseFloat(data.find(item => item.name === 'Bicarbonate')?.value || '0');
         const calculatedAnionGap = sodium - (chloride + bicarbonate);
         setAnionGap(calculatedAnionGap);
     };
 
     return (
-        <Box maxWidth="sm">
-            <Typography align="left" variant="h4" component="h1" gutterBottom>
-                Basic Metabolic Panel
-            </Typography>
-            <form onSubmit={handleSubmit} noValidate autoComplete="off">
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Test</TableCell>
-                                <TableCell align="right">Value</TableCell>
-                                <TableCell align="right">Unit</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.map((row, index) => (
-                                <TableRow key={row.name}>
-                                    <TableCell component="th" scope="row">
-                                        {row.name}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <TextField
-                                            value={row.value}
-                                            onChange={(e) => handleChange(index, 'value', e.target.value)}
-                                            variant="outlined"
-                                            margin="normal"
-
-                                        />
-                                    </TableCell>
-                                    <TableCell align="right">{row.unit}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <Button variant="contained" color="primary" type="submit" style={{ marginTop: '20px' }}>
-                    Calculate Anion Gap
-                </Button>
+        <Box>
+            <Typography variant="h6">Basic Metabolic Panel</Typography>
+            <form onSubmit={handleSubmit}>
+                {data.map((item, index) => (
+                    <Box key={index} sx={{ marginBottom: '10px' }}>
+                        <TextField
+                            label={item.name}
+                            value={item.value}
+                            onChange={(e) => handleChange(index, 'value', e.target.value)}
+                            InputProps={{
+                                endAdornment: <Typography>{item.unit}</Typography>
+                            }}
+                        />
+                    </Box>
+                ))}
+                <Button type="submit" variant="contained" color="primary">Calculate Anion Gap</Button>
             </form>
             {anionGap !== null && (
-                <Typography variant="h6" component="h2" style={{ marginTop: '20px' }}>
-                    Anion Gap: {anionGap}
-                </Typography>
+                <Typography variant="h6">Anion Gap: {anionGap}</Typography>
             )}
         </Box>
     );

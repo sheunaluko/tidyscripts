@@ -22,7 +22,7 @@ export function get_openai() {
 	log(`Initializing open api in browser`)
 	let api_key  = localStorage['OAAK'] ;
 	if (!api_key) {
-	    let msg = 'Unable to find API key; please make sure api key is under "OOAK" in local storage'
+	    let msg = 'Unable to find API key; please make sure api key is under "OAAK" in local storage'
 	    log(msg)
 	    window.alert(msg);
 	    return 1 

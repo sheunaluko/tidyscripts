@@ -5,35 +5,69 @@ import BMP from './widgets/BMP';
 import Demographics from './widgets/Demographics';
 import Medications from './widgets/Medications';
 import PromptEngineering from './widgets/prompt_engineering';
+import Chat from './widgets/chat';
+
+import * as tsw from "tidyscripts_web"  ;
+import useInit from "../../../hooks/useInit"
+
+import {theme} from "../../theme"
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const log = tsw.common.logger.get_logger({id:"cds"}) ;
 
 const CdsApp = () => {
-    const [selectedWidget, setSelectedWidget] = useState('PromptEngineering');
+
+    let init = async function() {
+	/* Assign tidyscripts library to window */
+	if (typeof window !== 'undefined') { 
+	    Object.assign(window, {
+		tsw ,
+	    })
+	    log("cds init")
+	}
+
+    }
+
+    const default_widget = 'Chat'
+
+    let clean_up = ()=> { log("cds unmounted") }
+    useInit({ init , clean_up })  //my wrapper around useEffect 
+
+    const [selectedWidget, setSelectedWidget] = useState(default_widget);
+
 
     const renderWidget = () => {
         switch (selectedWidget) {
-            case 'PromptEngineering':
-                return <PromptEngineering />;
-            case 'BMP':
-                return <BMP />;
-            case 'Demographics':
-                return <Demographics />;
-            case 'Medications':
-                return <Medications />;
-            default:
-                return <PromptEngineering />;
+        case 'PromptEngineering':
+            return <PromptEngineering />;
+        case 'BMP':
+            return <BMP />;
+        case 'Demographics':
+            return <Demographics />;
+        case 'Medications':
+            return <Medications />;
+        case 'Chat':
+            return <Chat />;
+	    
+        default:
+            return <Chat />;
         }
     };
 
     return (
+
         <Box maxWidth="sm">
-            <Box display="flex" justifyContent="space-between" marginBottom="100px" spacing={2}>
+            <Box display="flex" justifyContent="space-between" marginBottom="100px" >
                 <Button variant="outlined" onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Engineering</Button>
                 <Button variant="outlined" onClick={() => setSelectedWidget('BMP')}>BMP</Button>
                 <Button variant="outlined" onClick={() => setSelectedWidget('Demographics')}>Demographics</Button>
                 <Button variant="outlined" onClick={() => setSelectedWidget('Medications')}>Medications</Button>
+		<Button variant="outlined" onClick={() => setSelectedWidget('Chat')}>Chat</Button>
+		
             </Box>
             {renderWidget()}
         </Box>
+
     );
 };
 
