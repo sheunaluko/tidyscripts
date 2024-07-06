@@ -1,0 +1,8 @@
+echo "Installing common deps"
+cd packages/ts_common; npm install ;
+echo "Installing node deps"
+cd ../ts_node; npm install ;
+echo "Installing web deps"
+cd ../ts_web ; npm install ;
+cd ../.. ;
+echo "Done"
