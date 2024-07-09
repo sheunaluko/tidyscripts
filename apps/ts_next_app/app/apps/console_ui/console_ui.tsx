@@ -4,6 +4,7 @@ import type { NextPage } from 'next'
 import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
+import { ChakraProvider } from '@chakra-ui/react'
 
 import { Button,
 	 ButtonGroup,
@@ -82,7 +83,7 @@ const Component: NextPage = (props : any) => {
 
   return (
 
-
+      <ChakraProvider> 
     <Flex direction="column" style={{width : "100%",
 				     minHeight : "50vh" ,
 				     alignItems : 'center',
@@ -99,7 +100,7 @@ const Component: NextPage = (props : any) => {
       <ObjectInspector style={{width: "50%"}} data={cmd_result} expandPaths={default_inspector_expansion} /> 
 
     </Flex>
-
+	  </ChakraProvider> 
     
   )
 

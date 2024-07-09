@@ -5,6 +5,8 @@ import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 import { Button,
 	 ButtonGroup,
 	 Textarea,
@@ -75,7 +77,7 @@ const Component: NextPage = (props : any) => {
 
   return (
 
-
+      <ChakraProvider> 
     <Flex direction="column" align="center" justifyContent="space-around" >
       
       <h2 className={styles.title}>   Device Orientation </h2>
@@ -93,7 +95,7 @@ const Component: NextPage = (props : any) => {
       </Flex>
 
     </Flex>
-
+	  </ChakraProvider> 
     
   )
 

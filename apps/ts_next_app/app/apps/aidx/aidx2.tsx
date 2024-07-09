@@ -5,6 +5,7 @@ import type { NextPage } from 'next'
 import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
+import { ChakraProvider } from '@chakra-ui/react'
 import {
     Button,
     ButtonGroup,
@@ -37,15 +38,15 @@ const log = tsw.common.logger.get_logger({id:"aidx"}) ;
 declare var window : any ;
 
 /*
-   TODO: 
-   - change ui to use state instead of ID's for the config 
-   [ ] -- still working on this and getting a re-rendering bug -- may need to pass in a state object to each subcomponent and have them manage their states independently 
-   -- and then have a component level state object that holds references to the sub states ?  
-   
-   - this will eliminate bug of 0 config after state update
-   - store the queries in localstorage 
-   - add follow up chat interface (create chat interface first that allows for setting the messages parameter ) 
- */
+  TODO: 
+  - change ui to use state instead of ID's for the config 
+  [ ] -- still working on this and getting a re-rendering bug -- may need to pass in a state object to each subcomponent and have them manage their states independently 
+  -- and then have a component level state object that holds references to the sub states ?  
+  
+  - this will eliminate bug of 0 config after state update
+  - store the queries in localstorage 
+  - add follow up chat interface (create chat interface first that allows for setting the messages parameter ) 
+*/
 
 const FREE_TEXT_ID = "free_text" ;
 const SYSTEM_ID = "system" ;
@@ -78,7 +79,7 @@ const Component: NextPage = (props : any) => {
     
     /* 
        Function for creating the chat completions query from the UI state 
-     */
+    */
     let create_chat_query = function() {
 
 	let init_prompt = `Medical information:\n${uiState.USER_TXT.get()}\n\n${uiState.PROMPT.get()}`
@@ -157,71 +158,73 @@ const Component: NextPage = (props : any) => {
 
 
 
-let ResultWidget = function() {
-    if (state == 'querying' ) {
-	return <Spinner style={{marginTop : "20px" }}
-			thickness='4px'
-			speed='0.65s'
-			emptyColor='gray.200'
-			color='blue.500'
-			size='xl' 	/>
-    }
+    let ResultWidget = function() {
+	if (state == 'querying' ) {
+	    return <Spinner style={{marginTop : "20px" }}
+			    thickness='4px'
+			    speed='0.65s'
+			    emptyColor='gray.200'
+			    color='blue.500'
+			    size='xl' 	/>
+	}
 
-    if (state == 'query_result') {
+	if (state == 'query_result') {
+	    return (
+		<>
+		    <h3> Got result in {result.t_elapsed/1000} seconds: </h3>
+		    <Box>
+			{result.response.content.split("\n\n").map((t:string)=><Text key={t.slice(0,20)} style={{marginTop : "20px"}}>
+										   {t}
+									       </Text>)
+			}
+		    </Box>
+		</>
+	    )
+	}
+
 	return (
-	    <>
-		<h3> Got result in {result.t_elapsed/1000} seconds: </h3>
-		<Box>
-		    {result.response.content.split("\n\n").map((t:string)=><Text key={t.slice(0,20)} style={{marginTop : "20px"}}>
-			{t}
-		    </Text>)
-		    }
-		</Box>
-	    </>
+	    <></>
 	)
-    }
-
-    return (
-	<></>
-    )
-} 
+    } 
 
     
 
     
     return (
-	<Box style={{'width' : "100%" , 'overflowX' : 'hidden' }}>
-	    <h1 className={styles.title}>
-		Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
-	    </h1>
+	<ChakraProvider>
+	    <Box style={{'width' : "100%" , 'overflowX' : 'hidden' }}>
+		<h1 className={styles.title}>
+		    Welcome to <a href="https://github.com/sheunaluko/tidyscripts">AI Diagnostics</a>
+		</h1>
 
-	    <p className={styles.description}>
-		Clinical Decision Support powered by Artificial Intelligence
-	    </p>
+		<p className={styles.description}>
+		    Clinical Decision Support powered by Artificial Intelligence
+		</p>
 
-	    <ConfigAccordion style={{marginTop : "20px",marginBottom : "20px",}} uiState={uiState} />	    
+		<ConfigAccordion style={{marginTop : "20px",marginBottom : "20px",}} uiState={uiState} />	    
 
-	    <Box padding="30px">
+		<Box padding="30px">
 
-		
-		<h3>Medical Information:</h3>
-		<Textarea id={FREE_TEXT_ID} value={uiState.USER_TXT.get()} onChange={(e:any)=> uiState.USER_TXT.set(e.target.value)}  />
+		    
+		    <h3>Medical Information:</h3>
+		    <Textarea id={FREE_TEXT_ID} value={uiState.USER_TXT.get()} onChange={(e:any)=> uiState.USER_TXT.set(e.target.value)}  />
 
 
-		
-		<Button onClick={run} style={{marginTop : "15px" , marginBottom : "15px"}}>Analyze </Button>
+		    
+		    <Button onClick={run} style={{marginTop : "15px" , marginBottom : "15px"}}>Analyze </Button>
 
-		<Box>
+		    <Box>
 
-		    <ResultWidget/>
+			<ResultWidget/>
 
+		    </Box>
+
+
+		    
 		</Box>
-
-
 		
 	    </Box>
-	    
-	</Box>
+	</ChakraProvider> 
 
     )
 }
@@ -232,27 +235,27 @@ export default Component
 
 var ConfigAccordion = function(props : any) {
 
-	let [expState,setExpState] = useState(-1) ; 
-	
-	return (
-	    <Box style={props.style}>
-		<Accordion allowToggle index={expState} onChange={ (i:number)=>setExpState(i) }>
-		    <AccordionItem>
-			<Flex direction="column"> 
-			    <AccordionButton>
-				<Box as="span" flex='1' textAlign='left'>
-				    <h1>Configuration</h1>
-				</Box>
-				<AccordionIcon />
-			    </AccordionButton>
-			    <AccordionPanel pb={8}>
-				{ConfigUI(props.uiState)}
-			    </AccordionPanel>
-			</Flex>
-		    </AccordionItem>
-		</Accordion>
-	    </Box>
-	) 
+    let [expState,setExpState] = useState(-1) ; 
+    
+    return (
+	<Box style={props.style}>
+	    <Accordion allowToggle index={expState} onChange={ (i:number)=>setExpState(i) }>
+		<AccordionItem>
+		    <Flex direction="column"> 
+			<AccordionButton>
+			    <Box as="span" flex='1' textAlign='left'>
+				<h1>Configuration</h1>
+			    </Box>
+			    <AccordionIcon />
+			</AccordionButton>
+			<AccordionPanel pb={8}>
+			    {ConfigUI(props.uiState)}
+			</AccordionPanel>
+		    </Flex>
+		</AccordionItem>
+	    </Accordion>
+	</Box>
+    ) 
 } 
 
 

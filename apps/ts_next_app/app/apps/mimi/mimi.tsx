@@ -5,7 +5,7 @@ import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 
-
+import { ChakraProvider } from '@chakra-ui/react'
 
 import TSKnob from "../../../components/TSKnob" 
 
@@ -28,6 +28,7 @@ import { Button,
 } from '@chakra-ui/react'
 
 import { ArrowUpIcon} from "@chakra-ui/icons"
+
 
 import useInit from "../../../hooks/useInit" 
 
@@ -531,7 +532,7 @@ const Component: NextPage = (props : any) => {
     
     return (
 
-	<>
+	<ChakraProvider>
 	    <Flex direction="row" align="center" width="98%" justifyContent="left" > 
 		M I M I
 	    </Flex>
@@ -563,7 +564,7 @@ const Component: NextPage = (props : any) => {
 		panel_dictionary[panel_state]
 	    } 
 
-	</>
+	<ChakraProvider/>
     )
 
 }

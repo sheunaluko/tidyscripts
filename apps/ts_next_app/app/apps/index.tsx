@@ -9,20 +9,15 @@ import styles from '../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ; 
 
 import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  Flex , 
-  Card,
-} from "@chakra-ui/react";
+    Box,
+    Card,
+    CardContent,
+    Typography
+} from "../../src/mui"  ; //  "@chakra-ui/react";
+
+const MLink = ({ ...props }) => {
+    return <Link {...props} style={{textDecoration: 'none' }} />;
+};
 
 
 const card_style : any  = {
@@ -35,108 +30,106 @@ const AllLinks = () => {
   return (
       <Box>
 	  
-	      
-	  <Link href="/apps/cds">
-	      .
+	  <MLink href="/apps/cds">
 	      <Card style={card_style}>
-		  <h2>CDS Tool &rarr;</h2>
+		  <Typography variant="h5" color="primary">CDS Tool </Typography>
 		  <p>
 		      Clinical Decision Support Tool 
 		  </p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
-	  <Link href="/apps/cortex">
+	  <MLink href="/apps/cortex">
 	      <Card style={card_style}>
-		  <h2>Cortex &rarr;</h2>
+		  <Typography variant="h5" color="primary">Cortex </Typography>
 		  <p>
 		      A next generation AI assistant 
 		  </p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
 	  
-	  <Link href="/apps/aidx">
+	  <MLink href="/apps/aidx">
 	      <Card style={card_style}>
-		  <h2>AI Diagnostics [Aidx] &rarr;</h2>
+		  <Typography variant="h5" color="primary">AI Diagnostics [Aidx] </Typography>
 		  <p>
 		      Aidx performs clinical decision support using Artifical Intelligence,
 		      and is powered by OpenAI and Tidyscripts
 		  </p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
-	  <Link href="/apps/medications">
+	  <MLink href="/apps/medications">
 	      <Card style={card_style}>
-		  <h2>Medications &rarr;</h2>
+		  <Typography variant="h5" color="primary">Medications </Typography>
 		  <p>
 		      Helpful Clinical utilities for working with Medications  
 		  </p>
 	      </Card >
-	  </Link>	  
+	  </MLink>	  
 
-	  <Link href="/apps/microbiology">
+	  <MLink href="/apps/microbiology">
 	      <Card style={card_style}>
-		  <h2>Microbiology &rarr;</h2>
+		  <Typography variant="h5" color="primary">Microbiology </Typography>
 		  <p>Antiobiogram on Steroids (in progress)</p>
 	      </Card >
-	  </Link>	  
+	  </MLink>	  
 
-	  <Link href="/apps/bokeh">
+	  <MLink href="/apps/bokeh">
 	      <Card style={card_style}>
-		  <h2>Bokeh Interface &rarr;</h2>
+		  <Typography variant="h5" color="primary">Bokeh Interface </Typography>
 		  <p>
 		      Interface to the Bokeh graphing library
 		  </p>
 	      </Card >
-	  </Link>	  
+	  </MLink>	  
 	  
-	  <Link href="/apps/vip">
+	  <MLink href="/apps/vip">
 	      <Card style={card_style}>
-		  <h2>Voice Interface Panel [VIP] &rarr;</h2>
+		  <Typography variant="h5" color="primary">Voice Interface Panel [VIP] </Typography>
 		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
 	      </Card >
-	  </Link> 
+	  </MLink> 
 
 
 	  
-	  <Link href="/apps/log_interface">
+	  <MLink href="/apps/log_interface">
 	      <Card style={card_style}>
-		  <h2>Log Input Panel [LIP] &rarr;</h2>
+		  <Typography variant="h5" color="primary">Log Input Panel [LIP] </Typography>
 		  <p>Store logs securely on your device</p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
 
 
-	  <Link href="/apps/local_storage_interface">
+	  <MLink href="/apps/local_storage_interface">
 	      <Card style={card_style}>
-		  <h2>Local Storage Interface &rarr;</h2>
+		  <Typography variant="h5" color="primary">Local Storage Interface </Typography>
 		  <p>User Interface for editing the LocalStorage object of your devices browser</p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
 	  
-	  <Link href="/apps/console_ui">
+	  <MLink href="/apps/console_ui">
 	      <Card style={card_style}>
-		  <h2>Console Interface &rarr;</h2>
+		  <Typography variant="h5" color="primary">Console Interface </Typography>
 		  <p>User Interface for interacting with browser console (useful for debugging mobile apps)</p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
-	  <Link href="/apps/device_orientation">
+	  <MLink href="/apps/device_orientation">
 	      <Card style={card_style}>
-		  <h2>Orientation Sensor &rarr;</h2>
+		  <Typography variant="h5" color="primary">Orientation Sensor </Typography>
 		  <p>User Interface for visualizing the device orientation</p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
-	  <Link href="/apps/mimi">
+	  <MLink href="/apps/mimi">
 	      <Card style={card_style}>
-		  <h2>MIMI &rarr;</h2>
+		  <Typography variant="h5" color="primary">MIMI </Typography>
 		  <p>Modular Interface for Midi Input</p>
 	      </Card >
-	  </Link>
+	  </MLink>
 
 	  
 
@@ -158,9 +151,9 @@ const Component : NextPage = (props : any) => {
           Powerful and portable web applications.
         </p>
 
-        <Flex >
+        <Box >
 	  <AllLinks />
-        </Flex>
+        </Box>
 
     </>
   )

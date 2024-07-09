@@ -15,6 +15,8 @@ import {
   Select,
 } from "@chakra-ui/react";
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 /**
  * SOME CODE GENERATED WITH THE AID OF CHAT GPT ! 
  * 
@@ -133,7 +135,9 @@ const LocalStorageUi = () => {
   };
 
   return (
-      <><Box padding="20px">
+      
+      <ChakraProvider>
+      <Box padding="20px">
 
 	  <br/>
 
@@ -213,7 +217,7 @@ const LocalStorageUi = () => {
 
 	  
       </Box>
-      </>
+      <ChakraProvider/>
   );
 };
 

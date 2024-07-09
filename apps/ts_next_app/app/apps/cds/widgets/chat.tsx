@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, TextField, Button, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -31,13 +31,21 @@ const Chat: React.FC = () => {
     const [messages, setMessages] = useState<{ role: string, content: string }[]>([]);
     const [input, setInput] = useState<string>('');
     const [model, setModel] = useState<string>('gpt-4o');
-    const [systemMessage, setSystemMessage] = useState<string>('');
+    const [systemMessage, setSystemMessage] = useState<string>('');    
+
+    const chatDisplayRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (chatDisplayRef.current) {
+            chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const handleSend = async () => {
         if (input.trim()) {
             const newMessages = [...messages, { role: 'user', content: input }];
             setMessages(newMessages);
-            const completion = await chat_completion(model, systemMessage, newMessages);
+            const completion = await chat_completion(model , systemMessage, newMessages);
             setMessages([...newMessages, { role: 'assistant', content: completion }]);
             setInput('');
         }
@@ -71,7 +79,7 @@ const Chat: React.FC = () => {
             <Typography variant="h6" gutterBottom>
                 Chat
             </Typography>
-            <Accordion>
+            <Accordion style={{marginBottom : "10px" }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>Configuration</Typography>
                 </AccordionSummary>
@@ -94,7 +102,9 @@ const Chat: React.FC = () => {
                     />
                 </AccordionDetails>
             </Accordion>
-            <Box sx={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
+            <Box id="chat_display" ref={chatDisplayRef} sx={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
+
+
                 {messages.map((message, index) => (
                     <Box
                         key={index}

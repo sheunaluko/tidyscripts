@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 import {
     Box,
     Button,
@@ -164,7 +166,8 @@ export default function LogForm(props: LogFormProps) {
     const dm = "20px" 
     const logo_dims = { x : sz, y : sz }
 
-    return (
+							  return (
+							  <ChakraProvider> 
 	<Flex direction="column" align="center" justify="space-between" padding="40px" >
 
 
@@ -276,5 +279,6 @@ export default function LogForm(props: LogFormProps) {
 		
 	    </Grid>
 	</Flex>
+	</ChakraProvider> 
     );
 }

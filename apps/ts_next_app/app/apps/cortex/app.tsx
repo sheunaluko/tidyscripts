@@ -6,6 +6,8 @@ import React from 'react' ;
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 import {
     Box,
     Button,
@@ -130,6 +132,7 @@ const  Component: NextPage = (props : any) => {
     useEffect(  ()=> {init()} , [] ) ; //init script
 
     return (
+	<ChakraProvider> 
 
 	    <Box style={{ flexDirection : 'column' , display : 'flex'}} >
 
@@ -190,6 +193,7 @@ const  Component: NextPage = (props : any) => {
 
 	    </Box>
 
+	</ChakraProvider>
 
     )
 }

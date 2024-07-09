@@ -76,6 +76,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 
 import Checkbox from '@mui/material/Checkbox';
 import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -97,6 +98,7 @@ export  {
     AppBar,
     Button, 
     Card,
+    CardContent, 
     Drawer, 
     SpeedDial,
     SpeedDialIcon,

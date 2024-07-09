@@ -55,20 +55,7 @@ If any of their medications have interactions with each other that may be affect
 REPLACE_general_output_prompt
 
 Here are some examples:
-[
-    {
-        "action": "adjust",
-        "data": "Increase the dose of metoprolol from 50mg to 100mg daily.",
-        "reasoning": "The patient's blood pressure remains elevated despite the current dose of metoprolol. Increasing the dose may help achieve better blood pressure control.",
-        "caveat": "Monitor the patient for signs of bradycardia or hypotension after the dose adjustment."
-    },
-    {
-        "action": "discontinue",
-        "data": "Stop the use of ibuprofen.",
-        "reasoning": "The patient has a history of peptic ulcer disease, and the use of NSAIDs like ibuprofen can exacerbate this condition.",
-        "caveat": "Consider alternative pain management options such as acetaminophen."
-    }
-]
+REPLACE_EXAMPLES_medication_review
 `;
 
 export const labs_prompt = `

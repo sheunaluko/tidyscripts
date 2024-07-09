@@ -1,0 +1,36 @@
+
+> ts_next_app@0.1.0 build
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+  ▲ Next.js 14.2.3
+
+
+> Build error occurred
+Error: EACCES: permission denied, unlink '/workspace/tidyscripts/apps/ts_next_app/.next/server/app-paths-manifest.json'
+    at async Object.unlink (node:internal/fs/promises:1071:10)
+    at async unlinkPath (/workspace/tidyscripts/node_modules/next/dist/lib/recursive-delete.js:25:13)
+    at async Promise.all (index 1)
+    at async recursiveDelete (/workspace/tidyscripts/node_modules/next/dist/lib/recursive-delete.js:51:5)
+    at async /workspace/tidyscripts/node_modules/next/dist/lib/recursive-delete.js:68:17
+    at async Promise.all (index 5)
+    at async recursiveDelete (/workspace/tidyscripts/node_modules/next/dist/lib/recursive-delete.js:51:5)
+    at async /workspace/tidyscripts/node_modules/next/dist/build/index.js:692:17
+    at async Span.traceAsyncFn (/workspace/tidyscripts/node_modules/next/dist/trace/trace.js:154:20)
+    at async build (/workspace/tidyscripts/node_modules/next/dist/build/index.js:366:9) {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'unlink',
+  path: '/workspace/tidyscripts/apps/ts_next_app/.next/server/app-paths-manifest.json'
+}
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /workspace/tidyscripts/apps/ts_next_app
+npm error workspace ts_next_app@0.1.0
+npm error location /workspace/tidyscripts/apps/ts_next_app
+npm error command failed
+npm error command sh -c next build

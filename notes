@@ -3,7 +3,6 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
-
 [ ] add more money to OpenAI api
 [ ] remove BMP, demographics, and medications UIs for now
 [ ] Create tools for generating fake H&P (i.e specify components of HP and have ai generate all)

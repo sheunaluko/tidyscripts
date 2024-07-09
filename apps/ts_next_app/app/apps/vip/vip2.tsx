@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 import {
     Box,
     Button,
@@ -146,7 +148,8 @@ export default function Component() {
 
     
     return ( 
-	
+
+	<ChakraProvider> 
 	<Flex
 	    direction="column" 
 		       padding="20px">
@@ -233,7 +236,8 @@ export default function Component() {
 			</Box>
 		    </Box>
 	    </Box>	    
-	</Flex> 
+	</Flex>
+	    </ChakraProvider> 
 	
     )
 

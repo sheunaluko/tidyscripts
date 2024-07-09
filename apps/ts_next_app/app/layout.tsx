@@ -5,7 +5,7 @@ import '@fontsource/roboto/700.css';
 
 import React from 'react' ;
 import { Metadata } from 'next';
-import ChakraProvider from './chakra_provider'
+
 import Head from 'next/head' ;
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -21,7 +21,7 @@ import Toast from '../components/Toast'
 import { Analytics } from '@vercel/analytics/react';
 
 import styles from "../styles/Layout.module.css" ; 
-
+import {ChakraProvider} from "@chakra-ui/react" 
 
 export const metadata: Metadata = {
     title: 'Tidyscripts',
@@ -51,7 +51,7 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 	    >
 		<ThemeProvider theme={theme}>
 		    <CssBaseline />
-		    <ChakraProvider>
+
 
 			<div
 			    style={{
@@ -90,13 +90,15 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 				    paddingRight: footer_h_padding
 				}}
 			    >
-				<Footer/>
+				<ChakraProvider>
+				    <Footer/>
+				</ChakraProvider>
 				<Toast/> 
 			    </div>
 			</div>
 
 			
-		    </ChakraProvider>
+
 		    <Analytics />
 		</ThemeProvider>
 	    </body>

@@ -6,6 +6,8 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import * as firebase_instance from "../../../src/firebase" ; 
 import * as tsw from "tidyscripts_web" 
 
+import { ChakraProvider } from '@chakra-ui/react'
+
 const {
     GoogleAuthProvider ,
     signInWithRedirect, 
@@ -127,7 +129,7 @@ const Component: NextPage = (props : any) => {
   } 
   
   return (
-    <>   { user  ? <LogOutUI/> : <LoadingOrLogin />  }  </> 
+    <ChakraProvider>   { user  ? <LogOutUI/> : <LoadingOrLogin />  }  <ChakraProvider/> 
   )
 }
 

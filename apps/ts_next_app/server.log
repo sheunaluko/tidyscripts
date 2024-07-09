@@ -1,0 +1,19 @@
+
+> ts_next_app@0.1.0 start
+> next start
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/workspace/tidyscripts/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/workspace/tidyscripts/node_modules/next/dist/server/lib/router-server.js:61:23)
+    at async Server.<anonymous> (/workspace/tidyscripts/node_modules/next/dist/server/lib/start-server.js:249:36)
+npm error Lifecycle script `start` failed with error:
+npm error code 1
+npm error path /workspace/tidyscripts/apps/ts_next_app
+npm error workspace ts_next_app@0.1.0
+npm error location /workspace/tidyscripts/apps/ts_next_app
+npm error command failed
+npm error command sh -c next start
