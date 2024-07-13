@@ -1,3 +1,8 @@
+import * as tsw from "tidyscripts_web";
+
+const debug = tsw.common.util.debug;
+const log = tsw.common.logger.get_logger({id : "prompt" })
+
 export const ai_role = "clinical decision support assistant";
 export const user = "internal medicine physician";
 export const setting = "internal medicine hospital floor";
@@ -21,13 +26,17 @@ The internal medicine hospital floor is a general medicine floor within a large 
 Your user is an internal medicine physician who relies on you to provide helpful feedback for managing patient's on the floor.
 You review the patients data, including demographics, medical history, outpatient medications, history of present illness, vital signs, current symptoms, active medications, physical exam, laboratory values, imaging data, and other data in order to provided valuable insight to augment the patient's care.
 It is very important that you understand the actions that an internal medicine physician can take, since it is only helpful to suggest actions that can be done.
-Here is a list of them (the order of these does NOT matter):
+
+\n\n
+
+## List of Internal Medicine Actions 
 
 REPLACE_internal_medicine_action_list
 
+\n\n
 In general the role of an inpatient internal medicine doctor is to review the patients objective data and decide what adjustments (if any) need to be made.
 
-Here are some examples:
+Here are some examples: \n\n
 If a patient is admitted with heart failure and their weight is increasing and their oxygen requirement is increasing, a chest xray should be performed to evaluate for worsening pulmonary edema and an increase in the patient's diuretics should be considered.
 
 If a patient is admitted with pneumonia and it is day 3 of antibiotics but their pneumonia is worsening on chest xray and they are subjectively feeling worse, repeat sputum cultures or respiratory pathogen panel should be obtained and antibiotics should be broadened to cover more organisms. If the patient is tachycardic or hypotensive blood cultures should be obtained given concern for sepsis and intravenous fluids should be given.
@@ -41,7 +50,7 @@ In particular, here is a description of the current setting: REPLACE_context_of_
 `;
 
 export const general_output_prompt = `
-Your output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
+\n\nYour output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
 `;
 
 export const medication_review_prompt = `
@@ -51,7 +60,7 @@ Carefully review their outpatient medications, if provided, as well as their act
 
 If any of their medications have interactions with each other that may be affecting their care, you will output this information to the user.
 
-Here are some examples:
+\n\n Here are some examples: \n\n
 REPLACE_EXAMPLES_medication_review
 `;
 
@@ -60,7 +69,7 @@ Carefully review all of the laboratory information provided, including electroly
 
 Given the medical information provided and all of the other instructions, your job is to suggest additional lab tests that the user should run which have NOT YET BEEN done and which would improve the patients care or elucidate a diagnosis that is not yet clearly elucidated.
 
-Here are some examples:
+\n\n Here are some examples: \n\n
 REPLACE_EXAMPLES_labs
 `;
 
@@ -71,7 +80,7 @@ In particular, you will suggest any additional imaging tests (xrays, ct scan, MR
 
 Make sure to specify the exact location and laterality that should be imaged, and ensure to specify the appropriate subtype of imaging, for example a CT scan of the head without contrast (used for detecting bleeds) or a CT Chest with contrast (to evaluate for pulmonary embolism).
 
-Here are some examples:
+\n\n Here are some examples: \n\n
 REPLACE_EXAMPLES_imaging
 `;
 
@@ -84,7 +93,7 @@ If you agree with a diagnosis you will output the action 'agree' and explain you
 
 You may also suggest adding a diagnosis which you think has been missed. 
 
-Here are some examples:
+\n\n Here are some examples: \n\n 
 REPLACE_EXAMPLES_diagnosis_review
 `;
 
@@ -180,6 +189,8 @@ export const examples = {
 
 export function generate_prompt(prompt : string, _replacements  :any  , _examples : any  , prompt_type  : string) {
 
+    log(`Generating prompt with prompt_type: ${prompt_type}`) 
+    
     if ( ! _replacements ) {
 	_replacements = replacements  
     }
@@ -194,8 +205,15 @@ export function generate_prompt(prompt : string, _replacements  :any  , _example
         new_prompt = new_prompt.replace(new RegExp(`REPLACE_${key}`, 'g'), value);
     }
 
-    // replace the examples 
-    new_prompt = new_prompt.replace(new RegExp(`REPLACE_EXAMPLES_${prompt_type}`, 'g'), JSON.stringify(_examples[prompt_type], null, 4));
+    let all_examples = _examples[prompt_type] ;
+    debug.add("all_examples", all_examples)     ; 
+
+    if (all_examples) { 
+	let stringified_examples = all_examples.map( (e:string) => JSON.stringify( e  , null, 4))
+	let examples_string = stringified_examples.join("\n\n") 
+	// replace the examples 
+	new_prompt = new_prompt.replace(new RegExp(`REPLACE_EXAMPLES_${prompt_type}`, 'g'), examples_string);
+    } 
 
     // a replacement might generate new replacements that need to be processed, so this is handled recursively until the prompt is unchanged 
     if (new_prompt == prompt ) { 
@@ -231,11 +249,11 @@ export function generate_full_prompt(hp : string, prompt_type : string) {
     ${gen_prompt}
     ${gen_output_prompt}
 
--- BEGIN PATIENT HISTORY AND PHYSICAL NOTE -- 
+\n\n-- BEGIN PATIENT HISTORY AND PHYSICAL NOTE --\n\n
 
 ${hp}
 
--- END PATIENT HISTORY AND PHYSICAL NOTE -- 
+\n\n-- END PATIENT HISTORY AND PHYSICAL NOTE --\n\n
 
 ${spe_prompt}
     `
@@ -249,8 +267,10 @@ ${spe_prompt}
  * 
  */
 export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
+
+    log(`Generating quick prompt with types: ${JSON.stringify(prompt_types)}`) 
     
-    let gen_prompt = generate_prompt(general_prompt)
+    let gen_prompt = generate_prompt(general_prompt, replacements, examples, null) 
     let gen_output_prompt = generate_prompt(general_output_prompt, replacements, examples, null )    
     
     let prompt_map = {
@@ -262,6 +282,7 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
 
     let specific_prompts = prompt_types.map(
 	function(prompt_type : string) {
+	    log(`subfunction: ${prompt_types}`) 
 	    // get the prompt template
 	    let tmp_prompt = prompt_map[prompt_type] ;
 	    // generate it
@@ -272,7 +293,7 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
     let specific_prompts_string = specific_prompts.join("\n\nIn addition to this: \n\n") 
 
     //debug 
-    tsw.common.util.debug.add("specific_prompts", specific_prompts) 
+    debug.add("specific_prompts", specific_prompts) 
 
     let full_prompt = `
 
@@ -289,7 +310,7 @@ ${specific_prompts_string}
     `
 
     //debug 
-    tsw.common.util.debug.add("full_prompt", full_prompt) 
+    debug.add("full_prompt", full_prompt) 
 
     return full_prompt ; 
     

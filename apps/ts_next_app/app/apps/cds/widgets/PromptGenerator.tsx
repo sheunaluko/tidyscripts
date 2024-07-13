@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { generate_quick_prompt } from '../prompts';
+import ReactMarkdown from 'react-markdown';
 import { FormControl, InputLabel, Select, MenuItem, TextField, Button, Card, CardContent, Typography, Checkbox } from '@mui/material';
 
 const PromptGenerator = () => {
@@ -47,10 +48,11 @@ const PromptGenerator = () => {
                 GENERATE
             </Button>
             {generatedPrompt && (
-                <Card variant="outlined" style={{ marginTop: '20px' }}>
+                <Card variant="outlined" style={{ marginTop: '20px', padding : "20px" }}>
                     <CardContent>
                         <Typography variant="h6">Generated Prompt:</Typography>
-                        <Typography variant="body1">{generatedPrompt}</Typography>
+
+                        <ReactMarkdown>{generatedPrompt}</ReactMarkdown>
                     </CardContent>
                 </Card>
             )}
