@@ -72,20 +72,24 @@ const CdsApp = () => {
         }
     };
 
-    const handleSliderChange = (event, newValue) => {
+    const handleSliderChange = (event :any, newValue : any) => {
         setWidgetWidth(newValue);
     };
 
     return (
-        <Box width="100%">
-            <Box display="flex" justifyContent="left" marginBottom="20px" width="100%">
+        <Box display="flex" flexDirection="column" height="100%" width="100%">
+            <Box display="flex" justifyContent="center" marginBottom="20px" width="100%">
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "Autocare"          ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare')}>Autocare</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "NoteGenerator"     ? "contained" : "outlined" } onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptEngineering" ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Engineering</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
             </Box>
-            <Box display="flex" justifyContent="center" marginBottom="20px" width="100%">
+            <Box flexGrow={1} width={`${widgetWidth}%`} margin="0 auto" display="flex" flexDirection="column">
+                {renderWidget()}
+            </Box>
+            <Box display="flex" justifyContent="center" alignItems="center" marginTop="20px" width="100%">
+                <Typography variant="body1" style={{ marginRight: '10px' }}>Size</Typography>
                 <Slider
                     value={widgetWidth}
                     onChange={handleSliderChange}
@@ -93,11 +97,8 @@ const CdsApp = () => {
                     valueLabelDisplay="auto"
                     min={10}
                     max={100}
-                    style={{ width: '50%' }}
+                    style={{ width: '30%' }}
                 />
-            </Box>
-            <Box width={`${widgetWidth}%`} margin="0 auto">
-                {renderWidget()}
             </Box>
         </Box>
     );

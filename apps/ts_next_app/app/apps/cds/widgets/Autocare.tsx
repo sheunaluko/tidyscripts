@@ -1,10 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button, TextField, CircularProgress, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { ObjectInspector } from 'react-inspector';
 import { generate_hp, get_all_dashboard_info } from './util';
+
+import * as tsw from "tidyscripts_web"
+const log = tsw.common.logger.get_logger({id:"autocare"}) 
 
 const Autocare = () => {
     const [open, setOpen] = useState(true);
@@ -29,16 +31,25 @@ const Autocare = () => {
 
     const handleAnalyze = async (text: string) => {
         setLoading(true);
-        let info = await get_all_dashboard_info(text);
+        let info = await get_all_dashboard_info(text) 
 
         // Clean the JSON string
-        const startIndex = info.indexOf('[');
-        const endIndex = info.lastIndexOf(']') + 1;
+	const startIndex = info?.indexOf('[') ?? -1;
+	const endIndex = (info?.lastIndexOf(']') ?? -1) + 1;
+	
         if (startIndex !== -1 && endIndex !== -1) {
+	     // @ts-ignore
             info = info.substring(startIndex, endIndex);
         }
 
-        const jsonInfo = JSON.parse(info);
+	var jsonInfo : any = [{}]  ; 
+	
+	try {
+	    jsonInfo = JSON.parse(info as any);
+	} catch (e : any) {
+	    log("ERROR parsing JSON!")
+	    jsonInfo = [{error : "There was an error parsing the JSON" }]
+	} 
         setDashboardInfo(jsonInfo);
         setLoading(false);
     };

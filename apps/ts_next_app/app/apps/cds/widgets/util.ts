@@ -1,5 +1,7 @@
 import * as prompts from "../prompts"
-import * as tsw from "tidyscripts_web" 
+import * as tsw from "tidyscripts_web"
+
+const log = tsw.common.logger.get_logger({id:"cds_util"}) 
 
 export function generate_prompt(note: string) {
     return `
@@ -62,8 +64,17 @@ export async function get_individaul_dashboard_info(hp : string,  dashboard_name
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
 
-    return content;
+    /*
+       Need to finish implementation 
+     */ 
+    return dashboard_prompt;
+    
 }
+
+
+
+
+
 export async function get_all_dashboard_info(hp: string) {
     // -- get a ref to the open_ai_client 
     let client = tsw.apis.openai.get_openai();
