@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Drawer, CircularProgress, Box, Typography } from '@mui/material';
+import { Button, TextField, CircularProgress, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { ObjectInspector } from 'react-inspector';
 import { generate_hp, get_all_dashboard_info } from './util';
 
 const Autocare = () => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
     const [dashboardInfo, setDashboardInfo] = useState(null);
@@ -26,44 +27,39 @@ const Autocare = () => {
         setLoading(false);
     };
 
-    const handleAnalyze = async (text : string) => {
+    const handleAnalyze = async (text: string) => {
         setLoading(true);
         let info = await get_all_dashboard_info(text);
-        
+
         // Clean the JSON string
         const startIndex = info.indexOf('[');
         const endIndex = info.lastIndexOf(']') + 1;
         if (startIndex !== -1 && endIndex !== -1) {
             info = info.substring(startIndex, endIndex);
         }
-        
+
         const jsonInfo = JSON.parse(info);
         setDashboardInfo(jsonInfo);
         setLoading(false);
-        setOpen(false);
     };
 
     return (
         <div>
             <Button
                 variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => setOpen(true)}
+                startIcon={open ? <RemoveIcon /> : <AddIcon />}
+                onClick={() => setOpen(!open)}
             >
-                Enter Clinical Information
+                {open ? 'HIDE' : 'SHOW'} H&P
             </Button>
-            <Drawer
-                anchor="left"
-                open={open}
-                onClose={() => setOpen(false)}
-                PaperProps={{ style: { width: '50%', padding: '10%' } }}
-            >
+            {open && (
                 <Box
                     display="flex"
                     flexDirection="column"
                     alignItems="center"
                     justifyContent="center"
-                    height="100%"
+                    width="50%"
+                    padding="10%"
                 >
                     <Button
                         variant="outlined"
@@ -94,7 +90,7 @@ const Autocare = () => {
                         Analyze
                     </Button>
                 </Box>
-            </Drawer>
+            )}
             {dashboardInfo && (
                 <Box>
                     <Typography variant="h6">Dashboard Information</Typography>
