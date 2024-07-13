@@ -2,14 +2,20 @@
 'use client';
 import React, { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
+
+/*
+  Widget imports 
+ */ 
 import BMP from './widgets/BMP';
 import Demographics from './widgets/Demographics';
 import Medications from './widgets/Medications';
 import PromptEngineering from './widgets/prompt_engineering';
 import NoteGenerator from './widgets/NoteGenerator';
 import Chat from './widgets/chat';
-
+import Autocare from './widgets/Autocare';
 import PromptGenerator from './widgets/PromptGenerator';
+
+
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../hooks/useInit";
 
@@ -35,7 +41,7 @@ const CdsApp = () => {
         }
     };
 
-    const default_widget = 'PromptGenerator';
+    const default_widget = 'Autocare';
 
     let clean_up = ()=> { log("cds unmounted"); };
     useInit({ init , clean_up });  //my wrapper around useEffect 
@@ -52,12 +58,14 @@ const CdsApp = () => {
 		return <Demographics />;
             case 'Medications':
 		return <Medications />;
-            case 'Chat':
-		return <Chat />;
-            case 'NoteGenerator':
+	    case 'Autocare':
+		return <Autocare />;
+	    case 'NoteGenerator':
 		return <NoteGenerator />;
             case 'PromptGenerator':
 		return <PromptGenerator />;
+            case 'PromptGenerator':
+		return <Chat />;
             default:
 		return <Chat />;
         }
@@ -66,9 +74,10 @@ const CdsApp = () => {
     return (
         <Box maxWidth="sm">
             <Box display="flex" justifyContent="left" marginBottom="100px" >
+		<Button style={{marginRight:"10px"}} variant={selectedWidget == "Autocare"          ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare')}>Autocare</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "NoteGenerator"     ? "contained" : "outlined" } onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>
                 <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptEngineering" ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Generator</Button>
+		<Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Engineering</Button>
 		<Button style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
                 {
                     /*
