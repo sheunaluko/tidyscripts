@@ -1,4 +1,3 @@
-
 export const ai_role = "clinical decision support assistant";
 export const user = "internal medicine physician";
 export const setting = "internal medicine hospital floor";
@@ -46,13 +45,11 @@ Your output will consist of a LIST of JSON objects with the following fields: ac
 `;
 
 export const medication_review_prompt = `
-Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's medications ONLY.
+Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's medications. 
 
 Carefully review their outpatient medications, if provided, as well as their active inpatient medications if provided.
 
 If any of their medications have interactions with each other that may be affecting their care, you will output this information to the user.
-
-REPLACE_general_output_prompt
 
 Here are some examples:
 REPLACE_EXAMPLES_medication_review
@@ -62,8 +59,6 @@ export const labs_prompt = `
 Carefully review all of the laboratory information provided, including electrolyte values, chemistries like lactate (lactic acid), a1c, lipid panel, TSH, hepatic enzymes, and any other lab values that are provided.
 
 Given the medical information provided and all of the other instructions, your job is to suggest additional lab tests that the user should run which have NOT YET BEEN done and which would improve the patients care or elucidate a diagnosis that is not yet clearly elucidated.
-
-REPLACE_general_output_prompt
 
 Here are some examples:
 REPLACE_EXAMPLES_labs
@@ -76,8 +71,6 @@ In particular, you will suggest any additional imaging tests (xrays, ct scan, MR
 
 Make sure to specify the exact location and laterality that should be imaged, and ensure to specify the appropriate subtype of imaging, for example a CT scan of the head without contrast (used for detecting bleeds) or a CT Chest with contrast (to evaluate for pulmonary embolism).
 
-REPLACE_general_output_prompt
-
 Here are some examples:
 REPLACE_EXAMPLES_imaging
 `;
@@ -89,7 +82,7 @@ If you disagree with a diagnosis in the user's assessment, then you will output 
 
 If you agree with a diagnosis you will output the action 'agree' and explain your reasoning.
 
-REPLACE_general_output_prompt
+You may also suggest adding a diagnosis which you think has been missed. 
 
 Here are some examples:
 REPLACE_EXAMPLES_diagnosis_review
@@ -174,7 +167,14 @@ export const examples = {
             "data": { "diagnosis": "COPD exacerbation" },
             "reasoning": "The patient does not have shortness of breath nor does he have wheezing on exam.",
             "caveat": "He may have received bronchodilators prior to the physical exam."
+        } ,
+	        {
+            "action": "add",
+            "data": { "diagnosis": "Hemolytic anemia" },
+            "reasoning": "There is evidence of hemolysis given LDH is high and haptoglobin is low. This in combination with anemia suggests a hemolytic process is taking place.",
+            "caveat": ""
         }
+
     ]
 };
 
@@ -188,20 +188,109 @@ export function generate_prompt(prompt : string, _replacements  :any  , _example
 	_examples = examples   
     } 
     
-    
     let new_prompt = prompt;
     for (const [key, value] of Object.entries(_replacements)) {
 	// @ts-ignore 
         new_prompt = new_prompt.replace(new RegExp(`REPLACE_${key}`, 'g'), value);
     }
-    if (prompt_type === 'medication_review') {
-        new_prompt = new_prompt.replace('REPLACE_general_output_prompt', general_output_prompt);
-    }
+
+    // replace the examples 
     new_prompt = new_prompt.replace(new RegExp(`REPLACE_EXAMPLES_${prompt_type}`, 'g'), JSON.stringify(_examples[prompt_type], null, 4));
 
+    // a replacement might generate new replacements that need to be processed, so this is handled recursively until the prompt is unchanged 
     if (new_prompt == prompt ) { 
 	return new_prompt
     } else {
 	return generate_prompt(new_prompt , _replacements , _examples, prompt_type) 
     } 
 }
+
+
+/*
+ * Generates the general intro prompt and then the dashboard_specific prompt and combines them 
+ * into one large ("full") prompt. 
+ */
+export function generate_full_prompt(hp : string, prompt_type : string) {
+    
+    let gen_prompt = generate_prompt(general_prompt, replacements, examples, null )
+    let gen_output_prompt = generate_prompt(general_output_prompt, replacements, examples, null )    
+    
+    let prompt_map = {
+	medication_review : medication_review_prompt ,
+	labs : labs_prompt ,
+	imaging : imaging_prompt, 
+	dianosis_review : diagnosis_review_prompt
+    } 
+
+    var tmp_prompt = prompt_map[prompt_type] 
+    
+    let spe_prompt = generate_prompt(tmp_prompt, replacements, examples  , prompt_type)
+    
+    let full_prompt = `
+
+    ${gen_prompt}
+    ${gen_output_prompt}
+
+-- BEGIN PATIENT HISTORY AND PHYSICAL NOTE -- 
+
+${hp}
+
+-- END PATIENT HISTORY AND PHYSICAL NOTE -- 
+
+${spe_prompt}
+    `
+
+    return full_prompt ; 
+    
+} 
+
+/*
+ * Generates a "quicker" prompt that combines multiple dashboards into a single call 
+ * 
+ */
+export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
+    
+    let gen_prompt = generate_prompt(general_prompt)
+    let gen_output_prompt = generate_prompt(general_output_prompt, replacements, examples, null )    
+    
+    let prompt_map = {
+	medication_review : medication_review_prompt ,
+	labs : labs_prompt ,
+	imaging : imaging_prompt, 
+	diagnosis_review : diagnosis_review_prompt
+    } 
+
+    let specific_prompts = prompt_types.map(
+	function(prompt_type : string) {
+	    // get the prompt template
+	    let tmp_prompt = prompt_map[prompt_type] ;
+	    // generate it
+	    return generate_prompt(tmp_prompt, replacements, examples, prompt_type)
+	}
+    )
+
+    let specific_prompts_string = specific_prompts.join("\n\n\n\n") 
+
+    //debug 
+    tsw.common.util.debug.add("specific_prompts", specific_prompts) 
+
+    let full_prompt = `
+
+${gen_prompt}
+${gen_output_prompt}
+
+-- BEGIN PATIENT HISTORY AND PHYSICAL NOTE -- 
+
+${hp}
+
+-- END PATIENT HISTORY AND PHYSICAL NOTE -- 
+
+${specific_prompts_string}
+    `
+
+    //debug 
+    tsw.common.util.debug.add("full_prompt", full_prompt) 
+
+    return full_prompt ; 
+    
+} 

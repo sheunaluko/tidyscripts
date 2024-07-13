@@ -15,6 +15,9 @@ import useInit from "../../../hooks/useInit";
 import {theme} from "../../theme";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
+import * as util from "./widgets/util"
+import * as prompts from "./prompts"
+
 const log = tsw.common.logger.get_logger({id:"cds"});
 
 const CdsApp = () => {
@@ -24,6 +27,8 @@ const CdsApp = () => {
         if (typeof window !== 'undefined') { 
             Object.assign(window, {
                 tsw,
+		util,
+		prompts
             });
             log("cds init");
         }
@@ -59,7 +64,7 @@ const CdsApp = () => {
         <Box maxWidth="sm">
             <Box display="flex" justifyContent="left" marginBottom="100px" >
                 <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>		
-                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Engineering</Button>
+                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
                 {
                    /*
                 <Button variant="outlined" onClick={() => setSelectedWidget('BMP')}>BMP</Button>
