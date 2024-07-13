@@ -24,12 +24,17 @@ const PromptGenerator = () => {
                 <Select
                     multiple
                     value={selectedDashboards}
+		    // @ts-ignore 
                     onChange={(e) => setSelectedDashboards([...e.target.value])}
                     renderValue={(selected) => selected.join(', ')}
                 >
                     {dashboards.map((dashboard) => (
                         <MenuItem key={dashboard} value={dashboard}>
-			<Checkbox checked={selectedDashboards.indexOf(dashboard) > -1} />
+
+			<Checkbox checked={
+			    // @ts-ignore
+			     selectedDashboards.indexOf(dashboard) > -1
+			 }/>
                             {dashboard}
                         </MenuItem>
                     ))}

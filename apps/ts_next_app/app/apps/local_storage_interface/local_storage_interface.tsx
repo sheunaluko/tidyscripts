@@ -217,7 +217,7 @@ const LocalStorageUi = () => {
 
 	  
       </Box>
-      <ChakraProvider/>
+      </ChakraProvider>
   );
 };
 

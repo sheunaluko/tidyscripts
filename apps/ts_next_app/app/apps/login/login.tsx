@@ -129,7 +129,7 @@ const Component: NextPage = (props : any) => {
   } 
   
   return (
-    <ChakraProvider>   { user  ? <LogOutUI/> : <LoadingOrLogin />  }  <ChakraProvider/> 
+    <ChakraProvider>   { user  ? <LogOutUI/> : <LoadingOrLogin />  }  </ChakraProvider> 
   )
 }
 

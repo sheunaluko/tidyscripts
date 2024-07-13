@@ -564,7 +564,7 @@ const Component: NextPage = (props : any) => {
 		panel_dictionary[panel_state]
 	    } 
 
-	<ChakraProvider/>
+	</ChakraProvider>
     )
 
 }

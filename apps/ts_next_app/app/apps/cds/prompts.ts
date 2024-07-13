@@ -222,7 +222,7 @@ export const examples = {
     ]
 };
 
-export function generate_prompt(prompt : string, _replacements  :any  , _examples : any  , prompt_type  : string) {
+export function generate_prompt(prompt : string, _replacements  :any  , _examples : any  , prompt_type  : (string | null) ) {
 
     log(`Generating prompt with prompt_type: ${prompt_type}`) 
     
@@ -240,7 +240,7 @@ export function generate_prompt(prompt : string, _replacements  :any  , _example
         new_prompt = new_prompt.replace(new RegExp(`REPLACE_${key}`, 'g'), value);
     }
 
-    let all_examples = _examples[prompt_type] ;
+    let all_examples = _examples[(prompt_type as string)] ;
     debug.add("all_examples", all_examples)     ; 
 
     if (all_examples) { 
@@ -268,11 +268,11 @@ export function generate_full_prompt(hp : string, prompt_type : string) {
     let gen_prompt = generate_prompt(general_prompt, replacements, examples, null )
     let gen_output_prompt = generate_prompt(general_output_prompt, replacements, examples, null )    
     
-    let prompt_map = {
-	medication_review : medication_review_prompt ,
-	labs : labs_prompt ,
-	imaging : imaging_prompt, 
-	dianosis_review : diagnosis_review_prompt
+    let prompt_map :  { [k:string] : string }  = {
+	'medication_review' : medication_review_prompt ,
+	'labs' : labs_prompt ,
+	'imaging' : imaging_prompt, 
+	'dianosis_review' : diagnosis_review_prompt
     } 
 
     var tmp_prompt = prompt_map[prompt_type] 
@@ -280,7 +280,6 @@ export function generate_full_prompt(hp : string, prompt_type : string) {
     let spe_prompt = generate_prompt(tmp_prompt, replacements, examples  , prompt_type)
     
     let full_prompt = `
-
 ${gen_prompt}
 
 &nbsp;
@@ -302,7 +301,7 @@ ${hp}
 &nbsp;
 
 **Specific Instructions** 
-${specific_prompts_string}
+${spe_prompt}
     `
 
     return full_prompt ; 
@@ -320,11 +319,11 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
     let gen_prompt = generate_prompt(general_prompt, replacements, examples, null) 
     let gen_output_prompt = generate_prompt(general_output_prompt, replacements, examples, null )    
     
-    let prompt_map = {
-	medication_review : medication_review_prompt ,
-	labs : labs_prompt ,
-	imaging : imaging_prompt, 
-	diagnosis_review : diagnosis_review_prompt
+    let prompt_map : { [k:string] : string }  = {
+	'medication_review' : medication_review_prompt ,
+	'labs' : labs_prompt ,
+	'imaging' : imaging_prompt, 
+	'diagnosis_review' : diagnosis_review_prompt
     } 
 
     let specific_prompts = prompt_types.map(
@@ -350,7 +349,6 @@ In addition to this:
     debug.add("specific_prompts", specific_prompts) 
 
     let full_prompt = `
-
 ${gen_prompt}
 
 &nbsp;

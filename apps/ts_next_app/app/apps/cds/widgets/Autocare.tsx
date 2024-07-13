@@ -1,35 +1,83 @@
 
-import React, { useState } from 'react';
-
-import { Button, TextField, Drawer, CircularProgress, Tabs, Tab } from '@mui/material';
-import { generate_hp, get_dashboard_info } from './util';
+import React, { useState, useEffect } from 'react';
+import { Button, TextField, Drawer, CircularProgress, Box, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { ObjectInspector } from 'react-inspector';
+import { generate_hp, get_all_dashboard_info } from './util';
 
 const Autocare = () => {
     const [open, setOpen] = useState(false);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
-    const [dashboard, setDashboard] = useState('medication_review');
+    const [dashboardInfo, setDashboardInfo] = useState(null);
+
+    useEffect(() => {
+        const storedNote = localStorage.getItem('HP');
+        if (storedNote) {
+            setNote(storedNote);
+        }
+    }, []);
 
     const handleGenerate = async () => {
         setLoading(true);
         const generatedNote = await generate_hp(note);
         setNote(generatedNote);
         await handleAnalyze(generatedNote);
+        setLoading(false);
     };
 
-    const handleAnalyze = async (text) => {
+    const handleAnalyze = async (text : string) => {
         setLoading(true);
-        const info = await get_dashboard_info(text, dashboard);
-        // Handle the info as needed
+        let info = await get_all_dashboard_info(text);
+        
+        // Clean the JSON string
+        const startIndex = info.indexOf('[');
+        const endIndex = info.lastIndexOf(']') + 1;
+        if (startIndex !== -1 && endIndex !== -1) {
+            info = info.substring(startIndex, endIndex);
+        }
+        
+        const jsonInfo = JSON.parse(info);
+        setDashboardInfo(jsonInfo);
         setLoading(false);
         setOpen(false);
     };
 
     return (
         <div>
-            <Button onClick={() => setOpen(true)}>Expand</Button>
-            <Drawer anchor="left" open={open} onClose={() => setOpen(false)}>
-                <div>
+            <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setOpen(true)}
+            >
+                Enter Clinical Information
+            </Button>
+            <Drawer
+                anchor="left"
+                open={open}
+                onClose={() => setOpen(false)}
+                PaperProps={{ style: { width: '50%', padding: '10%' } }}
+            >
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
+                    height="100%"
+                >
+                    <Button
+                        variant="outlined"
+                        onClick={handleGenerate}
+                        style={{ marginBottom: '20px' }}
+                    >
+                        Auto Generate
+                    </Button>
+                    {loading && (
+                        <Box display="flex" flexDirection="column" alignItems="center" marginBottom="20px">
+                            <CircularProgress />
+                            <Typography>Generating content</Typography>
+                        </Box>
+                    )}
                     <TextField
                         label="History and Physical Note"
                         multiline
@@ -37,26 +85,21 @@ const Autocare = () => {
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         variant="outlined"
+                        style={{ marginBottom: '20px', width: '100%' }}
                     />
-                    <Button onClick={handleGenerate}>Auto Generate</Button>
-                    <Button onClick={() => handleAnalyze(note)}>Analyze</Button>
-                </div>
-            </Drawer>
-            {loading ? (
-                <CircularProgress />
-            ) : (
-                <div>
-                    <Tabs
-                        value={dashboard}
-                        onChange={(e, newValue) => setDashboard(newValue)}
+                    <Button
+                        variant="outlined"
+                        onClick={() => handleAnalyze(note)}
                     >
-                        <Tab label="Medication Review" value="medication_review" />
-                        <Tab label="Lab Review" value="labs" />
-                        <Tab label="Imaging Review" value="imaging" />
-                        <Tab label="Assessment and Plan Review" value="diagnosis_review" />
-                    </Tabs>
-                    {/* Display dashboard info here */}
-                </div>
+                        Analyze
+                    </Button>
+                </Box>
+            </Drawer>
+            {dashboardInfo && (
+                <Box>
+                    <Typography variant="h6">Dashboard Information</Typography>
+                    <ObjectInspector data={dashboardInfo} />
+                </Box>
             )}
         </div>
     );

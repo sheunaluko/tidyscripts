@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 8000",
     "build": "next build",
+    "build:dev": "NODE_ENV=development next build",      
     "start": "next start",
     "lint": "next lint"
   },

@@ -56,15 +56,15 @@ export async function generate_hp(clinical_information : string) {
 }
 
 
-export async function get_dashboard_info(hp : string,  dashboard_name : string) {
+export async function get_individaul_dashboard_info(hp : string,  dashboard_name : string) {
     // -- get a ref to the open_ai_client 
     let client = tsw.apis.openai.get_openai() ;
 
     // -- generate the prompt 
-    let dashboard_prompt = await prompt.generate_full_prompt(hp, dashboard_name)
+    let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
     
     // -- debug
-    tsw.util.common.debug.add("generated_dashoard_prompt", dashboard_prompt) 
+    tsw.common.util.debug.add("generated_dashoard_prompt", dashboard_prompt) 
     
     // --  query the AI with the prompt
     const response = await client.chat.completions.create({
@@ -77,5 +77,34 @@ export async function get_dashboard_info(hp : string,  dashboard_name : string) 
     
     let content = response.choices[0].message.content;
 
+    
+} 
+
+export async function get_all_dashboard_info(hp : string) {
+    // -- get a ref to the open_ai_client 
+    let client = tsw.apis.openai.get_openai() ;
+
+    // -- generate the prompt 
+    let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review" , "labs", "imaging", "diagnosis_review"])
+    
+    // -- debug
+    tsw.common.util.debug.add("generated_dashboard_prompt", dashboard_prompt) 
+    
+    // --  query the AI with the prompt
+    const response = await client.chat.completions.create({
+	model: "gpt-4o",
+	messages: [
+	    { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+	    { role: 'user', content: dashboard_prompt }
+	]
+    });
+    
+    let dashboard_info = response.choices[0].message.content;
+
+    // -- debug
+    tsw.common.util.debug.add("dashboard_info", dashboard_info) 
+
+
+    return dashboard_info
     
 } 

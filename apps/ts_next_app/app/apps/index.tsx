@@ -16,6 +16,7 @@ import {
 } from "../../src/mui"  ; //  "@chakra-ui/react";
 
 const MLink = ({ ...props }) => {
+    // @ts-ignore
     return <Link {...props} style={{textDecoration: 'none' }} />;
 };
 
