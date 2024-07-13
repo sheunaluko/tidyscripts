@@ -1,6 +1,5 @@
-import * as tsw from "tidyscripts_web";
-
-import * as prompts from "../prompts" 
+import * as prompts from "../prompts"
+import * as tsw from "tidyscripts_web" 
 
 export function generate_prompt(note: string) {
     return `
@@ -62,25 +61,44 @@ export async function get_individaul_dashboard_info(hp : string,  dashboard_name
 
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
+
+    return content;
+}
+export async function get_all_dashboard_info(hp: string) {
+    // -- get a ref to the open_ai_client 
+    let client = tsw.apis.openai.get_openai();
+
+    // -- generate the prompt 
+    let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review", "labs", "imaging", "diagnosis_review"]);
     
     // -- debug
-    tsw.common.util.debug.add("generated_dashoard_prompt", dashboard_prompt) 
-    
-    // --  query the AI with the prompt
+    log("Generated dashboard prompt: " + dashboard_prompt);
+
+    // -- query the AI with the prompt
     const response = await client.chat.completions.create({
-	model: "gpt-4o",
-	messages: [
-	    { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
-	    { role: 'user', content: dashboard_prompt }
-	]
+        model: "gpt-4o",
+        messages: [
+            { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+            { role: 'user', content: dashboard_prompt }
+        ]
     });
-    
+
     let content = response.choices[0].message.content;
+    log("Received response content: " + content);
 
-    
-} 
+    // -- extract JSON array from response content
+    let dashboard_info = extractJsonArrayFromResponse(content);
+    if (dashboard_info) {
+        log("Extracted dashboard info: " + JSON.stringify(dashboard_info));
+        return dashboard_info;
+    } else {
+        log("Error: Failed to extract valid JSON array from response.");
+        return null;
+    }
+}
 
-export async function get_all_dashboard_info(hp : string) {
+
+async function get_all_dashboard_info_old(hp : string) {
     // -- get a ref to the open_ai_client 
     let client = tsw.apis.openai.get_openai() ;
 
@@ -108,3 +126,25 @@ export async function get_all_dashboard_info(hp : string) {
     return dashboard_info
     
 } 
+
+
+
+function extractJsonArrayFromResponse(responseContent: string): any[] | null {
+    const jsonArrayPattern = /\[.*\]/;
+    const match = responseContent.match(jsonArrayPattern);
+    if (match) {
+        const jsonArrayStr = match[0];
+        try {
+            const jsonArray = JSON.parse(jsonArrayStr);
+            return jsonArray;
+        } catch (error) {
+            log("Error: The extracted string is not a valid JSON array.");
+            return null;
+        }
+    } else {
+        log("Error: No JSON array found in the response.");
+        return null;
+    }
+}
+
+    

@@ -59,7 +59,7 @@ In particular, here is a description of the current setting: REPLACE_context_of_
 `;
 
 export const general_output_prompt = `
-Your output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
+Your output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient. Please return only a JSON array without any additional text or explanations outside of the JSON array. 
 `;
 
 export const medication_review_prompt = `
@@ -302,6 +302,13 @@ ${hp}
 
 **Specific Instructions** 
 ${spe_prompt}
+
+&nbsp;
+
+**Output Reminder** 
+Remember, it is EXTREMELY IMPORTANT TO FOLLOW the output format. Here it is repeated: 
+${gen_output_prompt} 
+
     `
 
     return full_prompt ; 
@@ -371,6 +378,12 @@ ${hp}
 
 **Specific Instructions** 
 ${specific_prompts_string}
+
+&nbsp;
+
+**Output Reminder** 
+Remember, it is EXTREMELY IMPORTANT TO FOLLOW the output format. Here it is repeated: 
+${gen_output_prompt} 
     `
 
     //debug 
