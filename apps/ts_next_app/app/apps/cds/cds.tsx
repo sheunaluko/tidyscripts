@@ -9,6 +9,7 @@ import PromptEngineering from './widgets/prompt_engineering';
 import NoteGenerator from './widgets/NoteGenerator';
 import Chat from './widgets/chat';
 
+import PromptGenerator from './widgets/PromptGenerator';
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../hooks/useInit";
 
@@ -43,20 +44,22 @@ const CdsApp = () => {
 
     const renderWidget = () => {
         switch (selectedWidget) {
-        case 'PromptEngineering':
-            return <PromptEngineering />;
-        case 'BMP':
-            return <BMP />;
-        case 'Demographics':
-            return <Demographics />;
-        case 'Medications':
-            return <Medications />;
-        case 'Chat':
-            return <Chat />;
-        case 'NoteGenerator':
-            return <NoteGenerator />;
-        default:
-            return <Chat />;
+            case 'PromptEngineering':
+		return <PromptEngineering />;
+            case 'BMP':
+		return <BMP />;
+            case 'Demographics':
+		return <Demographics />;
+            case 'Medications':
+		return <Medications />;
+            case 'Chat':
+		return <Chat />;
+            case 'NoteGenerator':
+
+            case 'PromptGenerator':
+		return <PromptGenerator />;
+            default:
+		return <Chat />;
         }
     };
 
@@ -65,14 +68,15 @@ const CdsApp = () => {
             <Box display="flex" justifyContent="left" marginBottom="100px" >
                 <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>		
                 <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
+                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Generator</Button>
+		<Button variant="outlined" onClick={() => setSelectedWidget('Chat')}>Chat</Button>
                 {
-                   /*
-                <Button variant="outlined" onClick={() => setSelectedWidget('BMP')}>BMP</Button>
-                <Button variant="outlined" onClick={() => setSelectedWidget('Demographics')}>Demographics</Button>
-                <Button variant="outlined" onClick={() => setSelectedWidget('Medications')}>Medications</Button>
-                    */
+                    /*
+                       <Button variant="outlined" onClick={() => setSelectedWidget('BMP')}>BMP</Button>
+                       <Button variant="outlined" onClick={() => setSelectedWidget('Demographics')}>Demographics</Button>
+                       <Button variant="outlined" onClick={() => setSelectedWidget('Medications')}>Medications</Button>
+	             */		
                 }
-                <Button variant="outlined" onClick={() => setSelectedWidget('Chat')}>Chat</Button>
             </Box>
             {renderWidget()}
         </Box>

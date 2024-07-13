@@ -269,7 +269,7 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
 	}
     )
 
-    let specific_prompts_string = specific_prompts.join("\n\n\n\n") 
+    let specific_prompts_string = specific_prompts.join("\n\nIn addition to this: \n\n") 
 
     //debug 
     tsw.common.util.debug.add("specific_prompts", specific_prompts) 
