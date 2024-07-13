@@ -2,6 +2,7 @@
 import React from 'react';
 import { Accordion, AccordionSummary, AccordionDetails, Typography, Box, useTheme } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ReactMarkdown from 'react-markdown';
 import { generate_prompt, replacements, general_prompt, general_output_prompt, medication_review_prompt, labs_prompt, diagnosis_review_prompt, examples } from '../prompts';
 
 import * as tsw from "tidyscripts_web"  ;
@@ -20,39 +21,41 @@ const PromptEngineering: React.FC = () => {
     const generatedLabsPrompt = generate_prompt(labs_prompt, replacements, examples, 'labs');
     const generatedDiagnosisReviewPrompt = generate_prompt(diagnosis_review_prompt, replacements, examples, 'diagnosis_review');
 
+    let pd = "20px" 
     return (
         <div>
-            <h1>Prompt Engineering Widget</h1>
+
             <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>General Prompt</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Typography>{generatedGeneralPrompt}</Typography>
+                   <Box style={{padding : pd}}> <ReactMarkdown>{generatedGeneralPrompt}</ReactMarkdown></Box> 
                 </AccordionDetails>
             </Accordion>
             <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>General Output Prompt</Typography>
+                    <ReactMarkdown>General Output Prompt</ReactMarkdown>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Typography>{generatedGeneralOutputPrompt}</Typography>
+		                       <Box style={{padding : pd}}> <ReactMarkdown>{generatedGeneralOutputPrompt}</ReactMarkdown></Box> 
                 </AccordionDetails>
             </Accordion>
             <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>Medication Review Prompt</Typography>
+                    <ReactMarkdown>Medication Review Prompt</ReactMarkdown>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Typography>{generatedMedicationReviewPrompt}</Typography>
+		    		                       <Box style={{padding : pd}}> <ReactMarkdown>{generatedMedicationReviewPrompt}</ReactMarkdown></Box> 
+                    
                     <Accordion>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography>Examples</Typography>
+                            <ReactMarkdown>Examples</ReactMarkdown>
                         </AccordionSummary>
                         <AccordionDetails>
                             {examples.medication_review.map((example, index) => (
                                 <Box key={index} sx={{ marginBottom: '10px', border: 1, borderColor: 'primary.main', padding: '10px' }}>
-                                    <Typography>{JSON.stringify(example, null, 2)}</Typography>
+                                    <ReactMarkdown>{JSON.stringify(example, null, 2)}</ReactMarkdown>
                                 </Box>
                             ))}
                         </AccordionDetails>
@@ -61,13 +64,15 @@ const PromptEngineering: React.FC = () => {
             </Accordion>
             <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>Labs Prompt</Typography>
+                    <ReactMarkdown>Labs Prompt</ReactMarkdown>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Typography>{generatedLabsPrompt}</Typography>
+		    		                       <Box style={{padding : pd}}> <ReactMarkdown>{generatedLabsPrompt}</ReactMarkdown></Box> 
+
                     <Accordion>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography>Examples</Typography>
+			    
+                            <ReactMarkdown>Examples</ReactMarkdown>
                         </AccordionSummary>
                         <AccordionDetails>
                             {examples.labs.map((example, index) => (
@@ -84,7 +89,8 @@ const PromptEngineering: React.FC = () => {
                     <Typography>Diagnosis Review Prompt</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Typography>{generatedDiagnosisReviewPrompt}</Typography>
+		    		                       <Box style={{padding : pd}}> <ReactMarkdown>{generatedDiagnosisReviewPrompt}</ReactMarkdown></Box> 
+
                     <Accordion>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Typography>Examples</Typography>

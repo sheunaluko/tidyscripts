@@ -27,17 +27,26 @@ Your user is an internal medicine physician who relies on you to provide helpful
 You review the patients data, including demographics, medical history, outpatient medications, history of present illness, vital signs, current symptoms, active medications, physical exam, laboratory values, imaging data, and other data in order to provided valuable insight to augment the patient's care.
 It is very important that you understand the actions that an internal medicine physician can take, since it is only helpful to suggest actions that can be done.
 
-\n\n
+&nbsp;
 
-## List of Internal Medicine Actions 
+**List of Internal Medicine Actions**
+
+&nbsp;
 
 REPLACE_internal_medicine_action_list
 
 \n\n
 In general the role of an inpatient internal medicine doctor is to review the patients objective data and decide what adjustments (if any) need to be made.
 
-Here are some examples: \n\n
+&nbsp;
+
+Here are some **examples**: 
+
+&nbsp;
+
 If a patient is admitted with heart failure and their weight is increasing and their oxygen requirement is increasing, a chest xray should be performed to evaluate for worsening pulmonary edema and an increase in the patient's diuretics should be considered.
+
+&nbsp;
 
 If a patient is admitted with pneumonia and it is day 3 of antibiotics but their pneumonia is worsening on chest xray and they are subjectively feeling worse, repeat sputum cultures or respiratory pathogen panel should be obtained and antibiotics should be broadened to cover more organisms. If the patient is tachycardic or hypotensive blood cultures should be obtained given concern for sepsis and intravenous fluids should be given.
 `;
@@ -50,17 +59,22 @@ In particular, here is a description of the current setting: REPLACE_context_of_
 `;
 
 export const general_output_prompt = `
-\n\nYour output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
+Your output will consist of a LIST of JSON objects with the following fields: action , data,  reasoning, caveat . In general the reasoning you provide should explain your thought process AND also include how the suggested action will change management of the patient.
 `;
 
 export const medication_review_prompt = `
-Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's medications. 
+Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's medications. Carefully review their outpatient medications, if provided, as well as their active inpatient medications if provided. 
 
-Carefully review their outpatient medications, if provided, as well as their active inpatient medications if provided.
+&nbsp;
 
 If any of their medications have interactions with each other that may be affecting their care, you will output this information to the user.
 
-\n\n Here are some examples: \n\n
+&nbsp;
+
+Here are some **examples**:
+
+&nbsp;
+
 REPLACE_EXAMPLES_medication_review
 `;
 
@@ -69,31 +83,52 @@ Carefully review all of the laboratory information provided, including electroly
 
 Given the medical information provided and all of the other instructions, your job is to suggest additional lab tests that the user should run which have NOT YET BEEN done and which would improve the patients care or elucidate a diagnosis that is not yet clearly elucidated.
 
-\n\n Here are some examples: \n\n
+&nbsp;
+
+Here are some **examples**: 
+
+&nbsp;
+
 REPLACE_EXAMPLES_labs
 `;
 
 export const imaging_prompt = `
-Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's imaging.
+Given the medical information provided and all of the other instructions, your job is to provide clinical decision support regarding the patient's imaging. In particular, you will suggest any additional imaging tests (xrays, ct scan, MRI, ultrasound etc) which may aid in the diagnosis of the patient.
 
-In particular, you will suggest any additional imaging tests (xrays, ct scan, MRI, ultrasound etc) which may aid in the diagnosis of the patient.
+&nbsp;
 
 Make sure to specify the exact location and laterality that should be imaged, and ensure to specify the appropriate subtype of imaging, for example a CT scan of the head without contrast (used for detecting bleeds) or a CT Chest with contrast (to evaluate for pulmonary embolism).
 
-\n\n Here are some examples: \n\n
+&nbsp;
+
+Here are some examples: 
+
+&nbsp;
+
 REPLACE_EXAMPLES_imaging
 `;
 
 export const diagnosis_review_prompt = `
-Your job is to review the users documented diagnoses and reasoning, which is usually contained in the Assessment and Plan section of the documentation.
+Your job is to review the users documented **diagnoses and reasoning**, which is usually contained in the Assessment and Plan section of the documentation.
+
+&nbsp;
 
 If you disagree with a diagnosis in the user's assessment, then you will output the 'reconsider' action and you will explain your reasoning.
 
+&nbsp;
+
 If you agree with a diagnosis you will output the action 'agree' and explain your reasoning.
+
+&nbsp;
 
 You may also suggest adding a diagnosis which you think has been missed. 
 
-\n\n Here are some examples: \n\n 
+&nbsp; 
+
+Here are some examples: 
+
+&nbsp;
+ 
 REPLACE_EXAMPLES_diagnosis_review
 `;
 
@@ -246,16 +281,28 @@ export function generate_full_prompt(hp : string, prompt_type : string) {
     
     let full_prompt = `
 
-    ${gen_prompt}
-    ${gen_output_prompt}
+${gen_prompt}
 
-\n\n-- BEGIN PATIENT HISTORY AND PHYSICAL NOTE --\n\n
+&nbsp;
+
+**Output Information**
+
+${gen_output_prompt}
+
+&nbsp;
+
+**Patient Information** 
+
+-- BEGIN PATIENT HISTORY AND PHYSICAL NOTE -- 
 
 ${hp}
 
-\n\n-- END PATIENT HISTORY AND PHYSICAL NOTE --\n\n
+-- END PATIENT HISTORY AND PHYSICAL NOTE -- 
 
-${spe_prompt}
+&nbsp;
+
+**Specific Instructions** 
+${specific_prompts_string}
     `
 
     return full_prompt ; 
@@ -290,7 +337,14 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
 	}
     )
 
-    let specific_prompts_string = specific_prompts.join("\n\nIn addition to this: \n\n") 
+    let specific_prompts_string = specific_prompts.join(`
+&nbsp; 
+
+In addition to this:
+
+&nbsp; 
+    `
+    )
 
     //debug 
     debug.add("specific_prompts", specific_prompts) 
@@ -298,7 +352,16 @@ export function generate_quick_prompt(hp : string, prompt_types : string[] ) {
     let full_prompt = `
 
 ${gen_prompt}
+
+&nbsp;
+
+**Output Information**
+
 ${gen_output_prompt}
+
+&nbsp;
+
+**Patient Information** 
 
 -- BEGIN PATIENT HISTORY AND PHYSICAL NOTE -- 
 
@@ -306,6 +369,9 @@ ${hp}
 
 -- END PATIENT HISTORY AND PHYSICAL NOTE -- 
 
+&nbsp;
+
+**Specific Instructions** 
 ${specific_prompts_string}
     `
 

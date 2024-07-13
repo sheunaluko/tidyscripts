@@ -35,7 +35,7 @@ const CdsApp = () => {
         }
     };
 
-    const default_widget = 'NoteGenerator';
+    const default_widget = 'PromptGenerator';
 
     let clean_up = ()=> { log("cds unmounted"); };
     useInit({ init , clean_up });  //my wrapper around useEffect 
@@ -55,7 +55,7 @@ const CdsApp = () => {
             case 'Chat':
 		return <Chat />;
             case 'NoteGenerator':
-
+		return <NoteGenerator />;
             case 'PromptGenerator':
 		return <PromptGenerator />;
             default:
@@ -66,10 +66,10 @@ const CdsApp = () => {
     return (
         <Box maxWidth="sm">
             <Box display="flex" justifyContent="left" marginBottom="100px" >
-                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>		
-                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
-                <Button style={{marginRight:"10px"}} variant="outlined" onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Generator</Button>
-		<Button variant="outlined" onClick={() => setSelectedWidget('Chat')}>Chat</Button>
+                <Button style={{marginRight:"10px"}} variant={selectedWidget == "NoteGenerator"     ? "contained" : "outlined" } onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>
+                <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptEngineering" ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
+                <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Generator</Button>
+		<Button style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
                 {
                     /*
                        <Button variant="outlined" onClick={() => setSelectedWidget('BMP')}>BMP</Button>
