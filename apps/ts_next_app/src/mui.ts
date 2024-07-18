@@ -1,3 +1,4 @@
+
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
@@ -16,6 +17,8 @@ import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 import SaveIcon from '@mui/icons-material/Save';
 
+
+import Slider from '@mui/material/Slider';
 
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -183,6 +186,8 @@ export  {
     RemoveIcon,
     ExpandMoreIcon,
     TroubleshootIcon,
+
+    Slider
 
 } 
 
