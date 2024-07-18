@@ -8,7 +8,13 @@ const log = get_logger({id : "openai_chat"}) ;
 
 declare var URL : any ; 
 
-type Data = any ; 
+type Data = any ;
+
+
+export const config = {
+    maxDuration: 300, //can run for 300s
+};
+
 
 
 /**

@@ -12,6 +12,12 @@ type Data = {
   text: any , 
 }
 
+
+export const config = {
+    maxDuration: 300, //can run for 300s
+};
+
+
 /**
  * This is a vercel serverless function 
  * 

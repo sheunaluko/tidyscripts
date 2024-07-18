@@ -12,7 +12,12 @@ const ORG = process.env.OPENAI_ORG
 const API_KEY = process.env.OPENAI_API_KEY
 
 
-const log = get_logger({id : "ai_chat"}) 
+const log = get_logger({id : "ai_chat"})
+
+
+export const config = {
+    maxDuration: 300, //can run for 300s
+};
 
 /**
  * This is a vercel serverless function 
