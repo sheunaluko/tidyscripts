@@ -17,7 +17,8 @@ import {
     ThumbUpIcon,
     ThumbDownIcon,
     ThumbDownOffAltIcon,
-    ThumbUpOffAltIcon, 
+    ThumbUpOffAltIcon,
+    TroubleshootIcon, 
     ExpandMoreIcon,
     AddIcon,
     RemoveIcon, 
@@ -107,6 +108,7 @@ const Autocare = () => {
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loadingAnalyze, setLoadingAnalyze] = useState(false);    
     const [dashboardInfo, setDashboardInfo] = useState(null);
     const [showMedications, setShowMedications] = useState(true);
     const [showLabs, setShowLabs] = useState(true);
@@ -139,14 +141,14 @@ const Autocare = () => {
     };
 
     const handleAnalyze = async (text: string) => {
-        setLoading(true);
+        setLoadingAnalyze(true);
         let info = await get_all_dashboard_info(text)
         // the above should return a JSON object
 
         debug.add('dashboardInfo', info)
         var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
         setDashboardInfo(jsonInfo);
-        setLoading(false);
+        setLoadingAnalyze(false);
     };
 
     return (
@@ -207,8 +209,8 @@ const Autocare = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleAnalyze}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+                disabled={loadingAnalyze}
+                startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
             >
                 Analyze
             </Button>
@@ -242,7 +244,7 @@ const getActionType = (action: string) => {
     if (action.includes("medication")) return 'Medication';
     if (action.includes("lab")) return 'Lab';
     if (action.includes("imaging")) return 'Imaging';
-    if (action.includes("agree") || action.includes("reconsider")) return 'Reasoning';
+    if (action.includes("Agree") || action.includes("Reconsider")) return 'Reasoning';
     return 'Miscellaneous';
 };
 

@@ -24,6 +24,7 @@ import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 
 import InfoIcon from '@mui/icons-material/Info';
 import MicIcon from '@mui/icons-material/Mic';
@@ -181,6 +182,7 @@ export  {
     AddIcon,
     RemoveIcon,
     ExpandMoreIcon,
+    TroubleshootIcon,
 
 } 
 
