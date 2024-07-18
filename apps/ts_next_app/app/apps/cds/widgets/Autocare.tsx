@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import ReactMarkdown from 'react-markdown';
 import { ObjectInspector } from 'react-inspector';
 import { generate_hp, get_all_dashboard_info } from './util';
@@ -14,7 +12,18 @@ import {
     Card,
     CardContent,
     FormControlLabel,
-    Checkbox
+    Checkbox,
+    IconButton,
+    ThumbUpIcon,
+    ThumbDownIcon,
+    ThumbDownOffAltIcon,
+    ThumbUpOffAltIcon, 
+    ExpandMoreIcon,
+    AddIcon,
+    RemoveIcon, 
+    Accordion,
+    AccordionSummary,
+    AccordionDetails 
 } from '../../../../src/mui'
 
 import {theme} from "../../../theme"
@@ -33,21 +42,28 @@ function DashboardCard({info}) {
         return theme.palette.warning.main; // Miscellaneous
     };
 
-    log(`Dashboard card: ${JSON.stringify(info)}`)
-
-    log("THe following is info.action")
-    debug.add("info", info) 
-    log(info.action) 
-
     const card_style : any  = {
         padding : "10px" ,
         marginBottom : "10px" ,
         cursor : 'pointer' ,
-        backgroundColor :  getCardColor
-	(info.action.toLowerCase()),
+        backgroundColor :  getCardColor(info.action.toLowerCase()),
         borderWidth : "1px" , 
-        borderRadius : "10px"     
+        borderRadius : "10px",
+        opacity: 0.6
     } 
+
+    const [thumbsUp, setThumbsUp] = useState(false);
+    const [thumbsDown, setThumbsDown] = useState(false);
+
+    const handleThumbsUp = () => {
+        setThumbsUp(!thumbsUp);
+        if (thumbsDown) setThumbsDown(false);
+    };
+
+    const handleThumbsDown = () => {
+        setThumbsDown(!thumbsDown);
+        if (thumbsUp) setThumbsUp(false);
+    };
 
     let tmp = info.action
     info.action = tmp[0].toUpperCase() + tmp.slice(1)
@@ -55,16 +71,33 @@ function DashboardCard({info}) {
     return (
         <Card style={card_style} >
             <CardContent>
-                <Typography variant="h6">{info.action}</Typography>
-                <ObjectInspector data={info.data}/>
+                <Box display="flex" justifyContent="space-between">
+                    <Typography variant="h6">{info.action}</Typography>
+                    <Box>
+                        <IconButton onClick={handleThumbsUp} color={thumbsUp ? "primary" : "default"}>
+                            <ThumbUpIcon />
+                        </IconButton>
+                        <IconButton onClick={handleThumbsDown} color={thumbsDown ? "primary" : "default"}>
+                            <ThumbDownIcon />
+                        </IconButton>
+                    </Box>
+                </Box>
+                <Typography>{JSON.stringify(info.data)}</Typography>
                 <ReactMarkdown>**Reasoning**</ReactMarkdown>        
                 <Typography >{info.reasoning}</Typography>
-                <ReactMarkdown>**Caveat**</ReactMarkdown>        
-                <Typography >{info.caveat}</Typography>
+                <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>Caveat</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Typography>{info.caveat}</Typography>
+                    </AccordionDetails>
+                </Accordion>
             </CardContent>
         </Card>
     )
 } 
+
 
  const Autocare = () => {
     

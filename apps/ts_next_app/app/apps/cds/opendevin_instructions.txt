@@ -13,7 +13,11 @@ These are displayed as Cards to the user.
 
 1) An ObjectInspector is used to display the data field for each card. Instead of this, simply display a JSON.stringify version of the data object
 
-2) THere is a Caveat section on each card, which should be moved to inside an Accordion that is on the card with the name "Caveat" 
+2) THere is a Caveat section on each card, which should be moved to inside an Accordion that is on the card with the name "Caveat"
+
+3) In the top right of each card there is a thumbs up and thumbs down button/icon that takes user feedback. If one is clicked the state toggles to show that it is selected. If it is clicked again then they are both unselected.
+
+4) Set the transparancy of the card to 60% 
 
 
 

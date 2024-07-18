@@ -5,6 +5,8 @@ import '@fontsource/roboto/700.css';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
+
+
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -13,6 +15,15 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 import SaveIcon from '@mui/icons-material/Save';
+
+
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
+import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import InfoIcon from '@mui/icons-material/Info';
 import MicIcon from '@mui/icons-material/Mic';
@@ -64,7 +75,7 @@ import Tab from '@mui/material/Tab';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -135,7 +146,6 @@ export  {
     AccordionDetails,
     CircularProgress,
     LinearProgress, 
-    ExpandMoreIcon, 
     Container, 
     Grid, 
     InfoIcon, 
@@ -158,6 +168,19 @@ export  {
     Visibility, 
     VisibilityOff,
     ThemeProvider,
-    createTheme
+    createTheme,
+
+
+
+
+    
+    ThumbDownIcon,
+    ThumbUpIcon, 
+    ThumbDownOffAltIcon,
+    ThumbUpOffAltIcon,
+    AddIcon,
+    RemoveIcon,
+    ExpandMoreIcon,
+
 } 
 
