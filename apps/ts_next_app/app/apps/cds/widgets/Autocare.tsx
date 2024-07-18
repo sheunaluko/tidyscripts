@@ -120,15 +120,21 @@ const Autocare = () => {
         const storedNote = localStorage.getItem('HP');
         let info = localStorage.getItem('info');    
 
-        if (storedNote) {
-            setNote(storedNote);
-        }
+	let testing = false ; 
+	
+	if (testing) {
+	    
+            if (storedNote ) {
+		setNote(storedNote);
+            }
 
-        if (info) {
-	    let t = JSON.parse(info)
-            setDashboardInfo(t)
-	    debug.add("dashboardInfo", t ) 
-        }
+            if (info) {
+		let t = JSON.parse(info)
+		setDashboardInfo(t)
+		debug.add("dashboardInfo", t ) 
+            }
+	}
+
 
     }, []);
 
@@ -136,8 +142,9 @@ const Autocare = () => {
         setLoading(true);
         const generatedNote = await generate_hp(note);
         setNote(generatedNote);
+        setLoading(false);	
         await handleAnalyze(generatedNote);
-        setLoading(false);
+
     };
 
     const handleAnalyze = async (text: string) => {
