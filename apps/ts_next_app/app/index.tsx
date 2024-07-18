@@ -107,9 +107,9 @@ const Home: NextPage = (props : any) => {
 
 		<MLink href="/apps">
 		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">Experiments</Typography>
+			<Typography variant="h5" color="primary">Laboratory</Typography>
 			<p>
-			    Application Development Sandbox 
+			    Prototypes and Experiments
 			</p>
 		    </Card >
 		</MLink>
@@ -122,6 +122,16 @@ const Home: NextPage = (props : any) => {
 			</p>
 		    </Card >
 		</MLink>
+
+		<MLink href="/about">
+		    <Card style={card_style}>
+			<Typography variant="h5" color="primary">About</Typography>
+			<p>
+			    The Origin
+			</p>
+		    </Card >
+		</MLink>
+		
 		
 
 
