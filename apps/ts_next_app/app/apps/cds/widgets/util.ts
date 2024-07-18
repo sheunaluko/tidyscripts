@@ -7,6 +7,7 @@ import {generate_prompt} from "./hp"
 const log    = tsw.common.logger.get_logger({id:"cds_util"}) 
 const debug  = tsw.common.util.debug
 const fp     = tsw.common.fp
+let { get_json_from_url } = tsw.common ;
 
 /* Util function definitions */ 
 
@@ -44,11 +45,39 @@ export async function get_individaul_dashboard_info(hp : string,  dashboard_name
 
 
 
+/*
+   Going to create a wrapper over the openai client 
+ */
 
+var wrapped_client = {
+    chat : {
+	completions : {
+	    create : wrapped_chat_completion 
+	}
+    } 
+}
+
+export async function wrapped_chat_completion(args : any) {
+    /*
+       Take the args and pass it to the vercel function instead 
+     */
+
+    let url = "/api/open_ai_chat_2"
+    let fetch_response = await fetch(url, {
+	method : 'POST' ,
+	headers: {   'Content-Type': 'application/json'   },
+	body : JSON.stringify(args)
+    });
+    debug.add("fetch_response" , fetch_response) ;
+    let response = await fetch_response.json() ;
+    debug.add("response" , response) ;
+
+    return response 
+} 
 
 export async function get_all_dashboard_info(hp: string) {
     // -- get a ref to the open_ai_client 
-    let client = tsw.apis.openai.get_openai();
+    let client =  wrapped_client // tsw.apis.openai.get_openai();
 
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review", "labs", "imaging", "diagnosis_review"]);
@@ -64,6 +93,8 @@ export async function get_all_dashboard_info(hp: string) {
             { role: 'user', content: dashboard_prompt }
         ]
     });
+
+
 
     let content = response.choices[0].message.content;
     log("Received response content: " + content);

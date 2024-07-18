@@ -53,13 +53,25 @@ const Home: NextPage = (props : any) => {
 
     let clean_up = ()=> { log("index unmounted") }
     useInit({ init , clean_up })  //my wrapper around useEffect 
+    let R = "17px"
+
+    
+    const MLink = ({ ...props }) => {
+	// @ts-ignore
+	return <Link {...props} style={{textDecoration: 'none'   }} />;
+    };
+
+
     const card_style : any  = {
 	padding : "10px" ,
-	marginBottom : "10px" ,
-	cursor : 'pointer' , 
-    }
+	marginBottom : "30px" ,
+	cursor : 'pointer' ,
+	width : "100%" 
+    } 
 
-    let R = "17px"
+
+
+    
     
     return (
 	<Box
@@ -81,45 +93,36 @@ const Home: NextPage = (props : any) => {
 	    </Box>
 
 
-	    <Box
-		display='flex'
-		flexDirection='column'
-		alignItems='center'
-		justifyContent='top'
-		flexGrow={1}
-		style={{width: "100%"}}
-	    >
-		<Box
-		    style={{
-			borderStyle : "solid",
-			borderWidth : 2,
-			borderRadius : R,
-			borderColor : "gray", 
-			padding : "4px"  ,
-			marginBottom : "15px" 
-		    }} >
-		    <Link href="/apps">
-			<p style={{padding: "5px"}}>
-			    App Library
-			</p>
-		    </Link>		  
-		</Box>
+	    <Box  >
 
-		<Box
-		    style={{
-			borderStyle : "solid",
-			borderWidth : 2,
-			borderRadius : R,
-			borderColor : "gray", 			
-			padding : "4px" 
-		    }} >
-		    <Link href="/resources/docs/index.html">
-			<p style={{padding: "5px"}}>
-			    Docs 
+		<MLink href="/apps">
+		    <Card style={card_style}>
+			<Typography variant="h5" color="primary">App Library</Typography>
+			<p>
+			    Mature Applications 
 			</p>
-		    </Link>		  
-		</Box>
+		    </Card >
+		</MLink>
+		
 
+		<MLink href="/apps">
+		    <Card style={card_style}>
+			<Typography variant="h5" color="primary">Experiments</Typography>
+			<p>
+			    Application Development Sandbox 
+			</p>
+		    </Card >
+		</MLink>
+
+		<MLink href="/resources/docs/index.html">
+		    <Card style={card_style}>
+			<Typography variant="h5" color="primary">Documentation</Typography>
+			<p>
+			    Explore the Docs
+			</p>
+		    </Card >
+		</MLink>
+		
 
 
 		
