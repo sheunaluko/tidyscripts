@@ -3,32 +3,9 @@ TIDYSCRIPTS NOTES
 
 To work on =>
 
-[ ] add more money to OpenAI api
-[ ] remove BMP, demographics, and medications UIs for now
-[ ] Create tools for generating fake H&P (i.e specify components of HP and have ai generate all)
-[ ] create a function that takes an HP and runs each of the prompts on it (dont't forget to add the general prompt then the HP information and then the specific prompt )
-[ ] create an interface that allows user to enter H&P and then shows the suggesstions in auto expandded accordian. When user hits submit the HP input is collapsed the "REVIEW" accordian is expanded which has sub accordians for each of the prompts. They are auto expanded by default (there is a collapse all and expand all button) and there are loading indicators. 
-
-[ ] remove chakra ui from app and use only material ui 
-
-[x] test generation of react user interfaces using OpenDevin
 [ ] test using llama3 model with open devin to save costs
-
-
-[ ... ] fix the feedback button (connect it to the firebase.give_feedback) function 
 [ ] extract all dreams and store
 [ ] fix mobile version of app and mobile login etc (will have to debug on mobile device)  
-
-- firebase admin (integration into Tidyscripts node lib)  
-- firebase client integration into Tidyscripts web lib
-   - react-firebase-hooks is an interesting library
-   - firebase is the required library  
-- remove firebaseConfig object from public github
-
-Status => have largely completed integrating firebase client in TSW lib. Now need to get the admin functionality working and the
-firebaseConfig object out of the source code (and into environment var). For the env var I will then test it by pushing the code to production (but first will need to fix the microbiology, bokeh interface apps) -- maybe categorize them 
-
-
 - add theming to the menu bar  (decide if you want menu bar on the side or at the top of the app?)
 - allow user to configure settings 
 - allow signed in user to sync notes accross browser instances
@@ -36,7 +13,6 @@ firebaseConfig object out of the source code (and into environment var). For the
 
 
 [ ] create an ADMIN DASHBOARD 
-
 [ ] AI coding utilities -- see one note docs 
 
 
