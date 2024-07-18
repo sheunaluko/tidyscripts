@@ -4,25 +4,31 @@ It is structed by a main page cds.tsx which allows selection of multiple widgets
 
 The Autocare.tsx widget renders the main application.
 
-dashboardInfo is a react state variable which contains the information that should be rendered to the dashboard.
+dashboardInfo is a react state variable which contains the information that is rendered to the dashboard.
 
 This is an array of JSON obects where each has the fields, "action", "data", "reasoning" and "caveat".
 
 These are displayed as Cards to the user.
 
 
+1) An ObjectInspector is used to display the data field for each card. Instead of this, simply display a JSON.stringify version of the data object
 
-However I want to make some updates to the interface.
+2) THere is a Caveat section on each card, which should be moved to inside an Accordion that is on the card with the name "Caveat" 
 
-1) The cards should be color coded by the Type of action. Make the colors be particular colors of the material ui theme.
-2) In the top right of the recommendations section there are four checkboxes to toggle the display of particular types, which are "Medications", "Labs" , "Imaging", "Reasoning". What type the action is is determined by the following:
 
-Any action that contains the word "medication" is a Medication type
-Any action that contains the word "lab" is a Lab type
-Any action that contains the word "imaging" is a Imaging type
-Any action that contains the word "agree" or "reconsider" is a Reasoning type
 
-If none of these match then the type Miscellaneous is given. Miscellaneous is also a checkbox option
+
+
+
+
+
+
+
+
+
+
+
+
 
 DO NOT INSTALL ANY SOFTWARE
 DO NOT RUN ANY CODE

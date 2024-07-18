@@ -12,7 +12,9 @@ import {
     Box,
     Typography,
     Card,
-    CardContent
+    CardContent,
+    FormControlLabel,
+    Checkbox
 } from '../../../../src/mui'
 
 import {theme} from "../../../theme"
@@ -21,53 +23,74 @@ import * as tsw from "tidyscripts_web"
 const log   = tsw.common.logger.get_logger({id:"autocare"})
 const debug = tsw.common.util.debug
 
-function DashboardCard(info : any) {
+function DashboardCard({info}) {
+
+    const getCardColor = (action: string) => {
+        if (action.includes("medication")) return theme.palette.primary.main;
+        if (action.includes("lab")) return theme.palette.secondary.main;
+        if (action.includes("imaging")) return theme.palette.info.main;
+        if (action.includes("agree") || action.includes("reconsider")) return theme.palette.success.main;
+        return theme.palette.warning.main; // Miscellaneous
+    };
+
+    log(`Dashboard card: ${JSON.stringify(info)}`)
+
+    log("THe following is info.action")
+    debug.add("info", info) 
+    log(info.action) 
 
     const card_style : any  = {
-	padding : "10px" ,
-	marginBottom : "10px" ,
-	cursor : 'pointer' ,
-	backgroundColor :  'primary.main',
-	borderWidth : "1px" , 
-	borderRadius : "10px" 	
+        padding : "10px" ,
+        marginBottom : "10px" ,
+        cursor : 'pointer' ,
+        backgroundColor :  getCardColor
+	(info.action.toLowerCase()),
+        borderWidth : "1px" , 
+        borderRadius : "10px"     
     } 
 
     let tmp = info.action
     info.action = tmp[0].toUpperCase() + tmp.slice(1)
     
     return (
-	<Card style={card_style} >
-	    <CardContent>
+        <Card style={card_style} >
+            <CardContent>
                 <Typography variant="h6">{info.action}</Typography>
                 <ObjectInspector data={info.data}/>
-                <ReactMarkdown>**Reasoning**</ReactMarkdown>		
+                <ReactMarkdown>**Reasoning**</ReactMarkdown>        
                 <Typography >{info.reasoning}</Typography>
-		<ReactMarkdown>**Caveat**</ReactMarkdown>		
+                <ReactMarkdown>**Caveat**</ReactMarkdown>        
                 <Typography >{info.caveat}</Typography>
-	    </CardContent>
+            </CardContent>
         </Card>
-
     )
 } 
 
-const Autocare = () => {
+ const Autocare = () => {
     
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
     const [dashboardInfo, setDashboardInfo] = useState(null);
+    const [showMedications, setShowMedications] = useState(true);
+    const [showLabs, setShowLabs] = useState(true);
+    const [showImaging, setShowImaging] = useState(true);
+    const [showReasoning, setShowReasoning] = useState(true);
+    const [showMiscellaneous, setShowMiscellaneous] = useState(true);
 
     useEffect(() => {
         const storedNote = localStorage.getItem('HP');
-        let info = localStorage.getItem('info');	
+        let info = localStorage.getItem('info');    
 
         if (storedNote) {
             setNote(storedNote);
         }
 
-	if (info) { 
-	    setDashboardInfo(JSON.parse(info))
-	}
+        if (info) {
+	    let t = JSON.parse(info)
+            setDashboardInfo(t)
+	    debug.add("dashboardInfo", t ) 
+        }
 
     }, []);
 
@@ -82,118 +105,109 @@ const Autocare = () => {
     const handleAnalyze = async (text: string) => {
         setLoading(true);
         let info = await get_all_dashboard_info(text)
+        // the above should return a JSON object
 
-	debug.add('info', info)
-	// the above should return a JSON object
-	
-	var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
-	
+        debug.add('dashboardInfo', info)
+        var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
         setDashboardInfo(jsonInfo);
         setLoading(false);
     };
 
     return (
         <div>
-	    
+            <Box display="flex" justifyContent="flex-end" marginBottom="20px">
+                <FormControlLabel
+                    control={<Checkbox checked={showMedications} onChange={() => setShowMedications(!showMedications)} />}
+                    label="Medications"
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={showLabs} onChange={() => setShowLabs(!showLabs)} />}
+                    label="Labs"
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={showImaging} onChange={() => setShowImaging(!showImaging)} />}
+                    label="Imaging"
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={showReasoning} onChange={() => setShowReasoning(!showReasoning)} />}
+                    label="Reasoning"
+                />
+                <FormControlLabel
+                    control={<Checkbox checked={showMiscellaneous} onChange={() => setShowMiscellaneous(!showMiscellaneous)} />}
+                    label="Miscellaneous"
+                />
+            </Box>
             <Button
                 variant="outlined"
                 startIcon={open ? <RemoveIcon /> : <AddIcon />}
                 onClick={() => setOpen(!open)}
             >
-                {open ? 'HIDE' : 'SHOW'} H&P
+                {open ? 'Hide' : 'Show'} Note
             </Button>
             {open && (
-                <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    width="50%"
-                    padding="10%"
-                >
-                    <TextField
-                        label="History and Physical Note"
-                        multiline
-                        rows={10}
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        variant="outlined"
-                        style={{ marginBottom: '20px', width: '100%' }}
-                    />
+		<React.Fragment> 
+                <TextField
+                    fullWidth
+                    multiline
+                    rows={10}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    variant="outlined"
+                    margin="normal"
+                />
 
-                    <Button
-                        variant="outlined"
-                        onClick={handleGenerate}
-                        style={{ marginBottom: '20px' }}
-                    >
-                        Generate H&P
-                    </Button>
-		    
-                    <Button
-                        variant="outlined"
-                        onClick={() => handleAnalyze(note)}
-                    >
-                        Analyze
-                    </Button>
-		    {loading && (
-                        <Box display="flex" flexDirection="column" alignItems="center" marginBottom="20px" marginTop="15px">
-                            <CircularProgress />
-
-                        </Box>
-                    )}
-
-                </Box>
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={handleGenerate}
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+            >
+                Generate
+            </Button>
+	    
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAnalyze}
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+            >
+                Analyze
+            </Button>
+		</React.Fragment> 
+		
             )}
-            {dashboardInfo && (
-                <Box>
-                    <Typography variant="h6">Recommendations:</Typography>
-		    <Box>
-			{
-			    dashboardInfo.map( DashboardCard )
-			}
-		    </Box>
-		    
-                </Box>
-            )}
+
+	    
+            <Box marginTop="20px">
+
+		
+                {dashboardInfo && dashboardInfo.map((info: any, index: number) => {
+                    const actionType = getActionType(info.action);
+                    if (
+                        (actionType === 'Medication' && showMedications) ||
+                        (actionType === 'Lab' && showLabs) ||
+                        (actionType === 'Imaging' && showImaging) ||
+                        (actionType === 'Reasoning' && showReasoning) ||
+                        (actionType === 'Miscellaneous' && showMiscellaneous)
+                    ) {
+                        return <DashboardCard key={index} info={info} />;
+                    }
+                    return null;
+                })}
+            </Box>
         </div>
     );
 };
 
-export default Autocare;
+const getActionType = (action: string) => {
+    if (action.includes("medication")) return 'Medication';
+    if (action.includes("lab")) return 'Lab';
+    if (action.includes("imaging")) return 'Imaging';
+    if (action.includes("agree") || action.includes("reconsider")) return 'Reasoning';
+    return 'Miscellaneous';
+};
 
 
-/*
-   TODO 
-   
-   Group the dashboard output by these categories: 
-
-   Medications / Labs / Imaging / Reasoning  --- Complications 
-
-   In the top right of the recommendations dashboard there are 4 check boxes for toggling 
-   including the above things (a filter bank) 
-
-   The things are automatically grouped based on the action title 
-   - action.contains("lab")
-   - action.contains("medication")
-   - action.contains("imaging")
-   - action.contains("agree" OR "recondsider")
-
-   If there is not match for a filter then it will show up under "miscellaneous" 
-
-
-   obtain lab
-   obtain imaging
-
-   hold medication 
-   adjust medication
-   suggest medication 
-
-   agree
-   reconsider
-
-   Color code these outputs 
-
-
-   Capitaize the card 
-
- */
+export default Autocare; 
