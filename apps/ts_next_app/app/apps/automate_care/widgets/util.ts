@@ -15,7 +15,7 @@ export async function generate_hp(clinical_information : string) {
     
     const prompt = generate_prompt(clinical_information);
     //get a ref to the open_ai_client 
-    let client = tsw.apis.openai.get_openai() ; 
+    let client =  wrapped_client // tsw.apis.openai.get_openai();
     const response = await client.chat.completions.create({
 	model: "gpt-4o",
 	messages: [
@@ -31,7 +31,7 @@ export async function generate_hp(clinical_information : string) {
 
 export async function get_individaul_dashboard_info(hp : string,  dashboard_name : string) {
     // -- get a ref to the open_ai_client 
-    let client = tsw.apis.openai.get_openai() ;
+    let client =  wrapped_client // tsw.apis.openai.get_openai();
 
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
@@ -44,12 +44,11 @@ export async function get_individaul_dashboard_info(hp : string,  dashboard_name
 }
 
 
-
 /*
    Going to create a wrapper over the openai client 
  */
 
-var wrapped_client = {
+export var wrapped_client = {
     chat : {
 	completions : {
 	    create : wrapped_chat_completion 
@@ -117,7 +116,7 @@ export async function get_all_dashboard_info(hp: string) {
 
 async function get_all_dashboard_info_old(hp : string) {
     // -- get a ref to the open_ai_client 
-    let client = tsw.apis.openai.get_openai() ;
+    let client =  wrapped_client // tsw.apis.openai.get_openai();
 
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review" , "labs", "imaging", "diagnosis_review"])

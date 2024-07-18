@@ -206,7 +206,7 @@ const Autocare = () => {
                         color="primary"
                         onClick={handleGenerate}
                         disabled={loading}
-                        sx={{ marginRight: "10px" }}
+                        sx={{ marginTop : "6px" , marginRight: "10px" }}
                         size="small"
                         startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
                     >

@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../../hooks/useInit";
 import {generate_hp} from "./util" 
+import {wrapped_client} from "./util"
 
 var open_ai_client: any = null;
 
@@ -19,7 +20,7 @@ const NoteGenerator = () => {
         /* Assign tidyscripts library to window */
         if (typeof window !== 'undefined') {
 
-            open_ai_client = tsw.apis.openai.get_openai();
+            open_ai_client = wrapped_client // tsw.apis.openai.get_openai();
 
             Object.assign(window, {
                 open_ai_client,
