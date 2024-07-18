@@ -24,8 +24,10 @@ export async function generate_hp(clinical_information : string) {
 	]
     });
     let content = response.choices[0].message.content;
-    content = content.replace("- BEGIN H&P INSTRUCTIONS -", "").replace("- END H&P INSTRUCTIONS -", "").trim();
-    return content 
+    debug.add("hp_content" , content) 
+    let filtered_content = content.replace('```markdown', "").replace('```',"")
+    filtered_content      = filtered_content.replace("- BEGIN H&P INSTRUCTIONS -", "").replace("- END H&P INSTRUCTIONS -", "").trim();
+    return filtered_content 
 }
 
 
@@ -241,7 +243,6 @@ export async function transform_hp_to_fhir({client, hp} : { [k:string] : any } )
     let content = response.choices[0].message.content;
     log("Received response content: " + content);
     debug.add("fhir_content" , content) ;
-
     let filtered_content = content.replace('```json', "").replace('```',"")
     debug.add("filtered_fhir_content" , filtered_content) ;
 
