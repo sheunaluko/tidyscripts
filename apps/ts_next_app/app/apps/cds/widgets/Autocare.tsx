@@ -1,14 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, CircularProgress, Box, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import ReactMarkdown from 'react-markdown';
 import { ObjectInspector } from 'react-inspector';
 import { generate_hp, get_all_dashboard_info } from './util';
 
+import {
+    Button,
+    TextField,
+    CircularProgress,
+    Box,
+    Typography,
+    Card,
+    CardContent
+} from '../../../../src/mui'
+
+import {theme} from "../../../theme"
+
 import * as tsw from "tidyscripts_web"
-const log = tsw.common.logger.get_logger({id:"autocare"}) 
+const log   = tsw.common.logger.get_logger({id:"autocare"})
+const debug = tsw.common.util.debug
+
+function DashboardCard(info : any) {
+
+    const card_style : any  = {
+	padding : "10px" ,
+	marginBottom : "10px" ,
+	cursor : 'pointer' ,
+	backgroundColor :  'primary.main',
+	borderWidth : "1px" , 
+	borderRadius : "10px" 	
+    } 
+
+    let tmp = info.action
+    info.action = tmp[0].toUpperCase() + tmp.slice(1)
+    
+    return (
+	<Card style={card_style} >
+	    <CardContent>
+                <Typography variant="h6">{info.action}</Typography>
+                <ObjectInspector data={info.data}/>
+                <ReactMarkdown>**Reasoning**</ReactMarkdown>		
+                <Typography >{info.reasoning}</Typography>
+		<ReactMarkdown>**Caveat**</ReactMarkdown>		
+                <Typography >{info.caveat}</Typography>
+	    </CardContent>
+        </Card>
+
+    )
+} 
 
 const Autocare = () => {
+    
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,9 +59,16 @@ const Autocare = () => {
 
     useEffect(() => {
         const storedNote = localStorage.getItem('HP');
+        let info = localStorage.getItem('info');	
+
         if (storedNote) {
             setNote(storedNote);
         }
+
+	if (info) { 
+	    setDashboardInfo(JSON.parse(info))
+	}
+
     }, []);
 
     const handleGenerate = async () => {
@@ -31,31 +81,20 @@ const Autocare = () => {
 
     const handleAnalyze = async (text: string) => {
         setLoading(true);
-        let info = await get_all_dashboard_info(text) 
+        let info = await get_all_dashboard_info(text)
 
-        // Clean the JSON string
-	const startIndex = info?.indexOf('[') ?? -1;
-	const endIndex = (info?.lastIndexOf(']') ?? -1) + 1;
+	debug.add('info', info)
+	// the above should return a JSON object
 	
-        if (startIndex !== -1 && endIndex !== -1) {
-	     // @ts-ignore
-            info = info.substring(startIndex, endIndex);
-        }
-
-	var jsonInfo : any = [{}]  ; 
+	var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
 	
-	try {
-	    jsonInfo = JSON.parse(info as any);
-	} catch (e : any) {
-	    log("ERROR parsing JSON!")
-	    jsonInfo = [{error : "There was an error parsing the JSON" }]
-	} 
         setDashboardInfo(jsonInfo);
         setLoading(false);
     };
 
     return (
         <div>
+	    
             <Button
                 variant="outlined"
                 startIcon={open ? <RemoveIcon /> : <AddIcon />}
@@ -72,19 +111,6 @@ const Autocare = () => {
                     width="50%"
                     padding="10%"
                 >
-                    <Button
-                        variant="outlined"
-                        onClick={handleGenerate}
-                        style={{ marginBottom: '20px' }}
-                    >
-                        Auto Generate
-                    </Button>
-                    {loading && (
-                        <Box display="flex" flexDirection="column" alignItems="center" marginBottom="20px">
-                            <CircularProgress />
-                            <Typography>Generating content</Typography>
-                        </Box>
-                    )}
                     <TextField
                         label="History and Physical Note"
                         multiline
@@ -94,18 +120,39 @@ const Autocare = () => {
                         variant="outlined"
                         style={{ marginBottom: '20px', width: '100%' }}
                     />
+
+                    <Button
+                        variant="outlined"
+                        onClick={handleGenerate}
+                        style={{ marginBottom: '20px' }}
+                    >
+                        Generate H&P
+                    </Button>
+		    
                     <Button
                         variant="outlined"
                         onClick={() => handleAnalyze(note)}
                     >
                         Analyze
                     </Button>
+		    {loading && (
+                        <Box display="flex" flexDirection="column" alignItems="center" marginBottom="20px" marginTop="15px">
+                            <CircularProgress />
+
+                        </Box>
+                    )}
+
                 </Box>
             )}
             {dashboardInfo && (
                 <Box>
-                    <Typography variant="h6">Dashboard Information</Typography>
-                    <ObjectInspector data={dashboardInfo} />
+                    <Typography variant="h6">Recommendations:</Typography>
+		    <Box>
+			{
+			    dashboardInfo.map( DashboardCard )
+			}
+		    </Box>
+		    
                 </Box>
             )}
         </div>
@@ -113,3 +160,40 @@ const Autocare = () => {
 };
 
 export default Autocare;
+
+
+/*
+   TODO 
+   
+   Group the dashboard output by these categories: 
+
+   Medications / Labs / Imaging / Reasoning  --- Complications 
+
+   In the top right of the recommendations dashboard there are 4 check boxes for toggling 
+   including the above things (a filter bank) 
+
+   The things are automatically grouped based on the action title 
+   - action.contains("lab")
+   - action.contains("medication")
+   - action.contains("imaging")
+   - action.contains("agree" OR "recondsider")
+
+   If there is not match for a filter then it will show up under "miscellaneous" 
+
+
+   obtain lab
+   obtain imaging
+
+   hold medication 
+   adjust medication
+   suggest medication 
+
+   agree
+   reconsider
+
+   Color code these outputs 
+
+
+   Capitaize the card 
+
+ */

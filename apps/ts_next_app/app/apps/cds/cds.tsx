@@ -25,7 +25,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import * as util from "./widgets/util"
 import * as prompts from "./prompts"
 
-const log = tsw.common.logger.get_logger({id:"cds"});
+const log    = tsw.common.logger.get_logger({id:"cds"});
+const debug  = tsw.common.util.debug
+//const fp     = tsw.common.fp
+
 
 const CdsApp = () => {
 
@@ -35,7 +38,8 @@ const CdsApp = () => {
             Object.assign(window, {
                 tsw,
                 util,
-                prompts
+                prompts,
+		debug
             });
             log("cds init");
         }

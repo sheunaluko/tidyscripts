@@ -1,14 +1,17 @@
+import {get_logger} from "../logger"  ;
 
+/*
+ * Debugger module 
+ *
+ * @packageDocumentation 
+ */
 
-import {get_logger} from "../logger"  ; 
-
-
+export var log = get_logger({id: "debug" } )
 export var db : { [k:string] : any }  = {}  
 
-
-
 export function add(id : string, val : any ) { 
-    db[id] = val 
+    db[id] = val
+    log(`Added :${id}`)
 } 
 
 export function get(id : string) { 
@@ -18,7 +21,7 @@ export function get(id : string) {
 
 
 
-export var log = get_logger({id: "debug" } )
+
 
 
 
