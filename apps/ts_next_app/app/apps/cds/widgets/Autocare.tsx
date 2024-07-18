@@ -28,15 +28,15 @@ import {
 } from '../../../../src/mui'
 
 import {theme} from "../../../theme"
-    
-    
+
+
 import { alpha } from '@mui/system';
 
 import * as tsw from "tidyscripts_web"
 const log   = tsw.common.logger.get_logger({id:"autocare"})
 const debug = tsw.common.util.debug
 
-function DashboardCard({info}) {
+function DashboardCard({info} : any) {
 
     const getCardColor = (action: string) => {
         if (action.includes("medication")) return theme.palette.primary.main;
@@ -109,7 +109,7 @@ const Autocare = () => {
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingAnalyze, setLoadingAnalyze] = useState(false);    
-    const [dashboardInfo, setDashboardInfo] = useState(null);
+    const [dashboardInfo, setDashboardInfo] = useState(null as any);
     const [showMedications, setShowMedications] = useState(true);
     const [showLabs, setShowLabs] = useState(true);
     const [showImaging, setShowImaging] = useState(true);
@@ -143,15 +143,14 @@ const Autocare = () => {
         const generatedNote = await generate_hp(note);
         setNote(generatedNote);
         setLoading(false);	
-        await handleAnalyze(generatedNote);
+	//handleAnalyze() ; 
 
     };
 
-    const handleAnalyze = async (text: string) => {
+    const handleAnalyze = async () => {
         setLoadingAnalyze(true);
-        let info = await get_all_dashboard_info(text)
+        let info = await get_all_dashboard_info(note)
         // the above should return a JSON object
-
         debug.add('dashboardInfo', info)
         var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
         setDashboardInfo(jsonInfo);
@@ -191,36 +190,36 @@ const Autocare = () => {
             </Button>
             {open && (
 		<React.Fragment> 
-                <TextField
-                    fullWidth
-                    multiline
-                    rows={10}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    variant="outlined"
-                    margin="normal"
-                />
+                    <TextField
+			fullWidth
+			multiline
+			rows={10}
+			value={note}
+			onChange={(e) => setNote(e.target.value)}
+			variant="outlined"
+			margin="normal"
+                    />
 
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={handleGenerate}
-                disabled={loading}
-		sx={{marginRight :  "10px"}}
-                startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
-            >
-                Generate
-            </Button>
-	    
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={handleAnalyze}
-                disabled={loadingAnalyze}
-                startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
-            >
-                Analyze
-            </Button>
+		    <Button
+			variant="contained"
+			color="primary"
+			onClick={handleGenerate}
+			disabled={loading}
+			sx={{marginRight :  "10px"}}
+			startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+		    >
+			Generate
+		    </Button>
+		    
+		    <Button
+			variant="contained"
+			color="primary"
+			onClick={handleAnalyze}
+			disabled={loadingAnalyze}
+			startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
+		    >
+			Analyze
+		    </Button>
 		</React.Fragment> 
 		
             )}
