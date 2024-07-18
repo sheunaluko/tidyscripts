@@ -105,7 +105,7 @@ const Home: NextPage = (props : any) => {
 		</MLink>
 		
 
-		<MLink href="/apps">
+		<MLink href="/laboratory">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">Laboratory</Typography>
 			<p>
