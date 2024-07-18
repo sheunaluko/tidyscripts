@@ -18,26 +18,24 @@ import {
     ThumbDownIcon,
     ThumbDownOffAltIcon,
     ThumbUpOffAltIcon,
-    TroubleshootIcon, 
+    TroubleshootIcon,
     ExpandMoreIcon,
     AddIcon,
-    RemoveIcon, 
+    RemoveIcon,
     Accordion,
     AccordionSummary,
-    AccordionDetails 
-} from '../../../../src/mui'
+    AccordionDetails,
+    Grid
+} from '../../../../src/mui';
 
-import {theme} from "../../../theme"
-
-
+import { theme } from "../../../theme";
 import { alpha } from '@mui/system';
+import * as tsw from "tidyscripts_web";
 
-import * as tsw from "tidyscripts_web"
-const log   = tsw.common.logger.get_logger({id:"autocare"})
-const debug = tsw.common.util.debug
+const log = tsw.common.logger.get_logger({ id: "autocare" });
+const debug = tsw.common.util.debug;
 
-function DashboardCard({info} : any) {
-
+function DashboardCard({ info }: any) {
     const getCardColor = (action: string) => {
         if (action.includes("medication")) return theme.palette.primary.main;
         if (action.includes("lab")) return theme.palette.secondary.main;
@@ -46,14 +44,14 @@ function DashboardCard({info} : any) {
         return theme.palette.warning.main; // Miscellaneous
     };
 
-    const card_style : any  = {
-        padding : "10px" ,
-        marginBottom : "10px" ,
-        cursor : 'pointer' ,
-        backgroundColor :  alpha(getCardColor(info.action.toLowerCase()) , 0.5    )  , 
-        borderWidth : "1px" , 
-        borderRadius : "10px",
-    } 
+    const card_style: any = {
+        padding: "10px",
+        marginBottom: "10px",
+        cursor: 'pointer',
+        backgroundColor: alpha(getCardColor(info.action.toLowerCase()), 0.5),
+        borderWidth: "1px",
+        borderRadius: "10px",
+    };
 
     const [thumbsUp, setThumbsUp] = useState(false);
     const [thumbsDown, setThumbsDown] = useState(false);
@@ -68,11 +66,11 @@ function DashboardCard({info} : any) {
         if (thumbsUp) setThumbsUp(false);
     };
 
-    let tmp = info.action
-    info.action = tmp[0].toUpperCase() + tmp.slice(1)
-    
+    let tmp = info.action;
+    info.action = tmp[0].toUpperCase() + tmp.slice(1);
+
     return (
-        <Card style={card_style} >
+        <Card style={card_style}>
             <CardContent>
                 <Box display="flex" justifyContent="space-between">
                     <Typography variant="h6">{info.action}</Typography>
@@ -86,10 +84,10 @@ function DashboardCard({info} : any) {
                     </Box>
                 </Box>
                 <Typography>{JSON.stringify(info.data)}</Typography>
-		<br/> 
-                <ReactMarkdown>**Reasoning**</ReactMarkdown>        
-                <Typography >{info.reasoning}</Typography>
-		<br /> 
+                <br />
+                <ReactMarkdown>**Reasoning**</ReactMarkdown>
+                <Typography>{info.reasoning}</Typography>
+                <br />
                 <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography>Caveat</Typography>
@@ -100,15 +98,14 @@ function DashboardCard({info} : any) {
                 </Accordion>
             </CardContent>
         </Card>
-    )
-} 
+    );
+}
 
 const Autocare = () => {
-    
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
-    const [loadingAnalyze, setLoadingAnalyze] = useState(false);    
+    const [loadingAnalyze, setLoadingAnalyze] = useState(false);
     const [dashboardInfo, setDashboardInfo] = useState(null as any);
     const [showMedications, setShowMedications] = useState(true);
     const [showLabs, setShowLabs] = useState(true);
@@ -118,69 +115,73 @@ const Autocare = () => {
 
     useEffect(() => {
         const storedNote = localStorage.getItem('HP');
-        let info = localStorage.getItem('info');    
+        let info = localStorage.getItem('info');
 
-	let testing = false ; 
-	
-	if (testing) {
-	    
-            if (storedNote ) {
-		setNote(storedNote);
+        let testing = false;
+
+        if (testing) {
+            if (storedNote) {
+                setNote(storedNote);
             }
 
             if (info) {
-		let t = JSON.parse(info)
-		setDashboardInfo(t)
-		debug.add("dashboardInfo", t ) 
+                let t = JSON.parse(info);
+                setDashboardInfo(t);
+                debug.add("dashboardInfo", t);
             }
-	}
-
-
+        }
     }, []);
 
     const handleGenerate = async () => {
         setLoading(true);
         const generatedNote = await generate_hp(note);
         setNote(generatedNote);
-        setLoading(false);	
-	//handleAnalyze() ; 
-
+        setLoading(false);
     };
 
     const handleAnalyze = async () => {
         setLoadingAnalyze(true);
-        let info = await get_all_dashboard_info(note)
-        // the above should return a JSON object
-        debug.add('dashboardInfo', info)
-        var jsonInfo = (info || [{error : "There was an error parsing the JSON" }])
+        let info = await get_all_dashboard_info(note);
+        debug.add('dashboardInfo', info);
+        var jsonInfo = (info || [{ error: "There was an error parsing the JSON" }]);
         setDashboardInfo(jsonInfo);
         setLoadingAnalyze(false);
     };
 
     return (
         <div>
-            <Box display="flex" justifyContent="flex-end" marginBottom="20px">
-                <FormControlLabel
-                    control={<Checkbox checked={showMedications} onChange={() => setShowMedications(!showMedications)} />}
-                    label="Medications"
-                />
-                <FormControlLabel
-                    control={<Checkbox checked={showLabs} onChange={() => setShowLabs(!showLabs)} />}
-                    label="Labs"
-                />
-                <FormControlLabel
-                    control={<Checkbox checked={showImaging} onChange={() => setShowImaging(!showImaging)} />}
-                    label="Imaging"
-                />
-                <FormControlLabel
-                    control={<Checkbox checked={showReasoning} onChange={() => setShowReasoning(!showReasoning)} />}
-                    label="Reasoning"
-                />
-                <FormControlLabel
-                    control={<Checkbox checked={showMiscellaneous} onChange={() => setShowMiscellaneous(!showMiscellaneous)} />}
-                    label="Miscellaneous"
-                />
-            </Box>
+            <Grid container spacing={2} justifyContent="flex-end" marginBottom="20px">
+                <Grid item xs={12} sm="auto">
+                    <FormControlLabel
+                        control={<Checkbox checked={showMedications} onChange={() => setShowMedications(!showMedications)} />}
+                        label="Medications"
+                    />
+                </Grid>
+                <Grid item xs={12} sm="auto">
+                    <FormControlLabel
+                        control={<Checkbox checked={showLabs} onChange={() => setShowLabs(!showLabs)} />}
+                        label="Labs"
+                    />
+                </Grid>
+                <Grid item xs={12} sm="auto">
+                    <FormControlLabel
+                        control={<Checkbox checked={showImaging} onChange={() => setShowImaging(!showImaging)} />}
+                        label="Imaging"
+                    />
+                </Grid>
+                <Grid item xs={12} sm="auto">
+                    <FormControlLabel
+                        control={<Checkbox checked={showReasoning} onChange={() => setShowReasoning(!showReasoning)} />}
+                        label="Reasoning"
+                    />
+                </Grid>
+                <Grid item xs={12} sm="auto">
+                    <FormControlLabel
+                        control={<Checkbox checked={showMiscellaneous} onChange={() => setShowMiscellaneous(!showMiscellaneous)} />}
+                        label="Miscellaneous"
+                    />
+                </Grid>
+            </Grid>
             <Button
                 variant="outlined"
                 startIcon={open ? <RemoveIcon /> : <AddIcon />}
@@ -189,45 +190,44 @@ const Autocare = () => {
                 {open ? 'Hide' : 'Show'} Note
             </Button>
             {open && (
-		<React.Fragment> 
+                <React.Fragment>
                     <TextField
-			fullWidth
-			multiline
-			rows={10}
-			value={note}
-			onChange={(e) => setNote(e.target.value)}
-			variant="outlined"
-			margin="normal"
+                        fullWidth
+                        multiline
+                        rows={10}
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        variant="outlined"
+                        margin="normal"
                     />
 
-		    <Button
-			variant="contained"
-			color="primary"
-			onClick={handleGenerate}
-			disabled={loading}
-			sx={{marginRight :  "10px"}}
-			startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
-		    >
-			Generate
-		    </Button>
-		    
-		    <Button
-			variant="contained"
-			color="primary"
-			onClick={handleAnalyze}
-			disabled={loadingAnalyze}
-			startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
-		    >
-			Analyze
-		    </Button>
-		</React.Fragment> 
-		
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleGenerate}
+                        disabled={loading}
+                        sx={{ marginRight: "10px" }}
+                        size="small"
+                        startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+                    >
+                        Generate
+                    </Button>
+
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleAnalyze}
+                        disabled={loadingAnalyze}
+                        size="small"
+                        sx={{ marginTop: "6px" }}
+                        startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
+                    >
+                        Analyze
+                    </Button>
+                </React.Fragment>
             )}
 
-	    
             <Box marginTop="20px">
-
-		
                 {dashboardInfo && dashboardInfo.map((info: any, index: number) => {
                     const actionType = getActionType(info.action);
                     if (
@@ -254,5 +254,4 @@ const getActionType = (action: string) => {
     return 'Miscellaneous';
 };
 
-
-export default Autocare; 
+export default Autocare;

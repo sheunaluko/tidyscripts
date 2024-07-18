@@ -82,13 +82,14 @@ const CdsApp = () => {
 
     return (
         <Box display="flex" flexDirection="column" height="100%" width="100%">
-            <Box display="flex" justifyContent="center" marginBottom="20px" width="100%">
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "Autocare"          ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare')}>Autocare</Button>
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "NoteGenerator"     ? "contained" : "outlined" } onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptEngineering" ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Engineering</Button>
-                <Button style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
-            </Box>
+
+<Box display="flex" justifyContent="center" marginBottom="20px" width="100%" sx={{ flexWrap: 'wrap' }}>
+    <Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "Autocare"          ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare')}>Autocare</Button>
+    <Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "NoteGenerator"     ? "contained" : "outlined" } onClick={() => setSelectedWidget('NoteGenerator')}>H&P Generator</Button>
+    <Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "PromptEngineering" ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptEngineering')}>Prompt Review</Button>
+    <Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "PromptGenerator"   ? "contained" : "outlined" } onClick={() => setSelectedWidget('PromptGenerator')}>Prompt Engineering</Button>
+    <Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
+</Box>
             <Box flexGrow={1} width={`${widgetWidth}%`} margin="0 auto" display="flex" flexDirection="column">
                 {renderWidget()}
             </Box>
@@ -109,3 +110,4 @@ const CdsApp = () => {
 };
 
 export default CdsApp;
+

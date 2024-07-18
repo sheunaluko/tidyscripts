@@ -1,4 +1,4 @@
-The cds directory defines an interface for performing clinical decision support.
+This directory defines an interface for performing clinical decision support.
 
 It is structed by a main page cds.tsx which allows selection of multiple widgets which are defined in the widgets directory.
 
@@ -11,12 +11,12 @@ This is an array of JSON obects where each has the fields, "action", "data", "re
 These are displayed as Cards to the user.
 
 
+Although the UI is good it is currently not rendering correctly on mobile devices. the following need to be fixed
 
-1) instead of the whole card tranparency tranparency, set the transparency of the card background but not the text on the card (so the text comes through well)
+- the widget selector is compressed and the text runs off of the buttons.
+- the checkboxes for actiontype selection do not fit
 
-2) Change the color of the caveat accordion to the same color as its parent card, and put outline arround the accordion in a darker shad of that color  
-
-
+Please fix these 
 
 
 
