@@ -27,6 +27,9 @@ import {
 } from '../../../../src/mui'
 
 import {theme} from "../../../theme"
+    
+    
+import { alpha } from '@mui/system';
 
 import * as tsw from "tidyscripts_web"
 const log   = tsw.common.logger.get_logger({id:"autocare"})
@@ -46,10 +49,9 @@ function DashboardCard({info}) {
         padding : "10px" ,
         marginBottom : "10px" ,
         cursor : 'pointer' ,
-        backgroundColor :  getCardColor(info.action.toLowerCase()),
+        backgroundColor :  alpha(getCardColor(info.action.toLowerCase()) , 0.5    )  , 
         borderWidth : "1px" , 
         borderRadius : "10px",
-        opacity: 0.6
     } 
 
     const [thumbsUp, setThumbsUp] = useState(false);
@@ -83,8 +85,10 @@ function DashboardCard({info}) {
                     </Box>
                 </Box>
                 <Typography>{JSON.stringify(info.data)}</Typography>
+		<br/> 
                 <ReactMarkdown>**Reasoning**</ReactMarkdown>        
                 <Typography >{info.reasoning}</Typography>
+		<br /> 
                 <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography>Caveat</Typography>
@@ -98,8 +102,7 @@ function DashboardCard({info}) {
     )
 } 
 
-
- const Autocare = () => {
+const Autocare = () => {
     
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
@@ -194,6 +197,7 @@ function DashboardCard({info}) {
                 color="primary"
                 onClick={handleGenerate}
                 disabled={loading}
+		sx={{marginRight :  "10px"}}
                 startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
             >
                 Generate

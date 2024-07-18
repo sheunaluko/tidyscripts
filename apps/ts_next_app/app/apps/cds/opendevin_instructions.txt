@@ -11,24 +11,10 @@ This is an array of JSON obects where each has the fields, "action", "data", "re
 These are displayed as Cards to the user.
 
 
-1) An ObjectInspector is used to display the data field for each card. Instead of this, simply display a JSON.stringify version of the data object
 
-2) THere is a Caveat section on each card, which should be moved to inside an Accordion that is on the card with the name "Caveat"
+1) instead of the whole card tranparency tranparency, set the transparency of the card background but not the text on the card (so the text comes through well)
 
-3) In the top right of each card there is a thumbs up and thumbs down button/icon that takes user feedback. If one is clicked the state toggles to show that it is selected. If it is clicked again then they are both unselected.
-
-4) Set the transparancy of the card to 60% 
-
-
-
-
-
-
-
-
-
-
-
+2) Change the color of the caveat accordion to the same color as its parent card, and put outline arround the accordion in a darker shad of that color  
 
 
 
