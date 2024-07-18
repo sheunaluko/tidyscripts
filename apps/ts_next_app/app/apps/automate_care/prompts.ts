@@ -213,7 +213,7 @@ export const examples = {
             "caveat": "He may have received bronchodilators prior to the physical exam."
         } ,
 	        {
-            "action": "add",
+            "action": "add diagnosis",
             "data": { "diagnosis": "Hemolytic anemia" },
             "reasoning": "There is evidence of hemolysis given LDH is high and haptoglobin is low. This in combination with anemia suggests a hemolytic process is taking place.",
             "caveat": ""

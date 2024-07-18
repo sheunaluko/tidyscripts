@@ -189,3 +189,64 @@ export function extractJsonArray(text : string) {
     
     
 }    
+
+
+
+
+export async function transform_hp_to_fhir({client, hp} : { [k:string] : any } ) {
+
+
+    // get client reference
+    let _client = (client  || wrapped_client) 
+    
+    // -- generate the prompt 
+    let hp_to_fhir_prompt = `
+ You are an expert data generation assistant
+ Your job is to transform textual medical data into fhir data (version R4) 
+ You perform this job eagerly and meticulously and efficiently 
+ You adhere strictly to FHIR version R4 
+ Your output is a parsable json string 
+
+ If the input contains information which cannot be represented as FHIR version R4 json objects, then you omit it from the output 
+ You do not generate any extraneous data that is not present in the input
+ Your output contains ONLY the json string and absolutely nothing else. The string should be immediately parsable by the JSON.parse() function
+
+ Here is the information that you will convert into FHIR R4: 
+
+ ${hp} 
+ 
+ Remember the following: 
+
+ You adhere strictly to FHIR version R4 
+ Your output is a parsable json string 
+ If the input contains information which cannot be represented as FHIR version R4 json objects, then you omit it from the output 
+ You do not generate any extraneous data that is not present in the input
+ Your output contains ONLY the json string and absolutely nothing else. The string should be immediately parsable by the JSON.parse() function
+
+    `
+    log("Generated hp_to_fhir_prompt " + hp_to_fhir_prompt);
+    debug.add("hp_to_fhir_prompt" , hp_to_fhir_prompt);    
+
+    // -- query the AI with the prompt
+    const response = await _client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+            { role: 'user', content: hp_to_fhir_prompt }
+        ]
+    });
+
+    debug.add("hp_to_fhir_response" , response)
+
+    let content = response.choices[0].message.content;
+    log("Received response content: " + content);
+    debug.add("fhir_content" , content) ;
+
+    let filtered_content = content.replace('```json', "").replace('```',"")
+    debug.add("filtered_fhir_content" , filtered_content) ;
+
+    let parsed = JSON.parse(filtered_content) 
+    debug.add("fhir_parsed" , parsed) ;     
+    
+    return parsed 
+}

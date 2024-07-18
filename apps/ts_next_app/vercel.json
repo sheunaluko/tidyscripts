@@ -3,5 +3,11 @@
     "env": {
       "NODE_VERSION": "21.6.0"
     }
+  },
+  "functions": {
+    "pages/api/**/*": {
+      "maxDuration": 300 // All functions can run for a maximum of 300 seconds
+    }
   }
+    
 }
