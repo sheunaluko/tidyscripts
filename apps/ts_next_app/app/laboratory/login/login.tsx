@@ -82,18 +82,20 @@ const Login: NextPage = () => {
 	let is_mobile  = tsw.util.is_mobile()
 	log(`Google sign in request; mobile=${is_mobile}`)
 
-	if (is_mobile) {
+	if (false) {
 	    
 	    signInWithRedirect(auth, provider).catch((error) => {
 		console.error("Error signing in with Google", error);
+		login_error(error.message)
 	    })
 	    
 	} else {
 
 	    signInWithPopup(auth, provider).catch((error) => {
 		console.error("Error signing in with Google", error);
+		login_error(error.message)
 	    })
-		
+	    
 	} 
 
     };

@@ -91,8 +91,8 @@ const store_user_data = async (auth: Auth, db: Firestore, path: string[], user_d
 
       const full_path = ['users', user_id, ...path];
       // @ts-expect-error
-    const collection_ref = collection(db, ...full_path);
-    await addDoc(collection_ref, user_data);
+      const collection_ref = collection(db, ...full_path);
+      await addDoc(collection_ref, user_data);
     console.log(`User document for ${user_id} at path ${full_path.join('/')} has been added successfully.`);
   } catch (error) {
     console.error('Error adding user document:', error);
@@ -146,10 +146,11 @@ const store_data = async (db: Firestore, path: string[], data: Record<string, an
   try {
       // Construct the collection reference using the path array
       log(`Request to store data at path: ${path}`)
-      
-    const collection_ref = collection(db, ...path);
 
-    await addDoc(collection_ref, data);
+      // @ts-expect-error      
+      const collection_ref = collection(db, ...path);
+
+      await addDoc(collection_ref, data);
     log(`Document at path ${path.join('/')} has been added successfully.`);
   } catch (error) {
     console.error('Error adding document:', error);
