@@ -4,9 +4,8 @@ import React, { useState } from 'react';
 import { NextPage } from 'next';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ChakraProvider, Box, Button, Input, Flex, Text } from '@chakra-ui/react';
-
 
 /* define the  Firebase config object  */ 
 const firebaseConfig = {
@@ -18,8 +17,6 @@ const firebaseConfig = {
   appId: "1:292052354057:web:77fa4743a205deb40764d8",
   measurementId: "G-4SJGBBQWW2"
 };
-
-
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -33,6 +30,12 @@ const Login: NextPage = () => {
   const handleEmailSignIn = () => {
     signInWithEmailAndPassword(auth, email, password).catch((error) => {
       console.error("Error signing in with email and password", error);
+    });
+  };
+
+  const handleEmailSignUp = () => {
+    createUserWithEmailAndPassword(auth, email, password).catch((error) => {
+      console.error("Error signing up with email and password", error);
     });
   };
 
@@ -67,10 +70,8 @@ const Login: NextPage = () => {
           </Box>
         ) : (
           <Flex direction="column" align="center" justify="center" minH="100%">
-
-	    <Button onClick={handleGoogleSignIn} mb={2}>Sign In with Google</Button>	    
+            <Button onClick={handleGoogleSignIn} mb={2}>Sign In with Google</Button>    
             <Button onClick={handleAnonymousSignIn} mb={2}>Sign In Anonymously</Button>
-
             <Input
               placeholder="Email"
               value={email}
@@ -85,7 +86,7 @@ const Login: NextPage = () => {
               mb={2}
             />
             <Button onClick={handleEmailSignIn} mb={2}>Sign In with Email</Button>
-           
+            <Button onClick={handleEmailSignUp} mb={2}>Sign Up with Email</Button>
           </Flex>
         )}
         {error && <Text color="red.500">{error.message}</Text>}

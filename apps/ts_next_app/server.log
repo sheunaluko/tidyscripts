@@ -1,5 +1,5 @@
 
-> ts_next_app@0.1.0 start
+> ts_next_app@0.1.1 start
 > next start
 
   ▲ Next.js 14.2.3
@@ -13,7 +13,12 @@ Error: Could not find a production build in the '.next' directory. Try building 
 npm error Lifecycle script `start` failed with error:
 npm error code 1
 npm error path /workspace/tidyscripts/apps/ts_next_app
-npm error workspace ts_next_app@0.1.0
+npm error workspace ts_next_app@0.1.1
 npm error location /workspace/tidyscripts/apps/ts_next_app
 npm error command failed
 npm error command sh -c next start
+npm notice
+npm notice New patch version of npm available! 10.8.1 -> 10.8.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v10.8.2
+npm notice To update run: npm install -g npm@10.8.2
+npm notice
