@@ -55,7 +55,7 @@ const login = (
 	    onClick={
     function(){
 	if (typeof window != "undefined" ) { 
-	    window.location.href="/apps/login"
+	    window.location.href="/laboratory/login"
 	}
 
     }}>

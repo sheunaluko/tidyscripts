@@ -1,38 +1,39 @@
 {
-  "name": "ts_next_app",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev -p 8000",
-    "build": "next build",
-    "build:dev": "NODE_ENV=development next build",      
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@chakra-ui/icons": "^2.1.1",
-    "@chakra-ui/react": "^2.8.2",
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@fontsource/roboto": "^5.0.13",
-    "@mui/icons-material": "^5.15.17",
-    "@mui/material": "^5.15.21",
-    "@supabase/ssr": "^0.3.0",
-    "@supabase/supabase-js": "^2.43.2",
-    "eslint": "^8.57.0",
-    "next": "^14.2.3",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-markdown": "^9.0.1",      
-    "react-firebase-hooks": "^5.1.1",
-    "tidyscripts_web": "*",
-    "webpack-cli": "^5.1.4"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint-config-next": "14.2.2",
-    "typescript": "^5"
-  }
+    "name": "ts_next_app",
+    "version": "0.1.1",
+    "private": true,
+    "scripts": {
+	"dev": "next dev -p 8000",
+	"prebuild" : "node scripts/generate_build_info.js" , 
+	"build": "next build",
+	"build:dev": "NODE_ENV=development next build",      
+	"start": "next start",
+	"lint": "next lint"
+    },
+    "dependencies": {
+	"@chakra-ui/icons": "^2.1.1",
+	"@chakra-ui/react": "^2.8.2",
+	"@emotion/react": "^11.11.4",
+	"@emotion/styled": "^11.11.5",
+	"@fontsource/roboto": "^5.0.13",
+	"@mui/icons-material": "^5.15.17",
+	"@mui/material": "^5.15.21",
+	"@supabase/ssr": "^0.3.0",
+	"@supabase/supabase-js": "^2.43.2",
+	"eslint": "^8.57.0",
+	"next": "^14.2.3",
+	"react": "^18",
+	"react-dom": "^18",
+	"react-markdown": "^9.0.1",      
+	"react-firebase-hooks": "^5.1.1",
+	"tidyscripts_web": "*",
+	"webpack-cli": "^5.1.4"
+    },
+    "devDependencies": {
+	"@types/node": "^20",
+	"@types/react": "^18",
+	"@types/react-dom": "^18",
+	"eslint-config-next": "14.2.2",
+	"typescript": "^5"
+    }
 }

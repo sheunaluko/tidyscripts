@@ -86,7 +86,7 @@ export default function Component(props : any) {
       <DrawerBody>
 
 	  <Card style={card_style}>
-	    <h1> Tell us how we can improve :)</h1>
+	    <h1> We value your feedback, <br/> so tell us how we can improve: </h1>
 	    <br/> 
 	    <textarea id="feedback_text"></textarea>
 	    <br/> 	    
@@ -97,7 +97,7 @@ export default function Component(props : any) {
 		give_feedback(feedback as any)
 		toast_toast({
 		    title : 'Success' ,
-		    description : 'Thank you for your invaluable feedback. LFG' ,
+		    description : 'Thank you for your invaluable feedback.' ,
 		    duration : 3000 , 
 		    status : 'success' ,
 		    isClosable : true, 
