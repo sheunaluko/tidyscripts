@@ -88,37 +88,38 @@ const Login: NextPage = () => {
   };
 
   return (
-    <ChakraProvider>
-      <Flex direction="column" align="center" justify="center" minH="100%">
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : user ? (
-          <Box>
-            <Text>Signed in as {user.email || "Anonymous"}</Text>
-            <Button onClick={handleSignOut} mt={4}>Sign Out</Button>
-          </Box>
-        ) : (
-          <Flex direction="column" align="center" justify="center" minH="100%">
-            <Button onClick={handleGoogleSignIn} mb={2}>Sign In with Google</Button>    
-            <Button onClick={handleAnonymousSignIn} mb={2}>Sign In Anonymously</Button>
-            <Input
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              mb={2}
-            />
-            <Input
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              mb={2}
-            />
-            <Button onClick={handleEmailSignIn} mb={2}>Sign In with Email</Button>
-            <Button onClick={handleEmailSignUp} mb={2}>Sign Up with Email</Button>
-          </Flex>
-        )}
-      </Flex>
-    </ChakraProvider>
+      <ChakraProvider>
+	  <Flex direction="column" align="center" justify="center" minH="100%">
+              {loading ? (
+		  <Text>Loading...</Text>
+              ) : user ? (
+		  <Box>
+		      <Text>Signed in as {user.email || "Anonymous"}</Text>
+		      <Button onClick={handleSignOut} mt={4}>Sign Out</Button>
+		  </Box>
+              ) : (
+		  <Flex direction="column" align="left" justify="center" minH="100%">
+		      <Button onClick={handleGoogleSignIn} mb={2}>Sign In with Google</Button>    
+		      <Button onClick={handleAnonymousSignIn} mb={2}>Sign In Anonymously</Button>
+		      <Button onClick={handleEmailSignIn} mb={2}>Sign In with Email</Button>
+		      <Button onClick={handleEmailSignUp} mb={2}>Sign Up with Email</Button>
+		      
+		      <Input
+			  placeholder="Email"
+			  value={email}
+			  onChange={(e) => setEmail(e.target.value)}
+			  mb={2}
+		      />
+		      <Input
+			  placeholder="Password"
+			  value={password}
+			  onChange={(e) => setPassword(e.target.value)}
+			  mb={2}
+		      />
+		  </Flex>
+              )}
+	  </Flex>
+      </ChakraProvider>
   );
 };
 
