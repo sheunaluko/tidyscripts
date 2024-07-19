@@ -6,6 +6,27 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ChakraProvider, Box, Button, Input, Flex, Text } from '@chakra-ui/react';
+import {toast_toast} from "../../../components/Toast"
+
+function login_success() {
+    toast_toast({
+        title : "Successfully logged in.", 
+        description : "",
+        duration : 2000,
+        status : "success" , 
+        isClosable : true , 
+    })
+} 
+
+function login_error(error : string) {
+    toast_toast({
+        title : "Failed to log in.", 
+        description : error,
+        duration : 2000,
+        status : "error" , 
+        isClosable : true , 
+    })
+} 
 
 /* define the  Firebase config object  */ 
 const firebaseConfig = {
@@ -28,15 +49,23 @@ const Login: NextPage = () => {
   const [password, setPassword] = useState('');
 
   const handleEmailSignIn = () => {
-    signInWithEmailAndPassword(auth, email, password).catch((error) => {
-      console.error("Error signing in with email and password", error);
-    });
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        login_success();
+      })
+      .catch((error) => {
+        login_error(error.message);
+      });
   };
 
   const handleEmailSignUp = () => {
-    createUserWithEmailAndPassword(auth, email, password).catch((error) => {
-      console.error("Error signing up with email and password", error);
-    });
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        login_success();
+      })
+      .catch((error) => {
+        login_error(error.message);
+      });
   };
 
   const handleAnonymousSignIn = () => {
@@ -80,7 +109,6 @@ const Login: NextPage = () => {
             />
             <Input
               placeholder="Password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               mb={2}
@@ -89,7 +117,6 @@ const Login: NextPage = () => {
             <Button onClick={handleEmailSignUp} mb={2}>Sign Up with Email</Button>
           </Flex>
         )}
-        {error && <Text color="red.500">{error.message}</Text>}
       </Flex>
     </ChakraProvider>
   );
