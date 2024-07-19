@@ -4,9 +4,12 @@ import React, { useState } from 'react';
 import { NextPage } from 'next';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ChakraProvider, Box, Button, Input, Flex, Text } from '@chakra-ui/react';
 import {toast_toast} from "../../../components/Toast"
+
+import * as tsw from "tidyscripts_web" 
+const log = tsw.common.logger.get_logger({id:"login"})
 
 function login_success() {
     toast_toast({
@@ -74,12 +77,26 @@ const Login: NextPage = () => {
     });
   };
 
-  const handleGoogleSignIn = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch((error) => {
-      console.error("Error signing in with Google", error);
-    });
-  };
+    const handleGoogleSignIn = () => {
+	const provider = new GoogleAuthProvider();
+	let is_mobile  = tsw.util.is_mobile()
+	log(`Google sign in request; mobile=${is_mobile}`)
+
+	if (is_mobile) {
+	    
+	    signInWithRedirect(auth, provider).catch((error) => {
+		console.error("Error signing in with Google", error);
+	    })
+	    
+	} else {
+
+	    signInWithPopup(auth, provider).catch((error) => {
+		console.error("Error signing in with Google", error);
+	    })
+		
+	} 
+
+    };
 
   const handleSignOut = () => {
     signOut(auth).catch((error) => {
