@@ -1,132 +1,97 @@
-'use client' ;
+'use client';
 
-import type { NextPage } from 'next'
-import React,{useEffect} from 'react' ;
+import React, { useState } from 'react';
+import { NextPage } from 'next';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import * as firebase_instance from "../../../src/firebase" ; 
-import * as tsw from "tidyscripts_web" 
-
-import { ChakraProvider } from '@chakra-ui/react'
-
-const {
-    GoogleAuthProvider ,
-    signInWithRedirect, 
-    log_out 
-}  = tsw.apis.firebase 
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { ChakraProvider, Box, Button, Input, Flex, Text } from '@chakra-ui/react';
 
 
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  Flex , 
-  Card,
-  Container,
-  Spinner, 
-} from "@chakra-ui/react";
-
-declare var window : any ;
-
-const log = tsw.common.logger.get_logger({id:'login'})
+/* define the  Firebase config object  */ 
+const firebaseConfig = {
+  apiKey: "AIzaSyByjw-kqCpeYXQpApAeUU3GAnh1WfSQd7I",
+  authDomain: "tidyscripts.firebaseapp.com",
+  projectId: "tidyscripts",
+  storageBucket: "tidyscripts.appspot.com",
+  messagingSenderId: "292052354057",
+  appId: "1:292052354057:web:77fa4743a205deb40764d8",
+  measurementId: "G-4SJGBBQWW2"
+};
 
 
-/* configure providers */
-const GoogleProvider = new GoogleAuthProvider() ;
-function google_sign_in() {signInWithRedirect(firebase_instance.get_auth(), GoogleProvider) }
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-/* component */ 
-const Component: NextPage = (props : any) => {
+const Login: NextPage = () => {
+  const [user, loading, error] = useAuthState(auth);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const [user, loading, error] = useAuthState(firebase_instance.auth, {});
+  const handleEmailSignIn = () => {
+    signInWithEmailAndPassword(auth, email, password).catch((error) => {
+      console.error("Error signing in with email and password", error);
+    });
+  };
 
-  useEffect( ()=>{
+  const handleAnonymousSignIn = () => {
+    signInAnonymously(auth).catch((error) => {
+      console.error("Error signing in anonymously", error);
+    });
+  };
 
-      
-    async function main() {
-        if (typeof window != "undefined" ) { 
-	    window.firebase = tsw.apis.firebase;
-	    window.firebase_instance = firebase_instance; 	    
-          }
-    } 
+  const handleGoogleSignIn = () => {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider).catch((error) => {
+      console.error("Error signing in with Google", error);
+    });
+  };
 
-    main() ;
+  const handleSignOut = () => {
+    signOut(auth).catch((error) => {
+      console.error("Error signing out", error);
+    });
+  };
 
-    
-  },[])
+  return (
+    <ChakraProvider>
+      <Flex direction="column" align="center" justify="center" minH="100%">
+        {loading ? (
+          <Text>Loading...</Text>
+        ) : user ? (
+          <Box>
+            <Text>Signed in as {user.email || "Anonymous"}</Text>
+            <Button onClick={handleSignOut} mt={4}>Sign Out</Button>
+          </Box>
+        ) : (
+          <Flex direction="column" align="center" justify="center" minH="100%">
 
-  let not_working = function() {
-    window.alert("Sorry! This type of login is not working yet, please login with Google") ; 
-  }
-  
-  let LogInUI = function() {
-    let m = '10px'
-    return (
-      <Flex direction="column" justifyContent="space-between">
+	    <Button onClick={handleGoogleSignIn} mb={2}>Sign In with Google</Button>	    
+            <Button onClick={handleAnonymousSignIn} mb={2}>Sign In Anonymously</Button>
 
-
-	<Button marginTop={m} marginBottom={m} onClick={google_sign_in}>
-	  Login with Google
-	</Button>
-
-
-	<Button  onClick={function(){window.location ="/" }}>
-	  Home
-	</Button>
-	
+            <Input
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              mb={2}
+            />
+            <Input
+              placeholder="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              mb={2}
+            />
+            <Button onClick={handleEmailSignIn} mb={2}>Sign In with Email</Button>
+           
+          </Flex>
+        )}
+        {error && <Text color="red.500">{error.message}</Text>}
       </Flex>
-    )
-  }
+    </ChakraProvider>
+  );
+};
 
-
-  let LogOutUI = function() {
-    return (
-      <Flex direction="column">
-
-	<Button onClick={function(){window.location="/" }}>
-	  Home
-	</Button>
-	
-	<Button onClick={()=>log_out(firebase_instance.auth)}>
-	  Log out
-	</Button>
-	
-      </Flex>
-    ) 
-  } 
-
-
-  var spinner = ( <Spinner style={{}}
-			   thickness='1px'
-			   speed='0.65s'
-			   emptyColor='gray.200'
-			   color='blue.500'
-			   size='xl' 	/> )
-
-
-  let LoadingOrLogin = function(){
-    return (
-      <React.Fragment>
-      { loading ? spinner : <LogInUI/>}
-      </React.Fragment> 
-    ) 
-  } 
-  
-    return (
-	<Box>
-
-	    <ChakraProvider>   { user  ? <LogOutUI/> : <LoadingOrLogin />  }  </ChakraProvider>
-	</Box>
-      
-  )
-}
-
-export default Component 
+export default Login;
