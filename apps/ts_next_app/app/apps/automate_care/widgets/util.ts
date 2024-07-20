@@ -59,6 +59,7 @@ export var wrapped_client = {
 }
 
 export async function wrapped_chat_completion(args : any) {
+
     /*
        Take the args and pass it to the vercel function instead 
      */
