@@ -2,18 +2,18 @@ TIDYSCRIPTS NOTES
 -----------------
 
 
-Currently working on: (in branch query_caching) 
-
-=> Query caching. Have been working in the firebase.ts file and implement helper functions for storing and retrieiving user data
-=> Working: user_doc_store, store_in_user_collection
-=> NOT WORKING: get_user_collection (there is a problem with resolving the collection reference to an array of documents
-   - ?Fix - https://github.com/angular/angularfire/issues/3442 suggests that it may be fixed by downgrading the firebase version, which I could try
-
-=> once storage and retrieval of authenticated user data is enabled, scoped by APP ID and User ID, then I can start to build the caching system 
-
-
-
-
+Currently working on: (in branch query_caching)
+-> fixed/implemented the utility firebase.util functions
+-> can now use these to implement the query caching
+--> rememember; each CACHED call will have an APP_ID and a ORIGIN_ID
+       for example the ORIGIN_ID may be a specific UI component or a background service
+       a UI COmponent can search for ORIGIN_ID which match its own to see which queries it has asked
+       I will need to think about how to support :
+          - UI can automatically know how to "autofill" possible user requests (prior queries can be clicked)
+	  - IF the SAME query but from a different ORIGIN_ID comes int -- then a cached result should still
+	      be able to be retrieved 
+	  - CACHED entities can be deleted
+	  - PAY WALL can still be supported 
 
 
 Other to work on =>
@@ -47,4 +47,5 @@ Other to work on =>
 
 DONE:
 
-[x] fix mobile version of app and mobile login etc (will have to debug on mobile device)  
+[x] fix mobile version of app and mobile login etc (will have to debug on mobile device)
+[x] -> fixed/implemented the utility firebase.util functions
