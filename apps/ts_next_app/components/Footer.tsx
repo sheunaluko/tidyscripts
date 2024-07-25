@@ -29,7 +29,11 @@ import {theme,
 	grey} from "../app/theme" 
 
 
-import build_info from "../src/build_info.json" 
+import build_info from "../src/build_info.json"
+
+
+// @ts-ignore
+const build_time = build_info.buildTime.split("T")[0]
 
 declare var window : any ; 
 
@@ -103,7 +107,7 @@ function Footer() {
 	</Box>
 
 	    <CBox style={{marginLeft : "8px", }}> 
-		  <Typography variant="caption" fontSize={8}>Build v{build_info.version}</Typography> 
+		  <Typography variant="caption" fontSize={8}>Build v{build_info.version} on {build_time}</Typography> 
 	    </CBox>
 	
 
