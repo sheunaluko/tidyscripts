@@ -20,6 +20,7 @@
         "@mui/material": "^5.15.21",
         "@supabase/ssr": "^0.3.0",
         "@supabase/supabase-js": "^2.43.2",
+        "crypto": "^1.0.1",
         "eslint": "^8.57.0",
         "firebase": "^10.12.4",
         "next": "^14.2.3",

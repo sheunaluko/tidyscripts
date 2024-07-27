@@ -5,9 +5,10 @@ import {getAuth } from "firebase/auth"
 
 /* create logger */ 
 const log = tsw.common.logger.get_logger({id : 'firebase'})  ; 
+const debug  = tsw.common.util.debug
 
-
-import * as util from "./firebase_utils"
+import * as fu from "./firebase_utils"
+import * as cu   from "./cache_utils"
 
 export {util} 
 
@@ -15,42 +16,161 @@ export {util}
 /*
    The firebase interface for the APP 
 
-
-   The util object exported from ./firebase_utils provides the core functionality, 
+   The fu (firebase_util) object exported from ./firebase_utils provides the core functionality, 
    including the following functions (see the Arugments types below) 
 
-   //un-authenticated IO 
-   util.store_doc(FirebaseDataStoreOps)
-   util.get_doc(FirebaseDataGetOps)
-   util.store_collection(FirebaseDataStoreOps)
-   util.get_collection(FirebaseDataStoreOps)
-
+   // Data types 
+   interface FirebaseDataStoreOps { app_id, path, data } 
+   interface FirebaseDataGetOps   { app_id, path } 
 
    //authenticated IO 
-   util.store_user_doc(FirebaseDataStoreOps)
-   util.get_user_doc(FirebaseDataGetOps)
-   util.store_user_collection(FirebaseDataStoreOps)
-   util.get_user_collection(FirebaseDataStoreOps)
+   fu.store_user_doc(FirebaseDataStoreOps)           [path must be odd] 
+   fu.get_user_doc(FirebaseDataGetOps)               [path must be odd] 
+   fu.store_user_collection(FirebaseDataStoreOps)    [path must be even] 
+   fu.get_user_collection(FirebaseDataStoreOps)      [path must be even] 
 
+   //un-authenticated IO 
+   fu.store_doc(FirebaseDataStoreOps)
+   fu.get_doc(FirebaseDataGetOps)
+   fu.store_collection(FirebaseDataStoreOps)
+   fu.get_collection(FirebaseDataStoreOps)
 
-   ARUGMENT TYPES/INTERFACE => 
-
-type UserData  = {[k:String] : any} 
-
-interface FirebaseDataStoreOps {
-    app_id : string ,
-    path : string [] ,
-    data : UserData 
-} 
-
-interface FirebaseDataGetOps {
-    app_id : string ,
-    path : string [] ,
-} 
 
  */
 
 
+
+
+/*
+ * The Cache Client provides the client.get and client.set functions with get and set cache 
+ * respectively. 
+ *
+*/ 
+var cache_client : any = {
+
+    get  : function(args :any) {
+	log(`Cache get request`)		
+	let {cache_key, app_id} = args;
+
+	let path = [ "cache" , "docs" , cache_key ] 
+	let get_ops = { app_id,  path }
+
+	try { 
+	    let result = await fu.get_user_doc(get_ops)
+	    log(`Successful cache get`)
+	    debug.add("cached_result" ,result)
+	    return result 
+	} catch (error : any)  {
+	    log(`Cache get error: ${error}`)
+	    return null 
+	} 
+	
+    } ,  
+
+    set : function(data : any) {
+	log(`Cache store request`)	
+	let  {	cache_key, app_id, origin_id,  function_id, args, args_hash, result } = args ; 
+	let path = [ "cache" , "docs" , cache_key ] 
+	let store_ops = {
+	    app_id,
+	    path,
+	    data  
+	}
+	try {
+	    // - store_user_doc( {app_id, path, data } ) [ path odd]	    
+	    await fu.store_user_doc(store_ops) 
+	    log(`Successful cached store`)
+	} catch (error : any) {
+	    log(`Cache store error: ${error}`)
+	} 
+	
+    }
+} 
+
+
+interface CachedWrappedChatArgs {
+    app_id : string,
+    origin_id : string,
+    args : any 
+}
+
+
+/*
+ * Cached wrapped client call
+ *
+ */
+export async function cached_wrapped_chat_call(ops : CachedWrappedChatArgs) {
+    const { app_id, origin_id , args } = ops ;
+
+    // 1st compute hash of the args
+    let args_hash = cu.generate_object_hash(args) ;
+
+    // define function id 
+    let function_id = "open_ai_chat_completion" 
+
+    // then compute the cache_key
+    let cache_key = cu.generate_object_hash({
+	app_id, origin_id, function_id , args_hash  
+    })
+
+    // now try to retrieve the data
+    let data = cache_client.get({cache_key}) ;
+
+    if (data ) {
+	// got a cached result
+	log(`Cache HIT for key: ${cache_key}`)
+	return data.result 
+    }
+
+    // if we are there then it was a cache_ miss      
+    log(`Cache MISS for key: ${cache_key}`)
+
+    // get the result
+    let result = await chat_completion(args) ;
+
+    if (! result ) {
+	log(`Result was null or missing; will return and will not cache`)
+	return result 
+    } 
+
+    log(`Obtained result; will store to cache`)    
+    await cache_client.set({
+	cache_key, app_id, origin_id,  function_id, args, args_hash, result 
+    })
+
+    return result 
+} 
+
+
+
+
+export async function chat_completion(args : any) {
+
+    /*
+       Take the args and pass it to the vercel function instead 
+     */
+
+    let url = "/api/open_ai_chat_2"
+    let fetch_response = await fetch(url, {
+	method : 'POST' ,
+	headers: {   'Content-Type': 'application/json'   },
+	body : JSON.stringify(args)
+    });
+    debug.add("fetch_response" , fetch_response) ;
+    let response = await fetch_response.json() ;
+    debug.add("response" , response) ;
+
+    return response 
+} 
+
+
+
+
+
+/*
+ * Function that sends feedback from the user to firestore backend 
+ *
+ */ 
 export async function give_feedback(msg : string) {
 
     log(`Request to give user feedback: ${msg}`)

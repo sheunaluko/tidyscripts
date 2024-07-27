@@ -13,7 +13,10 @@ Currently working on: (in branch query_caching)
 	  - IF the SAME query but from a different ORIGIN_ID comes int -- then a cached result should still
 	      be able to be retrieved 
 	  - CACHED entities can be deleted
-	  - PAY WALL can still be supported 
+	  - PAY WALL can still be supported
+
+
+status => implemented cached_wrapped_chat_call in firebase.ts -> can use this in Autocare app now to see if it works :) 
 
 
 Other to work on =>

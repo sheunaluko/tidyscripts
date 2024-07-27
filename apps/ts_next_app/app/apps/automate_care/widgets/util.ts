@@ -31,7 +31,7 @@ export async function generate_hp(clinical_information : string) {
 }
 
 
-export async function get_individaul_dashboard_info(hp : string,  dashboard_name : string) {
+export async function get_individual_dashboard_info(hp : string,  dashboard_name : string) {
     // -- get a ref to the open_ai_client 
     let client =  wrapped_client // tsw.apis.openai.get_openai();
 
