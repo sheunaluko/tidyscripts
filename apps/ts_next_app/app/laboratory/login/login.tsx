@@ -31,22 +31,10 @@ function login_error(error : string) {
     })
 } 
 
-/* define the  Firebase config object  */ 
-const firebaseConfig = {
-  apiKey: "AIzaSyByjw-kqCpeYXQpApAeUU3GAnh1WfSQd7I",
-  authDomain: "tidyscripts.firebaseapp.com",
-  projectId: "tidyscripts",
-  storageBucket: "tidyscripts.appspot.com",
-  messagingSenderId: "292052354057",
-  appId: "1:292052354057:web:77fa4743a205deb40764d8",
-  measurementId: "G-4SJGBBQWW2"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
 const Login: NextPage = () => {
+
+    const auth = getAuth() ;
+    
   const [user, loading, error] = useAuthState(auth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -1,23 +1,48 @@
 TIDYSCRIPTS NOTES
 -----------------
 
-To work on =>
-[ ] 
+
+Currently working on: (in branch query_caching)
+-> [x] fixed/implemented the utility firebase.util functions
+-> [x] can now use these to implement the query caching
+Caching architecture
+--> rememember; each CACHED call will have an APP_ID and a ORIGIN_ID
+       for example the ORIGIN_ID may be a specific UI component or a background service
+[x] implemented cached_wrapped_chat_call in firebase.ts
+[x] can use this in Autocare app now to see if it works :)
+
+
+status => Finished the above
+
+** NOTE ** Within Autocare.tsx there are now hp_client and analyze_client which are linked to
+autocare_hp and autocare_analyze ORIGIN_ID's respectively
+
+Thus to implement the checkmark below I should implement:
+     - search a collection and filter by KEY and only return certain fields
+     - then create function for searching PARTICULAR collection and filter by ORIGIN_ID
+         and only return the ORIGIN_ID , ARGS , (necessary to populate below) 
+
+[ ] a UI Component (for example  can search for ORIGIN_ID which match its own to see which queries it has asked
+          - UI can automatically know how to "autofill" possible user requests (prior queries can be clicked)
+	  - CACHED entities can be deleted
+	  - PAY WALL can still be supported
+
+[ ] in widgets/util implement export async function get_individual_dashboard_info(hp : string,  dashboard_name : string) { }
+[ ] in widgets/util transform_hp_to_fhir()    [ use this to build the data ui :)  ] 
+
+
+
+
+
+Other to work on =>
+
 [ ] test using llama3 model with open devin to save costs
 [ ] extract all dreams and store
-[ ] fix mobile version of app and mobile login etc (will have to debug on mobile device)  
-- add theming to the menu bar  (decide if you want menu bar on the side or at the top of the app?)
-- allow user to configure settings 
-- allow signed in user to sync notes accross browser instances
-- allow user to save text logs
 
 
-[ ] create an ADMIN DASHBOARD 
-[ ] AI coding utilities -- see one note docs 
+[ ]  allow user to configure settings 
 
-
-
-0. Implementing presence
+[ ] Implementing presence
 - Could do this using a document => stats/active_clients in  Firestore
   - and the vercel api/active_client endpoint 
   - need a way to get a unique identifier from the vercel client request
@@ -35,3 +60,10 @@ To work on =>
 2. tsconfig has "skipLibCheck" to resolve langchain type error
 3. consider getting rid of RAMDA ... it appears that it needs 0.28.0 and @types 0.28.25  in order to be compatible with typescript 5.3.3 !!!
    -> I ended up changing the typescript version multiple times so this may not be relevant
+
+
+
+DONE:
+
+[x] fix mobile version of app and mobile login etc (will have to debug on mobile device)
+[x] -> fixed/implemented the utility firebase.util functions

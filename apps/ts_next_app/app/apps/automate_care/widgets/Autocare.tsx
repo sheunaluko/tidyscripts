@@ -31,9 +31,28 @@ import {
 import { theme } from "../../../theme";
 import { alpha } from '@mui/system';
 import * as tsw from "tidyscripts_web";
+import * as fb  from "../../../../src/firebase";
 
 const log = tsw.common.logger.get_logger({ id: "autocare" });
 const debug = tsw.common.util.debug;
+
+
+/*
+ * Create the wrapped AI api clients 
+ */ 
+
+const hp_client = fb.create_wrapped_client({
+    app_id : "autocare" ,
+    origin_id : "autocare_hp"  ,
+    log 
+})
+
+const analyze_client = fb.create_wrapped_client({
+    app_id : "autocare" ,
+    origin_id : "autocare_analyze"  ,
+    log 
+})
+
 
 function DashboardCard({ info }: any) {
     const getCardColor = (action: string) => {
@@ -134,14 +153,16 @@ const Autocare = () => {
 
     const handleGenerate = async () => {
         setLoading(true);
-        const generatedNote = await generate_hp(note);
+	let clinical_information = note 
+        const generatedNote = await generate_hp({clinical_information, client : hp_client}) 
         setNote(generatedNote);
         setLoading(false);
     };
 
     const handleAnalyze = async () => {
         setLoadingAnalyze(true);
-        let info = await get_all_dashboard_info(note);
+	let hp =  note ;
+        let info = await get_all_dashboard_info({hp , client : analyze_client})
         debug.add('dashboardInfo', info);
         var jsonInfo = (info || [{ error: "There was an error parsing the JSON" }]);
         setDashboardInfo(jsonInfo);

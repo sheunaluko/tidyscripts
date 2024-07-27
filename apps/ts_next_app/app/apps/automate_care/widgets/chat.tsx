@@ -5,7 +5,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../../hooks/useInit";
-import {wrapped_client} from "./util"
 
 var open_ai_client : any = null ; 
 
@@ -17,11 +16,11 @@ const Chat: React.FC = () => {
         /* Assign tidyscripts library to window */
         if (typeof window !== 'undefined') {
 
-	    open_ai_client = wrapped_client // tsw.apis.openai.get_openai()
-	    
+
             Object.assign(window, {
-                open_ai_client  , 
+
             });
+	    
             log("Chat init");
         }
     };

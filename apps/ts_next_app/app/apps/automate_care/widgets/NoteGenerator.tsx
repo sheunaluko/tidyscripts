@@ -4,11 +4,17 @@ import ReactMarkdown from 'react-markdown';
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../../hooks/useInit";
 import {generate_hp} from "./util" 
-import {wrapped_client} from "./util"
+import * as fb from "../../../../src/firebase" 
 
 var open_ai_client: any = null;
 
 const log = tsw.common.logger.get_logger({ id: "note_generator" });
+
+const client = fb.create_wrapped_client({
+    app_id : "autocare" ,
+    origin_id : "hp_generator"  ,
+    log 
+})
 
 const NoteGenerator = () => {
 
@@ -20,11 +26,11 @@ const NoteGenerator = () => {
         /* Assign tidyscripts library to window */
         if (typeof window !== 'undefined') {
 
-            open_ai_client = wrapped_client // tsw.apis.openai.get_openai();
 
             Object.assign(window, {
-                open_ai_client,
+
             });
+	    
             log("NoteGenerator initialized");
         }
     };
@@ -39,7 +45,11 @@ const NoteGenerator = () => {
 
     const handleSaveNote = async () => {
         setLoading(true);
-	let content = await generate_hp(note)
+	let args = {
+	    clinical_information : note,
+	    client 
+	} 
+	let content = await generate_hp(args)
         setGeneratedNote(content);
         setLoading(false);
     };
