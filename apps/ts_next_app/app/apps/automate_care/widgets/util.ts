@@ -9,13 +9,17 @@ const debug  = tsw.common.util.debug
 const fp     = tsw.common.fp
 let { get_json_from_url } = tsw.common ;
 
+
+import * as fb from "../../../../src/firebase" 
+
+
 /* Util function definitions */ 
 
-export async function generate_hp(clinical_information : string) {
-    
+export async function generate_hp(ops : any ) {
+
+    let {clinical_information , client } = ops ; 
+
     const prompt = generate_prompt(clinical_information);
-    //get a ref to the open_ai_client 
-    let client =  wrapped_client // tsw.apis.openai.get_openai();
     const response = await client.chat.completions.create({
 	model: "gpt-4o",
 	messages: [
@@ -46,17 +50,6 @@ export async function get_individual_dashboard_info(hp : string,  dashboard_name
 }
 
 
-/*
-   Going to create a wrapper over the openai client 
- */
-
-export var wrapped_client = {
-    chat : {
-	completions : {
-	    create : wrapped_chat_completion 
-	}
-    } 
-}
 
 export async function wrapped_chat_completion(args : any) {
 
@@ -75,7 +68,12 @@ export async function wrapped_chat_completion(args : any) {
     debug.add("response" , response) ;
 
     return response 
-} 
+}
+
+
+
+
+
 
 export async function get_all_dashboard_info(hp: string) {
     // -- get a ref to the open_ai_client 

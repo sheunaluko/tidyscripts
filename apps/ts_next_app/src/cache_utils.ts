@@ -8,19 +8,19 @@ export function convert_and_sort_dictionary(args: object): [string, any][] {
 }
 
 // Function to stringify sorted key-value pairs
-function stringify_key_value_pairs(pairs: [string, any][]): string {
+export function stringify_key_value_pairs(pairs: [string, any][]): string {
   return JSON.stringify(pairs);
 }
 
 // Function to generate hash from stringified key-value pairs
-function generate_hash_from_string(data: string): string {
+export function generate_hash_from_string(data: string): string {
   const hash = createHash('md5');
   hash.update(data);
   return hash.digest('hex');
 }
 
 // Complete function to handle the entire process
-function generate_args_hash(args: object): string {
+export function generate_object_hash(args: object): string {
   const sorted_pairs = convert_and_sort_dictionary(args);
   const stringified_pairs = stringify_key_value_pairs(sorted_pairs);
   return generate_hash_from_string(stringified_pairs);

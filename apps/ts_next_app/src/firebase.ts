@@ -10,7 +10,7 @@ const debug  = tsw.common.util.debug
 import * as fu from "./firebase_utils"
 import * as cu   from "./cache_utils"
 
-export {util} 
+export {fu } 
 
 
 /*
@@ -48,7 +48,7 @@ export {util}
 */ 
 var cache_client : any = {
 
-    get  : function(args :any) {
+    get  : async function(args :any) {
 	log(`Cache get request`)		
 	let {cache_key, app_id} = args;
 
@@ -67,7 +67,7 @@ var cache_client : any = {
 	
     } ,  
 
-    set : function(data : any) {
+    set : async function(data : any) {
 	log(`Cache store request`)	
 	let  {	cache_key, app_id, origin_id,  function_id, args, args_hash, result } = args ; 
 	let path = [ "cache" , "docs" , cache_key ] 
@@ -96,25 +96,81 @@ interface CachedWrappedChatArgs {
 
 
 /*
+   Going to create a wrapper over the openai client 
+ */
+
+export function created_wrapped_client(ops :any) {
+
+    let { app_id, origin_id , log } = ops 
+
+    let wrapped_client = {
+	chat : {
+	    completions : {
+		create : fb.create_cached_wrapped_chat_completion(ops )
+	    }
+	}
+    }
+
+    return wrapped_client 
+}
+
+
+/*
+ * Provide app_id and origin_id and a log function and get a function that accepts llm chat args 
+ * and returns the llm result; handling caching under the hood 
+ */ 
+export function create_cached_wrapped_chat_completion(ops : any) {
+    let { app_id, origin_id, log  } = ops;
+    
+    log(`Creating cached wrapped chat completion function for app=${app_id}, origin=${origin_id}`)
+
+    return async function(llm_args : object) {
+	// define the args 
+	let cwcc_args = {
+	    app_id , 
+	    origin_id , 
+	    args  : llm_args
+	}
+	// get the result
+	log(`Calling cached_wrapped_chat_completion with args: ${JSON.stringify(cwcc_args)}`)
+	let result = await cached_wrapped_chat_completion(cwcc_args)
+	debug.add('cached_chat_result' , result) 
+	return result 
+    
+    }
+    
+    
+} 
+
+
+
+/*
  * Cached wrapped client call
  *
  */
-export async function cached_wrapped_chat_call(ops : CachedWrappedChatArgs) {
+export async function cached_wrapped_chat_completion(ops : CachedWrappedChatArgs) {
     const { app_id, origin_id , args } = ops ;
 
     // 1st compute hash of the args
+    log(`Generating arg hash`)
+    debugger ; 
     let args_hash = cu.generate_object_hash(args) ;
+    debug.add('args_hash' , args_hash) 
 
     // define function id 
     let function_id = "open_ai_chat_completion" 
 
     // then compute the cache_key
+    log(`Generating cache_key`)
     let cache_key = cu.generate_object_hash({
 	app_id, origin_id, function_id , args_hash  
     })
+    debug.add("cache_key", cache_key) 
 
     // now try to retrieve the data
+    log(`Requesting cache_key`)
     let data = cache_client.get({cache_key}) ;
+    debug.add('cache_data' , data)
 
     if (data ) {
 	// got a cached result

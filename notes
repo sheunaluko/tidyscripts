@@ -16,7 +16,8 @@ Currently working on: (in branch query_caching)
 	  - PAY WALL can still be supported
 
 
-status => implemented cached_wrapped_chat_call in firebase.ts -> can use this in Autocare app now to see if it works :) 
+status => implemented cached_wrapped_chat_call in firebase.ts -> can use this in Autocare app now to see if it works :)
+
 
 
 Other to work on =>
