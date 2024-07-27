@@ -70,8 +70,8 @@ const CdsApp = () => {
 	}
     };
 
-    //const default_widget = 'Autocare';
-    const default_widget = 'NoteGenerator';    
+    const default_widget = 'Autocare';
+    //const default_widget = 'NoteGenerator';    
 
     let clean_up = ()=> { log("cds unmounted"); };
     useInit({ init , clean_up });  //my wrapper around useEffect 

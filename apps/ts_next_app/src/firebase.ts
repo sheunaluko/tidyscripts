@@ -48,8 +48,11 @@ export {fu }
 */ 
 var cache_client : any = {
 
+    /*
+     * Defines the getter function for the cache client 
+     */
     get  : async function(args :any) {
-	log(`Cache get request`)		
+	log(`Cache get request: ${JSON.stringify(args)}`)		
 	let {cache_key, app_id} = args;
 
 	let path = [ "cache" , "docs" , cache_key ] 
@@ -57,8 +60,11 @@ var cache_client : any = {
 
 	try { 
 	    let result = await fu.get_user_doc(get_ops)
-	    log(`Successful cache get`)
+	    log(`Cache get completed`)
 	    debug.add("cached_result" ,result)
+	    if (result == null) {
+		log(`FYI result is not cached/ null `) 
+	    } 
 	    return result 
 	} catch (error : any)  {
 	    log(`Cache get error: ${error}`)
@@ -67,9 +73,12 @@ var cache_client : any = {
 	
     } ,  
 
+    /*
+     * Defines the setter function for the cache client 
+     */
     set : async function(data : any) {
 	log(`Cache store request`)	
-	let  {	cache_key, app_id, origin_id,  function_id, args, args_hash, result } = args ; 
+	let  {	cache_key, app_id, origin_id,  function_id, args, args_hash, result } = data ; 
 	let path = [ "cache" , "docs" , cache_key ] 
 	let store_ops = {
 	    app_id,
@@ -79,7 +88,7 @@ var cache_client : any = {
 	try {
 	    // - store_user_doc( {app_id, path, data } ) [ path odd]	    
 	    await fu.store_user_doc(store_ops) 
-	    log(`Successful cached store`)
+	    log(`Successful stored in cache with key=${cache_key}`)
 	} catch (error : any) {
 	    log(`Cache store error: ${error}`)
 	} 
@@ -99,14 +108,14 @@ interface CachedWrappedChatArgs {
    Going to create a wrapper over the openai client 
  */
 
-export function created_wrapped_client(ops :any) {
+export function create_wrapped_client(ops :any) {
 
     let { app_id, origin_id , log } = ops 
 
     let wrapped_client = {
 	chat : {
 	    completions : {
-		create : fb.create_cached_wrapped_chat_completion(ops )
+		create : create_cached_wrapped_chat_completion(ops )
 	    }
 	}
     }
@@ -147,13 +156,17 @@ export function create_cached_wrapped_chat_completion(ops : any) {
 /*
  * Cached wrapped client call
  *
+ * 
+ * The args object is first hashed 
+ * Then the cache_key is built by hashing {app_id, origin_id, funcion_id, args_hash} 
+ * Then request/caching proceeds as expected 
+ * 
  */
 export async function cached_wrapped_chat_completion(ops : CachedWrappedChatArgs) {
     const { app_id, origin_id , args } = ops ;
 
     // 1st compute hash of the args
     log(`Generating arg hash`)
-    debugger ; 
     let args_hash = cu.generate_object_hash(args) ;
     debug.add('args_hash' , args_hash) 
 
@@ -169,7 +182,7 @@ export async function cached_wrapped_chat_completion(ops : CachedWrappedChatArgs
 
     // now try to retrieve the data
     log(`Requesting cache_key`)
-    let data = cache_client.get({cache_key}) ;
+    let data = await cache_client.get({cache_key, app_id}) ;
     debug.add('cache_data' , data)
 
     if (data ) {
@@ -180,6 +193,7 @@ export async function cached_wrapped_chat_completion(ops : CachedWrappedChatArgs
 
     // if we are there then it was a cache_ miss      
     log(`Cache MISS for key: ${cache_key}`)
+    log(`Will proceed with call...`)    
 
     // get the result
     let result = await chat_completion(args) ;
@@ -257,6 +271,6 @@ export async function give_feedback(msg : string) {
 	path : ["collections" , "feedback" ] ,
 	data  
     } 
-    await util.store_collection(args)
+    await fu.store_collection(args)
 } 
 

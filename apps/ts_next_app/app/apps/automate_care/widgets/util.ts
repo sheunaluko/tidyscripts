@@ -37,15 +37,15 @@ export async function generate_hp(ops : any ) {
 
 export async function get_individual_dashboard_info(hp : string,  dashboard_name : string) {
     // -- get a ref to the open_ai_client 
-    let client =  wrapped_client // tsw.apis.openai.get_openai();
+    //let client =  wrapped_client // tsw.apis.openai.get_openai();
 
     // -- generate the prompt 
-    let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
+    //let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
 
     /*
        Need to finish implementation 
      */ 
-    return dashboard_prompt;
+    return  null // dashboard_prompt;
     
 }
 
@@ -75,10 +75,11 @@ export async function wrapped_chat_completion(args : any) {
 
 
 
-export async function get_all_dashboard_info(hp: string) {
-    // -- get a ref to the open_ai_client 
-    let client =  wrapped_client // tsw.apis.openai.get_openai();
+export async function get_all_dashboard_info(ops : any ) {
 
+    let {hp , client } = ops
+
+    
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review", "labs", "imaging", "diagnosis_review"]);
     
@@ -114,35 +115,6 @@ export async function get_all_dashboard_info(hp: string) {
     }
 }
 
-
-async function get_all_dashboard_info_old(hp : string) {
-    // -- get a ref to the open_ai_client 
-    let client =  wrapped_client // tsw.apis.openai.get_openai();
-
-    // -- generate the prompt 
-    let dashboard_prompt = await prompts.generate_quick_prompt(hp, ["medication_review" , "labs", "imaging", "diagnosis_review"])
-    
-    // -- debug
-    tsw.common.util.debug.add("generated_dashboard_prompt", dashboard_prompt) 
-    
-    // --  query the AI with the prompt
-    const response = await client.chat.completions.create({
-	model: "gpt-4o",
-	messages: [
-	    { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
-	    { role: 'user', content: dashboard_prompt }
-	]
-    });
-    
-    let dashboard_info = response.choices[0].message.content;
-
-    // -- debug
-    tsw.common.util.debug.add("dashboard_info", dashboard_info) 
-
-
-    return dashboard_info
-    
-} 
 
 
 export function all_indexes_of_ch(val : string, arr :string) {
@@ -198,7 +170,7 @@ export async function transform_hp_to_fhir({client, hp} : { [k:string] : any } )
 
 
     // get client reference
-    let _client = (client  || wrapped_client) 
+    let _client = client 
     
     // -- generate the prompt 
     let hp_to_fhir_prompt = `

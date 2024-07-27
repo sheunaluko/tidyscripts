@@ -3,20 +3,34 @@ TIDYSCRIPTS NOTES
 
 
 Currently working on: (in branch query_caching)
--> fixed/implemented the utility firebase.util functions
--> can now use these to implement the query caching
+-> [x] fixed/implemented the utility firebase.util functions
+-> [x] can now use these to implement the query caching
+Caching architecture
 --> rememember; each CACHED call will have an APP_ID and a ORIGIN_ID
        for example the ORIGIN_ID may be a specific UI component or a background service
-       a UI COmponent can search for ORIGIN_ID which match its own to see which queries it has asked
-       I will need to think about how to support :
+[x] implemented cached_wrapped_chat_call in firebase.ts
+[x] can use this in Autocare app now to see if it works :)
+
+
+status => Finished the above
+
+** NOTE ** Within Autocare.tsx there are now hp_client and analyze_client which are linked to
+autocare_hp and autocare_analyze ORIGIN_ID's respectively
+
+Thus to implement the checkmark below I should implement:
+     - search a collection and filter by KEY and only return certain fields
+     - then create function for searching PARTICULAR collection and filter by ORIGIN_ID
+         and only return the ORIGIN_ID , ARGS , (necessary to populate below) 
+
+[ ] a UI Component (for example  can search for ORIGIN_ID which match its own to see which queries it has asked
           - UI can automatically know how to "autofill" possible user requests (prior queries can be clicked)
-	  - IF the SAME query but from a different ORIGIN_ID comes int -- then a cached result should still
-	      be able to be retrieved 
 	  - CACHED entities can be deleted
 	  - PAY WALL can still be supported
 
+[ ] in widgets/util implement export async function get_individual_dashboard_info(hp : string,  dashboard_name : string) { }
+[ ] in widgets/util transform_hp_to_fhir()    [ use this to build the data ui :)  ] 
 
-status => implemented cached_wrapped_chat_call in firebase.ts -> can use this in Autocare app now to see if it works :)
+
 
 
 
