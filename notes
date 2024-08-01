@@ -18,6 +18,7 @@ status => Finished the above
 autocare_hp and autocare_analyze ORIGIN_ID's respectively
 
 Thus to implement the checkmark below I should implement:
+
      - search a collection and filter by KEY and only return certain fields
      - then create function for searching PARTICULAR collection and filter by ORIGIN_ID
          and only return the ORIGIN_ID , ARGS , (necessary to populate below) 
