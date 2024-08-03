@@ -2,39 +2,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, TextField, Button, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { alpha } from '@mui/system';
 
 import ReactMarkdown from 'react-markdown';
-import { theme } from "../../../theme";
-
 
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../../hooks/useInit";
 
-export async function chat_completion_handler(args : any) {
-    /*
-       Take the args and pass it to the vercel function instead 
-     */
-    let url = "/api/open_ai_chat_2"
-    let fetch_response = await fetch(url, {
-	method : 'POST' ,
-	headers: {   'Content-Type': 'application/json'   },
-	body : JSON.stringify(args)
-    });
-    debug.add("fetch_response" , fetch_response) ;
-    let response = await fetch_response.json() ;
-    debug.add("response" , response) ;
-    return response 
-} 
-
-
-export var open_ai_client = {
-    chat : {
-	completions : {
-	    create : chat_completion_handler
-	} 
-    } 
-} 
+var open_ai_client : any = null ; 
 
 const log = tsw.common.logger.get_logger({id:"chat"});
 
@@ -44,9 +18,9 @@ const Chat: React.FC = () => {
         /* Assign tidyscripts library to window */
         if (typeof window !== 'undefined') {
 
+
             Object.assign(window, {
-		open_ai_client ,
-		
+		tsw, 
             });
 	    
             log("Chat init");
@@ -83,8 +57,8 @@ const Chat: React.FC = () => {
 
 	log("getting completions")
 	let msgs = [
-            { role: "system", content: systemMessage },
-            ...messages
+                { role: "system", content: systemMessage },
+                ...messages
         ];
 	console.log(msgs) 
 	
@@ -101,11 +75,6 @@ const Chat: React.FC = () => {
             handleSend();
         }
     };
-
-
-    let alpha_val = 0.4
-    let light_primary = alpha(theme.palette.primary.main, alpha_val) 
-    let light_secondary = alpha(theme.palette.secondary.main, alpha_val) 
 
     return (
         <Box sx={{ padding: '20px', border: '1px solid', borderColor: 'primary.main', borderRadius: '8px' }}>
@@ -147,22 +116,20 @@ const Chat: React.FC = () => {
                             marginBottom: '10px'
                         }}
                     >
-			<Box
-			                                sx={{
+                        <Typography
+                            sx={{
                                 padding: '10px',
                                 borderRadius: '8px',
-				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
-                                border: message.role === 'user' ? '1px solid' : '1px solid',
-                                borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-                                color: message.role === 'assistant' ? 'inherit' : 'inherit'
+                                backgroundColor: message.role === 'assistant' ? 'primary.main' : 'transparent',
+                                border: message.role === 'user' ? '1px solid' : 'none',
+                                borderColor: message.role === 'user' ? 'secondary.main' : 'transparent',
+                                color: message.role === 'assistant' ? 'white' : 'inherit'
                             }}
+                        >
 
-			>
-			<ReactMarkdown>
-                            {message.content}
-			</ReactMarkdown>
-			</Box>
+				{message.content}
 
+                        </Typography>
                     </Box>
                 ))}
             </Box>
