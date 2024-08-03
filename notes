@@ -2,17 +2,7 @@ TIDYSCRIPTS NOTES
 -----------------
 
 
-Currently working on: (in branch query_caching)
--> [x] fixed/implemented the utility firebase.util functions
--> [x] can now use these to implement the query caching
-Caching architecture
---> rememember; each CACHED call will have an APP_ID and a ORIGIN_ID
-       for example the ORIGIN_ID may be a specific UI component or a background service
-[x] implemented cached_wrapped_chat_call in firebase.ts
-[x] can use this in Autocare app now to see if it works :)
-
-
-status => Finished the above
+Currently working on: in master branch 
 
 ** NOTE ** Within Autocare.tsx there are now hp_client and analyze_client which are linked to
 autocare_hp and autocare_analyze ORIGIN_ID's respectively
