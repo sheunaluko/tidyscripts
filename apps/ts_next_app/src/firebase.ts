@@ -274,3 +274,6 @@ export async function give_feedback(msg : string) {
     await fu.store_collection(args)
 } 
 
+
+
+export {getAuth  } ; 

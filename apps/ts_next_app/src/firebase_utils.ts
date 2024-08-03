@@ -90,9 +90,48 @@ export async function store_user_doc(args : FirebaseDataStoreOps) {
 	log(`Wrote document`)
     } catch (error : any) {
 	log(`Error writing document: ${error}`)
+	throw("authentication error")	
 	
     } 
 }
+
+
+/**
+ * testing function 
+ */
+export async function uid_store_user_doc(args : FirebaseDataStoreOps , user_id : string) {
+
+    let {app_id , path , data  } = args ;
+    log(`Request to user_doc_store: appid=${app_id}, path =${path}, data=${JSON.stringify(data)}`)
+
+    log(`Detected user id: ${user_id}`)
+
+        if (!user_id) {
+	throw new Error('User is not authenticated.');
+    }
+    
+    let full_path = [ "users" , user_id , app_id, ...path]  ;
+
+    log("full_path")
+    log(full_path)
+
+    // @ts-ignore
+    var docRef = doc(db, ...full_path)
+    log(`Obtained document reference`) 
+
+    try { 
+	await setDoc(docRef, data) 
+	log(`Wrote document`)
+    } catch (error : any) {
+	log(`Error writing document: ${error}`)
+	throw("authentication error")	
+	
+    } 
+}
+
+
+
+
 
 
 export async function test_store_user_doc() {
@@ -343,7 +382,7 @@ const store_data = async (path: string[], data: Record<string, any>): Promise<vo
 export async function store_collection(args : FirebaseDataStoreOps) {
     let {app_id , path , data  } = args ;
     log(`Request to store in collection: appid=${app_id}, path =${path}, data=${JSON.stringify(data)}`)
-    let full_path = [ app_id , ...path ] 
+    let full_path = [ "public" , "collections" , app_id , ...path ] 
     return await store_data( full_path,  data)
 }
 
@@ -363,7 +402,7 @@ export async function get_collection(args : FirebaseDataGetOps) {
 
     let {app_id , path  } = args ;
 
-    let full_path = [ app_id, ...path]  ;
+    let full_path = [ "public", "collections", app_id, ...path]  ;
     
     log(`Request to get collection: appid=${app_id}, path =${path}`)
     log(`Using full path: ${full_path}`) 
@@ -400,7 +439,7 @@ export async function store_doc(args : FirebaseDataStoreOps) {
 
     let {app_id , path , data  } = args ;
     
-    let full_path = [ app_id, ...path]  ;
+    let full_path = [ "public", "data", app_id, ...path]  ;
 
     log("full_path")
     log(full_path)
@@ -414,6 +453,7 @@ export async function store_doc(args : FirebaseDataStoreOps) {
 	log(`Wrote document`)
     } catch (error : any) {
 	log(`Error writing document: ${error}`)
+	throw("authentication error")
 	
     } 
 }
@@ -432,7 +472,7 @@ export async function get_doc(args : FirebaseDataGetOps) {
 
     let {app_id , path   } = args ;
 
-    let full_path = [ app_id, ...path]  ;
+    let full_path = [ "public" , "data", app_id, ...path]  ;
 
     log("full_path")
     log(full_path)
@@ -509,8 +549,34 @@ export async function logged_out_tests() {
     result = await test_get_collection()
     log(result)
 
+
     log(`DONE`) 
     
+}
+
+export async function privacy_tests() {
+
+    log(`Ensuring privacy of user subdirectories: `) ;
+    
+    try {
+
+	let fake_uid = "thisIsUid"
+	
+	let args = {
+	    app_id : "test",
+	    path :  ["data1" ] ,
+	    data : {msg : "hey boi"  } 
+	}
+	let result = await uid_store_user_doc(args, fake_uid); 
+
+	log(`Was able to complete logged_in_tests without error`) 
+	
+    } catch ( error : any ) {
+	
+	log(`Encountered error when running authenticated requests: ${error}`)
+	throw("AUTHENTICATION ERROR") 
+    }
+
 } 
 
 
@@ -530,7 +596,8 @@ export async function test_suite() {
     } else {
 	log(`No user is logged in`)
 
-	await logged_out_tests()	
+	await logged_out_tests()
+	await privacy_tests() 
     }
 
     log(`FIREBASE TEST SUITE FINISHED`) 

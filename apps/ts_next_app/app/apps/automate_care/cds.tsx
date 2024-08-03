@@ -27,6 +27,8 @@ const log    = tsw.common.logger.get_logger({id:"cds"});
 const debug  = tsw.common.util.debug
 //const fp     = tsw.common.fp
 
+import * as fb from "../../../src/firebase" ;
+const { fu } = fb ; 
 
 
 import {
@@ -64,7 +66,9 @@ const CdsApp = () => {
 		tsw,
 		util,
 		prompts,
-		debug
+		debug,
+		fu ,
+		fb 
 	    });
 	    log("cds init");
 	}
