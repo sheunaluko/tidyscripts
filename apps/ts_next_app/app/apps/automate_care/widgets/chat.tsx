@@ -149,7 +149,7 @@ const Chat: React.FC = () => {
                     >
 			<Box
 			                                sx={{
-                                padding: '10px',
+                                padding: '30px',
                                 borderRadius: '8px',
 				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
                                 border: message.role === 'user' ? '1px solid' : '1px solid',
