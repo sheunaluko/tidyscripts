@@ -9,6 +9,9 @@ import * as openai from "./openai/index"
 import * as firebase_admin from "./firebase_admin"
 import * as langchain from "./langchain"
 export * as bots from "./bots" 
+export * as gemini from "./gemini/index"
+
+
 
 export {
 

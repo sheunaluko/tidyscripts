@@ -11,6 +11,8 @@ import { theme } from "../../../theme";
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../../hooks/useInit";
 
+const debug = tsw.common.util.debug; 
+
 export async function chat_completion_handler(args : any) {
     /*
        Take the args and pass it to the vercel function instead 

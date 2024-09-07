@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.17.1",
     "@langchain/community": "^0.2.11",
     "@langchain/core": "^0.2.6",
     "@langchain/langgraph": "^0.0.23",

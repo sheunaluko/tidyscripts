@@ -1,0 +1,4 @@
+cd apps/docs;
+echo "In docs directory"
+
+npm run jdoc ; echo "finished" 
