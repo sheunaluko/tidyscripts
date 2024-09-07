@@ -2,7 +2,19 @@ TIDYSCRIPTS NOTES
 -----------------
 
 
-Currently working on: in master branch 
+Currently working on:
+
+Sep 6: implemented gemini chat (large context window can fit entire tidyscripts documentation in it)
+In the repl do this: 
+   jtext = node.io.read_file("/Users/sheunaluko/dev/tidyscripts/apps/docs/jdoc.json")
+   chat = node.apis.gemini.chat.get_chat()
+   await chat(`Here is the entire documentation of the tidyscripts library in json format: -beginJsonText ${jtext} -endJsonText. I would like to ask you a question about the library now.`
+
+Note: the GEMINI_API_KEY env var has to be set
+
+---
+
+
 
 ** NOTE ** Within Autocare.tsx there are now hp_client and analyze_client which are linked to
 autocare_hp and autocare_analyze ORIGIN_ID's respectively

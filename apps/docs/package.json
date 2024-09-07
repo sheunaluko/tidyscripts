@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "docs": "typedoc  --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" ; ",
-    "jdoc": "typedoc --includeDeclarations --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" --json jdoc.json ",
+    "jdoc": "typedoc  --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" --json jdoc.json ",
     "mdoc": "typedoc  --plugin typedoc-plugin-markdown --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" --out ./dist ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

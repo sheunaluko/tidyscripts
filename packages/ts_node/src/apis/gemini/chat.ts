@@ -1,5 +1,14 @@
-/*
- * From google website 
+/**
+ * Chat interface to gemini chat agent, which offers gemini-1.5-pro that has >200k token context length 
+ *
+ * ``` 
+ * jtext = node.io.read_file("/Users/sheunaluko/dev/tidyscripts/apps/docs/jdoc.json")
+ * chat = node.apis.gemini.chat.get_chat()
+ * await chat(`Here is the entire documentation of the tidyscripts library in json format: -beginJsonText ${jtext} -endJsonText. I would like to ask you a question about the library now.`)
+ * 
+ * ```
+ * 
+ * @packageDocumentation
  */
 
 import {
@@ -23,7 +32,7 @@ const generationConfig = {
     responseMimeType: "text/plain",
 };
 
-export async function get_chat() {
+export function get_chat() {
     
     const chatSession = model.startChat({
 	generationConfig,
