@@ -1,6 +1,7 @@
 /**
  * Chat interface to gemini chat agent, which offers gemini-1.5-pro that has >200k token context length 
  *
+ * Alternatively can also use the chat_completion function for one off prompting 
  * ``` 
  * jtext = node.io.read_file("/Users/sheunaluko/dev/tidyscripts/apps/docs/jdoc.json")
  * chat = node.apis.gemini.chat.get_chat()
@@ -50,4 +51,9 @@ export function get_chat() {
     return fn 
 }
 
-
+export async function completion(prompt : string) {
+    /* 
+       Implement gemini chat completion 
+    */
+    return await ( get_chat()(prompt) )  ; 
+} 

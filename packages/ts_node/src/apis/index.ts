@@ -10,7 +10,7 @@ import * as firebase_admin from "./firebase_admin"
 import * as langchain from "./langchain"
 export * as bots from "./bots" 
 export * as gemini from "./gemini/index"
-
+export * as up_to_date from "./up_to_date" 
 
 
 export {
