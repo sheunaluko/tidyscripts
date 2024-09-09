@@ -87,3 +87,40 @@ export async function openai_davinci_prompt(prompt : string, max_tokens  : numbe
   return await get_json_from_url("https://www.tidyscripts.com/api/openai_davinci" , {prompt , max_tokens})
 }
 
+
+
+export async function sendAudioBlobToOpenAI(blob: Blob) {
+
+    let oai = get_openai() ; 
+    let api_key  = localStorage['OAAK'] ;
+    
+    // Step 1: Prepare the FormData object with the audio file
+    const formData = new FormData();
+    
+    // Append the Blob as a file with a suitable name and type
+    formData.append('file', blob, 'audio.webm');
+    formData.append('model', 'whisper-1');  // The model we are using
+
+    try {
+        // Step 2: Send the FormData to the OpenAI API
+        const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${api_key}`
+            },
+            body: formData
+        });
+
+        // Step 3: Handle the API response
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        // Parse the JSON response
+        const transcription = await response.json();
+        log(`Transcription: ${transcription.text}`);
+        return transcription.text;  // Return the transcribed text
+    } catch (error) {
+        console.error("Error while sending audio to OpenAI:", error);
+    }
+}

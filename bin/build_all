@@ -1,0 +1,14 @@
+cd packages/ts_common;
+npm run build; 
+cd ../ts_node;
+npm run build ;
+cd ../ts_web;
+npm run build;
+cd ../ts_web_umd;
+npm run build;
+cd ../../apps/docs ;
+npm run build;
+cd ../ts_next_app ;
+npm run build;
+
+echo "Done" 

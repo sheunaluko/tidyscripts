@@ -35,7 +35,8 @@ const dsp   = tsw.common.util.dsp ;
 const debug = tsw.common.util.debug ;
 const fp    = tsw.common.fp ;
 const dom   = tsw.util.dom ; 
-const wa    = tsw.apis.web_audio; 
+const wa    = tsw.apis.web_audio;
+const oai   = tsw.apis.openai.get_openai()  ; 
 
 
 /**
@@ -64,13 +65,13 @@ async function init() {
 	Bokeh.Plotting.show(plot,el)
     })
     // Initialize the text
-    dom.set_value_by_id("text_field",
-			"Hello I am Cortex") ;       
+    dom.set_value_by_id("text_field", 	"Hello I am Cortex") ;       
 
     // - 
     Object.assign(window, {
 	tsw,
-	wa , 
+	wa ,
+	debug 
     })
 }
 
@@ -85,6 +86,9 @@ async function init() {
  */ 
 
 async function on_init_audio() {
+
+    //first do general audio init;  
+    await init()  ; 
     //start streaming microphone data to the mic graph
     log(`Initializing microphone`) ; 
     await wa.initialize_microphone() ;
@@ -111,10 +115,12 @@ async function on_init_audio() {
 	log(`detected event ended`) ;
 	let sr = await wa.get_sampling_rate() ; 
 	let blob = e.detail ;
+
 	let aud_buf = await wa.decode_audio_blob(blob);
 	let f32     = aud_buf.getChannelData(0) ; 
-	let new_data = { x : fp.range(0,f32.length).map( (i:any) =>i/sr ) , y : Array.from(f32) } ;
-	debug.add('event_data' , new_data) 
+	let new_data = { x : fp.range(0,f32.length).map( (i:any) =>i/sr ) , y : Array.from(f32) } 
+	debug.add('event_data' , new_data)
+	debug.add('raw_sound_event' , e) ; 
 	window.data_sources['plot_events'].stream(new_data, f32.length) ;
 
     })
@@ -129,7 +135,7 @@ async function on_init_audio() {
 
 const  Component: NextPage = (props : any) => {
 
-    useEffect(  ()=> {init()} , [] ) ; //init script
+    useEffect(  ()=> {  } , [] ) ; //init script is called in "on_init_audio" 
 
     return (
 	<ChakraProvider> 

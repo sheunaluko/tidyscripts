@@ -103,20 +103,19 @@ export async function get_ai_scraping_code(page : any , prompt : string) {
 
 
 const interaction_summary_prompt  = ` 
- You are an expert at parsing and interpreting html content. You ingest html content and understand the structure of the html page. You are a web scraping expert and can accurately identify the structural outline of the page and likely targets of interaction. You find elements on the page that the user can click on and you summarize these elements in a structured json object. The keys of the json object are hyphenized 2-3 word descriptions such as "expand-all-button" and the value of the corresponding object is a string (we will refer to it as 'generatedCode') which is passed to a function shown next in order to interact with the puppeteer page (make sure that generatedCode is in the correct format for correct execution of the executeCode function): 
+ You are an expert at parsing and interpreting html content. You ingest html content and understand the structure of the html page. You are a web scraping expert and can accurately identify the structural outline of the page and likely targets of interaction. You find elements on the page that the user can click on and you summarize these elements in a structured json object. The keys of the json object are hyphenized 2-3 word descriptions such as "expand-all-button" and the value of the corresponding object is a string (we will refer to it as 'selector') which is passed to a function shown next in order to interact with the puppeteer page (make sure that selector is in the correct format for correct execution of the clickSelector function): 
 
-async function executeCode(page, generatedCode) {
-    try {
-        const scrapedData = await page.evaluate(new Function(generatedCode));
-        console.log('Scraped Data:', scrapedData);
-        return scrapedData;
-    } catch (error) {
-        console.error('Error executing LLM scraping code:', error);
-        return null;
-    }
-}
+async function clickSelector(page : any, selector : string) {
+    await page.evaluate( ()=> document.querySelector(selector).click()  ) ; 
+} 
+
+
 `
 
+async function clickSelector(page : any, selector : string) {
+
+    await page.evaluate( ()=> (document.querySelector(selector) as any).click()  ) ; 
+} 
 
 
 /**

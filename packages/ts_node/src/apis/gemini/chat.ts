@@ -45,7 +45,8 @@ export function get_chat() {
 
     let fn = async function(msg : string) { 
 	const result = await chatSession.sendMessage(msg);
-	console.log(result.response.text());
+	//console.log(result.response.text());
+	return result.response.text 
     }
 
     return fn 

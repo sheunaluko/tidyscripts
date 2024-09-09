@@ -21,7 +21,7 @@ await P.go_and_wait(p1, url)
 
 
 Object.assign(global, {
-    P, p1  
+    P, p1   
 })
 
 

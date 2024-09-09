@@ -1,0 +1,4 @@
+cd apps/ts_next_app ;
+npm run build;
+cd ../.. ;
+
