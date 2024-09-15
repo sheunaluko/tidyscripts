@@ -5,7 +5,8 @@ Goals:
 - web audio expertise 
 - remba
 - documentation of the firebase/firestore user data api
-- cryptocurrency data frequency analysis (spectrogram generations - large numbers at a time in a parameter grid) 
+- cryptocurrency data frequency analysis (spectrogram generations - large numbers at a time in a parameter grid)
+- add guassian audio visualization 
 
 
 Currently working on:
