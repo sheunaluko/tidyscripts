@@ -59,3 +59,32 @@ export async function chat_completion(messages: any, model : string, max_tokens 
     } 
 
 }
+
+
+/**
+ * Extracts the first text response from the given OpenAI API response object.
+ * If the response does not contain a valid message, throws an error with detailed logging.
+ * @param response - The OpenAI API response object.
+ * @returns The first text response from the assistant.
+ * @throws Error if the response does not contain a valid message.
+ */
+export function extract_first_text_response(response: any): string {
+    try {
+        if (response && response.choices && response.choices.length > 0) {
+            const message = response.choices[0].message;
+            if (message && message.content) {
+                return message.content;
+            } else {
+                log(`Response object: ${JSON.stringify(response, null, 2)}`);
+                throw new Error("Response does not contain a valid message content.");
+            }
+        } else {
+            log(`Response object: ${JSON.stringify(response, null, 2)}`);
+            throw new Error("Response does not contain any choices.");
+        }
+    } catch (error : any) {
+        log(`Error extracting text response: ${error.message}`);
+        log(`Response object: ${JSON.stringify(response, null, 2)}`);
+        throw new Error(`Failed to extract text response: ${error.message}`);
+    }
+}
