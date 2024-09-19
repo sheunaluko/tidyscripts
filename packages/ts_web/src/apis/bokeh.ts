@@ -46,3 +46,44 @@ export async function load_bokeh_scripts() {
     log("Done") 
 } 
 
+
+export function point_plt() {
+     // create some data and a ColumnDataSource
+    const x = [0]
+    const y = [0] 
+    const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
+
+    // create some ranges for the plot
+    const ydr =  null ;
+
+    let ops : any  = {width: 300, height : 100}; 
+
+    ops.y_range = new Bokeh.Range1d({start : -1 , end : 1 })
+    ops.x_range = new Bokeh.Range1d({start : -1 , end : 1 })    
+    
+    const plot = new Bokeh.Plot(ops); 
+
+    // add axes to the plot
+    const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    const yaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    plot.add_layout(xaxis, "below");
+    plot.add_layout(yaxis, "left");
+
+    // add grids to the plot
+    const xgrid = new Bokeh.Grid({ ticker: xaxis.ticker, dimension: 0 });
+    const ygrid = new Bokeh.Grid({ ticker: yaxis.ticker, dimension: 1 });
+    plot.add_layout(xgrid);
+    plot.add_layout(ygrid);
+
+    // add a Line glyph
+    const line = new Bokeh.Line({
+	x: { field: "x" },
+	y: { field: "y" },
+	line_color: "#666699",
+	line_width: 2
+    });
+    plot.add_glyph(line, source);
+
+    
+    return {plot , source} 
+} 

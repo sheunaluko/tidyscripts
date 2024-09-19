@@ -1,12 +1,11 @@
 'use client';
-
 import type { NextPage } from 'next'
 import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
-
-import { ChakraProvider } from '@chakra-ui/react'
+import { ChakraProvider } from '@chakra-ui/react' ;
+import VC from "./voice_chat" ; 
 
 import {
     Box,
@@ -14,17 +13,6 @@ import {
     Input ,
     Textarea,
 } from "@chakra-ui/react" 
-
-/*
-import {
-    ThemeProvider,
-    createTheme,
-    Box ,
-    Button ,
-    Input ,
-    TextField,  
-} from "../../../src/mui"
-*/ 
 
 declare var window : any ;
 declare var Bokeh : any  ; 
@@ -36,7 +24,13 @@ const debug = tsw.common.util.debug ;
 const fp    = tsw.common.fp ;
 const dom   = tsw.util.dom ; 
 const wa    = tsw.apis.web_audio;
-const oai   = tsw.apis.openai.get_openai()  ; 
+const oai   = tsw.apis.openai;
+
+/* 
+   PARAMS 
+ */
+const viz_n = 50 ;
+const viz_s = 0.01 ; 
 
 
 /**
@@ -49,7 +43,7 @@ async function init() {
     await tsw.apis.bokeh.load_bokeh_scripts() ;
     if (! window.Bokeh ) {  return  } 
     // -
-    let plot_names = ['plot_tts' , 'plot_mic' , 'plot_mic_zoom', 'plot_events', 'plot_target' ] ;
+    let plot_names = ['plot_tts' , 'viz' , 'plot_mic' , 'plot_mic_zoom', 'plot_events', 'plot_target' ] ;
     window.data_sources = {} ; 
     // -    
     plot_names.map( (x:string) => {
@@ -57,10 +51,17 @@ async function init() {
 	let tmp : any; 
 	if (x == 'plot_mic_zoom' ) { 
 	    tmp = make_plot(null) ;
-	} else {
+	    
+	} else if ( x == 'viz'  ) {
+	    tmp = point_plt() ;
+	    //tmp = x_y_hex_plot(100, 1,1) 
+	    
+	} else 	{
 	    tmp = make_plot([-1.1,1.1]) ;
-	} 
-	let {plot,source} = tmp 
+	} ;
+	
+	let {plot,source} = tmp
+	plot.toolbar.logo = null ; 
 	window.data_sources[x]  = source  ; 
 	Bokeh.Plotting.show(plot,el)
     })
@@ -76,13 +77,9 @@ async function init() {
 }
 
 /*
- * TODO: 
-   - visualize the temp buffer to aid with debugging 
-   - consider calculating the amount of seconds in it  
-   - the problem is that the "quiet_met" criteria are occuring too fast 
-   - its possibly related to the order of functions in handle_data; what if analyze_tmp_buffer is placed first?
-   - what if the problem is that there is overlap between the buffers that are inside of the tmp buffer? 
-      - like this is because the behavior of getTimeData from the analyzer node is unexpected - I dont fully know the behavior
+
+--- 
+
  */ 
 
 async function on_init_audio() {
@@ -92,12 +89,19 @@ async function on_init_audio() {
     //start streaming microphone data to the mic graph
     log(`Initializing microphone`) ; 
     await wa.initialize_microphone() ;
+    
     wa.register_mic_callback('update_mic_graph'  , function(f32 : Float32Array) {
 	let val = dsp.mean_abs(f32 as any) ;
 	let t   = window.performance.now()/1000 ;
 	let new_data = { x : [t,t] , y : [-val,val] } ;
 	window.data_sources['plot_mic'].stream(new_data, 500) ;
 	window.data_sources['plot_mic_zoom'].stream(new_data, 500) ; 	
+    })
+
+    wa.register_mic_callback('update_viz'  , function(f32 : Float32Array) {
+	let val = dsp.mean_abs(f32 as any) ;
+	let new_data = x_y_gaussian(viz_n, val+viz_s, val+viz_s) ; 
+	window.data_sources['viz'].stream(new_data, viz_n) ;
     })
 
     log(`Initializing sound event detector`) ;
@@ -116,13 +120,29 @@ async function on_init_audio() {
 	let sr = await wa.get_sampling_rate() ; 
 	let blob = e.detail ;
 
-	let aud_buf = await wa.decode_audio_blob(blob);
-	let f32     = aud_buf.getChannelData(0) ; 
-	let new_data = { x : fp.range(0,f32.length).map( (i:any) =>i/sr ) , y : Array.from(f32) } 
-	debug.add('event_data' , new_data)
-	debug.add('raw_sound_event' , e) ; 
-	window.data_sources['plot_events'].stream(new_data, f32.length) ;
+	/*
+	   blob is the sound event in blob form, which can be passed to the openai.sendAudioBlobToOpenAI(blob: Blob) function to get a transcription 
+	 */
 
+	try { 
+	
+	    let aud_buf = await wa.decode_audio_blob(blob);
+	    let f32     = aud_buf.getChannelData(0) ; 
+	    let new_data = { x : fp.range(0,f32.length).map( (i:any) =>i/sr ) , y : Array.from(f32) }
+	    debug.add('event_data' , new_data)
+	    debug.add('raw_sound_event' , e) ;
+	    window.data_sources['plot_events'].stream(new_data, f32.length) ;	
+
+	    if (false) {
+		let transcript  = await oai.sendAudioBlobToOpenAI(blob) ;
+		debug.add("transcript" , transcript) ; 
+		log(`Sound event transcription: ${transcript}`)
+	    }
+
+	} catch (e : any) {
+	    log(`error with event transcription`) 
+	} 
+	
     })
     
 
@@ -150,8 +170,10 @@ const  Component: NextPage = (props : any) => {
 
 		<br />
 		<Button style={{width:"10%"}}
-			onClick={on_init_audio}
+		    onClick={on_init_audio}
 			variant="outlined" > Init </Button>
+
+
 
 		<Box flexDirection="column" >
 		    <p>TTS</p>
@@ -168,7 +190,12 @@ const  Component: NextPage = (props : any) => {
 		    <Box>
 			<p>Source</p>
 			<Box id="plot_tts" sx={{flexGrow: 1}} /> 			
+		    </Box>
+		    <Box>
+			<p>Viz</p>
+			<Box id="viz" sx={{flexGrow: 1}} /> 			
 		    </Box> 
+		    
 		    <br />
 		    <Box>
 			<p>Mic</p>			 
@@ -192,7 +219,10 @@ const  Component: NextPage = (props : any) => {
 		    <Box>
 			<p>Target</p>
 			<Box id="plot_target" sx={{flexGrow: 1}} />
-		    </Box> 
+		    </Box>
+
+		    <br /> 
+		    <VC /> 
 
 		</Box> 
 
@@ -210,21 +240,11 @@ export default Component ;
 async function on_submit() {
 
     /*
-       Next steps: 
+       This function converts the written text into audio and plays the audio when the user clicks submit 
 
-       - run turbo build -> if it works then 'git commit' ; if not :( 
+       - [x] Make use of openai speech recognition API on the event data 
 
-       - make use of openai speech recognition API on the event data 
-       - implment media_recorder object in the web_audio file (leave the evt_detector one) 
-          - enable manual recording , eg 
-          - async function record_audio(ms) ; 
-              - let promise = new Promise() 
-              - media_recorder.ondataavailable = function(data){ promise.resolve(data) }
-              - media_recorder.start() ; 
-              - setTimeout( ()=> media_recorder.stop() , ms) 
-              - return promise 
-       
-       - move web_audio.ts<dev> back to pkg dir 
+       - [ ] Idea for iterative workflow: 
 
        WORKFLOW
        - look at duration of the audio file that is to be played 
@@ -234,9 +254,9 @@ async function on_submit() {
        - Now write the code that lines up the waveforms to determine the DELAY and the the SCALE parameters using a loss function 
        - Display the target waveform in the 3rd graph, along with the calculated parameters 
        - create "mode" toggle for "adaptive" or "single shot" where the parameters are either iterated over time and applied in real-time 
-           - or they are applied with each run only 
-           - the above has created single shot already; so will work on adaptive mode at this point 
-    */
+       - or they are applied with each run only 
+       - the above has created single shot already; so will work on adaptive mode at this point 
+     */
 
     //get the text from the text area
     let el = document.getElementById("text_field") as any;
@@ -263,6 +283,7 @@ async function on_submit() {
     //get the data source
     let src = window.data_sources['plot_tts']
     src.stream( new_data , f32.length  )
+    window.ae = audio_element; 
     audio_element.play();  
 } 
 
@@ -306,3 +327,84 @@ function make_plot(yr : any) {
 
 }
 
+
+
+
+export function point_plt() {
+     // create some data and a ColumnDataSource
+    const x = [0]
+    const y = [0] 
+    const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
+
+    // create some ranges for the plot
+    const ydr =  null ;
+
+    let ops : any  = {width: 300, height : 100}; 
+
+    ops.y_range = new Bokeh.Range1d({start : -1 , end : 1 })
+    ops.x_range = new Bokeh.Range1d({start : -1 , end : 1 })    
+    
+    const plot = new Bokeh.Plot(ops); 
+
+    // add axes to the plot
+    const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    const yaxis = new Bokeh.LinearAxis({ axis_line_color: null });
+    //plot.add_layout(xaxis, "below");
+    //plot.add_layout(yaxis, "left");
+
+    // add grids to the plot
+    const xgrid = new Bokeh.Grid({ ticker: xaxis.ticker, dimension: 0 });
+    const ygrid = new Bokeh.Grid({ ticker: yaxis.ticker, dimension: 1 });
+    //plot.add_layout(xgrid);
+    //plot.add_layout(ygrid);
+
+    // add  glyph
+    const g = new Bokeh.Circle({
+	x: { field: "x" },
+	y: { field: "y" },
+	//line_color: "#666699",
+	//line_width: 2
+    });
+    plot.add_glyph(g, source);
+
+    
+    return {plot , source} 
+} 
+
+
+function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[], y: number[] } {
+    const x: number[] = [];
+    const y: number[] = [];
+
+    for (let i = 0; i < n; i++) {
+        // Generate two uniform random numbers between 0 and 1
+        const u1 = Math.random();
+        const u2 = Math.random();
+
+        // Use Box-Muller transform to obtain two independent standard normal random numbers
+        const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+        const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+
+        // Scale by the specified standard deviations
+        x.push(z0 * sigma_x);
+        y.push(z1 * sigma_y);
+    }
+
+    return { x, y };
+}
+
+function x_y_hex_plot(n: number, sigma_x: number, sigma_y: number): { x: number[], y: number[] } {
+    let p = new Bokeh.Figure({match_aspect: true}) 
+    p.background_fill_color = '#440154'
+
+
+    let {x,y} = x_y_gaussian(n, sigma_x, sigma_y) ; 
+
+    p.hexbin({x, y, size: 0.5, hover_color : "pink", hover_alpha: 0.8 }) 
+
+    hover = Bokeh.HoverTool({tooltips : [("count", "@c"), ("(q,r)", "(@q, @r)")]}) ;
+    
+    p.add_tools(hover)
+    let source = null 
+    return {plot :p , source } 
+} 
