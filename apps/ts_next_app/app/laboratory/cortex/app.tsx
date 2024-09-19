@@ -54,7 +54,6 @@ async function init() {
 	    
 	} else if ( x == 'viz'  ) {
 	    tmp = point_plt() ;
-	    //tmp = x_y_hex_plot(100, 1,1) 
 	    
 	} else 	{
 	    tmp = make_plot([-1.1,1.1]) ;
@@ -392,19 +391,3 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
 
     return { x, y };
 }
-
-function x_y_hex_plot(n: number, sigma_x: number, sigma_y: number): { x: number[], y: number[] } {
-    let p = new Bokeh.Figure({match_aspect: true}) 
-    p.background_fill_color = '#440154'
-
-
-    let {x,y} = x_y_gaussian(n, sigma_x, sigma_y) ; 
-
-    p.hexbin({x, y, size: 0.5, hover_color : "pink", hover_alpha: 0.8 }) 
-
-    hover = Bokeh.HoverTool({tooltips : [("count", "@c"), ("(q,r)", "(@q, @r)")]}) ;
-    
-    p.add_tools(hover)
-    let source = null 
-    return {plot :p , source } 
-} 
