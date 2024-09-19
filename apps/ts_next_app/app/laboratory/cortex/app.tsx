@@ -4,8 +4,8 @@ import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
-
-import { ChakraProvider } from '@chakra-ui/react'
+import { ChakraProvider } from '@chakra-ui/react' ;
+import VC from "./voice_chat" ; 
 
 import {
     Box,
@@ -53,7 +53,8 @@ async function init() {
 	    tmp = make_plot(null) ;
 	    
 	} else if ( x == 'viz'  ) {
-	    tmp = point_plt() ; 
+	    tmp = point_plt() ;
+	    //tmp = x_y_hex_plot(100, 1,1) 
 	    
 	} else 	{
 	    tmp = make_plot([-1.1,1.1]) ;
@@ -169,8 +170,10 @@ const  Component: NextPage = (props : any) => {
 
 		<br />
 		<Button style={{width:"10%"}}
-			onClick={on_init_audio}
+		    onClick={on_init_audio}
 			variant="outlined" > Init </Button>
+
+
 
 		<Box flexDirection="column" >
 		    <p>TTS</p>
@@ -216,7 +219,10 @@ const  Component: NextPage = (props : any) => {
 		    <Box>
 			<p>Target</p>
 			<Box id="plot_target" sx={{flexGrow: 1}} />
-		    </Box> 
+		    </Box>
+
+		    <br /> 
+		    <VC /> 
 
 		</Box> 
 
@@ -277,6 +283,7 @@ async function on_submit() {
     //get the data source
     let src = window.data_sources['plot_tts']
     src.stream( new_data , f32.length  )
+    window.ae = audio_element; 
     audio_element.play();  
 } 
 
@@ -385,3 +392,19 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
 
     return { x, y };
 }
+
+function x_y_hex_plot(n: number, sigma_x: number, sigma_y: number): { x: number[], y: number[] } {
+    let p = new Bokeh.Figure({match_aspect: true}) 
+    p.background_fill_color = '#440154'
+
+
+    let {x,y} = x_y_gaussian(n, sigma_x, sigma_y) ; 
+
+    p.hexbin({x, y, size: 0.5, hover_color : "pink", hover_alpha: 0.8 }) 
+
+    hover = Bokeh.HoverTool({tooltips : [("count", "@c"), ("(q,r)", "(@q, @r)")]}) ;
+    
+    p.add_tools(hover)
+    let source = null 
+    return {plot :p , source } 
+} 
