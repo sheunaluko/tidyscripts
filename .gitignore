@@ -8,6 +8,7 @@ packages/ts_node/resources
 
 bin/bin_repl.js
 bin/bin_repl.ts
+bin/account*
 
 local
 bin/local
