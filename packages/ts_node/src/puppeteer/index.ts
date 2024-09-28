@@ -56,7 +56,7 @@ export async function go_and_wait(page : any , url : string) {
 } 
 
 
-export async function executeCode(page, generatedCode) {
+export async function executeCode(page : any, generatedCode : any) {
     try {
         const scrapedData = await page.evaluate(new Function(generatedCode));
         console.log('Scraped Data:', scrapedData);
@@ -120,7 +120,7 @@ async function clickSelector(page : any, selector : string) {
 
 /**
  * Produces a json object which summarizes the interactable items on a page and provides  
- * functions for interacting with then 
+ * functions for interacting with them 
  * 
  * @param page The puppeteer page 
  */
