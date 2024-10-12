@@ -1,4 +1,5 @@
 TIDYSCRIPTS NOTES
+
 -----------------
 
 Goals:
@@ -10,6 +11,12 @@ Goals:
 
 
 Currently working on:
+
+
+Oct 12: adding FHIR server / client functionality. FHIR data generation.
+I want to work on generating custom FHIR data or example generation using AI endpoints. 
+
+
 
 Sep 6: implemented gemini chat (large context window can fit entire tidyscripts documentation in it)
 In the repl do this: 

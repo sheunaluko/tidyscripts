@@ -1,10 +1,10 @@
 {
   "name": "tidyscripts_node",
-  "version": "1.0.15",
+  "version": "1.0.17",
   "description": "Code/apis for typescript projects that run in the Node.js runtime",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -rf ./dist; tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist",
+    "build": "rm -rf ./dist; tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist  --resolveJsonModule",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch_package": "npm version patch;",
     "publish_package": "npm publish ; "
@@ -19,6 +19,7 @@
     "@langchain/langgraph": "^0.0.23",
     "@langchain/openai": "^0.1.3",
     "@types/ramda": "^0.29.12",
+    "axios": "^1.7.7",
     "child_process": "^1.0.2",
     "domutils": "^3.0.1",
     "express": "^4.18.2",

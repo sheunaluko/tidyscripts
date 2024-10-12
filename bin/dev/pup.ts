@@ -11,13 +11,18 @@ const P = node.puppeteer ;
 
 if (false) { 
     await P.get_browser({})
-    const p1 = await P.new_page({})
+    const page = await P.new_page({})
 
     let url = "https://coinmarketcap.com"
     log(`Navigating to ${url}`)
 
-    await P.go_and_wait(p1, url)
-    let data = await scmc(p1) ;
+    await P.go_and_wait(page, url)
+    let cmc_data = await scmc(page) ;
+
+    Object.assign( global , {
+    	cmc_data, 
+	page 
+    }) ;
 
 } 
 

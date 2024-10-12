@@ -1,6 +1,6 @@
 {
   "name": "tidyscripts_common",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "description": "Common (can run on browser and web) code/apis for typescript projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
