@@ -17,7 +17,6 @@ Oct 12: adding FHIR server / client functionality. FHIR data generation.
 I want to work on generating custom FHIR data or example generation using AI endpoints. 
 
 
-
 Sep 6: implemented gemini chat (large context window can fit entire tidyscripts documentation in it)
 In the repl do this: 
    jtext = node.io.read_file("/Users/sheunaluko/dev/tidyscripts/apps/docs/jdoc.json")
@@ -25,6 +24,10 @@ In the repl do this:
    await chat(`Here is the entire documentation of the tidyscripts library in json format: -beginJsonText ${jtext} -endJsonText. I would like to ask you a question about the library now.`
 
 Note: the GEMINI_API_KEY env var has to be set
+
+Needs debugging PRIOR TO NEXT DEPLOYMENT:
+- oct 12 it appears the gemini chat feature is ?non functional; need to investigate this
+- the margin of the app/laboratory UI appears to be affected 
 
 ---
 
