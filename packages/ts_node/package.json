@@ -24,6 +24,7 @@
     "domutils": "^3.0.1",
     "express": "^4.18.2",
     "extract-zip": "^2.0.1",
+    "fhir": "^4.12.0",
     "firebase": "^10.12.0",
     "firebase-admin": "^12.1.0",
     "ftp": "^0.3.10",

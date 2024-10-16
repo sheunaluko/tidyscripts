@@ -3,6 +3,7 @@ import * as aidx from "./aidx"
 import * as loinc from "./loinc"
 import * as medications from "./medications"
 import * as langchain from "./langchain"
+import * as data_generator from "./data_generator"
 import OpenAI from "openai" 
 
 
@@ -11,5 +12,6 @@ export {
     loinc,
     medications,
     langchain,
-    OpenAI , 
+    OpenAI ,
+    data_generator
 } 

@@ -6,8 +6,10 @@ import node from "../../packages/ts_node/dist/index";
 import common from "../../packages/ts_common/dist/index";
 
 const log = common.logger.get_logger({id : "fhir"}) ;
+const g_loinc = common.apis.data_generator.generate_loinc ; 
 
-declare var global : any ;
+declare var global : any ;	     
+
 
 log(`Init fhir`)
 
@@ -31,3 +33,18 @@ export async function start_server(data_file : string , port : any ) {
 }
 
 
+
+export async function generate_data(info : string) {
+    return await common.apis.data_generator.get_fhir_data(info)
+}
+
+
+export async function test_1() {
+    let info = "set of all loinc codes that reflect white blood cell count of blood"
+    return await g_loinc(info) ; 
+}
+
+export async function test_2() {
+    let info = "64 female patient with RNYGB and cholangitis"
+    return await generate_data(info) ; 
+}
