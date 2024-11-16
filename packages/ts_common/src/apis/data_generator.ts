@@ -13,26 +13,30 @@ const log = logger.get_logger({id: "dgen"}) ;
  * in a smart way 
  * 
 */
-const openai = (  function() {
-    if (is_browser()){
-	//if running in browser
-	log(`running openai in browser`) 
-	let apiKey = localStorage['OAAK'] ;
-	if (! apiKey) {
-	    let msg = "The OAAK localStorage variable is missing, please set it to proceed" ; 
-	    window.alert(msg) ;
-	    throw(msg) ; 
-	} else { 
-	    return ( new OpenAI( {apiKey,  dangerouslyAllowBrowser: true } ) )
-	}
-	
-    } else {
-	log(`running openai NOT in browser`) 	
-	return new OpenAI()
-    } 
-}
-)() 
+export function get_openai() {
+       
+    var openai = (  function() {
+	if (is_browser()){
+	    //if running in browser
+	    log(`running openai in browser`) 
+	    let apiKey = localStorage['OAAK'] ;
+	    if (! apiKey) {
+		let msg = "The OAAK localStorage variable is missing, please set it to proceed" ; 
+		window.alert(msg) ;
+		throw(msg) ; 
+	    } else { 
+		return ( new OpenAI( {apiKey,  dangerouslyAllowBrowser: true } ) )
+	    }
+	    
+	} else {
+	    log(`running openai NOT in browser`) 	
+	    return new OpenAI()
+	} 
+    }
+    )()
 
+    return openai 
+}
 
 /**
  * Generic completion 
@@ -43,7 +47,7 @@ export async function generic_completion_json(prompt: string): Promise<any> {
     db.add("prompt" , prompt ) 
     
     log(`Requesting chat completion`) ; 
-    const completion = await openai.chat.completions.create({
+    const completion = await (get_openai()).chat.completions.create({
 	model: "gpt-4o",
 	messages: [
             { role: "system", content: "You are a helpful assistant." },
