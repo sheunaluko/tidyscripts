@@ -12,6 +12,7 @@ Goals:
 
 Currently working on:
 
+Nov 16: handoff ai generation
 
 Oct 12: adding FHIR server / client functionality. FHIR data generation.
 I want to work on generating custom FHIR data or example generation using AI endpoints. 
