@@ -19,6 +19,7 @@ import {
     ThumbDownOffAltIcon,
     ThumbUpOffAltIcon,
     TroubleshootIcon,
+    VolunteerActivismIcon, 
     ExpandMoreIcon,
     AddIcon,
     RemoveIcon,
@@ -32,6 +33,7 @@ import { theme } from "../../../theme";
 import { alpha } from '@mui/system';
 import * as tsw from "tidyscripts_web";
 import * as fb  from "../../../../src/firebase";
+import * as hop from "./handoff_prompt" ;
 
 const log = tsw.common.logger.get_logger({ id: "autocare" });
 const debug = tsw.common.util.debug;
@@ -50,6 +52,12 @@ const hp_client = fb.create_wrapped_client({
 const analyze_client = fb.create_wrapped_client({
     app_id : "autocare" ,
     origin_id : "autocare_analyze"  ,
+    log 
+})
+
+const handoff_client = fb.create_wrapped_client({
+    app_id : "autocare" ,
+    origin_id : "autocare_handoff"  ,
     log 
 })
 
@@ -124,7 +132,9 @@ const Autocare = () => {
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
+    const [generated_handoff, setGeneratedHandoff] = useState(null as any) ; 
     const [loadingAnalyze, setLoadingAnalyze] = useState(false);
+    const [loadingHandoff, setLoadingHandoff] = useState(false);    
     const [dashboardInfo, setDashboardInfo] = useState(null as any);
     const [showMedications, setShowMedications] = useState(true);
     const [showLabs, setShowLabs] = useState(true);
@@ -169,6 +179,33 @@ const Autocare = () => {
         setLoadingAnalyze(false);
     };
 
+
+    const handleHandoff = async () => {
+        setLoadingHandoff(true);
+	let patient_information = note 	
+	let prompt = hop.template.replace("{patient_information}",patient_information).replace("{parameters}",hop.default_parameters)	
+
+	debug.add("handoff_prompt", prompt) ; 
+
+	// -- query the AI with the prompt
+	const response = await handoff_client.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+		//{ role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+		{ role: 'user', content: prompt }
+            ]
+	});
+
+
+	let content = response.choices[0].message.content;
+	log("Received response content: " + content);
+	debug.add("content" , content) ;
+
+	setGeneratedHandoff(content) ; 
+        setLoadingHandoff(false);
+    };
+    
+
     return (
         <div>
             <Grid container spacing={2} justifyContent="flex-end" marginBottom="20px">
@@ -208,10 +245,20 @@ const Autocare = () => {
                 startIcon={open ? <RemoveIcon /> : <AddIcon />}
                 onClick={() => setOpen(!open)}
             >
-                {open ? 'Hide' : 'Show'} Note
+                {open ? 'Hide' : 'Show'} 
             </Button>
             {open && (
                 <React.Fragment>
+
+	    <p style={{marginTop: "6px" }}>
+		1. Input an H&P note below, or instead input some patient information and press generate to create an H&P using AI
+	    </p>
+
+	    <p style={{marginTop: "6px" }}>
+	    	2. Analyze the H&P for insights or generate a handoff for cross-covering physicians!
+	    </p>
+
+
                     <TextField
                         fullWidth
                         multiline
@@ -240,13 +287,45 @@ const Autocare = () => {
                         onClick={handleAnalyze}
                         disabled={loadingAnalyze}
                         size="small"
-                        sx={{ marginTop: "6px" }}
+                        sx={{ marginTop: "6px" , marginRight: "10px" }}
                         startIcon={loadingAnalyze ? <CircularProgress size={20} /> : <TroubleshootIcon />}
                     >
                         Analyze
                     </Button>
+
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleHandoff}
+                        disabled={loadingHandoff}
+                        size="small"
+                        sx={{ marginTop: "6px" , marginRight: "10px" }}
+                        startIcon={loadingHandoff ? <CircularProgress size={20} /> : <VolunteerActivismIcon/>}
+                    >
+                        Get Handoff
+                    </Button>
+		    
                 </React.Fragment>
             )}
+
+	    <React.Fragment> {
+		(function(){
+		    if (generated_handoff) {
+			return ( 
+			    <Accordion style={{marginTop : "8px" }}>
+				<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+				    <Typography>Handoff</Typography>
+				</AccordionSummary>
+				<AccordionDetails>
+				    <Box style={{padding : "10px"}}> <ReactMarkdown>{generated_handoff}</ReactMarkdown></Box> 
+				</AccordionDetails>
+			    </Accordion>
+			) } else {
+			    return null 
+			} 
+		}) ()
+	    }
+	    </React.Fragment> 
 
             <Box marginTop="20px">
                 {dashboardInfo && dashboardInfo.map((info: any, index: number) => {
@@ -276,3 +355,7 @@ const getActionType = (action: string) => {
 };
 
 export default Autocare;
+
+
+
+var test_case = `45M admitted to ICU with septic shock secondary to pneumonia, complicated by pulmonary embolism worsening hypoxic respiratory failure, also with acute renal failure on CRRT` 

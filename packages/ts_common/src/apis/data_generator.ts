@@ -4,9 +4,34 @@ import { Patient } from "fhir/r4";
 import * as logger  from "../logger" ;
 import * as db from "../util/debug" ;  
 
+import {is_browser} from "../util/index"  ; 
+
 const log = logger.get_logger({id: "dgen"}) ;
 
-const openai = new OpenAI()
+/*
+ * initialize open ai
+ * in a smart way 
+ * 
+*/
+const openai = (  function() {
+    if (is_browser()){
+	//if running in browser
+	log(`running openai in browser`) 
+	let apiKey = localStorage['OAAK'] ;
+	if (! apiKey) {
+	    let msg = "The OAAK localStorage variable is missing, please set it to proceed" ; 
+	    window.alert(msg) ;
+	    throw(msg) ; 
+	} else { 
+	    return ( new OpenAI( {apiKey,  dangerouslyAllowBrowser: true } ) )
+	}
+	
+    } else {
+	log(`running openai NOT in browser`) 	
+	return new OpenAI()
+    } 
+}
+)() 
 
 
 /**

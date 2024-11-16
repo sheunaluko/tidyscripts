@@ -28,3 +28,6 @@ backup
 
 package-lock.json
 packages/ts_node/local
+
+.env
+apps/ts_next_app/.env.local

@@ -33,6 +33,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 
 import Container from '@mui/material/Container';
 import Popover from '@mui/material/Popover';
@@ -187,7 +188,8 @@ export  {
     ExpandMoreIcon,
     TroubleshootIcon,
 
-    Slider
+    Slider,
+    VolunteerActivismIcon
 
 } 
 
