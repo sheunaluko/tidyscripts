@@ -9,8 +9,9 @@ const debug  = tsw.common.util.debug
 
 import * as fu from "./firebase_utils"
 import * as cu   from "./cache_utils"
+import * as tex from "./tex" 
 
-export {fu } 
+export {fu , tex} 
 
 
 /*
@@ -158,7 +159,7 @@ export function create_cached_wrapped_chat_completion(ops : any) {
  *
  * 
  * The args object is first hashed 
- * Then the cache_key is built by hashing {app_id, origin_id, funcion_id, args_hash} 
+ * Then the cache_key is built by hashing {app_id, origin_id, function_id, args_hash} 
  * Then request/caching proceeds as expected 
  * 
  */
