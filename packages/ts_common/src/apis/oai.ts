@@ -42,7 +42,8 @@ export function get_openai() {
  * 
  */ 
 export async function call_structured_completion() {
-    //this function will call the serverless function which is at api/openai_structured_completion 
+    //this function will call the serverless function which is at api/openai_structured_completion
+    
 }
 
     

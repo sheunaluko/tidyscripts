@@ -1,7 +1,7 @@
-import CdsApp from './cds';
+import Main from './main';
 
 const Page = () => {
-    return <CdsApp />;
+    return <Main />;
 };
 
 export default Page;

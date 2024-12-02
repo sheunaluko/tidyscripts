@@ -72,7 +72,7 @@ export function read_dir(fname : string)  {  return fs.readdirSync(fname) }
  * 
  */
 export function ensure_extension(fname : string, ext : string)  {
-    if (fname.match(new RegExp(`.{ext}$`))){
+    if (fname.match(new RegExp(`.${ext}$`))){
 	return fname 
     } else {
 	return `${fname}.${ext}`
