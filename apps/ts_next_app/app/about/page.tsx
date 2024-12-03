@@ -39,9 +39,9 @@ const Component: NextPage = (props : any) => {
       </p>
 
       <p className={styles.description}>
-	The founder of Tidyscripts is
+	Tidyscripts was created by 
 	
-	<a href="https://www.linkedin.com/in/sheun-aluko/"> { "Dr. Sheun Aluko, MD." }</a> After completing a degree in Biomedical Engineering from Washington University in St. Louis, he attended Stanford for Medical School and for a Masters in Biomedical Informatics. Currently, Dr. Aluko is an Internal Medicine Hospitalist Physician at Barnes-Jewish Hospital in St. Louis, where he completed his residency training in Internal Medicine.
+	<a href="https://www.linkedin.com/in/sheun-aluko/"> { "Dr. Sheun Aluko, MD-MS." }</a> After completing a degree in Biomedical Engineering from Washington University in St. Louis in 2015, he attended Stanford School of Medicine where he received a Medical Degree and a Masters in Biomedical Informatics. Currently, Dr. Aluko is an Internal Medicine Hospitalist Physician at Barnes-Jewish Hospital in St. Louis, where he completed his residency training in Internal Medicine.
       </p>
 
 

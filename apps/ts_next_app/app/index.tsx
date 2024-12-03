@@ -20,7 +20,13 @@ import {
     Box,
     Typography ,
     Card ,
-    Button
+    Button,
+    AppShortcutIcon,
+    ScienceIcon ,
+    PageviewIcon,
+    GitHubIcon,
+    InfoIcon
+    
 } from "../src/mui" 
 
 const log = tsw.common.logger.get_logger({id:"app/index"}) ; 
@@ -58,7 +64,7 @@ const Home: NextPage = (props : any) => {
     
     const MLink = ({ ...props }) => {
 	// @ts-ignore
-	return <Link {...props} style={{textDecoration: 'none'   }} />;
+	return <Link {...props} style={{textDecoration: 'none' }} />;
     };
 
 
@@ -98,9 +104,13 @@ const Home: NextPage = (props : any) => {
 		<MLink href="/apps">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">App Library</Typography>
+			<Box display='flex' flexDirection='row' justifyContent='space-between'>
 			<p>
 			    Mature Applications 
 			</p>
+			<AppShortcutIcon color='primary'  />
+			</Box> 
+			
 		    </Card >
 		</MLink>
 		
@@ -108,27 +118,53 @@ const Home: NextPage = (props : any) => {
 		<MLink href="/laboratory">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">Laboratory</Typography>
+			<Box display='flex' flexDirection='row' justifyContent='space-between'>
+
 			<p>
 			    Prototypes and Experiments
 			</p>
+			<ScienceIcon color='primary' style={{marginLeft : "12px" }}  />
+			</Box>
 		    </Card >
 		</MLink>
 
 		<MLink href="/resources/docs/index.html">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">Documentation</Typography>
+			<Box display='flex' flexDirection='row' justifyContent='space-between'>
+			    
 			<p>
 			    Explore the Docs
 			</p>
+			<PageviewIcon color='primary' />
+			</Box>			
 		    </Card >
 		</MLink>
 
+		<MLink href="https://github.com/sheunaluko/tidyscripts">
+		    <Card style={card_style}>
+			<Typography variant="h5" color="primary">Github</Typography>
+			<Box display='flex' flexDirection='row' justifyContent='space-between'>
+			
+			<p>
+			    See the Source Code
+			</p>
+			<GitHubIcon color='primary'/>			
+			</Box>
+		    </Card >
+		</MLink>
+
+		
 		<MLink href="/about">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">About</Typography>
+			<Box display='flex' flexDirection='row' justifyContent='space-between'>
+
 			<p>
 			    The Origin
 			</p>
+			<InfoIcon color='primary' />						
+			</Box>
 		    </Card >
 		</MLink>
 		

@@ -77,7 +77,7 @@ const Main = () => {
     useInit({ init , clean_up });  //my wrapper around useEffect 
 
     const [selectedWidget, setSelectedWidget] = useState(default_widget);
-    const [widgetWidth, setWidgetWidth] = useState(75); // Default width percentage
+    const [widgetWidth, setWidgetWidth] = useState(90); // Default width percentage
 
     const renderWidget = () => {
 	switch (selectedWidget) {

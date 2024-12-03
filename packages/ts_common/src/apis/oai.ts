@@ -76,34 +76,22 @@ export async function test_1() {
  * Provide a zod object to define the desired data structure to be return, as well as a prompt for the AI 
  * and get the parsed JSON data back 
  */
-export async function generic_completion_json_structured(ops : any ): Promise<any> {
-    
-    let {prompt, zrf } = ops ;
+export async function generic_completion_json_structured(args : any ): Promise<any> {
+
+    //args should have model, messages, response_format (which is zodResponseFormat) 
     
     let oai_client = get_openai() ; 
 
     log(`Generating structured json query`) ; 
-    log(`Using prompt: ${prompt}`) ;
-    db.add("prompt" , prompt ) 
-    
+
     log(`Requesting chat completion`) ; 
-    const completion = await oai_client.beta.chat.completions.parse({
-	model: "gpt-4o-mini-2024-07-18",
-	messages: [
-            { role: "system", content: "You are a helpful assistant." },
-            {
-		role: "user",
-		content: prompt 
-            },
-	],
-	response_format : zrf 
-    }) ;
+    const completion = await oai_client.beta.chat.completions.parse(args) ; 
 
     const message = completion.choices[0]?.message;
 
     if (message?.parsed) {
 	log(`Successfully parsed the message`)
-	log(message.parsed)
+	//log(message.parsed)
 	return message.parsed 
     } else {
 	log(`Failed to parse response`)

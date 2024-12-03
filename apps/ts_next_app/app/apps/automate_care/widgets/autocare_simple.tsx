@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { ObjectInspector } from 'react-inspector';
 import { generate_hp, get_all_dashboard_info } from './util';
-import { z } from "zod" ;
-import { zodResponseFormat } from 'openai/helpers/zod' ; 
-
-/*
- * TODO: proxy handoff API request 
- */ 
 
 import {
     Button,
@@ -40,14 +34,13 @@ import { alpha } from '@mui/system';
 import * as tsw from "tidyscripts_web";
 import * as fb  from "../../../../src/firebase";
 import * as hop from "./handoff_prompt" ;
-import * as shop from "./structured_handoff_prompt" ;
 
 const log = tsw.common.logger.get_logger({ id: "autocare" });
 const debug = tsw.common.util.debug;
 
 
 /*
- * Create the wrapped AI api clients (which enable caching by default) 
+ * Create the wrapped AI api clients 
  */ 
 
 const hp_client = fb.create_wrapped_client({
@@ -62,31 +55,11 @@ const analyze_client = fb.create_wrapped_client({
     log 
 })
 
-const handoff_client = fb.create_wrapped_structured_client({
+const handoff_client = fb.create_wrapped_client({
     app_id : "autocare" ,
     origin_id : "autocare_handoff"  ,
     log 
 })
-
-
-/*
- * Define the response structure for the handoff 
- */
-
-const one_liner = z.string()  ;
-const diagnosis_group = z.object({
-    diagnoses : z.array(z.string()),
-    narrative_summary : z.string() ,
-    plan_items : z.array(z.string())  
-})
-const handoff_response_structure = z.object({
-    one_liner,
-    diagnosis_groups : z.array(diagnosis_group)
-}) ;
-
-const Handoff_Response_Format = zodResponseFormat(handoff_response_structure, 'handoff')
-
-
 
 
 function DashboardCard({ info }: any) {
@@ -156,13 +129,10 @@ function DashboardCard({ info }: any) {
 }
 
 const Autocare = () => {
-
-    let default_handoff = null //JSON.parse(localStorage['handoff_response']) ; 
-    
     const [open, setOpen] = useState(true);
     const [note, setNote] = useState('');
     const [loading, setLoading] = useState(false);
-    const [generated_handoff, setGeneratedHandoff] = useState(default_handoff as  any) ; 
+    const [generated_handoff, setGeneratedHandoff] = useState(null as any) ; 
     const [loadingAnalyze, setLoadingAnalyze] = useState(false);
     const [loadingHandoff, setLoadingHandoff] = useState(false);    
     const [dashboardInfo, setDashboardInfo] = useState(null as any);
@@ -213,35 +183,32 @@ const Autocare = () => {
     const handleHandoff = async () => {
         setLoadingHandoff(true);
 	let patient_information = note 	
-	let prompt = shop.template.replace("{patient_information}",patient_information).replace("{parameters}",shop.default_parameters)	
+	let prompt = hop.template.replace("{patient_information}",patient_information).replace("{parameters}",hop.default_parameters)	
 
-	debug.add("handoff_prompt", prompt) ;
-
-	let response_format = Handoff_Response_Format ; //defines the response structuture (see top of file)
-
-	let args = {
-	    model : 'gpt-4o-mini-2024-07-18' ,
-	    messages : [ {role : 'system' , content : 'you are an expert medical assistant'} , { role : 'user' , content : prompt } ] ,
-	    response_format
-	}
+	debug.add("handoff_prompt", prompt) ; 
 
 	// -- query the AI with the prompt
-	// note that this wraps/mimics the structured completion endpoint 
-	const response = await handoff_client.beta.chat.completions.parse(args) 
+	const response = await handoff_client.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+		//{ role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+		{ role: 'user', content: prompt }
+            ]
+	});
 
-	//response should actually be the structured json content now 
 
-	log("Received handoff response!")
-	debug.add("handoff_response" , response) ;
+	let content = response.choices[0].message.content;
+	log("Received response content: " + content);
+	debug.add("content" , content) ;
 
-	setGeneratedHandoff(response) ; 
+	setGeneratedHandoff(content) ; 
         setLoadingHandoff(false);
     };
     
 
     return (
         <div>
-            <Grid display="none" container spacing={2} justifyContent="flex-end" marginBottom="20px">
+            <Grid container spacing={2} justifyContent="flex-end" marginBottom="20px">
                 <Grid item xs={12} sm="auto">
                     <FormControlLabel
                         control={<Checkbox checked={showMedications} onChange={() => setShowMedications(!showMedications)} />}
@@ -273,26 +240,23 @@ const Autocare = () => {
                     />
                 </Grid>
             </Grid>
-	    <div style={{display : 'none'}}>
-		<Button
-                    variant="outlined"
-                    startIcon={open ? <RemoveIcon /> : <AddIcon />}
-                    onClick={() => setOpen(!open)}
-		>
-
-                    {open ? 'Hide' : 'Show'} 
-		</Button>
-	    </div>	    
+            <Button
+                variant="outlined"
+                startIcon={open ? <RemoveIcon /> : <AddIcon />}
+                onClick={() => setOpen(!open)}
+            >
+                {open ? 'Hide' : 'Show'} 
+            </Button>
             {open && (
                 <React.Fragment>
 
-		    <p style={{marginTop: "6px" }}>
-			1. Input an H&P below, or input any patient information and press generate to create an H&P using AI.
-		    </p>
+	    <p style={{marginTop: "6px" }}>
+		1. Input an H&P note below, or input some patient information and press generate to create an H&P using AI
+	    </p>
 
-		    <p style={{marginTop: "6px" }}>
-	    		2. Analyze the H&P for insights or generate a handoff for cross-covering physicians.
-		    </p>
+	    <p style={{marginTop: "6px" }}>
+	    	2. Analyze the H&P for insights or generate a handoff for cross-covering physicians!
+	    </p>
 
 
                     <TextField
@@ -346,28 +310,14 @@ const Autocare = () => {
 
 	    <React.Fragment> {
 		(function(){
-
-
-		    let render_diagnosis_group = (dg :any) =>  {
-			let headers = dg.diagnoses.map( (d : any) => `**#${d}**` ).join("") 
-			let plan = dg.plan_items.map( (p : any) => `\-&nbsp;*${p}*&nbsp;\n\n` ).join("") 
-			return `${headers}&nbsp;\n\n${dg.narrative_summary}&nbsp;\n\n${plan}`
-		    }
-
-		    
 		    if (generated_handoff) {
-			let handoff_markdown = `**ID**:&nbsp;${generated_handoff.one_liner}&nbsp;\n\n&nbsp;\n\n` + 
-					       generated_handoff.diagnosis_groups.map( render_diagnosis_group ).join("\n\n&nbsp;\n\n") 
-
 			return ( 
 			    <Accordion style={{marginTop : "8px" }}>
 				<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 				    <Typography>Handoff</Typography>
 				</AccordionSummary>
 				<AccordionDetails>
-				    <Box style={{padding : "10px"}}>
-					<ReactMarkdown>{handoff_markdown}</ReactMarkdown>
-				    </Box> 
+				    <Box style={{padding : "10px"}}> <ReactMarkdown>{generated_handoff}</ReactMarkdown></Box> 
 				</AccordionDetails>
 			    </Accordion>
 			) } else {

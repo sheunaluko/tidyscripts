@@ -16,6 +16,11 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 import SaveIcon from '@mui/icons-material/Save';
+import AppShortcutIcon from '@mui/icons-material/AppShortcut';
+import ScienceIcon from '@mui/icons-material/Science';
+import PageviewIcon from '@mui/icons-material/Pageview';
+import GitHubIcon from '@mui/icons-material/GitHub';
+
 
 
 import Slider from '@mui/material/Slider';
@@ -189,7 +194,13 @@ export  {
     TroubleshootIcon,
 
     Slider,
-    VolunteerActivismIcon
+    VolunteerActivismIcon,
+
+    AppShortcutIcon,
+    ScienceIcon,
+    PageviewIcon,
+    GitHubIcon,
+    
 
 } 
 

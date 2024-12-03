@@ -108,7 +108,6 @@ interface CachedWrappedChatArgs {
 /*
    Going to create a wrapper over the openai client 
  */
-
 export function create_wrapped_client(ops :any) {
 
     let { app_id, origin_id , log } = ops 
@@ -124,6 +123,26 @@ export function create_wrapped_client(ops :any) {
     return wrapped_client 
 }
 
+/*
+   Going to create a wrapper over the openai client 
+ */
+export function create_wrapped_structured_client(ops :any) {
+
+    let { app_id, origin_id , log } = ops 
+
+    let wrapped_client = {
+	beta : { 
+	    chat : {
+		completions : {
+		    parse  : create_cached_wrapped_chat_completion(ops )
+		}
+	    }
+	}
+    }
+
+    return wrapped_client 
+}
+
 
 /*
  * Provide app_id and origin_id and a log function and get a function that accepts llm chat args 
@@ -131,7 +150,7 @@ export function create_wrapped_client(ops :any) {
  */ 
 export function create_cached_wrapped_chat_completion(ops : any) {
     let { app_id, origin_id, log  } = ops;
-    
+
     log(`Creating cached wrapped chat completion function for app=${app_id}, origin=${origin_id}`)
 
     return async function(llm_args : object) {
@@ -151,7 +170,6 @@ export function create_cached_wrapped_chat_completion(ops : any) {
     
     
 } 
-
 
 
 /*
@@ -222,11 +240,21 @@ export async function chat_completion(args : any) {
      */
 
     let url = "/api/open_ai_chat_2"
+
+    //if the args contain the response_format field then we need to make a call to the structured endpoint instead
+    if (args.response_format) {
+	log(`Detected request for structured completion`)
+	url = "/api/openai_structured_completion"
+	log(`Switching URL to ${url}`)	    
+    } 
+
+    
     let fetch_response = await fetch(url, {
 	method : 'POST' ,
 	headers: {   'Content-Type': 'application/json'   },
 	body : JSON.stringify(args)
     });
+    
     debug.add("fetch_response" , fetch_response) ;
     let response = await fetch_response.json() ;
     debug.add("response" , response) ;
