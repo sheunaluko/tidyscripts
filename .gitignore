@@ -32,3 +32,5 @@ packages/ts_node/local
 
 .env
 apps/ts_next_app/.env.local
+data
+data/**

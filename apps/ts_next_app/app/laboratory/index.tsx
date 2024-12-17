@@ -25,7 +25,8 @@ const card_style : any  = {
   padding : "10px" ,
   marginBottom : "10px" ,
   cursor : 'pointer' , 
-} 
+}
+
 
 const AllLinks = () => {
   return (
@@ -132,7 +133,14 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
-	  
+	  <MLink href="/laboratory/spotifile">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Spotifile</Typography>
+		  <p>
+		      Spotify file management and playlist tools
+		  </p>
+	      </Card>
+	  </MLink>
 
       </Box>
   );
