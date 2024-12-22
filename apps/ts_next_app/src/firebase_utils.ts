@@ -96,44 +96,6 @@ export async function store_user_doc(args : FirebaseDataStoreOps) {
 }
 
 
-/**
- * testing function 
- */
-export async function uid_store_user_doc(args : FirebaseDataStoreOps , user_id : string) {
-
-    let {app_id , path , data  } = args ;
-    log(`Request to user_doc_store: appid=${app_id}, path =${path}, data=${JSON.stringify(data)}`)
-
-    log(`Detected user id: ${user_id}`)
-
-        if (!user_id) {
-	throw new Error('User is not authenticated.');
-    }
-    
-    let full_path = [ "users" , user_id , app_id, ...path]  ;
-
-    log("full_path")
-    log(full_path)
-
-    // @ts-ignore
-    var docRef = doc(db, ...full_path)
-    log(`Obtained document reference`) 
-
-    try { 
-	await setDoc(docRef, data) 
-	log(`Wrote document`)
-    } catch (error : any) {
-	log(`Error writing document: ${error}`)
-	throw("authentication error")	
-	
-    } 
-}
-
-
-
-
-
-
 export async function test_store_user_doc() {
     let args = {
 	app_id : "test",
@@ -145,7 +107,7 @@ export async function test_store_user_doc() {
 
 
 /**
- * Main function for adding a new document with a specified ID at a specified path
+ * Main function for getting  document at a specified path
  * The last string in the path is assumed to be the docId (and length of path MUST be odd) 
  *
  * @returns A promise that resolves when the document is successfully written.

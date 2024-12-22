@@ -35,18 +35,40 @@ export async function generate_hp(ops : any ) {
 }
 
 
-export async function get_individual_dashboard_info(hp : string,  dashboard_name : string) {
-    // -- get a ref to the open_ai_client 
-    //let client =  wrapped_client // tsw.apis.openai.get_openai();
-
-    // -- generate the prompt 
-    //let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name)
-
-    /*
-       Need to finish implementation 
-     */ 
-    return  null // dashboard_prompt;
+export async function get_individual_dashboard_info(ops: any) {
+    let { hp, client, dashboard_name } = ops;
     
+    // -- generate the prompt 
+    let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name);
+    
+    // -- debug
+    log("Generated dashboard prompt: " + dashboard_prompt);
+
+    // -- query the AI with the prompt
+    const response = await client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
+            { role: 'user', content: dashboard_prompt }
+        ]
+    });
+
+    let content = response.choices[0].message.content;
+    log("Received response content: " + content);
+    debug.add("content", content);
+
+    // -- extract JSON array from response content
+    let dashboard_info = extractJsonArray(content);    
+    log("Extracted dashboard info");
+    debug.add("dashboard_info", dashboard_info);
+    
+    if (dashboard_info) {
+        log("Extracted dashboard info: " + JSON.stringify(dashboard_info));
+        return dashboard_info;
+    } else {
+        log("Error: Failed to extract valid JSON array from response.");
+        return null;
+    }
 }
 
 

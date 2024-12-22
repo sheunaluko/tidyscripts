@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 
 import Chat from './widgets/chat';
 import Autocare from './widgets/AutocareSimple';
-
+import Autocare_Dev from './widgets/AutocareV3'; 
 
 import * as tsw from "tidyscripts_web";
 import useInit from "../../../hooks/useInit";
@@ -70,7 +70,7 @@ const Main = () => {
 	}
     };
 
-    const default_widget = 'Autocare';
+    const default_widget = 'Autocare_Dev';
 
 
     let clean_up = ()=> { log("main unmounted"); };
@@ -83,6 +83,8 @@ const Main = () => {
 	switch (selectedWidget) {
 	    case 'Autocare':
 		return <Autocare />;
+	    case 'Autocare_Dev':
+		return <Autocare_Dev />;
 	    case 'Chat':
 		return <Chat />;
 	    default:
@@ -105,6 +107,11 @@ const Main = () => {
 			<Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "Autocare"          ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare')}>Autocare</Button>
 		    </Grid>
 		    
+
+		    <Grid item xs={12} sm="auto">
+			<Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "Autocare_Dev"      ? "contained" : "outlined" } onClick={() => setSelectedWidget('Autocare_Dev')}>Autocare_Dev</Button>
+		    </Grid>
+
 		    <Grid item xs={12} sm="auto">
 			<Button className="widget-button" style={{marginRight:"10px"}} variant={selectedWidget == "Chat"              ? "contained" : "outlined" } onClick={() => setSelectedWidget('Chat')}>Chat</Button>
 		    </Grid>

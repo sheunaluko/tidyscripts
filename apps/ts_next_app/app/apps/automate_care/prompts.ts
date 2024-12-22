@@ -224,7 +224,11 @@ export const examples = {
 
 export function generate_prompt(prompt : string, _replacements  :any  , _examples : any  , prompt_type  : (string | null) ) {
 
-    log(`Generating prompt with prompt_type: ${prompt_type}`) 
+    log(`Generating prompt with prompt_type: ${prompt_type}`)
+    if (!prompt) {
+	log(`missing prompt!`) 
+	debugger; 
+    }
     
     if ( ! _replacements ) {
 	_replacements = replacements  
@@ -272,7 +276,7 @@ export function generate_full_prompt(hp : string, prompt_type : string) {
 	'medication_review' : medication_review_prompt ,
 	'labs' : labs_prompt ,
 	'imaging' : imaging_prompt, 
-	'dianosis_review' : diagnosis_review_prompt
+	'diagnosis_review' : diagnosis_review_prompt
     } 
 
     var tmp_prompt = prompt_map[prompt_type] 
