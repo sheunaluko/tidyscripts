@@ -31,6 +31,16 @@ const card_style : any  = {
 const AllLinks = () => {
   return (
       <Box>
+
+	  <MLink href="/laboratory/data_editor">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Data Editor </Typography>
+		  <p>
+		      View and edit your stored data 
+		  </p>
+	      </Card >
+	  </MLink>
+	  
 	  
 	  <MLink href="/laboratory/cds">
 	      <Card style={card_style}>

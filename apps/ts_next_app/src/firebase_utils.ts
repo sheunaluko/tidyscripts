@@ -3,7 +3,7 @@ import * as tsw from "tidyscripts_web";
 
 import { initializeApp } from 'firebase/app';
 //import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore/lite';
-import { getFirestore, collection, getDocs, setDoc, doc, addDoc , getDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, setDoc, doc, addDoc , getDoc, deleteDoc } from 'firebase/firestore';
 import {getAuth , onAuthStateChanged } from "firebase/auth"
 
 
@@ -12,6 +12,7 @@ export {getAuth} ;
 /* temporary placeholder for Auth type */ 
 type Auth = any ;
 type Firestore = any ; 
+
 
 
 /* define the  Firebase config object  */ 
@@ -28,6 +29,7 @@ const firebaseConfig = {
 
 /* create logger */ 
 const log = tsw.common.logger.get_logger({id : 'firebase_util'})  ; 
+const debug = tsw.common.util.debug 
 
 
 const app = initializeApp(firebaseConfig);
@@ -54,11 +56,104 @@ interface FirebaseDataGetOps {
    LOGGED IN UTILITIES 
  */
 
+interface CollectionInfo {
+    created: string;
+    collections?: { [key: string]: CollectionInfo };
+    path : string[] 
+}
+
+interface CollectionRegistry {
+    created: string;
+    collections?: { [key: string]: CollectionInfo };
+    updated : string ; 
+}
+
+
+async function update_collection_registry(app_id: string, path: string[]) {
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const registryRef = doc(db, 'users', user_id, 'registries', 'collection_registry');
+
+    log(`Request to check collections in path: ${path.join('/')}`);
+    log(`Will remove users/user_id from path`)
+    path = path.splice(2) ;
+    log(`Checking collections in path: ${path.join('/')}`);    
+
+    try {
+        const registrySnap = await getDoc(registryRef);
+        let registry: CollectionRegistry = registrySnap.exists() 
+            ? registrySnap.data() as CollectionRegistry
+            : { collections: {}, created : new Date().toISOString() , updated : new Date().toISOString() };
+
+        let currentLevel = registry.collections! ;
+        let newCollections: string[] = [];
+        
+        // Process every other item (collections only)
+        for (let i = 0; i < path.length; i += 2) {
+            const collectionName = path[i];
+            
+            if (!currentLevel[collectionName]) {
+                newCollections.push(collectionName);
+                currentLevel[collectionName] = {
+                    created: new Date().toISOString(),
+                    collections: {},
+		    path : path.slice(0,i+1) 
+                };
+            }
+
+            if (i + 2 < path.length) {
+                currentLevel = currentLevel[collectionName].collections!;
+            }
+        }
+
+        if (newCollections.length > 0) {
+            log(`New collections created: ${newCollections.join(', ')}`);
+        } else {
+            log(`No new collections created in path ${path.join('/')}`);
+        }
+
+        registry.updated = new Date().toISOString();
+        await setDoc(registryRef, registry);
+
+    } catch (error: any) {
+        log(`Error updating collection registry: ${error.message}`);
+        throw new Error(`Failed to update collection registry: ${error.message}`);
+    }
+}
+
+export async function get_collection_hierarchy(app_id: string): Promise<CollectionRegistry | null> {
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    try {
+        const registryRef = doc(db, 'users', user_id, app_id, 'collection_registry');
+        const registrySnap = await getDoc(registryRef);
+        
+        if (!registrySnap.exists()) {
+            return null;
+        }
+
+        return registrySnap.data() as CollectionRegistry;
+    } catch (error: any) {
+        log(`Error getting collection hierarchy: ${error.message}`);
+        throw new Error(`Failed to get collection hierarchy: ${error.message}`);
+    }
+}
+
 
 
 /**
  * Main function for adding a new document with a specified ID at a specified path
- * The last string in the path is assumed to be the docId (and length of path MUST be odd) 
+ * The last string in the path is assumed to be the docId (and length of path MUST be odd)
+ * It must be ODD because firestore using collection/doc/collection/doc/collection/doc ... 
+ * And by default the path will start with users/uid/app_id/... so to create a document it will be ODD 
  *
  * @returns A promise that resolves when the document is successfully written.
  */
@@ -80,6 +175,9 @@ export async function store_user_doc(args : FirebaseDataStoreOps) {
 
     log("full_path")
     log(full_path)
+
+    // Add registry update here
+    await update_collection_registry(app_id, full_path);
 
     // @ts-ignore
     var docRef = doc(db, ...full_path)
@@ -105,7 +203,38 @@ export async function test_store_user_doc() {
     return await store_user_doc(args); 
 } 
 
+/**
+ * testing function (for privacy testing) 
+ */
+export async function uid_store_user_doc(args : FirebaseDataStoreOps , user_id : string) {
 
+    let {app_id , path , data  } = args ;
+    log(`Request to user_doc_store: appid=${app_id}, path =${path}, data=${JSON.stringify(data)}`)
+
+    log(`Detected user id: ${user_id}`)
+
+        if (!user_id) {
+	throw new Error('User is not authenticated.');
+    }
+    
+    let full_path = [ "users" , user_id , app_id, ...path]  ;
+
+    log("full_path")
+    log(full_path)
+
+    // @ts-ignore
+    var docRef = doc(db, ...full_path)
+    log(`Obtained document reference`) 
+
+    try { 
+	await setDoc(docRef, data) 
+	log(`Wrote document`)
+    } catch (error : any) {
+	log(`Error writing document: ${error}`)
+	throw("authentication error")	
+	
+    } 
+}
 /**
  * Main function for getting  document at a specified path
  * The last string in the path is assumed to be the docId (and length of path MUST be odd) 
@@ -234,13 +363,23 @@ const get_user_data = async (auth: Auth, db: Firestore, path: string[], doc_id: 
  *
  * @returns A promise that resolves when the document is successfully written.
  */
-export async function store_user_collection(args : FirebaseDataStoreOps) {
+export async function store_user_collection(args: FirebaseDataStoreOps) {
+    let {app_id, path, data} = args;
+    log(`Request to store in user collection: appid=${app_id}, path=${path}, data=${JSON.stringify(data)}`);
 
-    let {app_id , path , data  } = args ;
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
     
-    let auth = getAuth() ; 
-    log(`Request to store in user collection: appid=${app_id}, path =${path}, data=${JSON.stringify(data)}`) 
-    return await store_user_data( auth , db, app_id , path, data)
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+    
+    let full_path = ["users", user_id, app_id, ...path];
+
+    // Add registry update here
+    await update_collection_registry(app_id, full_path);
+
+    return await store_user_data(auth, db, app_id, path, data);
 }
 
 
@@ -541,6 +680,122 @@ export async function privacy_tests() {
 
 } 
 
+/**
+ * Lists all documents in a collection without fetching their full content
+ * @param args - Standard Firebase data get operations arguments
+ * @returns Array of document IDs
+ */
+export async function list_documents_in_collection(args: FirebaseDataGetOps): Promise<string[]> {
+    const { app_id, path } = args;
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const full_path = ["users", user_id, app_id, ...path];
+    log(`Listing documents in collection: ${full_path.join('/')}`);
+
+    try {
+        // @ts-ignore
+        const collectionRef = collection(db, ...full_path);
+        const snapshot = await getDocs(collectionRef);
+        
+        return snapshot.docs.map(doc => doc.id);
+    } catch (error: any) {
+        log(`Error listing documents: ${error}`);
+        throw new Error(`Failed to list documents: ${error.message}`);
+    }
+}
+
+/**
+ * Updates specific fields in a user document
+ * @param args - Standard Firebase data store operations arguments
+ * @returns Promise<void>
+ */
+export async function update_user_doc(args: FirebaseDataStoreOps): Promise<void> {
+    const { app_id, path, data } = args;
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const full_path = ["users", user_id, app_id, ...path];
+    log(`Updating document at path: ${full_path.join('/')}`);
+
+    try {
+        // @ts-ignore
+        const docRef = doc(db, ...full_path);
+        await setDoc(docRef, data, { merge: true });
+        log(`Document updated successfully`);
+    } catch (error: any) {
+        log(`Error updating document: ${error}`);
+        throw new Error(`Failed to update document: ${error.message}`);
+    }
+}
+
+/**
+ * Deletes a user document
+ * @param args - Standard Firebase data get operations arguments
+ * @returns Promise<void>
+ */
+export async function delete_user_doc(args: FirebaseDataGetOps): Promise<void> {
+    const { app_id, path } = args;
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const full_path = ["users", user_id, app_id, ...path];
+    log(`Deleting document at path: ${full_path.join('/')}`);
+
+    try {
+        // @ts-ignore
+        const docRef = doc(db, ...full_path);
+        await deleteDoc(docRef);
+        log(`Document deleted successfully`);
+    } catch (error: any) {
+        log(`Error deleting document: ${error}`);
+        throw new Error(`Failed to delete document: ${error.message}`);
+    }
+}
+
+/**
+ * Gets statistics about a collection
+ * @param args - Standard Firebase data get operations arguments
+ * @returns Collection statistics including document count
+ */
+export async function get_collection_stats(args: FirebaseDataGetOps): Promise<any> {
+    const { app_id, path } = args;
+    const auth = getAuth();
+    const user_id = auth.currentUser?.uid;
+    
+    if (!user_id) {
+        throw new Error('User is not authenticated.');
+    }
+
+    const full_path = ["users", user_id, app_id, ...path];
+    log(`Getting stats for collection at path: ${full_path.join('/')}`);
+
+    try {
+        // @ts-ignore
+        const collectionRef = collection(db, ...full_path);
+        const snapshot = await getDocs(collectionRef);
+        
+        return {
+            documentCount: snapshot.size,
+            path: collectionRef.path
+        };
+    } catch (error: any) {
+        log(`Error getting collection stats: ${error}`);
+        throw new Error(`Failed to get collection stats: ${error.message}`);
+    }
+}
 
 export async function test_suite() {
 
@@ -566,3 +821,4 @@ export async function test_suite() {
 
     
 }
+
