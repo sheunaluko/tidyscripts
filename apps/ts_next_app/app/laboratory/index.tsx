@@ -32,6 +32,17 @@ const AllLinks = () => {
   return (
       <Box>
 
+
+	  <MLink href="/laboratory/trainer">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Trainer </Typography>
+		  <p>
+		     Transformation Repository for AI INference </p>
+		     <p>Provide Input/Output examples for Augmenting AI Inference tasks
+		  </p>
+	      </Card >
+	  </MLink>
+
 	  <MLink href="/laboratory/data_editor">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Data Editor </Typography>
