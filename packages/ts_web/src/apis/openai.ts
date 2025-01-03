@@ -9,6 +9,7 @@ declare var Audio : any ;
 declare var URL  : any ; 
 
 const log = common.logger.get_logger({id : 'open_ai_web'})
+const debug = common.util.debug ; 
 
 /**
  * Retrieves the API Key from localStorage under 'OAAK' ; returns alert if missing 
@@ -55,8 +56,8 @@ export async function speak(input : string) {
  * The blob can be used for the raw audio data 
  * The audio element can play the audio using Element.play() and Element.pause() 
  */
-export async function text_to_audio(input : string) {
-    let response = await get_openai_tts_response(input) ;
+export async function text_to_audio(args : any) {
+    let response = await tts_response(args) ;
     //convert response to blob
     let blob = await response.blob() 
     //get blob url
@@ -79,6 +80,17 @@ export async function get_openai_tts_response(input : string) {
     return response 
 } 
 
+
+/**
+ * Returns the openai TTS response , allows params
+ */
+export async function tts_response(args: any) {
+    let openai = get_openai() ;
+    let response = await openai.audio.speech.create(args) 
+    return response 
+} 
+
+
 /**
  * DEPRECATED 
  * Uses the tidyscripts openai davinci api to answer a text based prompt 
@@ -86,6 +98,47 @@ export async function get_openai_tts_response(input : string) {
 export async function openai_davinci_prompt(prompt : string, max_tokens  : number ) {
   return await get_json_from_url("https://www.tidyscripts.com/api/openai_davinci" , {prompt , max_tokens})
 }
+
+
+/**
+ * This function takes arguments for an openai llm chat completion (either structured or unstructured) and 
+ * and passes them to the Tidyscripts openai endpoints for completion 
+ * If response_format is included in the arugments then the structured_completion beta endpoint is used
+ * Otherwise the standard chat endpoint is used 
+ * @param args - Args to pass to openai chat endpoint 
+ */
+export async function proxied_chat_completion(args : any) {
+
+    /*
+       Take the args and pass it to the vercel function instead 
+     */
+
+    let url = "/api/open_ai_chat_2"
+
+    //if the args contain the response_format field then we need to make a call to the structured endpoint instead
+    if (args.response_format) {
+	log(`Detected request for structured completion`)
+	url = "/api/openai_structured_completion"
+	log(`Switching URL to ${url}`)
+	debug.add('chat_completion_args' , args ) 
+    } 
+
+    
+    let fetch_response = await fetch(url, {
+	method : 'POST' ,
+	headers: {   'Content-Type': 'application/json'   },
+	body : JSON.stringify(args)
+    });
+    
+    debug.add("fetch_response" , fetch_response) ;
+    let response = await fetch_response.json() ;
+    debug.add("response" , response) ;
+
+    return response 
+    
+
+}
+
 
 
 

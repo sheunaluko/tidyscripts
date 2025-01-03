@@ -19,7 +19,8 @@ import {theme} from "../../theme";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, TextField, Button, Typography } from "@mui/material";
 
-import {store_user_doc, store_user_collection} from "../../../src/firebase_utils" 
+import {store_user_doc, store_user_collection} from "../../../src/firebase_utils"
+import * as fbu from  "../../../src/firebase_utils"
 
 const log    = tsw.common.logger.get_logger({id:"trainer"});
 const debug  = tsw.common.util.debug
@@ -33,10 +34,11 @@ const Trainer = () => {
         if (typeof window !== 'undefined') { 
             Object.assign(window, {
                 tsw,
-		fp, 
+		fp,
+		fbu , 
 		debug
             });
-            log("trainer init");
+            log("Trainer init");
         }
     };
 

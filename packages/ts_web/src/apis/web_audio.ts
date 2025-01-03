@@ -36,6 +36,27 @@ export async function get_audio_context() {
 }
 
 /*
+ * Shutsdown the audio context
+ */
+export async function shutdown() {
+    if (!ctx) {
+	log(`no ctx is active`);
+	return
+    } else {
+	log(`Shutting down audio context`)
+	await ctx.close()
+	remove_mic_callbacks()
+	log(`Done`)
+	return null
+    } 
+}
+
+export  function remove_mic_callbacks() {
+    log(`Removing mic_callbacks`) 
+    mic_callbacks = {} 
+} 
+
+/*
  * Return the audio stream 
  */
 export async function get_audio_stream() {

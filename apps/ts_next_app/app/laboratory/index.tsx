@@ -32,6 +32,15 @@ const AllLinks = () => {
   return (
       <Box>
 
+	  <MLink href="/laboratory/ride">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">RIDE </Typography>
+		  <p>
+		     Repository based Inferenced for Domain-Specific Evaluation (RIDE)</p>
+		     <p>Use Input/Output examples for Augmenting AI Inference tasks
+		  </p>
+	      </Card >
+	  </MLink>
 
 	  <MLink href="/laboratory/trainer">
 	      <Card style={card_style}>

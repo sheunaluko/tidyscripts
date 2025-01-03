@@ -1,5 +1,5 @@
 export var template = `
-Your goal is to either generate or update a patient handoff based on the information given to you If no prior handoff is given then generate one.
+Your goal is toa patient handoff based on the information given to you
 
 The handoff is a concise summary of the patient and their active problems. Its purpose is to quickly inform a covering provider about the patient, assuming that they have never Met or chart reviewed the patient before. Thus, it should include pertinent information and exclude extraneous information, so as to optimize the transfer of essential information to the cross covering physician in a timely manner.
 

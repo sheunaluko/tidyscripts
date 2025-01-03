@@ -245,7 +245,8 @@ export async function chat_completion(args : any) {
     if (args.response_format) {
 	log(`Detected request for structured completion`)
 	url = "/api/openai_structured_completion"
-	log(`Switching URL to ${url}`)	    
+	log(`Switching URL to ${url}`)
+	debug.add('chat_completion_args' , args ) 
     } 
 
     
