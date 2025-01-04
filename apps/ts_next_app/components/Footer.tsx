@@ -83,7 +83,7 @@ function Footer() {
 	    <CBox>
 		<Show above="md">
 		    <Typography color={theme.palette.primary.main}> 		    
-			Copyright © 2024 Sheun Aluko, MD		
+			Copyright © 2025 Sheun Aluko, MD		
 		    </Typography>
 		</Show>
 

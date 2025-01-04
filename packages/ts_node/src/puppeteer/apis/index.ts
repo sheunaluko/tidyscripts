@@ -1,12 +1,12 @@
 
 import * as debank from "./debank"
-import * as uptodate from "./uptodate"
-export * as ai_utils from "./ai_utils" 
+export * as ai_utils from "./ai_utils"
+import * as usync from "./usync" 
 
 
 export {
     debank,
-    uptodate, 
+    usync, 
     
 } 
 
