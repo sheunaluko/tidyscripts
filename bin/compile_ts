@@ -1,4 +1,4 @@
 # see command line args below; these are the essentials for accurate compilation  
 echo compiling "$1" 
-npx tsc --moduleResolution node --module esnext --noEmit --esModuleInterop true --target esnext "$1"
+npx tsc --moduleResolution node --module esnext --noEmit --esModuleInterop true --target esnext "$1" --strict
 echo done 

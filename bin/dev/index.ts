@@ -5,7 +5,8 @@ import * as oai from "./openai"
 //import * as bot from "./bot" 
 import * as pup from "./pup"
 import * as fhir from "./fhir"
-import * as u2d from "./u2d" 
+import * as u2d from "./u2d"
+import * as uload from "./uload" 
 
 
 export {
@@ -13,6 +14,7 @@ export {
     oai ,
     pup,
     fhir,
-    u2d , 
-  //     bot 
+    u2d ,
+    uload
+
 } 

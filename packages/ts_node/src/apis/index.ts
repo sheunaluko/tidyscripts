@@ -1,4 +1,4 @@
-
+import * as firestore from "@google-cloud/firestore"
 import * as bokeh from "./bokeh"
 import * as binanceus from "./binanceus"
 import * as coinbase from "./coinbase"
@@ -14,8 +14,8 @@ export * as up_to_date from "./up_to_date"
 
 
 export {
-
-  firebase_admin, 
+  firestore   ,
+  firebase_admin , 
   binanceus  ,
   coinbase ,
   radiopaedia, 

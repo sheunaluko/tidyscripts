@@ -8,10 +8,10 @@ import {logger,asnc} from "tidyscripts_common" ;
 
 export const log = logger.get_logger({id: "usync"})
 
-export const url   = process.env['USYNC_URL']
-export const email = process.env['USYNC_EMAIL']
-export const pw    = process.env['USYNC_PW']
-export const dir   = process.env['USYNC_DIR']
+export const url   = process.env['USYNC_URL'] as string
+export const email = process.env['USYNC_EMAIL'] as string
+export const pw    = process.env['USYNC_PW'] as string
+export const dir   = process.env['USYNC_DIR'] as string
 
 export const config  = { url, email, pw, dir }
 
@@ -46,17 +46,17 @@ export async function main() {
 
     // launch
     log('launch')
-    await p.evaluate( ()=> document.querySelector<HTMLElement>("#BtnLaunch13684941").click() )
+    await p.evaluate( ()=> document.querySelector<HTMLElement>("#BtnLaunch13684941")!.click() )
     await loaded(p) ; await asnc.wait(5000) ; 
 
     //dropdown
     log('dropdown')    
-    await p.evaluate( ()=> document.querySelector<HTMLElement>("mat-nav-list mat-list-item:nth-child(4) a").click() )
+    await p.evaluate( ()=> document.querySelector<HTMLElement>("mat-nav-list mat-list-item:nth-child(4) a")!.click() )
     await asnc.wait(2000)
 
     //click
     log('click')    
-    await p.evaluate( ()=> document.querySelector<HTMLElement>("mat-nav-list mat-list-item:nth-child(4) mat-list-item:nth-child(2) a").click() )
+    await p.evaluate( ()=> document.querySelector<HTMLElement>("mat-nav-list mat-list-item:nth-child(4) mat-list-item:nth-child(2) a")!.click() )
     await asnc.wait(2000)
 
     //now we are here
@@ -70,7 +70,7 @@ export async function main() {
 	let tmp = [ ]  ; 
 	for (var i=0; i< rs.length ; i ++) {
 
-	    let name = rs[i].querySelector( "td:nth-child(2)" ).textContent.trim()
+	    let name = rs[i].querySelector( "td:nth-child(2)" )!.textContent!.trim()
 	    if (already_synced.includes(name)) {
 	    } else {
 		tmp.push( {row: i, name } )
@@ -102,13 +102,13 @@ export async function activate_row(p: any, i : number) {
     await p.evaluate((i:number)=>{
 	//get_rows	
 	let rs = Array.from(document.querySelectorAll<HTMLElement>("tbody tr")) ; 
-	rs[i].querySelector<HTMLElement>(`td:nth-child(9) p:nth-child(2) i`).click()
+	rs[i].querySelector<HTMLElement>(`td:nth-child(9) p:nth-child(2) i`)!.click()
     },i)
 
     await asnc.wait(3000)
 
     await p.evaluate(()=>{
-	document.querySelector<HTMLElement>(".review-button").click()
+	document.querySelector<HTMLElement>(".review-button")!.click()
     })
     
 }
@@ -117,7 +117,7 @@ export async function row_info(p: any, i : number) {
     return await p.evaluate((i:number)=>{
 	//get_rows	
 	let rs = Array.from(document.querySelectorAll<HTMLElement>("tbody tr")) ; 
-	return rs[i].innerText
+	return rs[i]!.innerText
     },i)
 }
 
@@ -165,7 +165,7 @@ export async function save_row_info(t_num : number, r_data : any) {
 
 export async function process_row(p : any , r_num :number ) {
     let r_data = await get_row_data(p, r_num) ;
-    let t_num = r_data.t_info.split("\t")[1].trim()
+    let t_num = r_data.t_info.split("\t")[1]!.trim()
     log(`Will save for t_num: ${t_num}`) 
     await save_row_info(t_num , r_data) 
 } 
@@ -173,27 +173,27 @@ export async function process_row(p : any , r_num :number ) {
 
 // - go to review page
 export async function go_to_review_page(p : any){
-    await p.evaluate( ()=> document.querySelector<HTMLElement>('[aria-label="Show Review Page"]').click() )
+    await p.evaluate( ()=> document.querySelector<HTMLElement>('[aria-label="Show Review Page"]')!.click() )
 }
 
 // - get number of questions 
 export async function get_num_questions(p : any) {
-    return await p.evaluate( ()=> document.querySelector<HTMLElement>("table.questionlist").children.length )
+    return await p.evaluate( ()=> document.querySelector<HTMLElement>("table.questionlist")!.children.length )
 }
 
 // - select nth q 
 export async function select_nth_q(p:any , n : number) {
-    return await p.evaluate( (n :number)=> document.querySelector<HTMLElement>("table.questionlist").children[n].querySelector<HTMLElement>("span").click() , n)
+    return await p.evaluate( (n :number)=> document.querySelector<HTMLElement>("table.questionlist")!.children[n].querySelector<HTMLElement>("span")!.click() , n)
 }
 
 // - goto next
-export async function next(p) {
-    await p.evaluate( ()=> document.querySelector<HTMLElement>('[aria-label="Navigate to the next question"]').click() )
+export async function next(p : any) {
+    await p.evaluate( ()=> document.querySelector<HTMLElement>('[aria-label="Navigate to the next question"]')!.click() )
 } 
 
 // - get main content 
 export async function get_main_content(p : any ){
-    return p.evaluate ( () => document.querySelector<HTMLElement>("#questionInformation").innerHTML )
+    return p.evaluate ( () => document.querySelector<HTMLElement>("#questionInformation")!.innerHTML )
 }
 
 
@@ -201,10 +201,10 @@ export async function get_main_content(p : any ){
 export async function get_q_metadata(p : any) {
     return await p.evaluate( ()=> {
 	return {
-	    qid: document.querySelector<HTMLElement>(".layout-header div:nth-child(2) div div:nth-child(2)").innerText,
-	    num: document.querySelector<HTMLElement>(".layout-header div:nth-child(3) div div:nth-child(2)").innerText,
-	    tid: document.querySelector<HTMLElement>(".layout-header div:nth-child(2) div div:nth-child(1)").innerText, 
-	    cat: document.querySelector<HTMLElement>(".layout-header div").innerText	    
+	    qid: document.querySelector<HTMLElement>(".layout-header div:nth-child(2) div div:nth-child(2)")!.innerText,
+	    num: document.querySelector<HTMLElement>(".layout-header div:nth-child(3) div div:nth-child(2)")!.innerText,
+	    tid: document.querySelector<HTMLElement>(".layout-header div:nth-child(2) div div:nth-child(1)")!.innerText, 
+	    cat: document.querySelector<HTMLElement>(".layout-header div")!.innerText	    
 	} 
     })
 }
@@ -215,7 +215,7 @@ export async function get_q_metadata(p : any) {
 function init() {
     log(`Initializing with config: ${JSON.stringify(config)}`)
     //check files structure and strip the t from beginning of dir names 
-    var already_synced = read_dir(dir).map( (x:string)=> x.replace("t","") )
+    var already_synced = read_dir(dir as string).map( (x:string)=> x.replace("t","") )
     log(`Already synced=${JSON.stringify(already_synced)}`)
     return { 
 	already_synced  
@@ -240,7 +240,7 @@ export async function login(p : any) {
     // - submit and wait for page load 
     await p.evaluate( (args : any ) => {
 	let {element_map , config }  = args; 
-	document.querySelector<HTMLElement>(element_map.btn).click() 
+	document.querySelector<HTMLElement>(element_map.btn)!.click() 
     }, {element_map, config} ) ; 
     await loaded(p)
 
