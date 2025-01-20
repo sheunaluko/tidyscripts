@@ -80,6 +80,15 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
+	  <MLink href="/laboratory/cortex_0">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Cortex_0 </Typography>
+		  <p>
+		      A next generation AI assistant (Traditional Verion)
+		  </p>
+	      </Card >
+	  </MLink>
+	  
 	  
 	  <MLink href="/laboratory/aidx">
 	      <Card style={card_style}>

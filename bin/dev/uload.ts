@@ -8,5 +8,7 @@ declare var global : any ;
 global.uload = uload ; 
 global.node = node ;
 
-await uload.init() 
-//const replServer = repl.start({ prompt: ':: ' }); 
+export async function uload_init() { 
+    return await uload.init()
+} 
+

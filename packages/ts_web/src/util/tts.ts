@@ -120,6 +120,12 @@ export async function _speak(ops : SpeechOps) {
     }
 }
 
+export var chunk_strategy = "sentences"  ;
+export function set_chunk_strategy(t : string) {
+    log(`Set chunk strategy: ${t}`) 
+    chunk_strategy = t ; 
+} 
+
 export function speak(ops : SpeechOps) {
      
     let { 
@@ -130,8 +136,15 @@ export function speak(ops : SpeechOps) {
     
     log("Request to speak  =:> " + text) 
     log("With voice =:> " + voiceURI) 
-    /*chunk up the text by word length */ 
-    let chunks = fp.map(fp.partition(fp.split(text," "), 20),fp.joiner(" "))
+    /*chunk up the text by word length */
+    var chunks : any  = null ;
+    if (chunk_strategy == 'sentences' ) {
+	log("splitting text by sentences")
+	chunks = text.split("\.")
+    } else  {
+	log("splitting text by words")	
+	chunks = fp.map(fp.partition(fp.split(text," "), 20),fp.joiner(" "))
+    }
     
     /* and pass them to the speak function */
     chunks.forEach( function(c :any) {

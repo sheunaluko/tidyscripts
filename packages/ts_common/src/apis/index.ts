@@ -5,6 +5,7 @@ import * as medications from "./medications"
 import * as langchain from "./langchain"
 import * as data_generator from "./data_generator"
 import * as oai from "./oai"
+import * as amie from "./amie/index"
 
 import OpenAI from "openai" 
 
@@ -15,6 +16,7 @@ export {
     medications,
     langchain,
     OpenAI ,
+    amie, 
     oai , 
     data_generator
 } 

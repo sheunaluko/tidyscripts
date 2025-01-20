@@ -10,11 +10,11 @@ import * as uload from "./uload"
 
 
 export {
-    firebase_admin ,
-    oai ,
-    pup,
-    fhir,
-    u2d ,
-    uload
+    //firebase_admin ,
+    //oai ,
+    //pup,
+    //fhir,
+    //u2d ,
+    //uload
 
 } 

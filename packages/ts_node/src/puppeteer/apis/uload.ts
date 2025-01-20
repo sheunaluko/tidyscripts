@@ -10,10 +10,12 @@ const log = logger.get_logger({'id': 'uload'}) ;
 export const dir     = process.env['USYNC_DIR'] as string ;
 export const lpath   = process.env['USYNC_LOAD_PATH'] as string ;
 
-log(`Getting firestore reference`)
-export var fire = new Firestore()
+
+export var fire : any = null ; 
 
 export async function init() {
+    log(`Getting firestore reference`)
+    fire = new Firestore()
     log(`Initializing with dir: ${dir}`); 
     let folders = read_dir(dir) 
     log(`Found folders: ${JSON.stringify(folders)}`)
