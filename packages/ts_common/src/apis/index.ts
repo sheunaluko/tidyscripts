@@ -6,6 +6,8 @@ import * as langchain from "./langchain"
 import * as data_generator from "./data_generator"
 import * as oai from "./oai"
 import * as amie from "./amie/index"
+import * as tnlp from "./tnlp"
+import * as cryptography from "./cryptography"
 
 import OpenAI from "openai" 
 
@@ -18,5 +20,7 @@ export {
     OpenAI ,
     amie, 
     oai , 
-    data_generator
+    data_generator,
+    tnlp,
+    cryptography 
 } 

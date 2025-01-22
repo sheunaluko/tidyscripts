@@ -1,5 +1,6 @@
 'use client'; 
 import * as tsw from "tidyscripts_web";
+const {fp } = tsw.common ;
 
 import { initializeApp } from 'firebase/app';
 //import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore/lite';
@@ -69,7 +70,7 @@ interface CollectionRegistry {
 }
 
 
-async function update_collection_registry(app_id: string, path: string[]) {
+async function update_collection_registry(app_id: string, _path: string[]) {
     const auth = getAuth();
     const user_id = auth.currentUser?.uid;
     if (!user_id) {
@@ -78,11 +79,13 @@ async function update_collection_registry(app_id: string, path: string[]) {
 
     const registryRef = doc(db, 'users', user_id, 'registries', 'collection_registry');
 
-    log(`Request to check collections in path: ${path.join('/')}`);
-    log(`Will remove users/user_id from path`)
-    path = path.splice(2) ;
-    log(`Checking collections in path: ${path.join('/')}`);    
+    let f_path = fp.clone(_path) ; 
 
+    log(`Request to check collections in path: ${f_path.join('/')}`);
+    log(`Will remove users/user_id from path`)
+    let path = f_path.splice(2) ;
+    log(`Checking collections in path: ${path.join('/')}`);
+    
     try {
         const registrySnap = await getDoc(registryRef);
         let registry: CollectionRegistry = registrySnap.exists() 
@@ -113,7 +116,7 @@ async function update_collection_registry(app_id: string, path: string[]) {
         if (newCollections.length > 0) {
             log(`New collections created: ${newCollections.join(', ')}`);
         } else {
-            log(`No new collections created in path ${path.join('/')}`);
+            log(`No new collections created in path ${f_path.join('/')}`);
         }
 
         registry.updated = new Date().toISOString();
@@ -173,11 +176,11 @@ export async function store_user_doc(args : FirebaseDataStoreOps) {
     
     let full_path = [ "users" , user_id , app_id, ...path]  ;
 
-    log("full_path")
-    log(full_path)
-
     // Add registry update here
     await update_collection_registry(app_id, full_path);
+
+    log("full_path")
+    log(full_path)
 
     // @ts-ignore
     var docRef = doc(db, ...full_path)

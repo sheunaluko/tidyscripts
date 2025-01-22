@@ -17,6 +17,8 @@
     "@types/fhir": "^0.0.41",
     "@types/ramda": "^0.29.12",
     "@uniswap/sdk": "^3.0.3",
+    "compromise": "^14.14.4",
+    "fast-json-stable-stringify": "^2.1.0",
     "openai": "^4.72.0",
     "ramda": "^0.29.1"
   }
