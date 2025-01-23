@@ -6,13 +6,14 @@ import { initializeApp } from 'firebase/app';
 //import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore/lite';
 import { getFirestore, collection, getDocs, setDoc, doc, addDoc , getDoc, deleteDoc } from 'firebase/firestore';
 import {getAuth , onAuthStateChanged } from "firebase/auth"
-
+import { getFunctions, connectFunctionsEmulator , httpsCallable } from "firebase/functions";
 
 export {getAuth} ; 
 
 /* temporary placeholder for Auth type */ 
 type Auth = any ;
 type Firestore = any ; 
+
 
 
 
@@ -34,6 +35,16 @@ const debug = tsw.common.util.debug
 
 
 const app = initializeApp(firebaseConfig);
+export var functions = getFunctions(app) ;
+
+// Connect to the emulator if running locally
+if (process.env.NODE_ENV !== "production") {
+    log(`Using emulator functions`) 
+    connectFunctionsEmulator(functions, "localhost", 5001);
+}
+
+export var store_embedding_function = httpsCallable(functions, "storeEmbedding")
+export var retrieve_embedding_function = httpsCallable(functions,"retrieveEmbedding")   
 const db = getFirestore(app);
 
 log(`Created firebase app and db references :)`) 

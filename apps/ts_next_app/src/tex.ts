@@ -10,7 +10,8 @@ import * as tsw from "tidyscripts_web";
 
 import * as tdf from "./text_definitions" 
 
-import sources from "./text_sources" 
+import sources from "./text_sources"
+
 
 /* create logger and debugger */ 
 const log    = tsw.common.logger.get_logger({id : 'tex'})  ; 
@@ -23,6 +24,7 @@ const tnlp    = tsw.common.apis.tnlp
 const app_id = 'tex';
 const DEFAULT_CHUNK_SIZE = 1024;
 const DEFAULT_EMBEDDING_SIZE = 1024;
+
 
 /*
    Notes:
@@ -85,7 +87,7 @@ export async function retrieve_source(sid : string) {
 
 
 interface EmbeddingInfo {
-    sid: string,  //source id 
+    metadata : any , 
     start : number,
     end : number ,
     embedding : number[] 
@@ -95,16 +97,33 @@ interface EmbeddingInfo {
 export async function upload_embedding(embedding_info: EmbeddingInfo) {
 
     // Store the embedding information in a Firestore document
-    await fu.store_user_collection({
-	app_id,
-	path: ['spaces', 'embedding_space'],
-	data: embedding_info,
-    });
-    let {sid, start, end} = embedding_info
+    try { 
+	await fu.store_embedding_function(embedding_info) ;
+	let { metadata, start, end } = embedding_info ; 
+	log(`Uploaded embedding for sid=${metadata.sid}, chars=${start}-${end}`)
+	return false
+    } catch (e : any) {
+	log(`Error storing embedding: ${e}`)
+	return true 
+    } 
 
-    log(`Uploading embedding for sid=${sid}, chars=${start}-${end}`)
-    return false
+    
 }
+
+export async function vector_search(query_vector : number[] , limit : number ) {
+
+    // Store the embedding information in a Firestore document
+    try { 
+	return await fu.retrieve_embedding_function({query_vector, limit}) ; 
+	log(`Retrieved embedding`) 
+    } catch (e : any) {
+	log(`Error retrieving embedding: ${e}`)
+	return null 
+    } 
+
+
+    
+} 
 
 
 interface TexConfig {
@@ -182,7 +201,7 @@ export async function compute_and_upload_embeddings_for_sid(sid : string, _sourc
     let {embedding_data,chunks} = await generate_embeddings_from_source_info(source_info) ;
 
     embedding_data.map( (ed : any) => {
-	ed.sid = sid
+	ed.metadata = {sid} 
     })
 
     await Promise.all(   embedding_data.map( (ei : EmbeddingInfo) => {

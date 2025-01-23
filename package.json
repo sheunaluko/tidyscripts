@@ -12,9 +12,12 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "apps/firebase/functions/*"
   ],
+  "packageManager": "npm@10.8.3",
   "devDependencies": {
+    "firebase-tools": "^13.29.2",
     "ts-loader": "^9.5.1",
     "typedoc": "^0.25.7"
   },
