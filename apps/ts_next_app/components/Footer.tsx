@@ -29,7 +29,7 @@ import {theme,
 	grey} from "../app/theme" 
 
 
-import build_info from "../src/build_info.json"
+import build_info from "../generated/build_info.json"
 
 
 // @ts-ignore

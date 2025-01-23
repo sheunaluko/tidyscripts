@@ -1,35 +1,41 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
-  "pipeline": {
-    "dev" : {
-      "cache" : false  
-      }, 
-    "build": {
-      // A package's `build` script depends on that package's
-      // dependencies and devDependencies
-      // `build` tasks  being completed first
-      // (the `^` symbol signifies `upstream`).
-      "dependsOn": ["^build"],
-      // note: output globs are relative to each package's `package.json`
-      // (and not the monorepo root)
-      "outputs": [".next/**", "dist/**"]
-    } ,
-    "publish_package": {
-      // (the `^` symbol signifies `upstream`).
-      "dependsOn": ["build", "patch_package", "^publish_package"],
-      // note: output globs are relative to each package's `package.json`
-      // (and not the monorepo root)
-      "outputs": []
-    } ,
-    "patch_package": {
-      // (the `^` symbol signifies `upstream`).
-      "dependsOn": ["^patch_package"],
-      // note: output globs are relative to each package's `package.json`
-      // (and not the monorepo root)
-      "outputs": []
-    } ,
-    "docs" : {
-      "outputs" : ["apps/ts_next_app/public/docs"] 
+    "$schema": "https://turborepo.org/schema.json",
+    "tasks": {
+	"dev": {
+	    "cache": false
+	},
+	"prebuild": {
+	    "outputs": ["generated/**"]
+	},
+	"build": {
+	    "dependsOn": [ "prebuild" , 
+			   "^build"
+	    ],
+	    "outputs": [
+		".next/**",
+		"dist/**",
+		"functions/lib/**",
+		"apps/ts_next_app/public/docs/**"	  
+	    ]
+	},
+	"publish_package": {
+	    "dependsOn": [
+		"build",
+		"patch_package",
+		"^publish_package"
+	    ],
+	    "outputs": []
+	},
+	"patch_package": {
+	    "dependsOn": [
+		"^patch_package"
+	    ],
+	    "outputs": []
+	},
+	"docs": {
+	    "outputs": [
+		"apps/ts_next_app/public/docs"
+	    ]
+	}
     }
-  }
 }

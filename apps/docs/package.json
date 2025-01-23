@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "typedoc  --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" ; ",
+    "build": "typedoc  --out ../ts_next_app/public/docs  --excludeExternals  --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" ; ",
     "docs": "typedoc  --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" ; ",
     "jdoc": "typedoc  --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" --json jdoc.json ",
     "mdoc": "typedoc  --plugin typedoc-plugin-markdown --excludeExternals --externalPattern \"**/node_modules/**\" --sourceLinkTemplate \"https://github.com/sheunaluko/tidyscripts/blob/master/{path}#L{line}\" --out ./dist ",

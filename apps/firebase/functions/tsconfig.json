@@ -1,18 +1,16 @@
 {
-    "compilerOptions": {
-	"module": "esnext", // Use ES module resolution
-	"target": "es2020", // Target modern JavaScript
-	"moduleResolution": "node", // Resolve modules like Node.js
-	"esModuleInterop": true, // Allow interop with CommonJS modules
-	"allowSyntheticDefaultImports": true, // Allow synthetic imports
-	"skipLibCheck": true, // Skip type checks for libraries	
-	"outDir": "lib",
-	"sourceMap": true,
-	"strict": true,
-	"target": "es2017"
-    },
-    "compileOnSave": true,
-    "include": [
-	"src"
-    ]
+  "compilerOptions": {
+    "target": "ES2020",                   // Set the ECMAScript target version
+    "module": "commonjs",                 // Module system
+    "strict": true,                       // Enable strict type checking
+    "esModuleInterop": true,              // Allow default imports
+    "outDir": "lib",                      // Output directory for compiled code
+      "rootDir": "src",                     // Source directory
+      "skipLibCheck" : true, 
+    "moduleResolution": "node",           // Node.js module resolution
+    "resolveJsonModule": true,            // Allow importing JSON files
+    "typeRoots": ["node_modules/@types"]  // Look for type definitions here
+  },
+  "include": ["src"],                     // Include all files in the src directory
+  "exclude": ["node_modules"]             // Exclude dependencies
 }
