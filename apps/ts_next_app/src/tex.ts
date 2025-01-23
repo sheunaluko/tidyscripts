@@ -67,7 +67,7 @@ export async function create_source(source_info: SourceInfo) {
     await fu.store_user_doc({
 	app_id,
 	path: ['spaces', 'source_space', sid],
-	data: { ...source_info , ... {sid} }
+	data: source_info 
     })
 
     log(`Source with sid=${sid} successfully created`);    
@@ -129,16 +129,19 @@ export async function get_tex_config() {
     // - 
     let path = 	['active_config'];
     // -
-    try { 
-	return await fu.get_user_doc({ app_id, path }) ;
-    } catch (e :any) {
+    let config = await fu.get_user_doc({ app_id, path }) ;
+    if (!config)  {
+	log(`No active config, will set it now`) 
 	await set_default_tex_config()
 	return get_default_tex_config() 
-    }
+    } else {
+	log(`Retrieved active config, will use it`) 	
+	return config 
+    } 
     
-
 } 
 
+//https://cloud.google.com/blog/products/databases/get-started-with-firestore-vector-similarity-search
 
 export function get_default_tex_config(){
     return {chunk_size : DEFAULT_CHUNK_SIZE, embedding_size : DEFAULT_EMBEDDING_SIZE}    

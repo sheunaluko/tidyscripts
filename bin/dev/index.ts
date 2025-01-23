@@ -7,7 +7,7 @@ import * as pup from "./pup"
 import * as fhir from "./fhir"
 import * as u2d from "./u2d"
 import * as uload from "./uload" 
-
+import * as tex from "./tex"
 
 export {
     //firebase_admin ,
@@ -16,5 +16,6 @@ export {
     //fhir,
     //u2d ,
     //uload
+    tex 
 
 } 
