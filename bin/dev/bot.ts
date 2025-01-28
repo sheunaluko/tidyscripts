@@ -14,7 +14,7 @@ var PAGE_REF_NAME = "PAGE_REF" ;
 const functions = [
 
     {
-	"description" : "Opens a puppeteer page. This can be used to search the internet and extract information. Returns true if it was opened successfully" ,
+	"description" : "Opens a puppeteer page. This can be used to search the internet and extract information." 
 	"name" : "open_browser_page" ,
 	"args" : "", 
 	"return_type" : "any" ,

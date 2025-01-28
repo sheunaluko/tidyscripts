@@ -23,6 +23,7 @@ import { Analytics } from '@vercel/analytics/react';
 import styles from "../styles/Layout.module.css" ; 
 import {ChakraProvider} from "@chakra-ui/react" 
 
+
 export const metadata: Metadata = {
     title: 'Tidyscripts',
     description : 'Robust Typescript Software' 
@@ -37,6 +38,7 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
     let main_v_padding="25px";
     let main_h_padding="10px"; 
 
+    
     return (
 	<html lang="en">
 	    <Head>

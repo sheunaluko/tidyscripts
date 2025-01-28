@@ -12,6 +12,10 @@ Goals:
 
 Currently working on:
 
+Jan 27:
+- cortex: main_stream , Text input loop 
+
+
 Nov 16: handoff ai generation
 
 Oct 12: adding FHIR server / client functionality. FHIR data generation.

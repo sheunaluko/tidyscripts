@@ -13,7 +13,9 @@ const configuration = new Configuration({
     organization: ORG, 
     apiKey: API_KEY, 
 });
-*/ 
+ */
+
+log(`OPENAI API KEY: ${API_KEY}`) 
 
 export const client = new OpenAI(); //default for v4 is to use the env var 
 

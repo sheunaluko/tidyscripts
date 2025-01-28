@@ -10,6 +10,8 @@ import * as firebase from "../src/firebase"
 import {toast_toast} from "../components/Toast"
 
 import * as tsw from "tidyscripts_web"  ;
+import * as lab from "./laboratory/src/index" 
+
 import useInit from "../hooks/useInit" 
 
 import {theme} from "./theme"
@@ -40,6 +42,7 @@ const Home: NextPage = (props : any) => {
 		tsw ,
 		toast_toast,
 		firebase ,
+		lab , 
 		theme 
 	    })
 	    window.setTimeout( function(){

@@ -57,7 +57,10 @@ export default async function handler(
 
     log(`Got post request for struct chat completion `) ;
     console.log(req.body) 
-    const response = await tsn.common.apis.oai.generic_completion_json_structured(req.body);
+    const response = await client.beta.chat.completions.parse(req.body) ;
+    //tsn.common.apis.oai.generic_completion_json_structured(req.body);
+    log(`Got response:`) ;
+    console.log(response) 
     res.status(200).json(response) 
 
 
