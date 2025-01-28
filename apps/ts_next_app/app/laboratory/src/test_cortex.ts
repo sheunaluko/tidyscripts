@@ -39,7 +39,7 @@ const functions  =  [
 	parameters        : null , 
 	fn          : async ()=>"1 billion dollars" ,
 	return_type : "string" , 	
-    } 
+    } ,
     
 ]
 
@@ -53,7 +53,8 @@ export async function main() {
 
     // preload a user message
     //c1.add_user_text_input("tell me about germany and brazil relations in 5 sentences") ;
-    c1.add_user_text_input("tell me the weather in dubai right now") ;    
+    //c1.add_user_text_input("tell me the weather in Singapore right now") ;
+    c1.add_user_text_input("tell me the time, the price of btc, and the weather in Singapore right now, all at once") ;        
 
     return c1 
 

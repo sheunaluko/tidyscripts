@@ -10,6 +10,21 @@ import * as common from "tidyscripts_common"
 const {debug} = common.util ;
 const log = common.logger.get_logger({'id':'cortex_base'})
 
+
+/*
+   
+   Todo:  
+   - integrate this into CortexUI 
+   - support multiple function calls simultaneously 
+      - probably best way is to change CortexOutput to be text of functionCallS
+      - and to have functionCalls : FunctionCall[ ]  | null 
+      - and just natively support multiple function calls (or 1 or none) 
+
+ */
+
+
+
+
 /* Define types */
 
 /* FunctionParameters */
@@ -17,7 +32,7 @@ type FunctionParameters = ( Record<string,string> | null )
 type FunctionReturnType = any 
 
 /* Function */
-export type Function = {
+type Function = {
     description  : string,
     name : string ,
     parameters : FunctionParameters , 
@@ -26,14 +41,15 @@ export type Function = {
 } 
 
 /* FunctionCall */
-export type FunctionCall =  {
+type FunctionCall =  {
     name : string,
     parameters :  FunctionParameters  
 }
 
 /* FunctionResult */
-export type FunctionResult =  {
+type FunctionResult =  {
     name : string,
+    error : boolean , 
     result  : FunctionReturnType
 } 
 
@@ -161,22 +177,6 @@ export class Cortex  {
 
     }
 
-    /*
-       
-       Todo: 
-         - Build the types for the SystemMessage, UserMessage, CortexMessage , then build the type Messages type (can just be an array of objects) 
-         - add the class variable Messages (starts as empty array) 
-         - add functions for adding a UserMessage or CortexMessage, or for setting SystemMessage (this allows swapping out the functions in real time?? 
-
-
-         - then add function for doing the LLM call with ExISTING Messages and getting the result back (will be a CortexMessage) 
-         - then add a function for PROCESSING a CortexMessage (if text is detected, it is EMITTED via a listener), if function call is detected it  
-              - is called and a UserMessage is prepared and added to the Messages History 
-         - think about a better abstraction for how to handle NEW messages in the Messages object and make it clean and separable 
-
-     */
-
-
     /**
      * Build the message array 
      */
@@ -222,12 +222,19 @@ export class Cortex  {
 	this.add_user_message(user_message) 
     }
 
+    add_cortex_output(output : CortexOutput ) {
+	let cortex_message = this._cortex_msg(JSON.stringify(output))
+	this.add_cortex_message(cortex_message) 
+    }
     
 	
     /**
-     * Run the LLM with the specified system message, message history, and parameters 
+     * Run the LLM with the specified system message, message history, and parameters
+     * If loop=N, after obtaining a function response another LLM call 
+     * will be made automatically, until no more functions are called or until N calls have been made 
      */
-    async run_llm() {
+    async run_llm(loop : number = 2) {
+
 	
 	let messages = this.build_messages() ;
 	let model = this.model ; 
@@ -245,11 +252,87 @@ export class Cortex  {
 	    body : JSON.stringify(args)
 	})
 
-	return result 
+	await this.handle_llm_response(result, loop )
 
 	
     }
-    
+
+
+    async handle_llm_response(fetchResponse : any , loop : number ) {
+
+	let jsonData = await fetchResponse.json()
+	let output  = jsonData.choices[0].message.parsed ;
+
+	//add the message 
+	this.add_cortex_output(output)	
+
+	//at this point parsed is a CortexOutput object
+	if (output.kind == "text" ) {
+	    this.log(`thinking::> ${output.thoughts}`)	    
+	    this.log(`OUTPUT::> ${output.text}`)
+	    return 
+	}
+
+	if (output.kind == "functionCall" ) {
+	    this.log(`Loop=${loop}`) 
+	    if (loop < 1 ) {
+		this.log(`Loop counter ran out!`)
+		return 
+	    }
+	    
+	    this.log(`thinking::> ${output.thoughts}`)
+	    let function_result = await this.handle_function_call(output) ;
+
+	    this.add_user_result_input(function_result) ;
+
+	    this.run_llm(loop-1) 
+
+	    
+	} 
+
+	return 
+    }
+
+    async handle_function_call(fMsg : CortexOutput) {
+	let { thoughts,  functionCall }  = fMsg ;
+	let { name, parameters }  = functionCall as FunctionCall  ;
+
+	let F = this.function_dictionary[name] ;
+	var error : any  ; 
+	if (! F ) {
+	    error = `The function ${name} was not found`
+	    this.log(error) 
+	    return {
+		error , 
+		result :  null ,
+		name 
+	    }
+	}
+
+	this.log(`Running function: ${name} with args=${JSON.stringify(parameters)}`) 
+	try {
+	    let result = await F.fn(parameters)
+	    error = null ; 
+	    this.log(`Ran ${name} function successfully and got result:`)
+	    this.log(result) ; 
+	    return {
+		error,
+		result,
+		name 
+	    }
+	} catch (e : any ) {
+	    error =  e ;
+	    this.log(error) 	    
+	    return {
+		error , 
+		result : null ,
+		name 
+	    } 
+	}
+
+
+	
+    }
 
     
 
