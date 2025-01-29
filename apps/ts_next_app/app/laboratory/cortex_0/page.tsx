@@ -1,3 +1,3 @@
-import App from './app2'
+import App from './app3'
 
 export default App; 

@@ -233,7 +233,7 @@ export class Cortex  {
      * If loop=N, after obtaining a function response another LLM call 
      * will be made automatically, until no more functions are called or until N calls have been made 
      */
-    async run_llm(loop : number = 2) {
+    async run_llm(loop : number = 2) : Promise<string> {
 
 	
 	let messages = this.build_messages() ;
@@ -246,13 +246,13 @@ export class Cortex  {
 	} ;
 
 
-	let result = await fetch("api/openai_structured_completion", {
+	let result = await fetch(`${window.location.origin}/api/openai_structured_completion`, {
 	    method : 'POST',
 	    headers : {'Content-Type' : 'application/json' } ,
 	    body : JSON.stringify(args)
 	})
 
-	await this.handle_llm_response(result, loop )
+	return await this.handle_llm_response(result, loop )
 
 	
     }
@@ -270,14 +270,14 @@ export class Cortex  {
 	if (output.kind == "text" ) {
 	    this.log(`thinking::> ${output.thoughts}`)	    
 	    this.log(`OUTPUT::> ${output.text}`)
-	    return 
+	    return output.text
 	}
 
 	if (output.kind == "functionCall" ) {
 	    this.log(`Loop=${loop}`) 
 	    if (loop < 1 ) {
 		this.log(`Loop counter ran out!`)
-		return 
+		return "too many calls to LLM" 
 	    }
 	    
 	    this.log(`thinking::> ${output.thoughts}`)
@@ -285,12 +285,14 @@ export class Cortex  {
 
 	    this.add_user_result_input(function_result) ;
 
-	    this.run_llm(loop-1) 
+	    return await this.run_llm(loop-1) 
 
 	    
-	} 
+	}
 
-	return 
+	return "LLM output kind unrecognized" 
+
+
     }
 
     async handle_function_call(fMsg : CortexOutput) {
