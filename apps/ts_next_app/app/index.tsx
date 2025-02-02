@@ -131,7 +131,7 @@ const Home: NextPage = (props : any) => {
 		    </Card >
 		</MLink>
 
-		<MLink href="/resources/docs/index.html">
+		<MLink href="/docs/index.html">
 		    <Card style={card_style}>
 			<Typography variant="h5" color="primary">Documentation</Typography>
 			<Box display='flex' flexDirection='row' justifyContent='space-between'>
