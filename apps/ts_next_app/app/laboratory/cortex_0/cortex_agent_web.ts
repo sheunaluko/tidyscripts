@@ -1,5 +1,4 @@
 import * as c from "../src/cortex"  ;
-declare var window : any ;
 
 /**
  * Defines the cortex agent used in the Cortex UI 
@@ -20,30 +19,33 @@ export function get_agent() {
 
 const functions = [
     {
-	description : `Use the javascript interpreter` ,
+	description : "use the javascript interpreter" ,
 	name        : "evaluate_javascript" ,
 	parameters  : { input : "string" }  ,
-	usage       : [
-	    "When reporting results, do not output long numerical data unless explicitly requested",
-	    "Use snake_case for variables unless explicitly requested", 
-	
-	], 
-	fn          : async ( params : any ) => {
-	    var error  : any = null ;
-	    var result : any = null ;
-	    try { 
-		result = window.eval(params.input)
-	    } catch (e : any) {
-		error = e 
+	fn          : async (ops : any) => {
+	    let {input} = ops
+	    let result = eval(input)
+	    return result 
+	} ,
+	return_type : "any"
+    },
+    {
+	description : "accumulates a block of text from the user" ,
+	name        : "accumulate_text" ,
+	parameters  : null , 
+	fn          : async (ops :any) => {
+	    let {get_user_data, log} = ops  ;
+	    log(`Accumulating text`)  ;
+	    let text  = await get_user_data() ;
+	    log(`Got user text: ${text}`);
+	    return {
+		accumulated_text : text 
 	    }
-	    return { result, error } 
 	    
 	} ,
 	return_type : "any"
     },
+
+
     
 ]
-
-
-
-

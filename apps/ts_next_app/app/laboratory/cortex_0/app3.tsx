@@ -25,7 +25,7 @@ import * as cortex_agent from "./cortex_agent_web"
       --- creating arrays and splitting in half 
 
    -- have panel that displays the workspace in real time as the ai creates objects, etc 
-
+tidy
    -- Cortex can help you create interfaces in real time through voice interaction, and runs in the page itself 
    -- Fix build date issue 
 
@@ -129,7 +129,20 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 
     window.addEventListener( 'tidyscripts_web_speech_recognition_result' , async (e: any) => {
 	let transcript = e.detail ;
-	log(`Transcribe Ref: ${transcribeRef.current}`) ; 	
+	log(`Transcribe Ref: ${transcribeRef.current}`) ;
+
+
+	/*
+	   This is where I need to pass the transcript Dynamically either to: 
+	   - cortex_channel 
+	   - function_channel 
+	   
+	   If a function is executing then we pass to function_channel 
+	   If not then we pass to cortex_channel 
+	   
+	 */
+
+	
 	if (transcribeRef.current) {
 	    log(`Transcribing audio`)
 	    debug.add("transcript" , transcript) ;
@@ -256,7 +269,14 @@ const  Component: NextPage = (props : any) => {
 
     let transcription_cb = async function(text : string) {
 	log(`tcb: ${text}`)
-	add_user_message(text) ;
+
+	if (COR.is_running_function) {
+	    log(`tcb: Cortex running function, will forward`)
+	    await COR.handle_function_input(text) 
+	} else { 
+	    log(`tcb: No active cortex function`) 
+	    add_user_message(text) ;
+	}
     } 
 
     

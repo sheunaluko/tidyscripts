@@ -9,7 +9,7 @@ import * as common from "tidyscripts_common"
 
 const {debug} = common.util ;
 const log = common.logger.get_logger({'id':'cortex_base'})
-
+import * as Channel from "./channel" 
 
 /*
    
@@ -28,7 +28,7 @@ const log = common.logger.get_logger({'id':'cortex_base'})
 /* Define types */
 
 /* FunctionParameters */
-type FunctionParameters = ( Record<string,string> | null )
+type FunctionParameters = ( Record<string,any> | null )
 type FunctionReturnType = any 
 
 /* Function */
@@ -154,18 +154,24 @@ export class Cortex  {
 
     model : string;
     name  : string;
-    log   : any; 
+    log   : any;
     functions : Function[]  ;
     system_msg : SystemMessage ; 
     function_dictionary : FunctionDictionary ;  
     messages  : IOMessages ;   //all messages (User and Cortex) that follow the system message 
 
+    is_running_function : boolean ; //tracks whether a function is currently being called
+    function_input_ch  : Channel.Channel ; 
+    
     constructor(ops : CortexOps) {
 	let { model, name, functions } = ops  ;
 	this.model = model ;
 	this.name  = name ;
 	this.functions = functions ;
-	this.messages = [ ] 
+	this.messages = [ ] ;
+	this.is_running_function = false;
+	this.function_input_ch = new Channel.Channel({name}) ; 
+	
 	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
 	log("Initializing")
@@ -182,7 +188,15 @@ export class Cortex  {
      */
     build_messages() { return [ this.system_msg , ...this.messages ]  } 
 
+    /**
+     * Running function
+     */
+    set_is_running_function(v : boolean) {
+	this.log(`Function running=${v}`) ; 
+	this.is_running_function  = v ; 
+    }
     
+
     /**
      * Add UserMessage 
      */
@@ -274,18 +288,32 @@ export class Cortex  {
 	}
 
 	if (output.kind == "functionCall" ) {
-	    this.log(`Loop=${loop}`) 
-	    if (loop < 1 ) {
-		this.log(`Loop counter ran out!`)
-		return "too many calls to LLM" 
+
+	    this.set_is_running_function(true) ; //function running indicator 
+
+	    try {
+		this.log(`Loop=${loop}`) 
+		if (loop < 1 ) {
+		    this.log(`Loop counter ran out!`)
+		    return "too many calls to LLM" 
+		}
+		
+		this.log(`thinking::> ${output.thoughts}`)
+		let function_result = await this.handle_function_call(output) ;
+		this.set_is_running_function(false) ;  //turn off function running indicator
+		this.add_user_result_input(function_result) ;
+		
+	    } catch (e : any ) {
+		
+		//error with function call
+		this.log(`Uncaught error with function execution!`)
+		throw new Error(e)
+		
 	    }
+
 	    
-	    this.log(`thinking::> ${output.thoughts}`)
-	    let function_result = await this.handle_function_call(output) ;
+	    return await this.run_llm(loop-1)
 
-	    this.add_user_result_input(function_result) ;
-
-	    return await this.run_llm(loop-1) 
 
 	    
 	}
@@ -294,6 +322,12 @@ export class Cortex  {
 
 
     }
+
+    //allows for passing user text to an active function 
+    async handle_function_input(i :any ) {
+	this.log(`Sending to function_input_ch: ${i}`)
+	this.function_input_ch.write(i) ; 
+    } 
 
     async handle_function_call(fMsg : CortexOutput) {
 	let { thoughts,  functionCall }  = fMsg ;
@@ -311,7 +345,22 @@ export class Cortex  {
 	    }
 	}
 
-	this.log(`Running function: ${name} with args=${JSON.stringify(parameters)}`) 
+	this.log(`Running function: ${name} with args=${JSON.stringify(parameters)}`)
+
+	parameters = parameters || {} ; // -- 
+
+	//prepare the function_input
+	const get_user_data = (async function() {
+	    // @ts-ignore 
+	    return await this.function_input_ch.read() 
+	}).bind(this)
+
+	const fn_log = common.logger.get_logger({id : `fn:${name}`}); 
+
+	this.log(`Appending get_user_data to function parameters`)	
+	parameters.get_user_data = get_user_data ;
+	parameters.log = fn_log ; 	
+	
 	try {
 	    let result = await F.fn(parameters)
 	    error = null ; 

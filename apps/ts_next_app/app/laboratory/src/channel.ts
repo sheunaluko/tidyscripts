@@ -16,15 +16,19 @@ export class Channel {
     promise_que : promiseEntry[] ;
     log : any ;
     name : string; 
+    forwarding_to : Channel[] ; 
+    receiving_from : Channel[] ; 
     
     constructor(ops : any) {
 
-	let {name } = ops 
+	let {name } = ops
 	
+	this.forwarding_to = [] ; 
+	this.receiving_from = [] ; 
 	this.value_que = [] 
 	this.promise_que = []
 	this.name = name;  
-	this.log = tsw.common.logger.get_logger({'id' : `ch:${name}:`})
+	this.log = tsw.common.logger.get_logger({'id' : `ch:${name}`})
 	
     } 
     
@@ -50,6 +54,14 @@ export class Channel {
 	    return p  //return the promise 
 	} 
 	
+    }
+
+    connect(forwarding_to  : Channel ) {
+	/* need to finish this implementation */ 
+	this.log(`Connecting to channel: ${forwarding_to.name}`); 
+	this.forwarding_to.push(forwarding_to) ;
+	forwarding_to.receiving_from.push(this)  ; 
+	
     } 
     
     write(data : any)  : void {
@@ -67,7 +79,13 @@ export class Channel {
     } 
     
     flush() : void {
-	//will clear the channel queue by sending nulls 
+	/* 
+	   need to finish this implementation 
+	   Technically this should not just send nulls but should clear the queue , etc.. 
+
+	 */ 	
+	//will clear the channel queue by sending nulls
+	
 	
 	//any values that have been written will be forgotten 
 	this.value_que = [] 
@@ -87,8 +105,8 @@ export class Channel {
 	
 	while (true ) {
 	    let val = await this.read() 
-	    log("Got value:") 
-	    log(val) 
+	    this.log("Got value:") 
+	    this.log(val) 
 	} 
     } 
     

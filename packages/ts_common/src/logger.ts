@@ -37,13 +37,27 @@ export function get_logger(ops : LoggerOps) {
   let { id  } = ops ;
   return function(t : any) {
 
-    if ( suppress_map[id] ) { return }  ; //suppress if applicable 
-    
+      if ( suppress_map[id] ) { return }  ; //suppress if applicable
+
+      if (t == undefined ) {
+	  console.log(`[${id}]:: undefined`)
+	  return 
+      } 
+
+      if (t == null ) {
+	  console.log(`[${id}]:: null`)
+	  return 
+      } 
+      
+      
     if (t.toString() == '[object Object]' ) {
       console.log(`[${id}]:: > `)
       console.log(t) 
     } else { 
       console.log(`[${id}]:: ${t}`)
-    } 
+    }
+
+
+      
   }
 } 
