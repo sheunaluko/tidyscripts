@@ -6,6 +6,7 @@ import { zodResponseFormat } from 'openai/helpers/zod' ;
 import { z } from "zod" ;
 import system_msg_template  from "./cortex_system_msg_template"
 import * as common from "tidyscripts_common"
+import * as tsw from "tidyscripts_web"
 
 const {debug} = common.util ;
 const log = common.logger.get_logger({'id':'cortex_base'})
@@ -360,6 +361,18 @@ export class Cortex  {
 	this.log(`Appending get_user_data to function parameters`)	
 	parameters.get_user_data = get_user_data ;
 	parameters.log = fn_log ; 	
+
+	//also prepare the feedback object
+	let sounds = tsw.util.sounds ; 
+	const feedback = {
+	    error : sounds.error,
+	    activated  : sounds.input_ready, 
+	    acknowledged : sounds.proceed,
+	    success : sounds.success , 
+	}
+
+	this.log(`Appending feedback object to function parameters`)	
+	parameters.feedback  = feedback  ; 
 	
 	try {
 	    let result = await F.fn(parameters)

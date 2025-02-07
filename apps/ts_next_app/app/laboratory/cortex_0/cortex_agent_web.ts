@@ -29,23 +29,38 @@ const functions = [
 	} ,
 	return_type : "any"
     },
+
+    /*
     {
 	description : "accumulates a block of text from the user" ,
 	name        : "accumulate_text" ,
 	parameters  : null , 
 	fn          : async (ops :any) => {
-	    let {get_user_data, log} = ops  ;
+	    // -- 
+	    let {get_user_data, log , feedback} = ops  ;
 	    log(`Accumulating text`)  ;
-	    let text  = await get_user_data() ;
-	    log(`Got user text: ${text}`);
-	    return {
-		accumulated_text : text 
-	    }
+	    feedback.activated() ;
+	    var txt = [ ]
+	    var text = await get_user_data()
 	    
+	    while ( text.trim() != "finished") {
+		txt.push(text)
+		log(`Added ${text}`)
+		feedback.acknowledged()
+		text = await get_user_data()
+	    }
+
+	    let final_text = txt.join("\n") 
+	    log(`Got user text: ${final_text}`);
+	    feedback.success() ; 
+	    return {
+		accumulated_text : final_text
+	    }
+	    // -- 
 	} ,
 	return_type : "any"
     },
-
+    */
 
     
 ]
