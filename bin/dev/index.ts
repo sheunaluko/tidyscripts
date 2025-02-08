@@ -8,6 +8,8 @@ import * as fhir from "./fhir"
 import * as u2d from "./u2d"
 import * as uload from "./uload" 
 import * as tex from "./tex"
+import * as ytt from "./yt_transcript"
+import * as yts from "./yts" 
 
 export {
     //firebase_admin ,
@@ -16,6 +18,8 @@ export {
     //fhir,
     //u2d ,
     //uload
-    tex 
+    tex ,
+    ytt ,
+    yts , 
 
 } 
