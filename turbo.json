@@ -4,18 +4,14 @@
 	"dev": {
 	    "cache": false
 	},
-	"prebuild": {
-	    "outputs": ["generated/**"]
-	},
 	"build": {
-	    "dependsOn": [ "prebuild" , 
-			   "^build"
-	    ],
+	    "dependsOn": [ "^build" ],
 	    "outputs": [
 		".next/**",
 		"dist/**",
 		"functions/lib/**",
-		"apps/ts_next_app/public/docs/**"	  
+		"apps/ts_next_app/public/docs/**",
+		"apps/ts_next_app/generated/**"	  		
 	    ]
 	},
 	"publish_package": {

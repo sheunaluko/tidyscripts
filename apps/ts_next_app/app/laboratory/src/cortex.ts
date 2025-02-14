@@ -162,7 +162,9 @@ export class Cortex  {
     messages  : IOMessages ;   //all messages (User and Cortex) that follow the system message 
 
     is_running_function : boolean ; //tracks whether a function is currently being called
-    function_input_ch  : Channel.Channel ; 
+    function_input_ch  : Channel.Channel ;
+
+    user_output : any ; 
     
     constructor(ops : CortexOps) {
 	let { model, name, functions } = ops  ;
@@ -171,9 +173,15 @@ export class Cortex  {
 	this.functions = functions ;
 	this.messages = [ ] ;
 	this.is_running_function = false;
-	this.function_input_ch = new Channel.Channel({name}) ; 
+	this.function_input_ch = new Channel.Channel({name}) ;
 	
 	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
+
+	this.user_output = function(x : any) {
+	    log(`User output not yet configured: received output:`)
+	    log(x) ; 
+	} 
+	
 
 	log("Initializing")
 	log("Generating system message")  
@@ -184,6 +192,11 @@ export class Cortex  {
 
     }
 
+    configure_user_output(fn : any ) {
+	this.log("Linking user output") 
+	this.user_output  = fn 
+    }
+    
     /**
      * Build the message array 
      */
@@ -367,12 +380,16 @@ export class Cortex  {
 	const feedback = {
 	    error : sounds.error,
 	    activated  : sounds.input_ready, 
-	    acknowledged : sounds.proceed,
+	    ok : sounds.proceed,
 	    success : sounds.success , 
 	}
 
 	this.log(`Appending feedback object to function parameters`)	
-	parameters.feedback  = feedback  ; 
+	parameters.feedback  = feedback  ;
+
+	this.log(`Appending user_output to function parameters`)	
+	parameters.user_output  = this.user_output  ; 
+	
 	
 	try {
 	    let result = await F.fn(parameters)
@@ -385,7 +402,7 @@ export class Cortex  {
 		name 
 	    }
 	} catch (e : any ) {
-	    error =  e ;
+	    error =  e.message ;
 	    this.log(error) 	    
 	    return {
 		error , 

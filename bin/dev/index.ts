@@ -9,7 +9,8 @@ import * as u2d from "./u2d"
 import * as uload from "./uload" 
 import * as tex from "./tex"
 import * as ytt from "./yt_transcript"
-import * as yts from "./yts" 
+import * as yts from "./yts"
+import * as tes from "./tes" 
 
 export {
     //firebase_admin ,
@@ -20,6 +21,7 @@ export {
     //uload
     tex ,
     ytt ,
-    yts , 
+    yts ,
+    tes
 
 } 

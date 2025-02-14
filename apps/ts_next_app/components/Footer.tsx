@@ -33,7 +33,7 @@ import build_info from "../generated/build_info.json"
 
 
 // @ts-ignore
-const build_time = build_info.buildTime.split("T")[0]
+const build_time = build_info.buildTime
 
 declare var window : any ; 
 

@@ -179,6 +179,13 @@ const  Component: NextPage = (props : any) => {
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
 
+    useEffect( ()=> {
+	let speak = async function(content : string) {
+	    await  vi.speak_with_rate(content, playbackRate) ;
+	}
+	COR.configure_user_output(speak) 
+    }, [playbackRate])
+
     const chatDisplayRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
