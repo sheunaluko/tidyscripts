@@ -48,7 +48,9 @@ export async function main() {
     // init cortex 
     let model = "gpt-4o" ;
     let name  = "core-1" ;
-    let ops   = { model , name, functions  } 
+    let additional_system_msg = ""
+    let ops   = { model , name, functions, additional_system_msg  }
+    
     let c1    = new cortex.Cortex( ops ) ;
 
     // preload a user message

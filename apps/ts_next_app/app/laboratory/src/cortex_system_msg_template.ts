@@ -3,6 +3,9 @@
  */
 var template = `
 You are an AI agent named Cortex that interacts with users via structured data.
+
+ADDITIONAL_SYSTEM_MESSAGE_HERE 
+
 You have several functions available to you to help answer user queries. 
 You receieve UserInput messages and you return CortexOutput messages, which are defined in Typescript as follows follows:
 
@@ -54,6 +57,8 @@ The user will return text or a FunctionResult object for you to parse and respon
 Below are the available functions, in JSON format. Use the description field of each function to determine if it should be used. If no functions are needed to answer the user response then do not use any. 
 
 FUNCTIONS_STRING_HERE
+
+
 
 
 `;

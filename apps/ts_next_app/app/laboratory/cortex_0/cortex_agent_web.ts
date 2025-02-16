@@ -1,24 +1,30 @@
 import * as c from "../src/cortex"  ;
 import jdoc from "../../../../docs/jdoc.json" 
-import * as fu from "../../../src/firebase_utils" 
+import * as fbu from "../../../src/firebase_utils" 
+import * as fnu from "../src/fn_util" 
 
 /**
  * Defines the cortex agent used in the Cortex UI 
  */
 
+// todo - change timestamp to ms epoch ; implement vector embeddings 
+// ability to update system message by talking to cortex -- via local storage object?
+// can update and then reload conversationally.
+// upload past dreams 
 
 export function get_agent() {
     // init cortex 
     let model = "gpt-4o" ;
     let name  = "coer" ;
-    let ops   = { model , name, functions  } 
+    let additional_system_msg = "Tidyscripts is the general name for your software architecture" 
+    let ops   = { model , name, functions, additional_system_msg  } 
     let coer    = new c.Cortex( ops ) ;
     // 
     return coer ; 
 }
 
 
-async function tes(fn_path  : string[], fn_args : any[] ) {
+export async function tes(fn_path  : string[], fn_args : any[] ) {
     
     let t =  await fetch('http://localhost:8001/call', {
 	method: 'POST',
@@ -31,17 +37,35 @@ async function tes(fn_path  : string[], fn_args : any[] ) {
     return await t.json()
 } 
 
-async function main_stream_log( ops : any ) {
-    let {text, user_initiation_string}  = ops;  
+export async function tidyscripts_log( ops : any ) {
+    let {text, user_initiation_string , path}  = ops;
+    let tokenized_text = fnu.tokenize_text(text) ; 
+    let app_id = "tidyscripts"
+    let data = {
+	tokenized_text  , 
+	user_initiation_string , 	
+	time_created : fbu.get_firestore_timestamp_from_date(new Date()) 
+    }
+    await fbu.store_user_collection({app_id, path, data})
+} 
+
+
+
+export async function main_stream_log( ops : any ) {
+    let {text, user_initiation_string}  = ops;
+
+    let tokenized_text = fnu.tokenize_text(text) ; 
     let path = ["logs", "main_stream"]
     let app_id = "tidyscripts"
     let data = {
-	text ,
+	tokenized_text  , 
 	user_initiation_string , 
-	time_created : (new Date()).toString() 
+	time_created : fbu.get_firestore_timestamp_from_date(new Date()) 
     }
-    await fu.store_user_collection({app_id, path, data})
+    await fbu.store_user_collection({app_id, path, data})
 } 
+
+
 
 
 const functions = [
@@ -100,6 +124,92 @@ const functions = [
     },
 
     { 
+	description : `
+Creates a new Tidyscripts log entry for the user. 
+
+1. Tidyscripts logs are stored inside "collections" in the database. Each log has a name and a path 
+2. All log names are in snake_case  
+3. When the user requests to store a log, you should first call the "get_user_collections" function to determines if the log already exists 
+4. If it does not then create it using the "initialize_user_log" function, then proceed 
+5. If it does exist then proceed 
+6. You will need to first accumulate text from the user before passing that text to this function. 
+7. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log 
+8. Finally, you should provide the log_path which is a forward slash delimited string 
+` , 
+	name        : "create_user_log_entry" ,
+	parameters  : {  text : "string" , user_initiation_string : "string" , log_path : "string" }  ,
+	fn          : async (ops : any) => {
+	    let { text , user_initiation_string ,log_path, log }  = ops ; 	    
+	    log(ops)
+	    let path = log_path.split("/").filter(Boolean) ;
+	    if ( path[0] != "tidyscripts" ) {
+		return "please make sure the path starts with tidyscripts and is separated by forward slashes" 
+	    }
+
+	    path = path.splice(1)
+
+	    await tidyscripts_log( {text, user_initiation_string, path }) 
+	    return "done" 
+	} ,
+	return_type : "string"
+    },
+    {
+	description : "Initializes a user log/collection. Takes the name of the log, in snake_case" ,
+	name : "initialize_user_log" ,
+	parameters : { name : "string"  } ,
+	fn : async ( ops : any ) =>  {
+	    let {name, log} = ops ;	    
+	    log(`Request to create log: ${ops.name}`)
+	    let text = `creating the ${name} log` ;
+	    let path = ["logs" , name ]  ;
+	    let user_initiation_string = null ;
+
+	    await tidyscripts_log({text,path , user_initiation_string}) ;  //auto adds app-id
+	    return "done" 
+	},
+	return_type : "string" 
+	
+    }, 
+
+    { 
+	description : "Retrieves existing Tidyscripts database collections" , 
+	name        : "get_user_collections" ,
+	parameters  : null  ,
+	fn          : async (ops : any) => {
+	    return await fnu.get_tidyscripts_collections() ; 
+	} ,
+	return_type : "string"
+    },
+    { 
+	description : "Searches a particular log/collection. Provide the search terms as a comma separated string like term1,term2,term3,etc. " , 
+	name        : "search_user_log" ,
+	parameters  : {  name : "string" , search_terms : "string" }  ,
+	fn          : async (ops : any) => {
+	    let {name, search_terms, log} = ops ;
+	    log('searching') 
+	    log(ops) 
+	    return fbu.search_user_collection("tidyscripts", ["logs", name ] , search_terms.split(",").map((y:string)=>y.trim()).filter(Boolean)) 
+	} ,
+	return_type : "any"
+    },
+
+    { 
+	description : "Retrieves an entire log/collection. You should opt to search instead of retrieving the entire collection unless the user specifically has requested to retrieve the whole collection" , 
+	name        : "get_whole_user_collection" ,
+	parameters  : {  name : "string" } ,
+	fn          : async (ops : any) => {
+	    let {name} = ops ; 
+	    return fbu.get_user_collection({app_id : "tidyscripts", path : ["logs", name ]})
+	} ,
+	return_type : "any"
+    }    
+
+    
+]
+
+
+const held_functions = [
+        { 
 	description : "Saves a diary/log entry for the user. May be referred to as Captain's log at times if the user is feeling spontaneous. You will need to first accumulate text from the user before passing that text to this function. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log" , 
 	name        : "generic_user_log" ,
 	parameters  : {  text : "string" , user_initiation_string : "string" }  ,
@@ -109,8 +219,5 @@ const functions = [
 	} ,
 	return_type : "string"
     },
-    
-
-
     
 ]

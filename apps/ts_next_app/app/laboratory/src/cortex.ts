@@ -15,7 +15,6 @@ import * as Channel from "./channel"
 /*
    
    Todo:  
-   - integrate this into CortexUI 
    - support multiple function calls simultaneously 
       - probably best way is to change CortexOutput to be text of functionCallS
       - and to have functionCalls : FunctionCall[ ]  | null 
@@ -135,16 +134,17 @@ export function get_functions_string(functions : Function[]) {
 
 
 /* Generates the system message from an array of function objects */ 
-export function generate_system_msg(functions : Function[]) {
+export function generate_system_msg(functions : Function[], additional_system_msg : string) {
     let FUNCTIONS_STRING = get_functions_string(functions) 
-    return system_msg_template.replace("FUNCTIONS_STRING_HERE", FUNCTIONS_STRING) 
+    return system_msg_template.replace("FUNCTIONS_STRING_HERE", FUNCTIONS_STRING).replace("ADDITIONAL_SYSTEM_MESSAGE_HERE", additional_system_msg)
 } 
 
 
 interface CortexOps {
     model : string ,
     name  : string ,
-    functions : Function[] , 
+    functions : Function[] ,
+    additional_system_msg : string, 
 } 
 
 /**
@@ -167,7 +167,7 @@ export class Cortex  {
     user_output : any ; 
     
     constructor(ops : CortexOps) {
-	let { model, name, functions } = ops  ;
+	let { model, name, functions , additional_system_msg } = ops  ;
 	this.model = model ;
 	this.name  = name ;
 	this.functions = functions ;
@@ -185,7 +185,7 @@ export class Cortex  {
 
 	log("Initializing")
 	log("Generating system message")  
-	let system_msg = {role :  'system' , content : generate_system_msg(functions) } as SystemMessage; this.system_msg = system_msg
+	let system_msg = {role :  'system' , content : generate_system_msg(functions,additional_system_msg) } as SystemMessage; this.system_msg = system_msg
 	log("Building function dictionary")
 	let function_dictionary = get_function_dictionary(functions) ; this.function_dictionary = function_dictionary ; 
 	log("Done")

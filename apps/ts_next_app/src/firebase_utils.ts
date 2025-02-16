@@ -3,8 +3,8 @@ import * as tsw from "tidyscripts_web";
 const {fp } = tsw.common ;
 
 import { initializeApp } from 'firebase/app';
-//import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore/lite';
-import { getFirestore, collection, getDocs, setDoc, doc, addDoc , getDoc, deleteDoc } from 'firebase/firestore';
+
+import { getFirestore, Timestamp, collection, getDocs, setDoc, doc, addDoc , getDoc, query , where , deleteDoc } from 'firebase/firestore';
 import {getAuth , onAuthStateChanged } from "firebase/auth"
 import { getFunctions, connectFunctionsEmulator , httpsCallable } from "firebase/functions";
 
@@ -13,8 +13,6 @@ export {getAuth} ;
 /* temporary placeholder for Auth type */ 
 type Auth = any ;
 type Firestore = any ; 
-
-
 
 
 /* define the  Firebase config object  */ 
@@ -28,11 +26,9 @@ const firebaseConfig = {
   measurementId: "G-4SJGBBQWW2"
 };
 
-
 /* create logger */ 
 const log = tsw.common.logger.get_logger({id : 'firebase_util'})  ; 
 const debug = tsw.common.util.debug 
-
 
 const app = initializeApp(firebaseConfig);
 export var functions = getFunctions(app) ;
@@ -49,6 +45,11 @@ const db = getFirestore(app);
 
 log(`Created firebase app and db references :)`) 
 
+
+
+export function get_firestore_timestamp_from_date(d : Date) {
+    return Timestamp.fromDate(d)  ; 
+}
 
 type UserData  = { [k:string] : any} 
 interface FirebaseDataStoreOps {
@@ -80,6 +81,9 @@ interface CollectionRegistry {
     updated : string ; 
 }
 
+export async function get_user_collection_registry() {
+    return await get_user_doc({path: ["collection_registry"], app_id : "registries"}) ; 
+}
 
 async function update_collection_registry(app_id: string, _path: string[]) {
     const auth = getAuth();
@@ -452,6 +456,60 @@ export async function get_user_collection(args : FirebaseDataGetOps) {
 
     return documents;
 }
+
+
+
+// search a user collection tokenized_text field
+export async function search_user_collection( app_id : string, path : string[], search_terms :  string[]) {
+
+
+    var user_id : any  = null  ;
+    let auth = getAuth() 
+
+    try { 
+	user_id = auth.currentUser?.uid;
+	log(`Detected user id: ${user_id}`)
+    } catch (error :any) {
+	throw new Error('User is not authenticated.');
+	return 
+    } 
+    
+    let full_path = [ "users" , user_id , app_id, ...path]  ;
+    
+    log(`Request to SEARCH user collection: appid=${app_id}, path =${path}`)
+    log(`Using full path: ${full_path}`) 
+    
+    // Get a reference to the collection
+    // @ts-expect-error
+    const collectionRef = collection(db, ...full_path);
+
+    search_terms = search_terms.map( (x:string)=>x.toLowerCase()) ; 
+    
+    const q = query(collectionRef, 
+		    where('tokenized_text', 'array-contains-any', search_terms)) ;
+
+    
+
+    // Get all documents in the collection
+    const snapshot = await getDocs(q);
+
+    // Create an array to hold the document data
+    const documents: any[] = [];
+
+    // Loop through each document in the snapshot
+    snapshot.forEach((doc) => {
+	// Add the document data to the array
+	documents.push({ id: doc.id, ...doc.data() });
+    });
+
+    return documents;
+    
+
+
+    
+}
+
+
 
 
 export async function test_get_user_collection() {

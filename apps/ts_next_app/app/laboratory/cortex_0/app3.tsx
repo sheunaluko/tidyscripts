@@ -226,7 +226,14 @@ const  Component: NextPage = (props : any) => {
 	if (role == 'user') {
 	    
 	    log(`Given user change, will send to ai`)
-	    get_ai_response().then( (resp : string) => add_ai_message(resp) )
+	    get_ai_response().then( (resp : string) => {
+		if (resp == null) {
+		    log("IGNORING NULL RESPONSE")
+		} else { 
+		    add_ai_message(resp)
+		}
+	    })
+		
 	    return 
 	    
 	}
@@ -292,7 +299,9 @@ const  Component: NextPage = (props : any) => {
 	    tsw,
 	    wa ,
 	    debug ,
-	    get_ai_response 
+	    get_ai_response ,
+	    COR ,
+	    transcription_cb 
 	}) ; 
 
     } , [] ) ; //init script is called in "on_init_audio"    
