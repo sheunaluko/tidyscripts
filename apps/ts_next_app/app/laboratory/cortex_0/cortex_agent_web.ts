@@ -40,11 +40,13 @@ export async function tes(fn_path  : string[], fn_args : any[] ) {
 export async function tidyscripts_log( ops : any ) {
     let {text, user_initiation_string , path}  = ops;
     let tokenized_text = fnu.tokenize_text(text) ; 
-    let app_id = "tidyscripts"
+    let app_id = "tidyscripts" ; 
+    let date_o = new Date()
     let data = {
 	tokenized_text  , 
-	user_initiation_string , 	
-	time_created : fbu.get_firestore_timestamp_from_date(new Date()) 
+	user_initiation_string ,
+	time_string  : date_o.toString() , 
+	time_created : fbu.get_firestore_timestamp_from_date(date_o)  
     }
     await fbu.store_user_collection({app_id, path, data})
 } 
@@ -94,10 +96,14 @@ const functions = [
 	    let text = [ ] ; 
 	    let chunk = await get_user_data() ;
 
+	    let clean = function(s:string){
+		return s.toLowerCase().trim().replace(".","") 
+	    }	
 
-	    while (chunk.trim() != "finished" ) {
+
+	    while (clean(chunk) != "finished" ) {
 		
-		if (chunk.trim() == "cancel" ) {
+		if (clean(chunk) == "cancel" ) {
 		    return "User cancelled the text accumulation" 
 		}
 		

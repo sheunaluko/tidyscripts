@@ -4,33 +4,11 @@ import {useEffect, useState } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
-import { ChakraProvider } from '@chakra-ui/react' ;
+//import { ChakraProvider } from '@chakra-ui/react' ;
 import { alpha } from '@mui/system';
 import { theme } from "../../theme";
 import ReactMarkdown from 'react-markdown';
 import * as cortex_agent from "./cortex_agent_web" 
-
-/*
-   
-   App2 implemented previously.
-   Now integrated Cortex Agent  
-
-   Todo: 
-   - allow specifying USAGE in the CORTEX Functions 
-   - create a demo showing CORTEX 
-   -- add interface for selecting voice and for putting in API Key 
-   -- cool demos
-      --- finding and changing text of element 
-      --- adding element to top of the page showing time, then making it interactive (update time) 
-      --- creating arrays and splitting in half 
-
-   -- have panel that displays the workspace in real time as the ai creates objects, etc 
-tidy
-   -- Cortex can help you create interfaces in real time through voice interaction, and runs in the page itself 
-   -- Fix build date issue 
-
- */
-
 import {
     Box,
     Button,
@@ -38,9 +16,32 @@ import {
     Switch,
     FormGroup,
     FormControlLabel,
+    TextField,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails, 
     Typography, 
     Slider 
 } from "@mui/material"
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+/*
+   
+   App2 implemented previously.
+   Now integrated Cortex Agent  
+
+   Todo: 
+   - allow specifying USAGE in the CORTEX Functions 
+   - [x] create a demo showing CORTEX 
+   -- add interface for selecting voice and for putting in API Key 
+
+   -- have panel that displays the workspace in real time as the ai creates objects, etc 
+tidy
+   -- [x] Cortex can help you create interfaces in real time through voice interaction, and runs in the page itself 
+   -- [x] Fix build date issue 
+
+
+ */
+
 
 declare var window : any ;
 declare var Bokeh : any  ; 
@@ -179,6 +180,10 @@ const  Component: NextPage = (props : any) => {
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
 
+    //
+
+    const [text_input, set_text_input] = useState<string>('');
+
     useEffect( ()=> {
 	let speak = async function(content : string) {
 	    await  vi.speak_with_rate(content, playbackRate) ;
@@ -194,6 +199,42 @@ const  Component: NextPage = (props : any) => {
         }
     }, [chat_history]);
 
+    //DEFINE THE TRANSCRIPTION CALLBACK
+    //This is passed to the audio api and will be called once transcription results  
+    //in the transcription callback we get the transcription text and call add_user_message
+    //then we call ai_response = await get_ai_response()
+
+    let transcription_cb = async function(text : string) {
+	log(`tcb: ${text}`)
+
+	if (COR.is_running_function) {
+	    log(`tcb: Cortex running function, will forward`)
+	    await COR.handle_function_input(text) 
+	} else { 
+	    log(`tcb: No active cortex function`) 
+	    add_user_message(text) ;
+	}
+    } 
+
+    //handle user chat message (instead of voice)
+    const handleSend = async () => {
+        if (text_input.trim()) {
+	    //simulate as if the user has said this
+	    transcription_cb(text_input.trim())
+        }
+    };
+
+    //if the user pressers enter instead of send
+    const handleKeyPress = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleSend();
+	    //set text_input to ""
+	    set_text_input("") ; 
+	    
+        }
+    };
+    
 
     //handle audio playback rate 
     const handleRateChange = (event: Event, newValue: number | number[]) => {
@@ -278,20 +319,6 @@ const  Component: NextPage = (props : any) => {
 
     } 
 
-    //in the transcription callback we get the transcription text and call add_user_message
-    //then we call ai_response = await get_ai_response()
-
-    let transcription_cb = async function(text : string) {
-	log(`tcb: ${text}`)
-
-	if (COR.is_running_function) {
-	    log(`tcb: Cortex running function, will forward`)
-	    await COR.handle_function_input(text) 
-	} else { 
-	    log(`tcb: No active cortex function`) 
-	    add_user_message(text) ;
-	}
-    } 
 
     
     useEffect(  ()=> {
@@ -318,7 +345,6 @@ const  Component: NextPage = (props : any) => {
     
 
     return (
-	<ChakraProvider> 
 
 	    <Box style={{ flexDirection : 'column' , display : 'flex' , alignItems : 'center' , minWidth : '40%'}} >
 
@@ -423,6 +449,30 @@ const  Component: NextPage = (props : any) => {
 		    
 		</Box>
 
+
+		<Box>
+		    <Accordion style={{ marginBottom : '10px'  }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Tools</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+
+		    <TextField
+			variant="outlined"
+			value={text_input}
+			onChange={(e) => set_text_input(e.target.value)}
+			onKeyPress={handleKeyPress}
+			placeholder=""
+			sx={{ marginBottom: '5px', marginTop: '5px' }}
+		    />
+		    
+		    
+                </AccordionDetails>
+            </Accordion>
+
+
+
+		</Box>
 		
 		<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
 		    <FormGroup>
@@ -471,7 +521,6 @@ const  Component: NextPage = (props : any) => {
 
 	    </Box>
 
-	</ChakraProvider>
 
     )
 }

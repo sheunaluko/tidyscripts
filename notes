@@ -3,18 +3,21 @@ TIDYSCRIPTS NOTES
 -----------------
 
 Goals:
-- web audio expertise [pending]
-- remba
-- documentation of the firebase/firestore user data api
-- cryptocurrency data frequency analysis (spectrogram generations - large numbers at a time in a parameter grid)
-- [x] add guassian audio visualization 
+- allow Cortex working with interpreter and functions directly
+- consolidate all openai calls properly, enable either API key usage or authenticated cloud function backend that gives X free tokens per day
+- create facility for monitoring token usage 
+
 
 
 Currently working on:
 
+Feb 24:
+- firestore_utils  (and converting timestapms)
+- adding text based chatting as well  [done]
+- parsing questions ; ?how to handle tables
+
 Jan 27:
 - cortex: main_stream , Text input loop 
-
 
 Nov 16: handoff ai generation
 

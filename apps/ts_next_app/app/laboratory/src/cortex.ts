@@ -49,7 +49,7 @@ type FunctionCall =  {
 /* FunctionResult */
 type FunctionResult =  {
     name : string,
-    error : boolean , 
+    error : boolean | string , 
     result  : FunctionReturnType
 } 
 
@@ -306,13 +306,28 @@ export class Cortex  {
 	    this.set_is_running_function(true) ; //function running indicator 
 
 	    try {
-		this.log(`Loop=${loop}`) 
+		this.log(`Loop=${loop}`)
+		this.log(`thinking::> ${output.thoughts}`)
+		
 		if (loop < 1 ) {
 		    this.log(`Loop counter ran out!`)
-		    return "too many calls to LLM" 
+
+		    let {functionCall} = output ;
+		    let {name} = functionCall ; 
+		    
+		    let function_result = {
+			name,
+			error : "too many repeated function calls, please request user  permission to proceed", 
+			result : null , 
+		    }
+		    
+		    this.set_is_running_function(false) ;  //turn off function running indicator
+		    this.add_user_result_input(function_result) ;
+		    return await this.run_llm(1) ; // 
+
 		}
 		
-		this.log(`thinking::> ${output.thoughts}`)
+
 		let function_result = await this.handle_function_call(output) ;
 		this.set_is_running_function(false) ;  //turn off function running indicator
 		this.add_user_result_input(function_result) ;

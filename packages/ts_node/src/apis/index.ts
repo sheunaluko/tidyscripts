@@ -6,7 +6,7 @@ import * as binance from "./binance/index"
 import * as radiopaedia from "./radiopaedia"
 import * as pubmed from './pubmed'
 import * as openai from "./openai/index"
-import * as firebase_admin from "./firebase_admin"
+import * as firestore_utils from "./firestore_utils"  
 import * as langchain from "./langchain"
 export * as bots from "./bots" 
 export * as gemini from "./gemini/index"
@@ -15,7 +15,7 @@ export * as up_to_date from "./up_to_date"
 
 export {
   firestore   ,
-  firebase_admin , 
+  firestore_utils , 
   binanceus  ,
   coinbase ,
   radiopaedia, 
