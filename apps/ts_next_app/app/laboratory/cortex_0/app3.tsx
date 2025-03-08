@@ -116,6 +116,7 @@ const  Component: NextPage = (props : any) => {
         }
     }, [chat_history]);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(  ()=> {
 	Object.assign(window, {
 	    tsw,
@@ -132,6 +133,7 @@ const  Component: NextPage = (props : any) => {
 	transcribeRef.current = transcribe 
     }, [transcribe] )
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps	
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {

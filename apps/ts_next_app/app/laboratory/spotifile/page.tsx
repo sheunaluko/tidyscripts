@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -86,6 +87,7 @@ const SpotifilePage: NextPage = () => {
         document.body.removeChild(link);
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (accessToken) {
             fetchLikedSongs();

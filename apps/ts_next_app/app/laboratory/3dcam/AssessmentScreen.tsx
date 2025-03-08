@@ -9,6 +9,7 @@ const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , 
     const [patientId, setPatientId] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
 	resetAssessment(); // Reset assessment when entering the screen
 	console.log("reset assessment logic") 

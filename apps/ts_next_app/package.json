@@ -19,8 +19,6 @@
         "@mui/icons-material": "^6.4.7",
         "@mui/material": "^6.4.7",
         "@mui/system": "^6.4.7",
-        "@supabase/ssr": "^0.3.0",
-        "@supabase/supabase-js": "^2.43.2",
         "ace-builds": "^1.37.1",
         "crypto": "^1.0.1",
         "eslint": "^8.57.0",

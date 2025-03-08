@@ -152,7 +152,9 @@ export function create_wrapped_structured_client(ops :any) {
 export function create_cached_wrapped_chat_completion(ops : any) {
     let { app_id, origin_id, log  } = ops;
 
-    log(`Creating cached wrapped chat completion function for app=${app_id}, origin=${origin_id}`)
+    if (typeof window !== "undefined") { 
+	log(`Creating cached wrapped chat completion function for app=${app_id}, origin=${origin_id}`)
+    }
 
     return async function(llm_args : object) {
 	// define the args 

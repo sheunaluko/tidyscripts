@@ -43,7 +43,9 @@ export var store_embedding_function = httpsCallable(functions, "storeEmbedding")
 export var retrieve_embedding_function = httpsCallable(functions,"retrieveEmbedding")   
 const db = getFirestore(app);
 
-log(`Created firebase app and db references :)`) 
+if (typeof window !== "undefined") { 
+    log(`Created firebase app and db references :)`)
+} 
 
 
 

@@ -23,6 +23,7 @@ export function useAssessmentLogic() {
     });
   }
 
+   // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect( ()=> {
 	console.log("detected breakdown change...")
 	if (responses.length < 1 ) {

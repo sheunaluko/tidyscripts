@@ -216,6 +216,7 @@ const  Component: NextPage = (props : any) => {
 	} 
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {
@@ -295,7 +296,8 @@ const  Component: NextPage = (props : any) => {
 	add_user_message(text) ;
     } 
 
-    
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(  ()=> {
 	Object.assign(window, {
 	    tsw,
