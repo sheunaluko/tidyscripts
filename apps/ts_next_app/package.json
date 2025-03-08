@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "@chakra-ui/icons": "^2.1.1",
-        "@chakra-ui/react": "^2.8.2",
+        "@chakra-ui/react": "^2.10.6",
         "@emotion/react": "^11.11.4",
         "@emotion/styled": "^11.11.5",
         "@fontsource/roboto": "^5.0.13",
@@ -30,8 +30,8 @@
         "react-dom": "^18",
         "react-firebase-hooks": "^5.1.1",
         "react-markdown": "^9.0.1",
+        "tidyscripts_node": "*",
         "tidyscripts_web": "*",
-        "tidyscripts_node": "*",	
         "webpack-cli": "^5.1.4"
     },
     "devDependencies": {

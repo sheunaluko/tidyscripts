@@ -1,1 +1,1 @@
-git add -A ; git commit -m "checkpoint" 
+git add -A ; git commit -m "checkpoint: $1" 
