@@ -82,6 +82,26 @@ const functions = [
 	} ,
 	return_type : "any"
     },
+
+    {
+	description : `
+The workspace is a toplevel nested object named workspace which exists within the javascript environment.
+You update the workspace by proving javascript code to this function.
+The code should directly provide the necessary manipulations to the workspace, and will be evaluated.
+After that, the user will automatically see the updated changes. 
+	`,
+	name        : "update_workspace" ,
+	parameters  : { code : "string" }  ,
+	fn          : async (ops : any) => {
+	    let {code} = ops
+	    let result = eval(code)
+	    // update the workspace UI here 
+	    return result 
+	} ,
+	return_type : "any"
+    },
+    
+    
     { 
 	description : "Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation" , 
 	name        : "accumulate_text" ,

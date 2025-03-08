@@ -21,26 +21,20 @@ import {
     AccordionSummary,
     AccordionDetails, 
     Typography, 
-    Slider 
+    Slider,
+    Paper 
 } from "@mui/material"
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { styled } from '@mui/material/styles';
+
+
 /*
    
-   App2 implemented previously.
-   Now integrated Cortex Agent  
+   Main Feature Release of Cortex
+   Currently working on integratinng Workspace Functionality  
 
-   Todo: 
-   - allow specifying USAGE in the CORTEX Functions 
-   - [x] create a demo showing CORTEX 
-   -- add interface for selecting voice and for putting in API Key 
-
-   -- have panel that displays the workspace in real time as the ai creates objects, etc 
-tidy
-   -- [x] Cortex can help you create interfaces in real time through voice interaction, and runs in the page itself 
-   -- [x] Fix build date issue 
-
-
- */
+*/
 
 
 declare var window : any ;
@@ -57,20 +51,394 @@ const vi    = tsw.util.voice_interface ;
 const oai   = tsw.apis.openai;
 const sounds = tsw.util.sounds
 
-/* 
-   PARAMS 
- */
+/* Params  */
 const viz_n = 50 ;
 const viz_s = 0.03 ; 
 var   sound_feedback = true 
 
-//for the chat box 
+/* For the chat box */ 
 const alpha_val = 0.4
 const light_primary = alpha(theme.palette.primary.main, alpha_val) 
 const light_secondary = alpha(theme.palette.secondary.main, alpha_val) 
 
-//get the agent
-const COR = cortex_agent.get_agent() ; 
+/* Get the agent */ 
+const COR = cortex_agent.get_agent() ;
+
+/* grid item */ 
+const Item = styled(Paper)(({ theme }) => ({
+  backgroundColor: '#fff',
+  ...theme.typography.body2,
+  padding: theme.spacing(1),
+  textAlign: 'center',
+  color: theme.palette.text.secondary,
+  ...theme.applyStyles('dark', {
+    backgroundColor: '#1A2027',
+  })
+})) 
+
+
+/* C O M P O N E N T _ D E F I N I T I O N  */ 
+const  Component: NextPage = (props : any) => {
+
+
+    const [transcribe, setTranscribe] = useState(true)
+    const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
+
+    let init_chat_history = [
+	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
+    ]
+
+    const default_model = "gpt-4o"
+    /* const default_model = "gpt-4o-mini-2024-07-18" */ 
+
+    const [started, set_started] = useState(false);    
+    const [chat_history, set_chat_history] = useState(init_chat_history);
+    const [audio_history, set_audio_history] = useState([]);
+    const [ai_model, set_ai_model] = useState(default_model);    
+    const [playbackRate, setPlaybackRate] = useState(1.2)
+    const [workspace, set_workspace] = useState({}) ; 
+    const [text_input, set_text_input] = useState<string>('');
+
+    /* E F F E C T S */ 
+    
+    useEffect( ()=> {
+	let speak = async function(content : string) {
+	    await  vi.speak_with_rate(content, playbackRate) ;
+	}
+	COR.configure_user_output(speak) 
+    }, [playbackRate])
+
+    const chatDisplayRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (chatDisplayRef.current) {
+            chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
+        }
+    }, [chat_history]);
+
+    useEffect(  ()=> {
+	Object.assign(window, {
+	    tsw,
+	    wa ,
+	    debug ,
+	    get_ai_response ,
+	    COR ,
+	    transcription_cb 
+	}) ; 
+
+    } , [] ) ; //init script is called in "on_init_audio"    
+    
+    useEffect( ()=> {
+	transcribeRef.current = transcribe 
+    }, [transcribe] )
+
+    useEffect(  ()=> {
+	//determine if it is user_message or ai_message
+	if (chat_history.length < 1)  {
+	    log(`Chat history empty`); return 
+	}
+	let role = fp.last(chat_history).role
+	log(`Detected change in chat history from: ${role}`)
+	
+	if (role == 'user') {
+	    
+	    log(`Given user change, will send to ai`)
+	    get_ai_response().then( (resp : string) => {
+		if (resp == null) {
+		    log("IGNORING NULL RESPONSE")
+		} else { 
+		    add_ai_message(resp)
+		}
+	    })
+	    
+	    return 
+	    
+	}
+	if (role == 'system') {
+	    log(`System change ignored`) 
+	} else {
+	    log(`Given ai change, will await user response `) 
+	} 
+	
+    }, [chat_history])
+    
+
+    /*
+
+       DEFINE THE TRANSCRIPTION CALLBACK
+       This is passed to the audio api and will be called once transcription results  
+       in the transcription callback we get the transcription text and call add_user_message
+       then we call ai_response = await get_ai_response()
+       
+     */
+
+    let transcription_cb = async function(text : string) {
+	log(`tcb: ${text}`)
+
+	if (COR.is_running_function) {
+	    log(`tcb: Cortex running function, will forward`)
+	    await COR.handle_function_input(text) 
+	} else { 
+	    log(`tcb: No active cortex function`) 
+	    add_user_message(text) ;
+	}
+    } 
+
+    //handle user chat message (instead of voice)
+    const handleSend = async () => {
+        if (text_input.trim()) {
+	    //simulate as if the user has said this
+	    transcription_cb(text_input.trim())
+        }
+    };
+
+    //if the user pressers enter instead of send
+    const handleKeyPress = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleSend();
+	    //set text_input to ""
+	    set_text_input("") ; 
+	    
+        }
+    };
+    
+    //handle audio playback rate 
+    const handleRateChange = (event: Event, newValue: number | number[]) => {
+	if (Array.isArray(newValue)) return; // Handle single value only
+	setPlaybackRate(newValue);
+    }
+
+    // Function to add a user's message to the chat
+    const add_user_message = (content: string) => {
+	// @ts-ignore
+	set_chat_history((prev) => [...prev, { role: "user", content }])
+
+	//add the user message to COR
+	COR.add_user_text_input(content) 
+
+	
+	if (sound_feedback) { 
+	    sounds.proceed()
+	} 
+    };
+
+
+    // Function to add an AI's message to the chat
+    const add_ai_message = async (content: string) => {
+	// @ts-ignore
+	set_chat_history((prev) => [...prev, { role: "assistant", content }]);
+	if (sound_feedback) { 
+	    sounds.proceed()
+	} 
+
+	//here we need to actually speak the response too!
+	log(`generating audio response...`)
+	log(`Using playbackRate to ${playbackRate}`)	
+	await vi.speak_with_rate(content, playbackRate) ;
+	log(`done`)
+	
+
+    };
+
+    //function for getting AI response from the chat history and the ai_model
+    let get_ai_response = async function() {
+	log(`Calling llm`)
+	var ai_response_text : string ; 
+	try  {
+	    var ai_response_text = await COR.run_llm(5) ; 
+	} catch (e : any) { 
+	    throw new Error(`Error extracting ai message: ${e}`) 
+	}
+
+	debug.add('ai_response_text' , ai_response_text)
+	log(`Got response: ${ai_response_text}`) 
+	return ai_response_text 
+
+    } 
+
+    const handleSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
+	let v = event.target.checked
+	log(`Transcribe=${v}`)
+	setTranscribe(v);
+    };
+    
+
+    return (
+
+	<Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , minWidth : '90%'}} >
+
+	<Box display='flex' flexDirection='row' alignItems='center' >
+	    <Box>
+		<h1 className={styles.title}>
+		    <a href="https://github.com/sheunaluko/tidyscripts">Cortex </a>  
+		</h1>
+	    </Box>
+
+	    <Box> 
+		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
+			onClick={function() {
+			    if (!started) {
+				log(`Started audio`)
+				set_started(true) ;
+				if (!plots_initialized) { 
+				    on_init_audio(transcribeRef, transcription_cb )
+				} else {
+				    GLOBAL_PAUSE = false 						     
+				} 
+			    } else {
+				//already started; so now we stop it
+				log(`Stopping audio`)
+				GLOBAL_PAUSE = true 
+				set_started(false) 
+			    } 
+			}
+			}
+		> {started ? "Stop" : "Start"} </Button>
+	    </Box> 
+
+	    
+	</Box>
+
+	<br />
+
+
+
+	<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
+	
+	<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
+	    <Box id="viz" />
+	</Box>
+	
+	<br />
+
+    
+
+	<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
+
+	    <Box id="chat_display" ref={chatDisplayRef} sx={{ maxWidth : "500px" , maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
+
+
+		{chat_history.slice(1).map((message, index) => (
+		    <Box
+			key={index}
+			    sx={{
+				display: 'flex',
+				justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
+				marginBottom: '10px'
+			    }}
+		    >
+			<Box
+			    sx={{
+				padding: '8px',
+				borderRadius: '8px',
+				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
+				border: message.role === 'user' ? '1px solid' : '1px solid',
+				borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
+				color: message.role === 'assistant' ? 'inherit' : 'inherit'
+			    }}
+
+			>
+			    <ReactMarkdown>
+				{message.content}
+			    </ReactMarkdown>
+			</Box>
+
+		    </Box>
+		))}
+	    </Box>
+
+
+	</Box> 
+
+	
+	</Box>
+
+	<Box style={{flexGrow : 1 }}>
+
+	</Box>
+
+
+	<Box>
+	    <Accordion style={{ marginBottom : '10px'  }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Tools</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+
+		    <TextField
+			variant="outlined"
+				 value={text_input}
+				 onChange={(e) => set_text_input(e.target.value)}
+				 onKeyPress={handleKeyPress}
+				 placeholder=""
+				 sx={{ marginBottom: '5px', marginTop: '5px' }}
+		    />
+
+
+		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
+			<FormGroup>
+			    <FormControlLabel control={
+				<Switch
+				    size='small'
+					  checked={transcribe}
+					  onChange={handleSwitch}
+					  inputProps={{ 'aria-label': 'controlled' }}
+				/>
+			    } label="Listen" />
+			</FormGroup>
+
+		    </Box>
+
+
+		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%" alignItems='center'>
+
+
+			<Box width="20%"> 
+			    <Slider
+
+				size='small'
+				      value={playbackRate}
+				      min={0.5}
+				      max={2.0}
+				      step={0.1}
+				      onChange={handleRateChange}
+				      valueLabelDisplay="auto"
+				      sx={{ marginTop: '8px' }}
+			    />
+			</Box>
+
+			<Box 				sx={{ marginLeft : '7px'  }}
+			>
+			    <Typography >{`Speech Rate: ${playbackRate.toFixed(1)}x`}</Typography>
+			</Box> 
+
+
+
+
+		    </Box>
+
+		    
+		    
+                </AccordionDetails>
+            </Accordion>
+
+
+
+	</Box>
+	
+
+	
+
+
+	</Box>
+
+
+    )
+}
+
+export default Component ; 
+
 
 
 var plots_initialized = false
@@ -156,376 +524,6 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 
 
 } 
-
-
-const  Component: NextPage = (props : any) => {
-
-
-
-    const [transcribe, setTranscribe] = useState(true)
-    const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
-
-    let init_chat_history = [
-	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
-    ]
-
-    const default_model = "gpt-4o"
-    //const default_model = "gpt-4o-mini-2024-07-18"
-
-
-    
-    const [started, set_started] = useState(false);    
-    const [chat_history, set_chat_history] = useState(init_chat_history);
-    const [audio_history, set_audio_history] = useState([]);
-    const [ai_model, set_ai_model] = useState(default_model);    
-    const [playbackRate, setPlaybackRate] = useState(1.2)
-
-    //
-
-    const [text_input, set_text_input] = useState<string>('');
-
-    useEffect( ()=> {
-	let speak = async function(content : string) {
-	    await  vi.speak_with_rate(content, playbackRate) ;
-	}
-	COR.configure_user_output(speak) 
-    }, [playbackRate])
-
-    const chatDisplayRef = React.useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (chatDisplayRef.current) {
-            chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
-        }
-    }, [chat_history]);
-
-    //DEFINE THE TRANSCRIPTION CALLBACK
-    //This is passed to the audio api and will be called once transcription results  
-    //in the transcription callback we get the transcription text and call add_user_message
-    //then we call ai_response = await get_ai_response()
-
-    let transcription_cb = async function(text : string) {
-	log(`tcb: ${text}`)
-
-	if (COR.is_running_function) {
-	    log(`tcb: Cortex running function, will forward`)
-	    await COR.handle_function_input(text) 
-	} else { 
-	    log(`tcb: No active cortex function`) 
-	    add_user_message(text) ;
-	}
-    } 
-
-    //handle user chat message (instead of voice)
-    const handleSend = async () => {
-        if (text_input.trim()) {
-	    //simulate as if the user has said this
-	    transcription_cb(text_input.trim())
-        }
-    };
-
-    //if the user pressers enter instead of send
-    const handleKeyPress = (event: React.KeyboardEvent) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            handleSend();
-	    //set text_input to ""
-	    set_text_input("") ; 
-	    
-        }
-    };
-    
-
-    //handle audio playback rate 
-    const handleRateChange = (event: Event, newValue: number | number[]) => {
-	if (Array.isArray(newValue)) return; // Handle single value only
-	setPlaybackRate(newValue);
-    }
-
-    // Function to add a user's message to the chat
-    const add_user_message = (content: string) => {
-	// @ts-ignore
-	set_chat_history((prev) => [...prev, { role: "user", content }])
-
-	//add the user message to COR
-	COR.add_user_text_input(content) 
-
-	
-	if (sound_feedback) { 
-	    sounds.proceed()
-	} 
-    };
-
-    useEffect(  ()=> {
-	//determine if it is user_message or ai_message
-	if (chat_history.length < 1)  {
-	    log(`Chat history empty`); return 
-	}
-	let role = fp.last(chat_history).role
-	log(`Detected change in chat history from: ${role}`)
-	
-	if (role == 'user') {
-	    
-	    log(`Given user change, will send to ai`)
-	    get_ai_response().then( (resp : string) => {
-		if (resp == null) {
-		    log("IGNORING NULL RESPONSE")
-		} else { 
-		    add_ai_message(resp)
-		}
-	    })
-		
-	    return 
-	    
-	}
-	if (role == 'system') {
-	    log(`System change ignored`) 
-	} else {
-	    log(`Given ai change, will await user response `) 
-	} 
-	
-    }, [chat_history])
-
-    // Function to add an AI's message to the chat
-    const add_ai_message = async (content: string) => {
-	// @ts-ignore
-	set_chat_history((prev) => [...prev, { role: "assistant", content }]);
-	if (sound_feedback) { 
-	    sounds.proceed()
-	} 
-
-	//here we need to actually speak the response too!
-	log(`generating audio response...`)
-	log(`Using playbackRate to ${playbackRate}`)	
-	await vi.speak_with_rate(content, playbackRate) ;
-	log(`done`)
-	
-
-    };
-
-    //function for getting AI response from the chat history and the ai_model
-    let get_ai_response = async function() {
-	log(`Calling llm`)
-	var ai_response_text : string ; 
-	try  {
-	    var ai_response_text = await COR.run_llm(5) ; 
-	} catch (e : any) { 
-	    throw new Error(`Error extracting ai message: ${e}`) 
-	}
-
-	debug.add('ai_response_text' , ai_response_text)
-	log(`Got response: ${ai_response_text}`) 
-	return ai_response_text 
-
-    } 
-
-
-    
-    useEffect(  ()=> {
-	Object.assign(window, {
-	    tsw,
-	    wa ,
-	    debug ,
-	    get_ai_response ,
-	    COR ,
-	    transcription_cb 
-	}) ; 
-
-    } , [] ) ; //init script is called in "on_init_audio"    
-    
-    React.useEffect( ()=> {
-	transcribeRef.current = transcribe 
-    }, [transcribe] )
-
-    const handleSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
-	let v = event.target.checked
-	log(`Transcribe=${v}`)
-	setTranscribe(v);
-    };
-    
-
-    return (
-
-	    <Box style={{ flexDirection : 'column' , display : 'flex' , alignItems : 'center' , minWidth : '40%'}} >
-
-		<Box display='flex' flexDirection='row' alignItems='center' >
-		    <Box>
-			<h1 className={styles.title}>
-			    <a href="https://github.com/sheunaluko/tidyscripts">Cortex </a>  
-			</h1>
-		    </Box>
-
-		    <Box> 
-			<Button variant='outlined' style={{width:"10%" , marginLeft : '25px' , marginTop : '11px'}}
-					 onClick={function() {
-					     if (!started) {
-						 log(`Started audio`)
-						 set_started(true) ;
-						 if (!plots_initialized) { 
-						     on_init_audio(transcribeRef, transcription_cb )
-						 } else {
-						     GLOBAL_PAUSE = false 						     
-						 } 
-					     } else {
-						 //already started; so now we stop it
-						 log(`Stopping audio`)
-						 GLOBAL_PAUSE = true 
-						 set_started(false) 
-					     } 
-				}
-}
-			> {started ? "Stop" : "Start"} </Button>
-		    </Box> 
-
-		    
-		</Box>
-
-		<br />
-
-
-
-		<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
-		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
-			<Box id="viz" />
-		    </Box> 
-
-		    {/*
-
-		    <br />
-		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
-			<p>Mic</p>			 
-			<Box style={{display:'flex' , flexDirection : 'row'}}>
-			    <Box>
-				<Box id="plot_mic" sx={{flexGrow: 1}} /> 			
-			    </Box>
-			    <Box>
-				<Box id="plot_mic_zoom" sx={{flexGrow: 1}} /> 			
-			    </Box>
-			    
-			</Box>
-		    </Box>
-
-		    */}
-		    <br />
-
-
-		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
-
-			<Box id="chat_display" ref={chatDisplayRef} sx={{ maxWidth : "500px" , maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
-
-
-			    {chat_history.slice(1).map((message, index) => (
-				<Box
-				    key={index}
-					sx={{
-					    display: 'flex',
-					    justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
-					    marginBottom: '10px'
-					}}
-				>
-				    <Box
-					sx={{
-					    padding: '8px',
-					    borderRadius: '8px',
-					    backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
-					    border: message.role === 'user' ? '1px solid' : '1px solid',
-					    borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-					    color: message.role === 'assistant' ? 'inherit' : 'inherit'
-					}}
-
-				    >
-					<ReactMarkdown>
-					    {message.content}
-					</ReactMarkdown>
-				    </Box>
-
-				</Box>
-			    ))}
-			</Box>
-
-
-		    </Box> 
-
-		    
-		</Box>
-
-
-		<Box>
-		    <Accordion style={{ marginBottom : '10px'  }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>Tools</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-
-		    <TextField
-			variant="outlined"
-			value={text_input}
-			onChange={(e) => set_text_input(e.target.value)}
-			onKeyPress={handleKeyPress}
-			placeholder=""
-			sx={{ marginBottom: '5px', marginTop: '5px' }}
-		    />
-		    
-		    
-                </AccordionDetails>
-            </Accordion>
-
-
-
-		</Box>
-		
-		<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
-		    <FormGroup>
-			<FormControlLabel control={
-			    <Switch
-				size='small'
-				checked={transcribe}
-				onChange={handleSwitch}
-				inputProps={{ 'aria-label': 'controlled' }}
-			    />
-			} label="Listen" />
-		    </FormGroup>
-
-		</Box>
-
-
-		<Box display='flex' flexDirection='row' justifyContent='center' width="100%" alignItems='center'>
-
-
-		    <Box width="20%"> 
-		    <Slider
-
-				size='small'
-				value={playbackRate}
-				min={0.5}
-				max={2.0}
-				step={0.1}
-				onChange={handleRateChange}
-				valueLabelDisplay="auto"
-				sx={{ marginTop: '8px' }}
-		    />
-		    </Box>
-
-		    <Box 				sx={{ marginLeft : '7px'  }}
->
-			<Typography >{`Speech Rate: ${playbackRate.toFixed(1)}x`}</Typography>
-			</Box> 
-
-
-
-
-		</Box>
-
-		
-
-
-	    </Box>
-
-
-    )
-}
-
-export default Component ; 
 
 
 
