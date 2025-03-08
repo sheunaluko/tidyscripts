@@ -32,6 +32,25 @@ const AllLinks = () => {
   return (
       <Box>
 
+	  <MLink href="/laboratory/3dcam">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">3D-CAM Tool</Typography>
+		  <p>
+		      Delirium Assessment Tool (3D-CAM) 
+		  </p>
+	      </Card >
+	  </MLink>
+
+	  <MLink href="/laboratory/cortex_0">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Cortex</Typography>
+		  <p>
+		      A next generation AI assistant (Latest Release)
+		  </p>
+	      </Card >
+	  </MLink>
+
+	  
 	  <MLink href="/laboratory/ride">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">RIDE </Typography>
@@ -75,19 +94,11 @@ const AllLinks = () => {
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Cortex </Typography>
 		  <p>
-		      A next generation AI assistant 
+		      A next generation AI assistant (v1) 
 		  </p>
 	      </Card >
 	  </MLink>
 
-	  <MLink href="/laboratory/cortex_0">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Cortex_0 </Typography>
-		  <p>
-		      A next generation AI assistant (Traditional Verion)
-		  </p>
-	      </Card >
-	  </MLink>
 	  
 	  
 	  <MLink href="/laboratory/aidx">

@@ -5,6 +5,12 @@ import node   from "../../packages/ts_node/dist/index" ;
 const log = common.logger.get_logger({'id' : 'yts'})
 const {debug} = common.util
 
+/*
+
+   This requires both yt-dlp AND ffmpeg to work
+   Todo: add check for ffmpeg before it runs 
+   
+ */
 export async function get_summary(url: string, length : string ) {
     log(`Getting transcript`) 
     let transcript = await ytt.get_transcript(url) ;
