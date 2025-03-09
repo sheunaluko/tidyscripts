@@ -24,17 +24,17 @@ import {
     Slider,
     Paper 
 } from "@mui/material"
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { styled } from '@mui/material/styles';
 
 
 /*
-   
+
    Main Feature Release of Cortex
    Currently working on integratinng Workspace Functionality  
 
-*/
+ */
 
 
 declare var window : any ;
@@ -66,14 +66,15 @@ const COR = cortex_agent.get_agent() ;
 
 /* grid item */ 
 const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-  ...theme.applyStyles('dark', {
-    backgroundColor: '#1A2027',
-  })
+    backgroundColor: '#fff',
+    ...theme.typography.body2,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+    minHeight : "250px" , 
+    color: theme.palette.text.secondary,
+    ...theme.applyStyles('dark', {
+	backgroundColor: '#1A2027',
+    })
 })) 
 
 
@@ -100,7 +101,7 @@ const  Component: NextPage = (props : any) => {
     const [text_input, set_text_input] = useState<string>('');
 
     /* E F F E C T S */ 
-    
+
     useEffect( ()=> {
 	let speak = async function(content : string) {
 	    await  vi.speak_with_rate(content, playbackRate) ;
@@ -111,9 +112,9 @@ const  Component: NextPage = (props : any) => {
     const chatDisplayRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (chatDisplayRef.current) {
-            chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
-        }
+	if (chatDisplayRef.current) {
+	    chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
+	}
     }, [chat_history]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,7 +129,7 @@ const  Component: NextPage = (props : any) => {
 	}) ; 
 
     } , [] ) ; //init script is called in "on_init_audio"    
-    
+
     useEffect( ()=> {
 	transcribeRef.current = transcribe 
     }, [transcribe] )
@@ -141,9 +142,9 @@ const  Component: NextPage = (props : any) => {
 	}
 	let role = fp.last(chat_history).role
 	log(`Detected change in chat history from: ${role}`)
-	
+
 	if (role == 'user') {
-	    
+
 	    log(`Given user change, will send to ai`)
 	    get_ai_response().then( (resp : string) => {
 		if (resp == null) {
@@ -152,18 +153,18 @@ const  Component: NextPage = (props : any) => {
 		    add_ai_message(resp)
 		}
 	    })
-	    
+
 	    return 
-	    
+
 	}
 	if (role == 'system') {
 	    log(`System change ignored`) 
 	} else {
 	    log(`Given ai change, will await user response `) 
 	} 
-	
+
     }, [chat_history])
-    
+
 
     /*
 
@@ -171,7 +172,7 @@ const  Component: NextPage = (props : any) => {
        This is passed to the audio api and will be called once transcription results  
        in the transcription callback we get the transcription text and call add_user_message
        then we call ai_response = await get_ai_response()
-       
+
      */
 
     let transcription_cb = async function(text : string) {
@@ -188,23 +189,23 @@ const  Component: NextPage = (props : any) => {
 
     //handle user chat message (instead of voice)
     const handleSend = async () => {
-        if (text_input.trim()) {
+	if (text_input.trim()) {
 	    //simulate as if the user has said this
 	    transcription_cb(text_input.trim())
-        }
+	}
     };
 
     //if the user pressers enter instead of send
     const handleKeyPress = (event: React.KeyboardEvent) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            handleSend();
+	if (event.key === 'Enter') {
+	    event.preventDefault();
+	    handleSend();
 	    //set text_input to ""
 	    set_text_input("") ; 
-	    
-        }
+
+	}
     };
-    
+
     //handle audio playback rate 
     const handleRateChange = (event: Event, newValue: number | number[]) => {
 	if (Array.isArray(newValue)) return; // Handle single value only
@@ -219,7 +220,7 @@ const  Component: NextPage = (props : any) => {
 	//add the user message to COR
 	COR.add_user_text_input(content) 
 
-	
+
 	if (sound_feedback) { 
 	    sounds.proceed()
 	} 
@@ -239,7 +240,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Using playbackRate to ${playbackRate}`)	
 	await vi.speak_with_rate(content, playbackRate) ;
 	log(`done`)
-	
+
 
     };
 
@@ -264,7 +265,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Transcribe=${v}`)
 	setTranscribe(v);
     };
-    
+
 
     return (
 
@@ -279,27 +280,27 @@ const  Component: NextPage = (props : any) => {
 
 	    <Box> 
 		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
-			onClick={function() {
-			    if (!started) {
-				log(`Started audio`)
-				set_started(true) ;
-				if (!plots_initialized) { 
-				    on_init_audio(transcribeRef, transcription_cb )
-				} else {
-				    GLOBAL_PAUSE = false 						     
-				} 
-			    } else {
-				//already started; so now we stop it
-				log(`Stopping audio`)
-				GLOBAL_PAUSE = true 
-				set_started(false) 
-			    } 
-			}
-			}
+				 onClick={function() {
+				     if (!started) {
+					 log(`Started audio`)
+					 set_started(true) ;
+					 if (!plots_initialized) { 
+					     on_init_audio(transcribeRef, transcription_cb )
+					 } else {
+					     GLOBAL_PAUSE = false 						     
+					 } 
+				     } else {
+					 //already started; so now we stop it
+					 log(`Stopping audio`)
+					 GLOBAL_PAUSE = true 
+					 set_started(false) 
+				     } 
+				 }
+				 }
 		> {started ? "Stop" : "Start"} </Button>
 	    </Box> 
 
-	    
+
 	</Box>
 
 	<br />
@@ -307,18 +308,19 @@ const  Component: NextPage = (props : any) => {
 
 
 	<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
-	
+
 	<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
 	    <Box id="viz" />
 	</Box>
-	
+
 	<br />
 
-    
 
-	<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
 
-	    <Box id="chat_display" ref={chatDisplayRef} sx={{ maxWidth : "500px" , maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
+	<Grid width="100%" height="100%" container spacing={2}>
+	    <Grid size={{ xs: 12, md: 6 }}>
+		<Item>
+		    	    <Box id="chat_display" ref={chatDisplayRef} sx={{ width : "100%" , height: '100%', overflowY: 'auto'  }}>
 
 
 		{chat_history.slice(1).map((message, index) => (
@@ -351,9 +353,18 @@ const  Component: NextPage = (props : any) => {
 	    </Box>
 
 
-	</Box> 
 
-	
+		</Item>
+	    </Grid>
+	    <Grid size={{ xs: 12, md: 6 }}>
+		<Item>Workspace</Item>
+	    </Grid>
+	</Grid>
+
+
+
+
+
 	</Box>
 
 	<Box style={{flexGrow : 1 }}>
@@ -362,11 +373,11 @@ const  Component: NextPage = (props : any) => {
 
 
 	<Box>
-	    <Accordion style={{ marginBottom : '10px'  }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>Tools</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
+	    <Accordion style={{ marginTop: "10px" , marginBottom : '5px'  }}>
+		<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+		    <Typography>Tools</Typography>
+		</AccordionSummary>
+		<AccordionDetails>
 
 		    <TextField
 			variant="outlined"
@@ -383,9 +394,9 @@ const  Component: NextPage = (props : any) => {
 			    <FormControlLabel control={
 				<Switch
 				    size='small'
-					  checked={transcribe}
-					  onChange={handleSwitch}
-					  inputProps={{ 'aria-label': 'controlled' }}
+				    checked={transcribe}
+				    onChange={handleSwitch}
+				    inputProps={{ 'aria-label': 'controlled' }}
 				/>
 			    } label="Listen" />
 			</FormGroup>
@@ -420,17 +431,17 @@ const  Component: NextPage = (props : any) => {
 
 		    </Box>
 
-		    
-		    
-                </AccordionDetails>
-            </Accordion>
+
+
+		</AccordionDetails>
+	    </Accordion>
 
 
 
 	</Box>
-	
 
-	
+
+
 
 
 	</Box>
@@ -460,14 +471,14 @@ async function init() {
 	let tmp : any; 
 	if (x == 'plot_mic_zoom' ) { 
 	    tmp = make_plot(null) ;
-	    
+
 	} else if ( x == 'viz'  ) {
 	    tmp = point_plt() ;
-	    
+
 	} else 	{
 	    tmp = make_plot([-1.1,1.1]) ;
 	} ;
-	
+
 	let {plot,source} = tmp
 	plot.toolbar.logo = null ; 
 	window.data_sources[x]  = source  ; 
@@ -507,13 +518,13 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 	   This is where I need to pass the transcript Dynamically either to: 
 	   - cortex_channel 
 	   - function_channel 
-	   
+
 	   If a function is executing then we pass to function_channel 
 	   If not then we pass to cortex_channel 
-	   
+
 	 */
 
-	
+
 	if (transcribeRef.current) {
 	    log(`Transcribing audio`)
 	    debug.add("transcript" , transcript) ;
@@ -564,7 +575,7 @@ function make_plot(yr : any) {
     });
     plot.add_glyph(line, source);
 
-    
+
     return {plot , source} 
 
 }
@@ -585,7 +596,7 @@ export function point_plt() {
 
     ops.y_range = new Bokeh.Range1d({start : -1 , end : 1 })
     ops.x_range = new Bokeh.Range1d({start : -1 , end : 1 })    
-    
+
     const plot = new Bokeh.Plot(ops); 
 
     // add axes to the plot
@@ -609,7 +620,7 @@ export function point_plt() {
     });
     plot.add_glyph(g, source);
 
-    
+
     return {plot , source} 
 } 
 
@@ -619,17 +630,17 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
     const y: number[] = [];
 
     for (let i = 0; i < n; i++) {
-        // Generate two uniform random numbers between 0 and 1
-        const u1 = Math.random();
-        const u2 = Math.random();
+	// Generate two uniform random numbers between 0 and 1
+	const u1 = Math.random();
+	const u2 = Math.random();
 
-        // Use Box-Muller transform to obtain two independent standard normal random numbers
-        const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-        const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+	// Use Box-Muller transform to obtain two independent standard normal random numbers
+	const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+	const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
 
-        // Scale by the specified standard deviations
-        x.push(z0 * sigma_x);
-        y.push(z1 * sigma_y);
+	// Scale by the specified standard deviations
+	x.push(z0 * sigma_x);
+	y.push(z1 * sigma_y);
     }
 
     return { x, y };
