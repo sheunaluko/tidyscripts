@@ -193,9 +193,9 @@ export class Cortex extends EventEmitter  {
 
     }
 
-    emit_thought(thought : string) {
-	this.log(`thought: ${thought}`) ; 
-	this.emit('thought' , thought) ; 
+    emit_event(evt : any) {
+	this.log(`emitting event: ${JSON.stringify(evt)}`) ; 
+	this.emit('event' , evt) ; 
     }
     
     configure_user_output(fn : any ) {
@@ -302,7 +302,7 @@ export class Cortex extends EventEmitter  {
 
 	//at this point parsed is a CortexOutput object
 	if (output.kind == "text" ) {
-	    this.emit_thought(output.thoughts)
+	    this.emit_event({'type': 'thought', 'thought' : output.thoughts})
 	    //this.log(`thinking::> ${output.thoughts}`)	    
 	    this.log(`OUTPUT::> ${output.text}`)
 	    return output.text
@@ -314,7 +314,7 @@ export class Cortex extends EventEmitter  {
 
 	    try {
 		this.log(`Loop=${loop}`)
-		this.emit_thought(output.thoughts) ; 
+		this.emit_event({'type': 'thought', 'thought' : output.thoughts}) 		
 		
 		if (loop < 1 ) {
 		    this.log(`Loop counter ran out!`)
@@ -359,10 +359,16 @@ export class Cortex extends EventEmitter  {
 
     }
 
+    log_event(msg: string) {
+	this.emit_event({'type' : 'log' , log : msg })  		
+    } 
+
     //allows for passing user text to an active function 
     async handle_function_input(i :any ) {
-	this.log(`Sending to function_input_ch: ${i}`)
-	this.function_input_ch.write(i) ; 
+	let msg = `Sending to function_input_ch: ${i}` 
+	this.log(msg)
+	this.function_input_ch.write(i) ;
+	this.log_event(msg) 
     } 
 
     async handle_function_call(fMsg : CortexOutput) {
@@ -381,7 +387,9 @@ export class Cortex extends EventEmitter  {
 	    }
 	}
 
-	this.log(`Running function: ${name} with args=${JSON.stringify(parameters)}`)
+	let fn_msg = `Running function: ${name} with args=${JSON.stringify(parameters)}`
+	this.log(fn_msg)
+	this.log_event(fn_msg)  
 
 	parameters = parameters || {} ; // -- 
 
@@ -410,12 +418,17 @@ export class Cortex extends EventEmitter  {
 	parameters.feedback  = feedback  ;
 
 	this.log(`Appending user_output to function parameters`)	
-	parameters.user_output  = this.user_output  ; 
+	parameters.user_output  = this.user_output  ;
+
+	this.log(`Appending event to function parameters`)	
+	parameters.event  = this.emit_event.bind(this)  ; 
+	
 	
 	
 	try {
 	    let result = await F.fn(parameters)
-	    error = null ; 
+	    error = null ;
+	    this.log_event(`Ran ${name} function successfully`)
 	    this.log(`Ran ${name} function successfully and got result:`)
 	    this.log(result) ; 
 	    return {
@@ -425,7 +438,8 @@ export class Cortex extends EventEmitter  {
 	    }
 	} catch (e : any ) {
 	    error =  e.message ;
-	    this.log(error) 	    
+	    this.log(error)
+	    this.log_event(`[ERROR] - Error with function: ${name}: ${error}`)	    
 	    return {
 		error , 
 		result : null ,

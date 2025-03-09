@@ -1,16 +1,20 @@
+'use client' ;
+
 import * as c from "../src/cortex"  ;
 import jdoc from "../../../../docs/jdoc.json" 
 import * as fbu from "../../../src/firebase_utils" 
 import * as fnu from "../src/fn_util" 
 
+declare var window : any ;
+
 /**
  * Defines the cortex agent used in the Cortex UI 
  */
 
-// todo - change timestamp to ms epoch ; implement vector embeddings 
 // ability to update system message by talking to cortex -- via local storage object?
 // can update and then reload conversationally.
-// upload past dreams 
+// upload past dreams
+
 
 export function get_agent() {
     // init cortex 
@@ -93,14 +97,29 @@ After that, the user will automatically see the updated changes.
 	name        : "update_workspace" ,
 	parameters  : { code : "string" }  ,
 	fn          : async (ops : any) => {
-	    let {code} = ops
-	    let result = eval(code)
-	    // update the workspace UI here 
+	    let {code, event } = ops
+	    let result = window.eval(code)
+	    // update the workspace UI here
+	    event({'type' : 'workspace_update' })
 	    return result 
 	} ,
 	return_type : "any"
     },
-    
+
+    {
+	description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
+	name : "youtube_summary" ,
+	parameters : { url : "string"  , length_in_minutes : "string" } ,
+	fn : async (ops : any ) => {
+	    let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
+	    let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
+
+	    let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
+	    ops.event({type:'log' , log : msg})	    
+	    return await tes(fn_path , fn_args )
+	} ,
+	return_type : "string" , 
+    }, 
     
     { 
 	description : "Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation" , 

@@ -9,6 +9,10 @@ import { alpha } from '@mui/system';
 import { theme } from "../../theme";
 import ReactMarkdown from 'react-markdown';
 import * as cortex_agent from "./cortex_agent_web" 
+import Grid from '@mui/material/Grid2';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { styled } from '@mui/material/styles';
+import {ObjectInspector } from 'react-inspector';
 import {
     Box,
     Button,
@@ -24,18 +28,13 @@ import {
     Slider,
     Paper 
 } from "@mui/material"
-import Grid from '@mui/material/Grid2';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { styled } from '@mui/material/styles';
-
 
 /*
 
    Main Feature Release of Cortex
    Currently working on integratinng Workspace Functionality  
 
- */
-
+*/
 
 declare var window : any ;
 declare var Bokeh : any  ; 
@@ -51,10 +50,6 @@ const vi    = tsw.util.voice_interface ;
 const oai   = tsw.apis.openai;
 const sounds = tsw.util.sounds
 
-/* Params  */
-const viz_n = 50 ;
-const viz_s = 0.03 ; 
-var   sound_feedback = true 
 
 /* For the chat box */ 
 const alpha_val = 0.4
@@ -70,8 +65,9 @@ const Item = styled(Paper)(({ theme }) => ({
     ...theme.typography.body2,
     padding: theme.spacing(1),
 
-    overflowY : 'hidden' , 
-    height : "300px" , 
+    overflowY : 'hidden' ,
+    overflowX : 'auto' ,     
+    height : "300px" ,
     color: theme.palette.text.secondary,
     ...theme.applyStyles('dark', {
 	backgroundColor: '#1A2027',
@@ -82,21 +78,12 @@ const Item = styled(Paper)(({ theme }) => ({
 /* C O M P O N E N T _ D E F I N I T I O N  */ 
 const  Component: NextPage = (props : any) => {
 
-
     const [transcribe, setTranscribe] = useState(true)
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
 
     let init_chat_history = [
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
-
-
-    /*
-    let test_chat = [{"role":"user","content":"Hi, how are you today?"},{"role":"assistant","content":"I'm great, thank you! How about you?"},{"role":"user","content":"I'm doing well, thanks for asking."},{"role":"assistant","content":"Glad to hear that. Anything exciting happening today?"},{"role":"user","content":"Not much, just working on some projects."},{"role":"assistant","content":"Sounds productive. Need any help with them?"},{"role":"user","content":"Not right now, but I appreciate it."},{"role":"assistant","content":"Anytime! Just let me know."},{"role":"user","content":"What do you recommend to take a break?"},{"role":"assistant","content":"Maybe a short walk or a quick meditation session?"}]
-
-       init_chat_history = [...init_chat_history, ...test_chat ] ;
-     */
-    
 
     const default_model = "gpt-4o"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
@@ -106,12 +93,45 @@ const  Component: NextPage = (props : any) => {
 
     const init_thoughts : string[] = []  ; 
     const [thought_history, set_thought_history] = useState(init_thoughts);
+
+    const init_logs : string[] = []  ;     
+    const [log_history, set_log_history] = useState(init_logs);    
     
     const [audio_history, set_audio_history] = useState([]);
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
-    const [workspace, set_workspace] = useState({}) ; 
+    const [workspace, set_workspace] = useState({}) ;
     const [text_input, set_text_input] = useState<string>('');
+
+    /* E V E N T _ H A N D L I N G */
+    const handle_thought = (evt : any) => {
+	let {thought} = evt ; 
+	log(`Got thought event: ${thought}`)
+	set_thought_history((prev) => [...prev, thought])	    
+    }
+
+    const handle_log = (evt : any) => {
+	log(`Got log event: ${evt.log}`)
+	set_log_history((prev) => [...prev, evt.log])	    
+    }
+    
+    const handle_workspace_update = (evt : any) => {
+	log(`Got workspace update event`)
+	let new_workspace = structuredClone(window.workspace) ; 
+	set_workspace( { ...new_workspace }) ; 
+    }
+    
+    const event_dic  : {[k:string] : any}  = {
+	'thought' : handle_thought ,
+	'workspace_update' : handle_workspace_update,
+	'log' : handle_log ,
+    }
+    
+    const handle_event = (evt : any) => {
+	log(`Got event: ${JSON.stringify(evt)}`)
+	let fn = event_dic[evt.type] ;
+	fn(evt) 
+    }
 
     
     /* E F F E C T S */ 
@@ -123,38 +143,50 @@ const  Component: NextPage = (props : any) => {
 	COR.configure_user_output(speak) 
     }, [playbackRate])
 
-    let handle_thought = (thought : string) => {
-	log(`Detected thought event: ${thought}`)
-	set_thought_history((prev) => [...prev, thought])	    
-    } 
 
     useEffect( ()=> {
-	COR.on('thought', handle_thought) 
-	return () => { COR.off('thought' , handle_thought) } 
+	COR.on('event', handle_event)
+	return () => { COR.off('event' , handle_event) } 
     }, [])
 
 
     useEffect(() => {
 	let el = document.getElementById("chat_display") ;
 	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [chat_history]);
+    }, [chat_history, thought_history, log_history]);
 
     useEffect(() => {
 	let el = document.getElementById("thought_display") ;
 	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [thought_history]);
+    }, [thought_history, chat_history, log_history]);
 
+    useEffect(() => {
+	let el = document.getElementById("log_display") ;
+	if (el) { el.scrollTop = el.scrollHeight } 
+    }, [thought_history, chat_history, log_history]);
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     useEffect(  ()=> {
+
+	if (window.workspace ) {
+	    window.alert(`Caution, overwriting workspace global var`) ;
+	}
+	
 	Object.assign(window, {
 	    tsw,
 	    wa ,
 	    debug ,
 	    get_ai_response ,
 	    COR ,
-	    transcription_cb 
-	}) ; 
+	    transcription_cb ,
+	    workspace : {} , 
+	}) ;
+
+	return ()=>{
+	    let k = `cortex_workspace_${(new Date()).toString()}` ; 
+	    localStorage[k] = JSON.stringify(window.workspace) ; 
+	    delete window.workspace 
+	}
 
     } , [] ) ; //init script is called in "on_init_audio"    
 
@@ -162,7 +194,6 @@ const  Component: NextPage = (props : any) => {
 	transcribeRef.current = transcribe 
     }, [transcribe] )
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps	
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {
@@ -193,14 +224,11 @@ const  Component: NextPage = (props : any) => {
 
     }, [chat_history])
 
-
     /*
-
        DEFINE THE TRANSCRIPTION CALLBACK
        This is passed to the audio api and will be called once transcription results  
        in the transcription callback we get the transcription text and call add_user_message
        then we call ai_response = await get_ai_response()
-
      */
 
     let transcription_cb = async function(text : string) {
@@ -323,6 +351,42 @@ const  Component: NextPage = (props : any) => {
     ) ; 
 
 
+    const LogWidget = () => (
+	<Item>
+	    Log
+	    <Box id="log_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >	    
+	    {
+		log_history.map( (log,index) => (
+		    <Box
+			key={index}
+			sx={{
+			    borderRadius: '8px',
+			    //border:  '1px solid' , 
+			    color: (log.indexOf('ERROR') > -1 ) ?  'error.light' : 'info.light'  , 
+			}} 
+		    >
+			{log} 
+		    </Box>
+
+		    
+		))
+		
+	    }
+	    </Box> 
+	</Item>
+    ) ; 
+
+    
+    const WorkspaceWidget = () => (
+	<Item>
+	    Workspace
+	    <Box id="workspace_display" sx={{maxHeight:"95%"  , marginTop:'5px' , overflowY:"auto"  }} >	    
+		<ObjectInspector style={{width: "90%"}} data={workspace} expandPaths={['$', '$.*','$.*.*']} />
+	    </Box> 
+
+	</Item>
+    )
+
     const ChatWidget = () => (
 		<Item>
 		    Chat
@@ -419,12 +483,18 @@ const  Component: NextPage = (props : any) => {
 	    </Grid>
 
 	    <Grid size={{ xs: 12, md: 6 }}>
+		<WorkspaceWidget/>
+	    </Grid>
+	    
+
+	    <Grid size={{ xs: 12, md: 6 }}>
 		<ThoughtsWidget/> 
 
 	    </Grid>
 	    <Grid size={{ xs: 12, md: 6 }}>
-		<Item>Workspace</Item>
+		<LogWidget/>
 	    </Grid>
+	    
 	</Grid>
 
 
@@ -439,7 +509,7 @@ const  Component: NextPage = (props : any) => {
 
 
 	<Box>
-	    <Accordion style={{ marginTop: "10px" , marginBottom : '5px'  }}>
+	    <Accordion style={{ marginTop: "15px" , marginBottom : '5px'  }}>
 		<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 		    <Typography>Tools</Typography>
 		</AccordionSummary>
@@ -604,6 +674,11 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 
 } 
 
+/* Params  */
+const viz_n = 50 ;
+const viz_s = 0.03 ; 
+var   sound_feedback = true 
+
 
 
 function make_plot(yr : any) {
@@ -711,3 +786,10 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
 
     return { x, y };
 }
+
+
+    /*
+    let test_chat = [{"role":"user","content":"Hi, how are you today?"},{"role":"assistant","content":"I'm great, thank you! How about you?"},{"role":"user","content":"I'm doing well, thanks for asking."},{"role":"assistant","content":"Glad to hear that. Anything exciting happening today?"},{"role":"user","content":"Not much, just working on some projects."},{"role":"assistant","content":"Sounds productive. Need any help with them?"},{"role":"user","content":"Not right now, but I appreciate it."},{"role":"assistant","content":"Anytime! Just let me know."},{"role":"user","content":"What do you recommend to take a break?"},{"role":"assistant","content":"Maybe a short walk or a quick meditation session?"}]
+
+       init_chat_history = [...init_chat_history, ...test_chat ] ;
+     */
