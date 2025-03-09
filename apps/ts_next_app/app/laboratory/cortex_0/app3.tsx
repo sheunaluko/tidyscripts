@@ -69,8 +69,9 @@ const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: '#fff',
     ...theme.typography.body2,
     padding: theme.spacing(1),
-    textAlign: 'center',
-    minHeight : "250px" , 
+
+    overflowY : 'hidden' , 
+    height : "300px" , 
     color: theme.palette.text.secondary,
     ...theme.applyStyles('dark', {
 	backgroundColor: '#1A2027',
@@ -89,17 +90,30 @@ const  Component: NextPage = (props : any) => {
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
 
+
+    /*
+    let test_chat = [{"role":"user","content":"Hi, how are you today?"},{"role":"assistant","content":"I'm great, thank you! How about you?"},{"role":"user","content":"I'm doing well, thanks for asking."},{"role":"assistant","content":"Glad to hear that. Anything exciting happening today?"},{"role":"user","content":"Not much, just working on some projects."},{"role":"assistant","content":"Sounds productive. Need any help with them?"},{"role":"user","content":"Not right now, but I appreciate it."},{"role":"assistant","content":"Anytime! Just let me know."},{"role":"user","content":"What do you recommend to take a break?"},{"role":"assistant","content":"Maybe a short walk or a quick meditation session?"}]
+
+       init_chat_history = [...init_chat_history, ...test_chat ] ;
+     */
+    
+
     const default_model = "gpt-4o"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    
     const [chat_history, set_chat_history] = useState(init_chat_history);
+
+    const init_thoughts : string[] = []  ; 
+    const [thought_history, set_thought_history] = useState(init_thoughts);
+    
     const [audio_history, set_audio_history] = useState([]);
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ; 
     const [text_input, set_text_input] = useState<string>('');
 
+    
     /* E F F E C T S */ 
 
     useEffect( ()=> {
@@ -109,14 +123,28 @@ const  Component: NextPage = (props : any) => {
 	COR.configure_user_output(speak) 
     }, [playbackRate])
 
-    const chatDisplayRef = React.useRef<HTMLDivElement>(null);
+    let handle_thought = (thought : string) => {
+	log(`Detected thought event: ${thought}`)
+	set_thought_history((prev) => [...prev, thought])	    
+    } 
+
+    useEffect( ()=> {
+	COR.on('thought', handle_thought) 
+	return () => { COR.off('thought' , handle_thought) } 
+    }, [])
+
 
     useEffect(() => {
-	if (chatDisplayRef.current) {
-	    chatDisplayRef.current.scrollTop = chatDisplayRef.current.scrollHeight;
-	}
+	let el = document.getElementById("chat_display") ;
+	if (el) { el.scrollTop = el.scrollHeight } 
     }, [chat_history]);
 
+    useEffect(() => {
+	let el = document.getElementById("thought_display") ;
+	if (el) { el.scrollTop = el.scrollHeight } 
+    }, [thought_history]);
+
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(  ()=> {
 	Object.assign(window, {
@@ -266,7 +294,73 @@ const  Component: NextPage = (props : any) => {
 	setTranscribe(v);
     };
 
+    /* define widgets */
 
+
+    const ThoughtsWidget = () => (
+	<Item>
+	    Thoughts
+	    <Box id="thought_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >	    
+	    {
+		thought_history.map( (thought,index) => (
+		    <Box
+			key={index}
+			sx={{
+			    borderRadius: '8px',
+			    //border:  '1px solid' , 
+			    color: 'success.light' 
+			}} 
+		    >
+			{thought} 
+		    </Box>
+
+		    
+		))
+		
+	    }
+	    </Box> 
+	</Item>
+    ) ; 
+
+
+    const ChatWidget = () => (
+		<Item>
+		    Chat
+		    <Box id="chat_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >
+
+		{chat_history.slice(1).map((message, index) => (
+		    <Box
+			key={index}
+			    sx={{
+				display: 'flex',
+				justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
+				marginBottom: '10px'
+			    }}
+		    >
+			<Box
+			    sx={{
+				padding: '8px',
+				borderRadius: '8px',
+				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
+				border: message.role === 'user' ? '1px solid' : '1px solid',
+				borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
+				color: message.role === 'assistant' ? 'inherit' : 'inherit'
+			    }}
+
+			>
+			    <ReactMarkdown>
+				{message.content}
+			    </ReactMarkdown>
+			</Box>
+
+		    </Box>
+		))}
+			</Box> 
+			</Item>
+
+    )
+
+    
     return (
 
 	<Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , minWidth : '90%'}} >
@@ -318,43 +412,15 @@ const  Component: NextPage = (props : any) => {
 
 
 	<Grid width="100%" height="100%" container spacing={2}>
+
 	    <Grid size={{ xs: 12, md: 6 }}>
-		<Item>
-		    	    <Box id="chat_display" ref={chatDisplayRef} sx={{ width : "100%" , height: '100%', overflowY: 'auto'  }}>
+		<ChatWidget/> 		
 
+	    </Grid>
 
-		{chat_history.slice(1).map((message, index) => (
-		    <Box
-			key={index}
-			    sx={{
-				display: 'flex',
-				justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
-				marginBottom: '10px'
-			    }}
-		    >
-			<Box
-			    sx={{
-				padding: '8px',
-				borderRadius: '8px',
-				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
-				border: message.role === 'user' ? '1px solid' : '1px solid',
-				borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-				color: message.role === 'assistant' ? 'inherit' : 'inherit'
-			    }}
+	    <Grid size={{ xs: 12, md: 6 }}>
+		<ThoughtsWidget/> 
 
-			>
-			    <ReactMarkdown>
-				{message.content}
-			    </ReactMarkdown>
-			</Box>
-
-		    </Box>
-		))}
-	    </Box>
-
-
-
-		</Item>
 	    </Grid>
 	    <Grid size={{ xs: 12, md: 6 }}>
 		<Item>Workspace</Item>

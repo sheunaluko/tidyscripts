@@ -7,7 +7,7 @@ import { z } from "zod" ;
 import system_msg_template  from "./cortex_system_msg_template"
 import * as common from "tidyscripts_common"
 import * as tsw from "tidyscripts_web"
-
+import {EventEmitter} from 'events'  ;  
 const {debug} = common.util ;
 const log = common.logger.get_logger({'id':'cortex_base'})
 import * as Channel from "./channel" 
@@ -21,8 +21,6 @@ import * as Channel from "./channel"
       - and just natively support multiple function calls (or 1 or none) 
 
  */
-
-
 
 
 /* Define types */
@@ -151,7 +149,7 @@ interface CortexOps {
  * Defines the Cortex class, which provides a clean interface to Agent<->User IO  
  * 
  */ 
-export class Cortex  {
+export class Cortex extends EventEmitter  {
 
     model : string;
     name  : string;
@@ -167,6 +165,9 @@ export class Cortex  {
     user_output : any ; 
     
     constructor(ops : CortexOps) {
+
+	super() ;
+	
 	let { model, name, functions , additional_system_msg } = ops  ;
 	this.model = model ;
 	this.name  = name ;
@@ -192,6 +193,11 @@ export class Cortex  {
 
     }
 
+    emit_thought(thought : string) {
+	this.log(`thought: ${thought}`) ; 
+	this.emit('thought' , thought) ; 
+    }
+    
     configure_user_output(fn : any ) {
 	this.log("Linking user output") 
 	this.user_output  = fn 
@@ -296,7 +302,8 @@ export class Cortex  {
 
 	//at this point parsed is a CortexOutput object
 	if (output.kind == "text" ) {
-	    this.log(`thinking::> ${output.thoughts}`)	    
+	    this.emit_thought(output.thoughts)
+	    //this.log(`thinking::> ${output.thoughts}`)	    
 	    this.log(`OUTPUT::> ${output.text}`)
 	    return output.text
 	}
@@ -307,7 +314,7 @@ export class Cortex  {
 
 	    try {
 		this.log(`Loop=${loop}`)
-		this.log(`thinking::> ${output.thoughts}`)
+		this.emit_thought(output.thoughts) ; 
 		
 		if (loop < 1 ) {
 		    this.log(`Loop counter ran out!`)
