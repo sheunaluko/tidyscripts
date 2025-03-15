@@ -3,6 +3,11 @@
    Thu Jul  2 09:05:48 PDT 2020
 */ 
 
+
+import * as common from "tidyscripts_common"
+let {asnc, fp , logger } = common ; 
+let log = logger.get_logger({id:"speech"})
+
 declare var window : any 
 
 
@@ -18,27 +23,49 @@ export interface RecognitionOps {
     onError? : ()=>void,
     onEnd?  : ()=>void, 
     lang?  : string , 
-    result_dispatch? : string , 
+    result_dispatch? : string ,
+    interim_dispatch? : string ,     
 } 
 
 export function get_recognition_object(ops: RecognitionOps = {})  {
     
-    let {result_dispatch = "tidyscripts_web_speech_recognition_result"} = ops 
+    let {
+	result_dispatch = "tidyscripts_web_speech_recognition_result",
+	interim_dispatch = "tidyscripts_web_speech_recognition_interim",	
+	 
+    } = ops 
     
     let {continuous = true,
-	 interimResults = false,
-	 onStart = ()=>{console.log("Recognition started")} ,
-	 onSoundStart = ()=>{console.log("Sound started...") },
-	 onSoundEnd = ()=>{console.log("Sound ended...") },	 
-	 onSpeechStart = ()=>{console.log("Speech started...") },
-	 onSpeechEnd = ()=>{console.log("Speech ended...") },	 
-	 onResult = function(e : any) { 
-	     let result = e.results[e.resultIndex][0].transcript
-	     console.log("Recognition result: " + result)
-	     window.dispatchEvent( new CustomEvent(result_dispatch, { detail : result } ) ) 
+	 interimResults = true,
+	 onStart = ()=>{log("Recognition started")} ,
+	 onSoundStart = ()=>{log("Sound started...") },
+	 onSoundEnd = ()=>{log("Sound ended...") },	 
+	 onSpeechStart = ()=>{log("Speech started...") },
+	 onSpeechEnd = ()=>{log("Speech ended...") },	 
+	 onResult = function(event : any) {
+
+	     let interimTranscript = '';
+	     let finalTranscript = '';
+
+	     for (let i = event.resultIndex; i < event.results.length; ++i) {
+		 if (event.results[i].isFinal) {
+		     log(`GOT FINAL RESULT`)
+		     finalTranscript += event.results[i][0].transcript;
+		     log("Recognition result: " + finalTranscript)	     
+		     window.dispatchEvent( new CustomEvent(result_dispatch, { detail : finalTranscript } ) ) 
+		     
+		 } else {
+
+		     interimTranscript += event.results[i][0].transcript;
+		     //log(`GOT INTERIM RESULT: ${interimTranscript}`)
+		     window.dispatchEvent( new CustomEvent(interim_dispatch, { detail : interimTranscript } ) )
+		 }
+	     }
+
+
 	 } , 
-	 onError = (e :any)=> {console.log("Recognition error: "); console.log(e);} , 
-	 onEnd = ()=> {console.log("Recognition ended")} , 
+	 onError = (e :any)=> {log("Recognition error: "); console.log(e);} , 
+	 onEnd = ()=> {log("Recognition ended")} , 
 	 lang = 'en-US' , 
 	} = ops  
     

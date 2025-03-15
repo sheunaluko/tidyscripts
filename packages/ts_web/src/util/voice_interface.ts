@@ -171,10 +171,10 @@ export function set_default_voice_from_name_preference_list(l : string[]) {
 
 export async function speak_with_voice(text :string,voiceURI : string | null,rate : number) {
     if (recognition) {
-	let thresh  = stop_recognition_and_detection() 
-      tts.speak({text, voiceURI , rate})
+	//let thresh  = stop_recognition_and_detection() 
+	tts.speak({text, voiceURI , rate})
 	await tts.finished_speaking()
-	start_recognition_and_detection(thresh) 
+	//start_recognition_and_detection(thresh) 
     } else { 
       tts.speak({text, voiceURI, rate})
 	await tts.finished_speaking()

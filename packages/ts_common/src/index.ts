@@ -7,7 +7,7 @@ import * as asnc from "./async"
 import * as apis from "./apis"
 import * as midi_encoder from "./midi_encoder"
 import * as dates from "./dates"
-
+import * as external from "./external" 
 
 const log = logger.get_logger({ id: "common" });
 
@@ -42,6 +42,7 @@ export {
     apis,
     midi_encoder,
     dates ,
+    external 
 }
 
 

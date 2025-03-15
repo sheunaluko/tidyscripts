@@ -29,6 +29,10 @@ import {
     Paper 
 } from "@mui/material"
 
+
+import * as cortex_utils from "./src/cortex_utils" 
+
+
 /*
 
    Main Feature Release of Cortex
@@ -90,6 +94,11 @@ const  Component: NextPage = (props : any) => {
 
     const [started, set_started] = useState(false);    
     const [chat_history, set_chat_history] = useState(init_chat_history);
+    const [last_ai_message, set_last_ai_message] = useState("" as string);
+    const last_ai_message_ref = React.useRef(last_ai_message) 
+    
+    const [transcription_similarity_threshold, set_transcription_similarity_threshold] = useState(0.7);
+    const [interim_result, set_interim_result] = useState("" as string);            
 
     const init_thoughts : string[] = []  ; 
     const [thought_history, set_thought_history] = useState(init_thoughts);
@@ -133,6 +142,15 @@ const  Component: NextPage = (props : any) => {
 	fn(evt) 
     }
 
+    /* L I S T E N E R */
+
+    if (typeof window !== "undefined" ) { 
+	window.addEventListener( 'tidyscripts_web_speech_recognition_interim' , async (e: any) => {
+	    let transcript = e.detail ;
+	    set_interim_result(transcript) ; 
+	})
+    }
+
     
     /* E F F E C T S */ 
 
@@ -153,17 +171,17 @@ const  Component: NextPage = (props : any) => {
     useEffect(() => {
 	let el = document.getElementById("chat_display") ;
 	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [chat_history, thought_history, log_history]);
+    }, [chat_history, thought_history, log_history, last_ai_message]);
 
     useEffect(() => {
 	let el = document.getElementById("thought_display") ;
 	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [thought_history, chat_history, log_history]);
+    }, [thought_history, chat_history, log_history, last_ai_message]);
 
     useEffect(() => {
 	let el = document.getElementById("log_display") ;
 	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [thought_history, chat_history, log_history]);
+    }, [thought_history, chat_history, log_history, last_ai_message]);
     
 
     useEffect(  ()=> {
@@ -179,7 +197,9 @@ const  Component: NextPage = (props : any) => {
 	    get_ai_response ,
 	    COR ,
 	    transcription_cb ,
-	    workspace : {} , 
+	    workspace : {} ,
+	    last_ai_message,
+	    last_ai_message_ref, 
 	}) ;
 
 	return ()=>{
@@ -194,6 +214,34 @@ const  Component: NextPage = (props : any) => {
 	transcribeRef.current = transcribe 
     }, [transcribe] )
 
+    useEffect( ()=> {
+	last_ai_message_ref.current = last_ai_message
+    }, [last_ai_message] )
+
+
+    useEffect( ()=> {
+	//log(`Interim result: ${interim_result}`)
+	//compare the interim result to last ai message to determine if we should stop...
+
+	if (interim_result.includes("stop") ) {
+	    log(`Detected stop word in the interim results`);
+	    if (last_ai_message.includes("stop")){
+		log(`However the AI also said stop so... ignoring`)
+	    } else {
+		log(`AND the AI did not say stop so assuming it is the user`)
+		vi.tts.cancel_speech()
+		vi.pause_recognition();
+
+		add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop" at the following location in your output: ${interim_result}. Do not respond until I prompt you again`) 
+		
+		
+	    }
+	    
+	}
+
+	
+    }, [interim_result])
+    
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {
@@ -231,8 +279,58 @@ const  Component: NextPage = (props : any) => {
        then we call ai_response = await get_ai_response()
      */
 
-    let transcription_cb = async function(text : string) {
-	log(`tcb: ${text}`)
+
+    let transcription_cb = (async function(text : string , ) {
+
+	log(`tcb: ${text}`)	
+
+	/*
+	   The system may have detected its own output, so we check for that
+	 */
+
+
+	let sim  = cortex_utils.string_similarity(text.trim() , last_ai_message_ref.current) ;
+
+	if (sim > transcription_similarity_threshold ) {
+	    log(`Detected similarity (${sim}) > threshold (${transcription_similarity_threshold})`)
+	    log(`Thus will ignore it :)`)
+	    return 
+	}
+
+	if (text.trim().toLowerCase().includes("stop") && !last_ai_message_ref.current.toLowerCase().includes("stop") )  {
+	    log(`Detected unique "stop" inside transcription so will ignore`) ;
+	    return ; 
+	}
+
+	/*
+	   Next, the user may be requesting to pause or stop the speech 
+	 */
+
+	if ( text.trim().match(/^(pause|stop)$/) ) {
+	    log(`Detected pause or stop keyword`) ;
+	    let is_speaking = vi.tts.tts().speaking ;
+	    if (is_speaking) {
+		log(`Currently speaking and thus will pause`) 
+	    } else {
+		log(`Not currently speaking`) 
+	    }
+	} 
+	
+
+
+	/*
+           This is where I need to pass the transcript Dynamically either to: 
+	   - cortex_channel 
+	   - function_channel 
+
+	   If a function is executing then we pass to function_channel 
+	   If not then we pass to cortex_channel 
+
+	 */
+
+
+
+
 
 	if (COR.is_running_function) {
 	    log(`tcb: Cortex running function, will forward`)
@@ -241,7 +339,7 @@ const  Component: NextPage = (props : any) => {
 	    log(`tcb: No active cortex function`) 
 	    add_user_message(text) ;
 	}
-    } 
+    }) ; 
 
     //handle user chat message (instead of voice)
     const handleSend = async () => {
@@ -291,6 +389,9 @@ const  Component: NextPage = (props : any) => {
 	    sounds.proceed()
 	} 
 
+	set_last_ai_message(content) ;
+
+	
 	//here we need to actually speak the response too!
 	log(`generating audio response...`)
 	log(`Using playbackRate to ${playbackRate}`)	
@@ -650,17 +751,6 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 	log(`Transcribe Ref: ${transcribeRef.current}`) ;
 
 
-	/*
-	   This is where I need to pass the transcript Dynamically either to: 
-	   - cortex_channel 
-	   - function_channel 
-
-	   If a function is executing then we pass to function_channel 
-	   If not then we pass to cortex_channel 
-
-	 */
-
-
 	if (transcribeRef.current) {
 	    log(`Transcribing audio`)
 	    debug.add("transcript" , transcript) ;
@@ -671,6 +761,8 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 	} 
     })
 
+
+    
 
 } 
 

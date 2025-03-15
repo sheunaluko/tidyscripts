@@ -6,14 +6,23 @@
 import * as common from "tidyscripts_common"
 let {asnc, fp , logger } = common ; 
 
+
 let log = logger.get_logger({id:"tts"})
 
 declare var window : any ;
 
 
-export var tts = function(){ return window.speechSynthesis;} ; 
+export var tts = function(){ return window.speechSynthesis;} ;
+
+
 export var speech_que : SpeechOps[] = []
 
+export function cancel_speech() {
+    log("Canceling speech, and queue")
+    speech_que = [ ]   ;
+    tts().cancel() ;
+    log("Done") 
+}      
 
 export async function finished_utterance() {
     
@@ -81,7 +90,35 @@ export var default_rate : number  = 1 ;
 export function set_default_rate(n : number) {
   default_rate = n ;
   log("Default rate set to: " + n )
-} 
+}
+
+export async function pause_speech() {
+    log("pausing speech utterance") ;
+    let synth = tts() ;
+
+     if (synth.speaking) {
+	 synth.pause();
+	 log('Speech paused.');
+    } else {
+	log('No speech is currently in progress to pause.');
+    }
+}
+
+
+
+export async function resume_speech() {
+    log("resuming utterance") ;
+    let synth = tts() ;
+
+     if (synth.paused) {
+	 synth.resume();
+	 log('Speech resumed.');
+    } else {
+	log('No speech is currently paused.');
+    }
+}
+
+
 
 export async function _speak(ops : SpeechOps) {  
     
@@ -112,10 +149,10 @@ export async function _speak(ops : SpeechOps) {
 	    _speak(next) 
 	} else { 
 	    //pass
-	    console.log("done with speech que") 
+	    log("done with speech que") 
 	}
     } else { 
-	console.log("Scheduling speech for later.")
+	log("Scheduling speech for later.")
 	speech_que.push(ops)
     }
 }
