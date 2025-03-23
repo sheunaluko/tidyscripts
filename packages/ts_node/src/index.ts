@@ -9,7 +9,7 @@ import * as cryptography from "./cryptography"
 export * as jsdom from 'jsdom'
 export * as fhir_client from './fhir_client'
 export * as fhir_server from './fhir_server' 
-
+export * as bashr   from './bashr/index' 
 
 import * as common from "tidyscripts_common"  
 

@@ -10,7 +10,8 @@ import * as firebase from "../src/firebase"
 import {toast_toast} from "../components/Toast"
 
 import * as tsw from "tidyscripts_web"  ;
-import * as lab from "./laboratory/src/index" 
+import * as lab from "./laboratory/src/index"
+import * as bashr from "../src/bashr/index"  ; 
 
 import useInit from "../hooks/useInit" 
 
@@ -43,7 +44,8 @@ const Home: NextPage = (props : any) => {
 		toast_toast,
 		firebase ,
 		lab , 
-		theme 
+		theme ,
+		bashr 
 	    })
 	    window.setTimeout( function(){
 		toast_toast({
