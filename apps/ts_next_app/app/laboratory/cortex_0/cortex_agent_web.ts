@@ -1,9 +1,10 @@
 'use client' ;
 
 import * as c from "../src/cortex"  ;
-import jdoc from "../../../../docs/jdoc.json" 
+//import jdoc from "../../../../docs/jdoc.json" 
 import * as fbu from "../../../src/firebase_utils" 
 import * as fnu from "../src/fn_util" 
+import * as bashr from "../../../src/bashr/index" 
 
 declare var window : any ;
 
@@ -13,7 +14,6 @@ declare var window : any ;
 
 // ability to update system message by talking to cortex -- via local storage object?
 // can update and then reload conversationally.
-// upload past dreams
 
 
 export function get_agent() {
@@ -40,6 +40,8 @@ export async function tes(fn_path  : string[], fn_args : any[] ) {
 
     return await t.json()
 } 
+
+
 
 export async function tidyscripts_log( ops : any ) {
     let {text, user_initiation_string , path}  = ops;
@@ -72,9 +74,31 @@ export async function main_stream_log( ops : any ) {
 } 
 
 
-
+var BASH_CLIENT = null ; 
 
 const functions = [
+    {
+	description : "Connect to the bash websocket server. The bash websocket server exposes an API for running bash commands on machine." ,
+	name        : "connect_to_bash_server" ,
+	parameters  : null  ,
+	fn          : async (ops : any) => {
+	    BASH_CLIENT = await bashr.connect_client()
+	    return "done" 
+	} ,
+	return_type : "string"
+    },
+    
+    {
+	description : "Runs a bash command using the bash server. Need to connect first. You can then provide any unix bash command to be executed, in order to accomplish the desired task. Please be careful and do not issue any dangerous commands that could harm the underlying system." ,
+	name        : "run_bash_command" ,
+	parameters  : { command : "string" }  ,
+	fn          : async (ops : any) => {
+	    return await BASH_CLIENT.runCommand(ops.command) 
+	} ,
+	return_type : "string"
+    },
+
+    
     {
 	description : "use the javascript interpreter" ,
 	name        : "evaluate_javascript" ,

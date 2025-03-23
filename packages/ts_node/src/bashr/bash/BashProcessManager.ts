@@ -107,7 +107,7 @@ export class BashProcessManager extends EventEmitter {
     if (!this.currentDelimiter) return;
 
     let delimiterIndex = this.stdoutBuffer.indexOf(this.currentDelimiter);
-    while (delimiterIndex !== -1) {
+    if (delimiterIndex !== -1) {
       // All output up to the delimiter is considered command output
       const commandOutput = this.stdoutBuffer.slice(0, delimiterIndex);
 
@@ -115,16 +115,13 @@ export class BashProcessManager extends EventEmitter {
       this.emit('commandComplete', this.currentCommand, commandOutput);
 
       // Remove that part + the delimiter from the buffer
-      this.stdoutBuffer = this.stdoutBuffer.slice(
-        delimiterIndex + this.currentDelimiter!.length
-      );
+      this.stdoutBuffer = "" 
 
       // Reset current command/delimiter so we don’t parse them again
       this.currentCommand = null;
       this.currentDelimiter = null;
 
-      // Look for any subsequent occurrence of the same delimiter (rare, but possible)
-      delimiterIndex = this.stdoutBuffer.indexOf(this.currentDelimiter || '');
+
     }
   }
 }
