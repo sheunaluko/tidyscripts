@@ -11,7 +11,7 @@ import * as langchain from "./langchain"
 export * as bots from "./bots" 
 export * as gemini from "./gemini/index"
 export * as up_to_date from "./up_to_date" 
-
+export * as playwright from "./playwright/index" 
 
 export {
   firestore   ,
