@@ -32,6 +32,7 @@ import {
 
 
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import WidgetItem from "./WidgetItem" ;
 
 import * as cortex_utils from "./src/cortex_utils" 
 
@@ -41,7 +42,7 @@ import * as cortex_utils from "./src/cortex_utils"
    Main Feature Release of Cortex
    Currently working on integratinng Workspace Functionality  
 
-*/
+ */
 
 declare var window : any ;
 declare var Bokeh : any  ; 
@@ -116,6 +117,8 @@ const  Component: NextPage = (props : any) => {
     const [workspace, set_workspace] = useState({}) ;
     const [text_input, set_text_input] = useState<string>('');
 
+
+    const [focusedWidget, setFocusedWidget] = useState<string | null>("chat");
     /* E V E N T _ H A N D L I N G */
     const handle_thought = (evt : any) => {
 	let {thought} = evt ; 
@@ -183,7 +186,7 @@ const  Component: NextPage = (props : any) => {
 		}
 	    });
 	});
-    }, [chat_history, thought_history, log_history, last_ai_message, transcribe, playbackRate]);    
+    }, [chat_history, thought_history, log_history, last_ai_message, transcribe, playbackRate, focusedWidget, interim_result]);    
 
     useEffect(  ()=> {
 
@@ -247,7 +250,7 @@ const  Component: NextPage = (props : any) => {
 		
 		
 	    }
-	   
+	    
 	}
 
 	
@@ -436,7 +439,7 @@ const  Component: NextPage = (props : any) => {
 
 
     let widget_scroll_styles = {
-	overflowY: 'scroll',
+	overflowY: 'auto',
 	maxHeight: '95%' ,
 	scrollbarWidth: 'none',         // Firefox
 	'&::-webkit-scrollbar': {
@@ -445,19 +448,23 @@ const  Component: NextPage = (props : any) => {
     }
 
     
-    const ThoughtsWidget = () => (
-	<Item>
-	    Thoughts
-	    <Box id="thought_display" sx={widget_scroll_styles} >	    
+    const ThoughtsWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="Thoughts"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
+	<Box id="thought_display" sx={widget_scroll_styles} >	    
 	    {
 		thought_history.map( (thought,index) => (
 		    <Box
 			key={index}
-			sx={{
-			    borderRadius: '8px',
-			    //border:  '1px solid' , 
-			    color: 'success.light' 
-			}} 
+			    sx={{
+				borderRadius: '8px',
+				//border:  '1px solid' , 
+				color: 'success.light' 
+			    }} 
 		    >
 			{thought} 
 		    </Box>
@@ -466,24 +473,28 @@ const  Component: NextPage = (props : any) => {
 		))
 		
 	    }
-	    </Box> 
-	</Item>
+	</Box> 
+	</WidgetItem>
     ) ; 
 
 
-    const LogWidget = () => (
-	<Item>
-	    Log
-	    <Box id="log_display" sx={widget_scroll_styles} >	    
+    const LogWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="Log"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
+	<Box id="log_display" sx={widget_scroll_styles} >	    
 	    {
 		log_history.map( (log,index) => (
 		    <Box
 			key={index}
-			sx={{
-			    borderRadius: '8px',
-			    //border:  '1px solid' , 
-			    color: (log.indexOf('ERROR') > -1 ) ?  'error.light' : 'info.light'  , 
-			}} 
+			    sx={{
+				borderRadius: '8px',
+				//border:  '1px solid' , 
+				color: (log.indexOf('ERROR') > -1 ) ?  'error.light' : 'info.light'  , 
+			    }} 
 		    >
 			{log} 
 		    </Box>
@@ -492,57 +503,66 @@ const  Component: NextPage = (props : any) => {
 		))
 		
 	    }
-	    </Box> 
-	</Item>
+	</Box> 
+	</WidgetItem>
     ) ; 
 
     
-    const WorkspaceWidget = () => (
-	<Item>
-	    Workspace
-	    <Box id="workspace_display" sx={widget_scroll_styles} >	    
-		<ObjectInspector style={{width: "90%" }}
-				 theme={theme.palette.mode == "dark" ? "chromeDark" : "chromeLight" }
-				 data={workspace} expandPaths={['$', '$.*','$.*.*']} />
-	    </Box> 
+    const WorkspaceWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="Workspace"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
 
-	</Item>
+	<Box id="workspace_display" sx={widget_scroll_styles} >	    
+	    <ObjectInspector style={{width: "90%"  , marginTop : "10px" }}
+			     theme={theme.palette.mode == "dark" ? "chromeDark" : "chromeLight" }
+			     data={workspace} expandPaths={['$', '$.*','$.*.*']} />
+	</Box> 
+
+	</WidgetItem>
     )
 
-    const ChatWidget = () => (
-		<Item>
-		    Chat
-		    <Box id="chat_display" sx={widget_scroll_styles} >
+    const ChatWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="Chat"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
+	<Box id="chat_display" sx={widget_scroll_styles} >
 
-		{chat_history.slice(1).map((message, index) => (
+	    {chat_history.slice(1).map((message, index) => (
+		<Box
+		    key={index}
+		    sx={{
+			display: 'flex',
+			justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
+			marginBottom: '10px'
+		    }}
+		>
 		    <Box
-			key={index}
-			    sx={{
-				display: 'flex',
-				justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
-				marginBottom: '10px'
-			    }}
+			sx={{
+			    padding: '8px',
+			    borderRadius: '8px',
+			    backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
+			    border: message.role === 'user' ? '1px solid' : '1px solid',
+			    borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
+			    color: message.role === 'assistant' ? 'inherit' : 'inherit'
+			}}
+
 		    >
-			<Box
-			    sx={{
-				padding: '8px',
-				borderRadius: '8px',
-				backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
-				border: message.role === 'user' ? '1px solid' : '1px solid',
-				borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-				color: message.role === 'assistant' ? 'inherit' : 'inherit'
-			    }}
-
-			>
-			    <ReactMarkdown>
-				{message.content}
-			    </ReactMarkdown>
-			</Box>
-
+			<ReactMarkdown>
+			    {message.content}
+			</ReactMarkdown>
 		    </Box>
-		))}
-			</Box> 
-			</Item>
+
+		</Box>
+	    ))}
+	</Box> 
+	</WidgetItem>
 
     )
 
@@ -560,25 +580,25 @@ const  Component: NextPage = (props : any) => {
 
 	    <Box> 
 		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
-				 onClick={function() {
-				     if (!started) {
-					 log(`Starting audio`)
-					 set_started(true) ;
-					 if (!plots_initialized) {
-					     console.log(theme) 
-					     init_graph(theme.palette.background.default) 
-					     on_init_audio(transcribeRef, transcription_cb )
-					 } else {
-					     GLOBAL_PAUSE = false 						     
-					 } 
-				     } else {
-					 //already started; so now we stop it
-					 log(`Stopping audio`)
-					 GLOBAL_PAUSE = true 
-					 set_started(false) 
-				     } 
-				 }
-				 }
+			onClick={function() {
+			    if (!started) {
+				log(`Starting audio`)
+				set_started(true) ;
+				if (!plots_initialized) {
+				    console.log(theme) 
+				    init_graph(theme.palette.background.default) 
+				    on_init_audio(transcribeRef, transcription_cb )
+				} else {
+				    GLOBAL_PAUSE = false 						     
+				} 
+			    } else {
+				//already started; so now we stop it
+				log(`Stopping audio`)
+				GLOBAL_PAUSE = true 
+				set_started(false) 
+			    } 
+			}
+			}
 		> {started ? "Stop" : "Start"} </Button>
 	    </Box> 
 
@@ -598,36 +618,44 @@ const  Component: NextPage = (props : any) => {
 	<br />
 
 
+	{ !focusedWidget && (
+	      <Grid width="100%" height="100%" container spacing={2}>
 
-	<Grid width="100%" height="100%" container spacing={2}>
+		  <Grid size={{ xs: 12, md: 6 }}>
+		      <ChatWidget onFocus={() => setFocusedWidget('chat')} />
 
-	    <Grid size={{ xs: 12, md: 6 }}>
-		<ChatWidget/> 		
+		  </Grid>
 
-	    </Grid>
+		  <Grid size={{ xs: 12, md: 6 }}>
+		      <WorkspaceWidget onFocus={() => setFocusedWidget('workspace')} />
+		  </Grid>
+		  
 
-	    <Grid size={{ xs: 12, md: 6 }}>
-		<WorkspaceWidget/>
-	    </Grid>
-	    
+		  <Grid size={{ xs: 12, md: 6 }}>
 
-	    <Grid size={{ xs: 12, md: 6 }}>
-		<ThoughtsWidget/> 
+		      <ThoughtsWidget onFocus={() => setFocusedWidget('thoughts')} />
+		  </Grid>
+		  
+		  <Grid size={{ xs: 12, md: 6 }}>
+		      <LogWidget onFocus={() => setFocusedWidget('log')} />
+		  </Grid>
+		  
+	      </Grid> ) 
+	} 
 
-	    </Grid>
-	    <Grid size={{ xs: 12, md: 6 }}>
-		<LogWidget/>
-	    </Grid>
-	    
-	</Grid>
-
-
-
+	
 
 
 	</Box>
 
-	<Box style={{flexGrow : 1 }}>
+	<Box style={{flexGrow : 1 , width  : "100%"  }}>
+
+	    	{focusedWidget === 'chat' && <ChatWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+	{focusedWidget === 'workspace' && <WorkspaceWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+	{focusedWidget === 'thoughts' && <ThoughtsWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+	{focusedWidget === 'log' && <LogWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+
+
 
 	</Box>
 
@@ -641,14 +669,14 @@ const  Component: NextPage = (props : any) => {
 
 		    <Box style={{display:'flex' , justifyContent : 'center' }}> 
 
-		    <TextField
-			variant="outlined"
-				 value={text_input}
-				 onChange={(e) => set_text_input(e.target.value)}
-				 onKeyPress={handleKeyPress}
-				 placeholder="Input text and press enter to submit"
-				 sx={{ marginBottom: '5px', marginTop: '5px', width : "100%" }}
-		    />
+			<TextField
+			    variant="outlined"
+			    value={text_input}
+			    onChange={(e) => set_text_input(e.target.value)}
+			    onKeyPress={handleKeyPress}
+			    placeholder="Input text and press enter to submit"
+			    sx={{ marginBottom: '5px', marginTop: '5px', width : "100%" }}
+			/>
 
 
 
@@ -676,13 +704,13 @@ const  Component: NextPage = (props : any) => {
 			    <Slider
 
 				size='small'
-				      value={playbackRate}
-				      min={0.5}
-				      max={2.0}
-				      step={0.1}
-				      onChange={handleRateChange}
-				      valueLabelDisplay="auto"
-				      sx={{ marginTop: '8px' }}
+				value={playbackRate}
+				min={0.5}
+				max={2.0}
+				step={0.1}
+				onChange={handleRateChange}
+				valueLabelDisplay="auto"
+				sx={{ marginTop: '8px' }}
 			    />
 			</Box>
 
@@ -924,8 +952,8 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
 }
 
 
-    /*
-    let test_chat = [{"role":"user","content":"Hi, how are you today?"},{"role":"assistant","content":"I'm great, thank you! How about you?"},{"role":"user","content":"I'm doing well, thanks for asking."},{"role":"assistant","content":"Glad to hear that. Anything exciting happening today?"},{"role":"user","content":"Not much, just working on some projects."},{"role":"assistant","content":"Sounds productive. Need any help with them?"},{"role":"user","content":"Not right now, but I appreciate it."},{"role":"assistant","content":"Anytime! Just let me know."},{"role":"user","content":"What do you recommend to take a break?"},{"role":"assistant","content":"Maybe a short walk or a quick meditation session?"}]
+/*
+   let test_chat = [{"role":"user","content":"Hi, how are you today?"},{"role":"assistant","content":"I'm great, thank you! How about you?"},{"role":"user","content":"I'm doing well, thanks for asking."},{"role":"assistant","content":"Glad to hear that. Anything exciting happening today?"},{"role":"user","content":"Not much, just working on some projects."},{"role":"assistant","content":"Sounds productive. Need any help with them?"},{"role":"user","content":"Not right now, but I appreciate it."},{"role":"assistant","content":"Anytime! Just let me know."},{"role":"user","content":"What do you recommend to take a break?"},{"role":"assistant","content":"Maybe a short walk or a quick meditation session?"}]
 
-       init_chat_history = [...init_chat_history, ...test_chat ] ;
-     */
+   init_chat_history = [...init_chat_history, ...test_chat ] ;
+ */
