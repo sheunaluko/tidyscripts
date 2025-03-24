@@ -9,7 +9,28 @@ const roboto = Roboto({
 });
 
 
-const theme = createTheme();
+
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#90caf9', // light blue
+    },
+    secondary: {
+      main: '#f48fb1', // pink
+    },
+    warning: {
+      main: '#ffb74d', // orange
+    },
+    background: {
+      default: '#121212',
+      paper: '#1e1e1e',
+    },
+  },
+});
+
+const theme = darkTheme ; //createTheme();
 
 const otherTheme = createTheme({
 

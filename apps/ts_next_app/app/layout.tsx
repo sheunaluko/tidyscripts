@@ -10,7 +10,7 @@ import Head from 'next/head' ;
 
 import CssBaseline from '@mui/material/CssBaseline';
 
-import {theme} from "./theme"  ;
+//import {theme} from "./theme"  ;
 
 import Box from '@mui/material/Box';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -23,6 +23,8 @@ import { Analytics } from '@vercel/analytics/react';
 import styles from "../styles/Layout.module.css" ; 
 import {ChakraProvider} from "@chakra-ui/react" 
 
+import ThemeContextProvider from "./ThemeContext" 
+import ThemeWrapper from "./ThemeWrapper" 
 
 export const metadata: Metadata = {
     title: 'Tidyscripts',
@@ -38,7 +40,6 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
     let main_v_padding="25px";
     let main_h_padding="10px"; 
 
-    
     return (
 	<html lang="en">
 	    <Head>
@@ -48,25 +49,11 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 		style={{
 		    minHeight : "100vh",
 		    overflowX : "hidden" ,
-		    position : "relative" 
+		    position : "relative"
 		}}
 	    >
-		<ThemeProvider theme={theme}>
-		    <CssBaseline />
-
-
-			<div
-			    style={{
-				display: 'flex',
-				flexDirection: 'column',
-				minHeight: '100vh',
-				minWidth: '100vw',
-				paddingTop: main_v_padding,
-				paddingBottom: main_v_padding,
-				paddingLeft: main_h_padding,
-				paddingRight: main_h_padding
-			    }}
-			>
+		<ThemeContextProvider> 
+		    <ThemeWrapper> 
 			    <div
 				style={{
 				    display: 'flex',
@@ -97,12 +84,11 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 				</ChakraProvider>
 				<Toast/> 
 			    </div>
-			</div>
-
+		    </ThemeWrapper>
 			
 
 		    <Analytics />
-		</ThemeProvider>
+		</ThemeContextProvider>
 	    </body>
 	</html>
     );

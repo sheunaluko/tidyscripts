@@ -58,6 +58,8 @@ var log = logger.get_logger({id : "voice_interface"}) ;
 
 export var recognition : any  = null 
 
+export var listen_while_speaking = false ; 
+
 export enum RecognitionState {
     NULL = "NULL", 
     STOPPED = "STOPPED", 
@@ -66,6 +68,11 @@ export enum RecognitionState {
     STOPPING = "STOPPING" , 
 }
 export var recognition_state : RecognitionState = RecognitionState.NULL 
+
+export function set_listen_while_speaking(val : boolean) {
+    log(`Set listen_while_speaking=${val}`) ; 
+    listen_while_speaking = val ; 
+}
 
 
 export function initialize_recognition(ops? : sr.RecognitionOps) {
@@ -171,12 +178,21 @@ export function set_default_voice_from_name_preference_list(l : string[]) {
 
 export async function speak_with_voice(text :string,voiceURI : string | null,rate : number) {
     if (recognition) {
-	//let thresh  = stop_recognition_and_detection() 
-	tts.speak({text, voiceURI , rate})
-	await tts.finished_speaking()
-	//start_recognition_and_detection(thresh) 
+
+	if (listen_while_speaking) {
+	    log(`Listening while speaking`)
+	    tts.speak({text, voiceURI , rate})
+	    await tts.finished_speaking()
+	} else {
+	    log(`Stopping listening while speaking`)
+	    let thresh  = stop_recognition_and_detection() 	    
+	    tts.speak({text, voiceURI , rate})
+	    await tts.finished_speaking()
+	    start_recognition_and_detection(thresh)	    
+	}
+
     } else { 
-      tts.speak({text, voiceURI, rate})
+	tts.speak({text, voiceURI, rate})
 	await tts.finished_speaking()
     } 
     return     

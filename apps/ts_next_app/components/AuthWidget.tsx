@@ -15,7 +15,9 @@ const {
 declare var window : any ; 
 
 import {
-    Typography 
+    Typography ,
+    Button ,
+    Box 
 } from "../src/mui"
 
 import {theme,
@@ -25,31 +27,32 @@ import {theme,
 
 
 import {
-  Box,
-  Button,
   Spinner
 } from "@chakra-ui/react";
 
 
-const spinner = ( <Spinner style={{}}
+const spinner = ( <Spinner style={{marginLeft : '9px'}}
 			 thickness='1px'
 			 speed='0.65s'
-			 emptyColor='gray.200'
+			   emptyColor='gray.200'
 			 color='blue.500'
 			   size='xs' 	/> )
 
 const logout = (
     //
-    <Button size="sm" onClick={()=>log_out(getAuth() )} 
-	    color={primary}
-	    colorScheme={secondary}
+    <Button size="small" onClick={()=>log_out(getAuth() )}
+
+	        style={{
+	backgroundColor : 'background.paper' , 
+	color : 'primary.main' 
+    }}
     >
 	Log out
     </Button>
 )
 
 const login = (
-    <Button size="sm"
+    <Button size="small"
 	    style={{
 		backgroundColor : grey[50] , 
 		color : primary 

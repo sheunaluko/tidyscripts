@@ -15,7 +15,7 @@ import * as bashr from "../src/bashr/index"  ;
 
 import useInit from "../hooks/useInit" 
 
-import {theme} from "./theme"
+//import {theme} from "./theme"
 
 declare var window : any ;
 
@@ -44,7 +44,7 @@ const Home: NextPage = (props : any) => {
 		toast_toast,
 		firebase ,
 		lab , 
-		theme ,
+		//theme ,
 		bashr 
 	    })
 	    window.setTimeout( function(){
@@ -59,7 +59,7 @@ const Home: NextPage = (props : any) => {
 	    log("Index page init")
 	}
 	//configure the theming
-	document.body.style.backgroundColor = theme.palette.background.default
+	//document.body.style.backgroundColor = theme.palette.background.default
     }
 
     let clean_up = ()=> { log("index unmounted") }
@@ -92,13 +92,13 @@ const Home: NextPage = (props : any) => {
 	    style={{width: "100%", height: "100%"}}
 	>
 	    <Box className={styles.title}>
-		<Typography variant="h2" color={theme.palette.primary.main as any}>
+		<Typography variant="h2" color='primary.main'>
 		    Tidyscripts
 		</Typography>
 	    </Box> 
 
 	    <Box className={styles.description}> 
-		<Typography variant="h4" color={theme.palette.secondary as any}>
+		<Typography variant="h4" > 
 		    Powerful tools for serious builders and users
 		</Typography>
 	    </Box>

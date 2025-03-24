@@ -8,26 +8,19 @@ import Image from 'next/image'
 import styles from '../styles/Footer.module.css'
 import Link from 'next/link' ; 
 
-import Drawer from '../components/Drawer' ; 
+import Drawer from '../components/Drawer' ;
 
-import {
-    Button,
-    Show
-} from "@chakra-ui/react"
+import ResponsiveCopyright from "./ResponsiveCopyright" 
+import ThemeToggle from "./ThemeToggle"
 
 import {
     Box ,
-    Typography 
+    Typography ,
+    Button 
 } from "../src/mui"
 
 import RL from './RotatingLogo' ;
 import AuthWidget from './AuthWidget'
-
-import {theme,
-	secondary,
-	primary,
-	grey} from "../app/theme" 
-
 
 import build_info from "../generated/build_info.json"
 
@@ -40,10 +33,10 @@ declare var window : any ;
 const Home = function() {
     return ( 
     <Button   
-    size="sm"
+	size="small"
     style={{
-	backgroundColor : grey[50]  , 
-	color : primary 
+	backgroundColor : 'background.paper' , 
+	color : 'primary.main' 
     }}
 
     onClick={function(){
@@ -71,7 +64,7 @@ function Footer() {
 	>
 
 	    <CBox>
-		<Typography color={theme.palette.primary.main}> 
+		<Typography color='primary.main'> 
 		    Tidyscripts
 		</Typography>
 	    </CBox> 
@@ -80,14 +73,10 @@ function Footer() {
 		<RL />
 	    </CBox>
 
-	    <CBox>
-		<Show above="md">
-		    <Typography color={theme.palette.primary.main}> 		    
-			Copyright © 2025 Sheun Aluko, MD		
-		    </Typography>
-		</Show>
 
-	    </CBox>
+	    <CBox>
+		<ResponsiveCopyright/>
+	    </CBox> 
 
 	    <CBox> 
 		<AuthWidget />
@@ -96,8 +85,12 @@ function Footer() {
 	    <CBox style={{marginLeft : "8px"}}> 
 		<Home/> 
 	    </CBox>
+
 	    
 
+	    <CBox>
+		<ThemeToggle/> 
+	    </CBox> 
 	    
 
 	    <CBox style={{marginLeft : "8px"}}>  
@@ -105,6 +98,8 @@ function Footer() {
 	    </CBox>
 
 	</Box>
+
+
 
 	    <CBox style={{marginLeft : "8px", }}> 
 		  <Typography variant="caption" fontSize={8}>Build v{build_info.version} on {build_time}</Typography> 

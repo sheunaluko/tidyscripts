@@ -5,6 +5,9 @@ import * as c from "../src/cortex"  ;
 import * as fbu from "../../../src/firebase_utils" 
 import * as fnu from "../src/fn_util" 
 import * as bashr from "../../../src/bashr/index" 
+import * as tsw from "tidyscripts_web"
+
+const vi = tsw.util.voice_interface ; 
 
 declare var window : any ;
 
@@ -74,9 +77,35 @@ export async function main_stream_log( ops : any ) {
 } 
 
 
-var BASH_CLIENT = null ; 
+var BASH_CLIENT : any = null ; 
 
 const functions = [
+
+
+    {
+	description : "Sets the Cortex interface listen_while_speaking setting" ,
+	name        : "set_listen_while_speaking" ,
+	parameters  : { value : "boolean" }   ,
+	fn          : async (ops : any) => {
+	    let val = ops.value ; 
+	    vi.set_listen_while_speaking(JSON.parse(val))
+	    return `Set listen_while_speaking to ${val}` ; 
+	} ,
+	return_type : "string"
+    },
+
+    {
+	description : "Gets the Cortex interface listen_while_speaking setting" ,
+	name        : "get_listen_while_speaking" ,
+	parameters  : null  ,
+	fn          : async (ops : any) => {
+	    return vi.listen_while_speaking
+	} ,
+	return_type : "boolean"
+    },
+    
+    
+    
     {
 	description : "Connect to the bash websocket server. The bash websocket server exposes an API for running bash commands on machine." ,
 	name        : "connect_to_bash_server" ,

@@ -18,6 +18,8 @@ import {
   Card
 } from '@chakra-ui/react'
 
+
+
 import {give_feedback} from "../src/firebase" 
 
 import {theme,
@@ -108,7 +110,9 @@ export default function Component(props : any) {
 	    </Button> 
 
 	  </Card >
-	
+
+
+	  
 	
       </DrawerBody>
 
@@ -127,6 +131,8 @@ export default function Component(props : any) {
     </Button>
 
     
+
+
     </Box>
 
   )

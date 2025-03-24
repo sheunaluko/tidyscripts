@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import * as cortex_agent from "./cortex_agent_web" 
 import Grid from '@mui/material/Grid2';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import {ObjectInspector } from 'react-inspector';
 import {
     Box,
@@ -26,9 +26,12 @@ import {
     AccordionDetails, 
     Typography, 
     Slider,
-    Paper 
+    Paper ,
+    IconButton 
 } from "@mui/material"
 
+
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import * as cortex_utils from "./src/cortex_utils" 
 
@@ -72,7 +75,6 @@ const Item = styled(Paper)(({ theme }) => ({
     overflowY : 'hidden' ,
     overflowX : 'auto' ,     
     height : "300px" ,
-    color: theme.palette.text.secondary,
     ...theme.applyStyles('dark', {
 	backgroundColor: '#1A2027',
     })
@@ -82,6 +84,8 @@ const Item = styled(Paper)(({ theme }) => ({
 /* C O M P O N E N T _ D E F I N I T I O N  */ 
 const  Component: NextPage = (props : any) => {
 
+    const theme = useTheme() ; 
+    
     const [transcribe, setTranscribe] = useState(true)
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
 
@@ -169,20 +173,17 @@ const  Component: NextPage = (props : any) => {
 
 
     useEffect(() => {
-	let el = document.getElementById("chat_display") ;
-	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [chat_history, thought_history, log_history, last_ai_message]);
+	const ids = ['chat_display', 'log_display', 'thought_display'];
 
-    useEffect(() => {
-	let el = document.getElementById("thought_display") ;
-	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [thought_history, chat_history, log_history, last_ai_message]);
-
-    useEffect(() => {
-	let el = document.getElementById("log_display") ;
-	if (el) { el.scrollTop = el.scrollHeight } 
-    }, [thought_history, chat_history, log_history, last_ai_message]);
-    
+	requestAnimationFrame(() => {
+	    ids.forEach((id) => {
+		const el = document.getElementById(id);
+		if (el) {
+		    el.scrollTop = el.scrollHeight;
+		}
+	    });
+	});
+    }, [chat_history, thought_history, log_history, last_ai_message, transcribe, playbackRate]);    
 
     useEffect(  ()=> {
 
@@ -223,20 +224,30 @@ const  Component: NextPage = (props : any) => {
 	//log(`Interim result: ${interim_result}`)
 	//compare the interim result to last ai message to determine if we should stop...
 
+	
 	if (interim_result.includes("stop") ) {
 	    log(`Detected stop word in the interim results`);
+
+	    //if the AI is NOT talking then we should NOT stop (since its just the user talking)
+	    if (! vi.tts.tts().speaking) {
+		log(`However the AI is not talking so will ignore`) 
+		return 
+	    }
+
+	    
 	    if (last_ai_message.includes("stop")){
 		log(`However the AI also said stop so... ignoring`)
 	    } else {
-		log(`AND the AI did not say stop so assuming it is the user`)
-		vi.tts.cancel_speech()
-		vi.pause_recognition();
+		log(`AND the AI did not say stop so assuming it is the user`) ;
 
-		add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop" at the following location in your output: ${interim_result}. Do not respond until I prompt you again`) 
+		
+		vi.tts.cancel_speech() ; 
+		vi.pause_recognition();
+		add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop" at the following location in your output: ${interim_result}. Do not respond until I prompt you again`) ; 
 		
 		
 	    }
-	    
+	   
 	}
 
 	
@@ -286,36 +297,36 @@ const  Component: NextPage = (props : any) => {
 
 	/*
 	   The system may have detected its own output, so we check for that
+	   This is only the case though if vi.listen_while_speaking == true //continues listening 
 	 */
 
+	if (vi.listen_while_speaking) {
+	    log(`Listening while speaking, so will check...`)
 
-	let sim  = cortex_utils.string_similarity(text.trim() , last_ai_message_ref.current) ;
+	    let sim  = cortex_utils.string_similarity(text.trim() , last_ai_message_ref.current) ;
 
-	if (sim > transcription_similarity_threshold ) {
-	    log(`Detected similarity (${sim}) > threshold (${transcription_similarity_threshold})`)
-	    log(`Thus will ignore it :)`)
-	    return 
-	}
-
-	if (text.trim().toLowerCase().includes("stop") && !last_ai_message_ref.current.toLowerCase().includes("stop") )  {
-	    log(`Detected unique "stop" inside transcription so will ignore`) ;
-	    return ; 
-	}
-
-	/*
-	   Next, the user may be requesting to pause or stop the speech 
-	 */
-
-	if ( text.trim().match(/^(pause|stop)$/) ) {
-	    log(`Detected pause or stop keyword`) ;
-	    let is_speaking = vi.tts.tts().speaking ;
-	    if (is_speaking) {
-		log(`Currently speaking and thus will pause`) 
-	    } else {
-		log(`Not currently speaking`) 
+	    if (sim > transcription_similarity_threshold ) {
+		log(`Detected similarity (${sim}) > threshold (${transcription_similarity_threshold})`)
+		log(`Thus will ignore it :)`)
+		return 
 	    }
-	} 
-	
+
+	    if (text.trim().toLowerCase().includes("stop") && !last_ai_message_ref.current.toLowerCase().includes("stop") )  {
+		log(`Detected unique "stop" inside transcription`)
+
+		if (! vi.tts.tts().speaking) {
+		    log(`AI is speaking`) 
+		    vi.tts.cancel_speech()
+		    vi.pause_recognition();
+		    add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop". Do not respond until I prompt you again`) 
+
+		    
+		    return ; 
+		}
+
+	    }
+
+	}
 
 
 	/*
@@ -328,17 +339,15 @@ const  Component: NextPage = (props : any) => {
 
 	 */
 
-
-
-
-
 	if (COR.is_running_function) {
 	    log(`tcb: Cortex running function, will forward`)
-	    await COR.handle_function_input(text) 
+	    await COR.handle_function_input(text)
+	    
 	} else { 
 	    log(`tcb: No active cortex function`) 
 	    add_user_message(text) ;
 	}
+	
     }) ; 
 
     //handle user chat message (instead of voice)
@@ -426,10 +435,20 @@ const  Component: NextPage = (props : any) => {
     /* define widgets */
 
 
+    let widget_scroll_styles = {
+	overflowY: 'scroll',
+	maxHeight: '95%' ,
+	scrollbarWidth: 'none',         // Firefox
+	'&::-webkit-scrollbar': {
+	    display: 'none',              // Chrome, Safari
+	}
+    }
+
+    
     const ThoughtsWidget = () => (
 	<Item>
 	    Thoughts
-	    <Box id="thought_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >	    
+	    <Box id="thought_display" sx={widget_scroll_styles} >	    
 	    {
 		thought_history.map( (thought,index) => (
 		    <Box
@@ -455,7 +474,7 @@ const  Component: NextPage = (props : any) => {
     const LogWidget = () => (
 	<Item>
 	    Log
-	    <Box id="log_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >	    
+	    <Box id="log_display" sx={widget_scroll_styles} >	    
 	    {
 		log_history.map( (log,index) => (
 		    <Box
@@ -481,8 +500,10 @@ const  Component: NextPage = (props : any) => {
     const WorkspaceWidget = () => (
 	<Item>
 	    Workspace
-	    <Box id="workspace_display" sx={{maxHeight:"95%"  , marginTop:'5px' , overflowY:"auto"  }} >	    
-		<ObjectInspector style={{width: "90%"}} data={workspace} expandPaths={['$', '$.*','$.*.*']} />
+	    <Box id="workspace_display" sx={widget_scroll_styles} >	    
+		<ObjectInspector style={{width: "90%" }}
+				 theme={theme.palette.mode == "dark" ? "chromeDark" : "chromeLight" }
+				 data={workspace} expandPaths={['$', '$.*','$.*.*']} />
 	    </Box> 
 
 	</Item>
@@ -491,7 +512,7 @@ const  Component: NextPage = (props : any) => {
     const ChatWidget = () => (
 		<Item>
 		    Chat
-		    <Box id="chat_display" sx={{maxHeight:"95%"  , overflowY:"auto"  }} >
+		    <Box id="chat_display" sx={widget_scroll_styles} >
 
 		{chat_history.slice(1).map((message, index) => (
 		    <Box
@@ -541,9 +562,11 @@ const  Component: NextPage = (props : any) => {
 		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
 				 onClick={function() {
 				     if (!started) {
-					 log(`Started audio`)
+					 log(`Starting audio`)
 					 set_started(true) ;
-					 if (!plots_initialized) { 
+					 if (!plots_initialized) {
+					     console.log(theme) 
+					     init_graph(theme.palette.background.default) 
 					     on_init_audio(transcribeRef, transcription_cb )
 					 } else {
 					     GLOBAL_PAUSE = false 						     
@@ -568,7 +591,7 @@ const  Component: NextPage = (props : any) => {
 
 	<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
 
-	<Box display='flex' flexDirection='row' justifyContent='center' width="100%">
+	<Box display='flex' flexDirection='row' justifyContent='center' width="100%"  >
 	    <Box id="viz" />
 	</Box>
 
@@ -609,23 +632,28 @@ const  Component: NextPage = (props : any) => {
 	</Box>
 
 
-	<Box>
+	<Box style={{width : "60%" }}>
 	    <Accordion style={{ marginTop: "15px" , marginBottom : '5px'  }}>
 		<AccordionSummary expandIcon={<ExpandMoreIcon />}>
 		    <Typography>Tools</Typography>
 		</AccordionSummary>
 		<AccordionDetails>
 
+		    <Box style={{display:'flex' , justifyContent : 'center' }}> 
+
 		    <TextField
 			variant="outlined"
 				 value={text_input}
 				 onChange={(e) => set_text_input(e.target.value)}
 				 onKeyPress={handleKeyPress}
-				 placeholder=""
-				 sx={{ marginBottom: '5px', marginTop: '5px' }}
+				 placeholder="Input text and press enter to submit"
+				 sx={{ marginBottom: '5px', marginTop: '5px', width : "100%" }}
 		    />
 
 
+
+		    </Box>
+		    
 		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
 			<FormGroup>
 			    <FormControlLabel control={
@@ -664,6 +692,19 @@ const  Component: NextPage = (props : any) => {
 			</Box> 
 
 
+			<IconButton onClick={
+			function() {
+			    if (vi.tts.tts().speaking) { 
+				vi.tts.cancel_speech() ; 
+				vi.pause_recognition();
+				add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop". Do not respond until I prompt you again`) ;
+			    }
+
+			} 
+			}>
+			    <PauseCircleOutlineIcon />
+			</IconButton>
+
 
 
 		    </Box>
@@ -694,7 +735,7 @@ export default Component ;
 var plots_initialized = false
 var GLOBAL_PAUSE      = false
 
-async function init() {
+async function init_graph(bgc : string) {
 
     //initialize the graphs
     await tsw.apis.bokeh.load_bokeh_scripts() ;
@@ -710,7 +751,7 @@ async function init() {
 	    tmp = make_plot(null) ;
 
 	} else if ( x == 'viz'  ) {
-	    tmp = point_plt() ;
+	    tmp = point_plt(bgc) ;
 
 	} else 	{
 	    tmp = make_plot([-1.1,1.1]) ;
@@ -728,8 +769,6 @@ async function init() {
 
 async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 
-    //first do general audio init;  
-    await init()  ; 
     //start streaming microphone data to the mic graph
     log(`Initializing microphone`) ; 
     await wa.initialize_microphone() ;
@@ -816,7 +855,7 @@ function make_plot(yr : any) {
 
 
 
-export function point_plt() {
+export function point_plt(bgc : string) {
     // create some data and a ColumnDataSource
     const x = [0]
     const y = [0] 
@@ -830,7 +869,12 @@ export function point_plt() {
     ops.y_range = new Bokeh.Range1d({start : -1 , end : 1 })
     ops.x_range = new Bokeh.Range1d({start : -1 , end : 1 })    
 
-    const plot = new Bokeh.Plot(ops); 
+    const plot = new Bokeh.Plot(ops);
+    plot.background_fill_color=bgc
+    plot.border_fill_color=bgc
+
+    plot.toolbar.logo = null
+    plot.toolbar_location = null
 
     // add axes to the plot
     const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
