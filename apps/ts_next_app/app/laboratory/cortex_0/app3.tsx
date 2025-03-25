@@ -1,6 +1,6 @@
 'use client';
 import type { NextPage } from 'next'
-import {useEffect, useState } from 'react' ;
+import {useEffect, useState, useRef } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 import * as tsw from "tidyscripts_web"  ;
@@ -119,11 +119,26 @@ const  Component: NextPage = (props : any) => {
     const [workspace, set_workspace] = useState({}) ;
     const [text_input, set_text_input] = useState<string>('');
 
-
     let init_code_params = {
 	code : `console.log("hello universe!")` ,
 	mode : `javascript` 
     } 
+    
+    //const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
+
+
+    const codeParamsRef = useRef(init_code_params);
+
+    /* 
+    useEffect( ()=> {
+	log(`initializing with code: ${code_params.code} + mode= ${code_params.mode}`) ; 
+    },[])
+    */
+
+    let handle_code_change = function(v : string) {
+	codeParamsRef.current.code = v;
+    	//set_code_params( { code : v , mode : code_params.mode  } ) 
+    }	
     
 
     
@@ -596,7 +611,7 @@ const  Component: NextPage = (props : any) => {
 
 		
 	    } } >
-	    <Code_Widget  /> 
+	    <Code_Widget code_params={codeParamsRef.current} onChange={handle_code_change}  /> 
 	</Box> 
 	</WidgetItem>
 

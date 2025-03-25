@@ -22,8 +22,21 @@ const debug  = tsw.common.util.debug
 const fp     = tsw.common.fp
 
 
-const CodeEditor = () => {
+const CodeEditor = ({code_params, onChange}) => {
 
+    const [localCode, setLocalCode] = useState(code_params.code);
+
+    // Only initialize once
+    useEffect(() => {
+	setLocalCode(code_params.code);
+    }, []); // no dependency on `codeParams` to avoid reset on parent re-render
+
+    const handleChange = (value: string) => {
+	setLocalCode(value);
+	onChange(value); // updates parent ref, but doesn’t trigger re-renders
+    };
+
+    
     let init = async function() {
 
         if (typeof window !== 'undefined') { 
@@ -39,49 +52,31 @@ const CodeEditor = () => {
     let clean_up = ()=> { log("code editor unmounted"); };
     useInit({ init , clean_up });  //my wrapper around useEffect
 
-    let init_code_params = {
-	code : `console.log("hello universe!")` ,
-	mode : `javascript` 
-    } 
-    
 
-    
-    const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
-
-    useEffect( ()=> {
-	log(`initializing with code: ${code_params.code} + mode= ${code_params.mode}`) ; 
-    },[])
-
-    let handle_code_change = function(v : string) {
-    	set_code_params( { code : v , mode : code_params.mode  } ) 
-    }	
 
     return (
         <Box display="flex" flexDirection="column" height="100%" width="100%">
 
-		<AceEditor
-		    mode={code_params.mode}
-		    theme="solarized_dark"
-		    showPrintMargin={false}
-		    name="ace-editor"
-		    value={code_params.code}
-		    onChange={handle_code_change}
-		    editorProps={{ $blockScrolling: true }}
-		    setOptions={{
-			showLineNumbers: true,
-			tabSize: 2,
-			// @ts-ignore 
-			useWorker : false , 
-		    }}
-		    fontSize={20}
-		    width="100%"
-		    height="100%"		    
+	    <AceEditor
+		mode={code_params.mode}
+		theme="solarized_dark"
+		value={localCode}
+		onChange={handleChange}
+		name="ace-editor"
+		fontSize={20}
+		width="100%"
+		height="100%"
+		showPrintMargin={false}
+		editorProps={{ $blockScrolling: true }}
+		setOptions={{
+		    showLineNumbers: true,
+		    tabSize: 2,
+		    useWorker: false,
+		}}
+	    />		
 
-		/>
-		
-
-		<style>
-		    {`
+	    <style>
+		{`
           /* Inline CSS to hide scrollbars but still allow scrolling */
           .ace_scrollbar {
             width: 0 !important;
@@ -90,8 +85,8 @@ const CodeEditor = () => {
           .ace_scrollbar-inner {
             display: none !important;
           }
-		    `}
-		</style>
+		`}
+	    </style>
         </Box>
 
     );
