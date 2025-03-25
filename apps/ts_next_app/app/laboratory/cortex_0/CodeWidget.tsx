@@ -34,7 +34,7 @@ const debug  = tsw.common.util.debug
 const fp     = tsw.common.fp
 
 
-const CodeEditor = ({code_params, onChange}) => {
+const CodeEditor = ({code_params , onChange } : any) => {
 
     const [localCode, setLocalCode] = useState(code_params.code);
     const [localMode, setLocalMode] = useState(code_params.mode);    
