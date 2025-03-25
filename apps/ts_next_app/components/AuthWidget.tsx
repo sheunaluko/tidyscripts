@@ -54,8 +54,8 @@ const logout = (
 const login = (
     <Button size="small"
 	    style={{
-		backgroundColor : grey[50] , 
-		color : primary 
+		backgroundColor : 'background.paper' , 
+		color : 'primary.main' 
 	    }}
 	    onClick={
     function(){

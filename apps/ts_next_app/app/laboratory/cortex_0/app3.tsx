@@ -37,6 +37,8 @@ import WidgetItem from "./WidgetItem" ;
 import * as cortex_utils from "./src/cortex_utils" 
 
 
+import Code_Widget from "./CodeWidget" 
+
 /*
 
    Main Feature Release of Cortex
@@ -118,7 +120,14 @@ const  Component: NextPage = (props : any) => {
     const [text_input, set_text_input] = useState<string>('');
 
 
-    const [focusedWidget, setFocusedWidget] = useState<string | null>("chat");
+    let init_code_params = {
+	code : `console.log("hello universe!")` ,
+	mode : `javascript` 
+    } 
+    
+
+    
+    const [focusedWidget, setFocusedWidget] = useState<string | null>("code");
     /* E V E N T _ H A N D L I N G */
     const handle_thought = (evt : any) => {
 	let {thought} = evt ; 
@@ -566,6 +575,34 @@ const  Component: NextPage = (props : any) => {
 
     )
 
+
+
+    const CodeWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="Code"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
+	    <Box id="code_display" sx={  {
+
+		overflowY: 'auto',
+		height : "95%" ,
+
+	scrollbarWidth: 'none',         // Firefox
+	'&::-webkit-scrollbar': {
+	    display: 'none',              // Chrome, Safari
+	}
+
+		
+	    } } >
+	    <Code_Widget  /> 
+	</Box> 
+	</WidgetItem>
+
+    )
+
+    
     
     return (
 
@@ -639,6 +676,11 @@ const  Component: NextPage = (props : any) => {
 		  <Grid size={{ xs: 12, md: 6 }}>
 		      <LogWidget onFocus={() => setFocusedWidget('log')} />
 		  </Grid>
+
+		  <Grid size={{ xs: 12, md: 6 }}>
+		      <CodeWidget onFocus={() => setFocusedWidget('code')} />
+		  </Grid>
+		  
 		  
 	      </Grid> ) 
 	} 
@@ -653,7 +695,8 @@ const  Component: NextPage = (props : any) => {
 	    	{focusedWidget === 'chat' && <ChatWidget fullscreen onClose={() => setFocusedWidget(null)} />}
 	{focusedWidget === 'workspace' && <WorkspaceWidget fullscreen onClose={() => setFocusedWidget(null)} />}
 	{focusedWidget === 'thoughts' && <ThoughtsWidget fullscreen onClose={() => setFocusedWidget(null)} />}
-	{focusedWidget === 'log' && <LogWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+	    {focusedWidget === 'log' && <LogWidget fullscreen onClose={() => setFocusedWidget(null)} />}
+	    {focusedWidget === 'code' && <CodeWidget fullscreen onClose={() => setFocusedWidget(null)} />}	    
 
 
 

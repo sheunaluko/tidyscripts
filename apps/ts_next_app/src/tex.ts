@@ -112,7 +112,7 @@ export async function upload_embedding(embedding_info: EmbeddingInfo) {
 
 export async function vector_search(query_vector : number[] , limit : number ) {
 
-    // Store the embedding information in a Firestore document
+    // Retrieve vectors that are similar 
     try { 
 	return await fu.retrieve_embedding_function({query_vector, limit}) ; 
 	log(`Retrieved embedding`) 
