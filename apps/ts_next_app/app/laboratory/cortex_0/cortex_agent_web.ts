@@ -83,7 +83,7 @@ const functions = [
 
 
     {
-	description : "Sets the Cortex interface listen_while_speaking setting" ,
+	description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
 	name        : "set_listen_while_speaking" ,
 	parameters  : { value : "boolean" }   ,
 	fn          : async (ops : any) => {
@@ -140,6 +140,41 @@ const functions = [
 	return_type : "any"
     },
 
+    {
+	description : `
+Displays code to the user interface. Use this when the user requests to see code.
+The code parameter is the string representing the code, and the language parameter is the coding language 
+
+The following languages are supported:
+
+json
+typescript
+javascript
+python
+html
+css
+markdown
+sh
+golang
+rust
+swift
+
+
+	`,
+	name        : "display_code" ,
+	parameters  : { code : "string" , language : "string" }  ,
+	fn : async ( ops :any) => {
+
+	    let {code, language, event } = ops
+	    let code_params = {code, mode : language} 
+	    event({'type' : 'code_update' , code_params}); 
+	    return "done" 
+	}  , 
+	return_type : "any"
+    },
+
+
+    
     {
 	description : `
 The workspace is a toplevel nested object named workspace which exists within the javascript environment.

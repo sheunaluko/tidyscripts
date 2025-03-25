@@ -5,7 +5,19 @@ import React, { useState, useEffect } from 'react';
 import AceEditor from "react-ace";
 
 import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-typescript";
 import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-python";
+
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/mode-css";
+import "ace-builds/src-noconflict/mode-markdown";
+import "ace-builds/src-noconflict/mode-sh";
+import "ace-builds/src-noconflict/mode-golang";
+import "ace-builds/src-noconflict/mode-rust";
+import "ace-builds/src-noconflict/mode-swift";
+
+
 import "ace-builds/src-noconflict/theme-kuroir";
 import "ace-builds/src-noconflict/theme-solarized_dark";
 import "ace-builds/src-noconflict/ext-language_tools";
@@ -25,15 +37,20 @@ const fp     = tsw.common.fp
 const CodeEditor = ({code_params, onChange}) => {
 
     const [localCode, setLocalCode] = useState(code_params.code);
+    const [localMode, setLocalMode] = useState(code_params.mode);    
 
     // Only initialize once
     useEffect(() => {
 	setLocalCode(code_params.code);
+	setLocalMode(code_params.mode); 
     }, []); // no dependency on `codeParams` to avoid reset on parent re-render
 
     const handleChange = (value: string) => {
 	setLocalCode(value);
-	onChange(value); // updates parent ref, but doesn’t trigger re-renders
+	onChange({
+		code : value ,
+		mode : localMode 
+	}); // updates parent ref, but doesn’t trigger re-renders
     };
 
     
@@ -45,11 +62,13 @@ const CodeEditor = ({code_params, onChange}) => {
 		fp, 
 		debug
             });
-            log("Code Widget init");
+            //log("Code Widget init");
         }
     };
 
-    let clean_up = ()=> { log("code editor unmounted"); };
+    let clean_up = ()=> {
+	//log("code editor unmounted");
+    };
     useInit({ init , clean_up });  //my wrapper around useEffect
 
 

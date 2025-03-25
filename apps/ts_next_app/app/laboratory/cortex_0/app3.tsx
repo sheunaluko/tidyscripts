@@ -119,10 +119,15 @@ const  Component: NextPage = (props : any) => {
     const [workspace, set_workspace] = useState({}) ;
     const [text_input, set_text_input] = useState<string>('');
 
-    let init_code_params = {
+    let init_code_params_ = {
 	code : `console.log("hello universe!")` ,
 	mode : `javascript` 
-    } 
+    }
+
+    let init_code_params =   {
+	code : "import asyncio\nimport websockets\n\nasync def echo(websocket, path):\n    async for message in websocket:\n        await websocket.send(message)\n\nasync def main():\n    async with websockets.serve(echo, \"localhost\", 8765):\n        await asyncio.Future()  # run forever\n\nasyncio.run(main())" , 
+	mode : "python"
+    }
     
     //const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
 
@@ -135,14 +140,15 @@ const  Component: NextPage = (props : any) => {
     },[])
     */
 
-    let handle_code_change = function(v : string) {
-	codeParamsRef.current.code = v;
+    let handle_code_change = function(code_params : any) {
+	codeParamsRef.current.code = code_params.code ;
+	codeParamsRef.current.mode = code_params.mode ; 
     	//set_code_params( { code : v , mode : code_params.mode  } ) 
     }	
     
 
     
-    const [focusedWidget, setFocusedWidget] = useState<string | null>("code");
+    const [focusedWidget, setFocusedWidget] = useState<string | null>(null);
     /* E V E N T _ H A N D L I N G */
     const handle_thought = (evt : any) => {
 	let {thought} = evt ; 
@@ -160,11 +166,19 @@ const  Component: NextPage = (props : any) => {
 	let new_workspace = structuredClone(window.workspace) ; 
 	set_workspace( { ...new_workspace }) ; 
     }
+
+    const handle_code_update = (evt : any) => {
+	log(`Got code update event`)
+	log(evt) 
+	handle_code_change(evt.code_params) ; 
+    }
+
     
     const event_dic  : {[k:string] : any}  = {
 	'thought' : handle_thought ,
 	'workspace_update' : handle_workspace_update,
 	'log' : handle_log ,
+	'code_update' : handle_code_update , 
     }
     
     const handle_event = (evt : any) => {
