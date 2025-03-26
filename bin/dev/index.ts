@@ -11,6 +11,7 @@ import * as tex from "./tex"
 import * as ytt from "./yt_transcript"
 import * as yts from "./yts"
 import * as tes from "./tes" 
+export * as playwright from "./playwright" 
 
 export {
     //firebase_admin ,
