@@ -8,7 +8,14 @@ import PastAssessments from "./PastAssessments";
 import DD from "./DeliriumDiagram" 
 
 /*
-   Todo: question flow logic + orchestration of UI components 
+   Todo: question flow logic + orchestration of UI components
+   Some AI generated files in ./new_*
+
+   Idea, start by enumerating ALL of the state variables:
+   	 - bannerInfo
+	 - DiagramPresent (boolean)
+	 - DisplayingQuestion || DisplayingInfo , etc... 
+
 */
 
 const App: React.FC = () => {
