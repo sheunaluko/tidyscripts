@@ -18,9 +18,9 @@ export default function ThemeWrapper({ children }: { children: React.ReactNode }
         color: textColor,
         display: 'flex',
         flexDirection: 'column',
-        px: '10px',
-        pt: '25px',
-        pb: '25px',
+        //px: '10px',
+        //pt: '25px',
+        //pb: '25px',
       }}
     >
       {children}

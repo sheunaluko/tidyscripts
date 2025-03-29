@@ -17,20 +17,22 @@ import {
 
 const MLink = ({ ...props }) => {
     // @ts-ignore
-    return <Link {...props} style={{textDecoration: 'none' }} />;
+    return <Link {...props} style={{textDecoration: 'none' ,  width : "80%",    maxWidth : "400px" }} />;
 };
 
 
 const card_style : any  = {
   padding : "10px" ,
   marginBottom : "10px" ,
-  cursor : 'pointer' , 
+    cursor : 'pointer' ,
+    width : "100%" 
+
 }
 
 
 const AllLinks = () => {
   return (
-      <Box>
+      <Box sx={{ width : "100%", height : "100%" , display : "flex", flexDirection : "column", alignItems: "center", justifyContent : "center" }} >
 
 	  <MLink href="/laboratory/3dcam">
 	      <Card style={card_style}>
@@ -201,7 +203,8 @@ const Component : NextPage = (props : any) => {
 
   return (
 
-    <>
+      <Box sx={{ padding: "3%", width : "100%", height : "100%" , display : "flex", flexDirection : "column", justifyContent : "center" }} >
+
         <h1 className={styles.title}>
           <a href="https://github.com/sheunaluko/tidyscripts"> Tidyscripts Lab </a>
         </h1>
@@ -214,7 +217,7 @@ const Component : NextPage = (props : any) => {
 	  <AllLinks />
         </Box>
 
-    </>
+    </Box> 
   )
 }
 

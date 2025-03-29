@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAssessmentLogic } from "./useAssessmentLogic";
 import { saveAssessment } from "./useLocalStorage";
-import { Card, CardContent, Typography, Button, Container, TextField } from "@mui/material";
+import { Card, CardContent, Typography, Button, Container, TextField , Box } from "@mui/material";
 
 const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , setTabIndex : (i : number)=> void }> = ({ setSelectedPatientId, setTabIndex }) => {
     
@@ -30,7 +30,7 @@ const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , 
     if (isSubmitted) {
 	return (
 	    <Container
-	        style={{ paddingTop: "10%" , display: "flex", flexDirection: "column", justifyContent: "center" }}
+	        style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}
 	    >
 
 		<Typography align="center">
@@ -42,9 +42,8 @@ const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , 
 
     if (!currentItem) {
 	return (
-	    <Container 
-		maxWidth="sm" 
-		style={{ paddingTop: "10%" , display: "flex", flexDirection: "column", justifyContent: "center" }}
+	    <Box
+	        style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}
 	    >
 
 		<Typography variant="h5" gutterBottom>
@@ -75,14 +74,13 @@ const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , 
 		</Button>
 
 
-	    </Container>
+	    </Box>
 	);
     }
 
     return (
-	<Container 
-	    maxWidth="sm" 
-	    style={{ paddingTop: "10%" , display: "flex", flexDirection: "column", justifyContent: "center" }}
+	<Box
+	    style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}
 	>
 	    <TextField
 		fullWidth
@@ -129,7 +127,7 @@ const AssessmentScreen: React.FC<{ setSelectedPatientId: (id: string) => void , 
 		</CardContent>
 	    </Card>
 
-	</Container>
+	</Box>
     );
 };
 

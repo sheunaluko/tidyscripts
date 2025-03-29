@@ -37,8 +37,8 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 
     let footer_v_padding="20px";
     let footer_h_padding="10px"; 
-    let main_v_padding="25px";
-    let main_h_padding="10px"; 
+    //let main_v_padding="25px";
+    //let main_h_padding="10px"; 
 
     return (
 	<html lang="en">

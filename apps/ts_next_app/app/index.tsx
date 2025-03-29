@@ -89,8 +89,9 @@ const Home: NextPage = (props : any) => {
 	    display='flex'
 	    flexDirection='column'
 	    alignItems='center'
-	    style={{width: "100%", height: "100%"}}
+	    style={{width: "100%", height: "100%", padding : "2%"}}
 	>
+	    <br/>
 	    <Box className={styles.title}>
 		<Typography variant="h2" color='primary.main'>
 		    Tidyscripts
