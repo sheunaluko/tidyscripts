@@ -1,144 +1,138 @@
 "use client" ; 
 
 import React, { useState } from "react";
-import { Typography , Container, Box, Tabs, Tab, TextField, Button } from "@mui/material";
-import AssessmentScreen from "./AssessmentScreen";
-import SummaryScreen from "./SummaryScreen";
-import PastAssessments from "./PastAssessments";
+import { Typography , Container, Box, Tabs, Tab, TextField, Button, Paper } from "@mui/material";
 import DD from "./DeliriumDiagram" 
+import { AssessmentProvider, useAssessment } from "./AssessmentContext";
+import { useTheme } from '@mui/material/styles';
+
 
 /*
-   Todo: question flow logic + orchestration of UI components
-   Some AI generated files in ./new_*
+   TODO
+    - implement saving and retrieving by ID
+    - optimize responsive layout
+ */
 
-   Idea, start by enumerating ALL of the state variables:
-   	 - bannerInfo
-	 - DiagramPresent (boolean)
-	 - DisplayingQuestion || DisplayingInfo , etc... 
+const Display = () => {
 
-*/
+    const theme = useTheme() ; 
+    const { deliriumPresent, complete } = useAssessment() ;
+
+    console.log(theme.breakpoints) 
+
+    return ( 
+    	<Box
+	    sx={(theme) => ({
+		width : "100%",
+		height : "100%" ,
+		display : "flex",
+		flexDirection : "column", 
+		maxWidth: "800px",
+		maxHeight: "1400px",
+		border: "1px solid black",
+		[theme.breakpoints.down('md')]: {
+		    border: "none",
+		},
+	    })}		
+
+	>
+	    { (deliriumPresent || complete)  ?   <SummaryScreen/> : <AssessmentScreen/>    }
+	    
+	</Box>
+    )
+
+}
+
+const AssessmentScreen = () => {
+
+    const { showDiagram } = useAssessment() ;
+    
+    return (
+	<> 
+    	<Banner /> 
+
+	<Box flexGrow={1} >
+	    <ShowItem />
+
+	</Box>
+
+
+	{ showDiagram ? 
+	  <DiagramSection /> : <Box sx={{minHeight : "20%"}}>
+	      <hr style={{border: 'none', height: '1px',  backgroundColor : 'black'}}/> 
+	  </Box>
+	}
+	</>
+    )
+
+}
 
 
 
 const App: React.FC = () => {
 
-
-    let initDiagramColors = {
-	'f1' : 'white' ,
-	'f2' : 'white' ,
-	'f3' : 'white' ,
-	'f4' : 'white' ,	
-    }
-    
-    const [tabIndex, setTabIndex] = useState(0);
-    const [selectedPatientId, setSelectedPatientId] = useState<string | null>("RM O8");
-    const [showDiagram, setShowDiagram] = useState(false) 
-
-    let initBannerInfo = {
-	header : '3D-CAM',
-	info : 'Step 1. Severe lethargy or severe altered level of consciousness screen' ,
-	color : 'black' ,
-	selectedPatientId,
-	setSelectedPatientId, 
-    }
-
-
-    let initItem = {
-	display_text : "Welcome to the 3D-CAM Assessment" 
-    }
-    
-    const [bannerInfo, setBannerInfo] = useState(initBannerInfo);
-    const [diagramColors, setDiagramColors] = useState(initDiagramColors);
-    const [currentItem   , setCurrentItem ] = useState(initItem) ; 
-
-
-    React.useEffect( ()=> {
-
-	
-    }, [currentItem])
-    
-
     return (
-	<Box
-	    style={{
-		height: "100%" ,
-		width : "100%" , 
-	        display: "flex",
-		flexDirection: "column",
-	    }}
-	>
-
-	    <Banner {...bannerInfo} />
-
-
-	    <Box flexGrow={1} >
-		<ShowItem
-		    info={{
-			text : "hey there" ,
-			answer_question : true,
-			pass_choice : "Correct" ,
-			fail_choice : "Incorrect"  
-		    }}
-		    />
-
-	    </Box>
-
-
-	    { showDiagram ? 
-	      <DiagramSection colors={diagramColors} /> : <Box sx={{minHeight : "20%"}}>
-		  <hr style={{border: 'none', height: '1px',  backgroundColor : 'black'}}/> 
-	      </Box>
-	    }
-	    
-	</Box>
+	<AssessmentProvider>
+	    <Display/>
+	</AssessmentProvider> 
     );
 };
 
 export default App;
 
-const RectangularButton: React.FC<RectangularButtonProps> = ({ children, ...props }) => {
-  return (
-    <Button
-      variant="outlined"
-      sx={{
-        borderRadius: 0,
-        borderColor: 'black',
-        color: 'black',
-        backgroundColor: props.bgc,
-        
-      }}
-      {...props}
-    >
-      {children}
-    </Button>
-  );
-};
-
-
 
 const ShowItem = (props : any) => {
-    let {text, answer_question, pass_choice, fail_choice} = props.info; 
+
+    const { currentItem , answer  } = useAssessment() ;
+
+    let text = currentItem.text ; 
+    let pass_choice = currentItem.answer_map.pass ; 
+    let fail_choice = currentItem.answer_map.fail ; 
+    
 
       return  (
       	  <Box display='flex' flexDirection='column' alignItems='center' justifyContent='space-around' width='100%'  height="100%" >
-	      <Box mt='5px'>
-		  {text}
+	      <Box display='flex' mt='5px' textAlign='center' padding="3%">
+		  <Typography> {text} </Typography> 
 	      </Box>
 
 	      <Box display='flex' flexDirection='row' justifyContent='space-around' alignItems='center' width='100%'>
 		  <Box>
-		      <RectangularButton bgc="#8cc97c">
-			  {pass_choice}
-		      </RectangularButton>
+
+		          <Button
+			      variant="outlined"
+			      sx={{
+				  borderRadius: 0,
+				  borderColor: 'black',
+				  color: 'black',
+				  backgroundColor: "#8cc97c",
+				  
+			      }}
+			      onClick={()=>answer("pass")}
+			  >
+			      {pass_choice}
+			  </Button>
+
 		  </Box>
 
 		  { fail_choice ? (
-		  <Box>
-		      <RectangularButton bgc="red">
-			  {fail_choice}			  
-		      </RectangularButton>
-		  </Box>
-			) : null 
+			<Box>
+			    <Button
+				variant="outlined"
+				sx={{
+				    borderRadius: 0,
+				    borderColor: 'black',
+				    color: 'black',
+				    backgroundColor: "red",
+				    
+				}}
+				onClick={()=>answer("fail")}
+			    >
+				{fail_choice}
+			    </Button>
+
+			</Box>
+		  ) : null 
 		  }
 	      </Box>
 	      
@@ -146,12 +140,12 @@ const ShowItem = (props : any) => {
       )
 }     
 
-const DiagramSection = ({colors} : any) => {
+const DiagramSection = () => {
 
     return (
 	<React.Fragment>
 	<hr style={{border: 'none', height: '1px',  backgroundColor : 'black'}}/>
-	    <DD colors={colors} />
+	    <DD />
 	<hr style={{border: 'none', height: '1px',  backgroundColor : 'black'}}/>	
 	</React.Fragment> 
     )
@@ -159,7 +153,15 @@ const DiagramSection = ({colors} : any) => {
 } 
 
 
-const Banner = ({header, info , color, selectedPatientId, setSelectedPatientId} : any) => {
+const Banner = () => {
+
+    const { currentItem , answer, patientId , setPatientId } = useAssessment() ;
+    let {banner_info} = currentItem ;
+    let header  = banner_info.title ;
+    let info    = banner_info.subtitle;
+    let color   = banner_info.bgc ;
+    let selectedPatientId = patientId ; 
+    let setSelectedPatientId = setPatientId ; 
 
 
     const [localId, setLocalId] = useState(selectedPatientId) ; 
@@ -169,7 +171,7 @@ const Banner = ({header, info , color, selectedPatientId, setSelectedPatientId} 
 
 	<br />
 	
-	<Box sx={{ display : 'flex' , flexDirection : 'column' , backgroundColor: color, p: 2, color: 'white' , alignItems : 'center' }}>
+	<Box sx={{ display : 'flex' , flexDirection : 'column' , backgroundColor: color, p: 2, color: (color == "#000000" ? 'white' : 'black' ) , alignItems : 'center' }}>
 	    <Typography variant="h6">{header}</Typography>
 	    <br/>
 	    <Typography variant="body1">{info}</Typography>
@@ -222,9 +224,71 @@ const Banner = ({header, info , color, selectedPatientId, setSelectedPatientId} 
 }
 
 
-/*
-   {tabIndex === 0 && <AssessmentScreen setSelectedPatientId={setSelectedPatientId} setTabIndex={setTabIndex} />}
-   {tabIndex === 1 && <SummaryScreen selectedPatientId={selectedPatientId} />}
-   {tabIndex === 2 && <PastAssessments setSelectedPatientId={setSelectedPatientId} setTabIndex={setTabIndex} />}
+const featureLabels: Record<string, string> = {
+  "1": "Acute Change or Fluctuation",
+  "2": "Inattention",
+  "3": "Disorganized Thinking",
+  "4": "Altered Level of Consciousness",
+  "Override": "Severe AMS",
+};
 
- */
+const SummaryScreen: React.FC = () => {
+  const { features, responses, deliriumPresent, patientId, resetAssessment } = useAssessment();
+
+  return (
+    <Box p={3}>
+      <Typography variant="h5" gutterBottom>
+        3D-CAM Assessment Summary
+      </Typography>
+
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        Delirium Present:{" "}
+        <strong style={{ color: deliriumPresent ? "red" : "green" }}>
+          {deliriumPresent ? "Yes" : "No"}
+        </strong>
+      </Typography>
+
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        ID:{" "}
+        <strong >
+	    {patientId}
+        </strong>
+      </Typography>
+      
+
+      {Object.entries(features).map(([featureId, isPositive]) => (
+        <Box key={featureId} mt={3}>
+          <Paper elevation={3} sx={{ p: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Feature {featureId}: {featureLabels[featureId] || "Unknown Feature"}
+            </Typography>
+            <Typography>
+              <strong>Status:</strong>{" "}
+              {isPositive ? "Positive (failed at least one item)" : "Negative"}
+            </Typography>
+
+            {responses[featureId] ? (
+              <Box mt={1}>
+                {Object.entries(responses[featureId]).map(([itemId, result]) => (
+                  <Typography key={itemId} sx={{ ml: 2 , color : (result == 'fail' ? 'red' : 'black')}} >
+                    {itemId as any}: {result as any}
+                  </Typography>
+                ))}
+              </Box>
+            ) : (
+              <Typography sx={{ ml: 2 }}>No responses recorded.</Typography>
+            )}
+          </Paper>
+        </Box>
+      ))}
+
+      <Box display="flex" flexDirection="row"  justifyContent="center"  mt='10px' >
+      <Button variant="outlined" 
+	  onClick={resetAssessment}
+      >
+	  Restart
+      </Button>
+      </Box> 
+    </Box>
+  );
+};

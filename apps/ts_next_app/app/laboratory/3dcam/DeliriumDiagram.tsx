@@ -1,14 +1,9 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { useAssessment } from "./AssessmentContext";
 
-interface DeliriumDiagramProps {
-  colors?: {
-    f1?: string;
-    f2?: string;
-    f3?: string;
-    f4?: string;
-  };
-}
+import {cmp} from "./new_items" ;
+
 
 const boxStyle = (bgColor: string) => ({
   backgroundColor: bgColor,
@@ -91,17 +86,16 @@ const MiddlePart = () => (
 
 )
 
-export const DeliriumDiagram: React.FC<DeliriumDiagramProps> = ({ colors = {} }) => {
+export const DeliriumDiagram = () => {
 
-    console.log(colors)
+    const {features} = useAssessment() ; 
     
-  const {
-    f1 = 'lightcoral',
-    f2 = 'red',
-    f3 = 'lightgreen',
-    f4 = 'lightgray',
-  } = colors;
+    let f1 = features['1'] ? 'red' :  cmp['f1'];
+    let f2 = features['2'] ? 'red' :  cmp['f2']
+    let f3 = features['3'] ? 'red' :  cmp['f3']
+    let f4 = features['4'] ? 'red' :  cmp['f4']        
 
+    
   return (
     <Box display="flex" flexDirection="column" alignItems="center" width="100%" position="relative" padding="4%">
       {/* Top Row with background line */}

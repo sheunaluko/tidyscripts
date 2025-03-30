@@ -1,7 +1,7 @@
 import { Item } from "./types";
 
 
-const cmp = {
+export const cmp = {
     f1: '#eec9c9', // Acute Change/Fluctuation (light red/pink)
     f2: '#c6dceb', // Inattention (light blue)
     f3: '#d7e9c6', // Disorganized Thinking (light green)
@@ -13,9 +13,9 @@ const cmp = {
 export const ITEMS: Item[] = [
     // Override
     {
-	id: "override_1",
+	id: "severe_lethargy_ams",
 	text: "Severe lethargy or severe altered level of consciousness (no or minimal response to voice/touch). If present and baseline unclear, please confirm baseline with caregiver, outpatient providers",
-	feature: "feature4",
+	feature: "featureOverride",
 	type: "override",
 	banner_info : {
 	    title : "3D-CAM" ,
@@ -29,7 +29,7 @@ export const ITEMS: Item[] = [
     {
 	id: "display1",
 	text: "Have UB-2 results on hand (Day of the Week and Months of the Year Backwards)",
-	feature: null  , 
+	feature: "featureDisplay1"  , 
 	type: "display",
 	banner_info : {
 	    title : "3D-CAM Part 1: Patient Assessment" ,
@@ -180,7 +180,7 @@ export const ITEMS: Item[] = [
     {
 	id: "display2",
 	text: "Reflect on your bedside observations and newly acquired history (e.g. patient's cognitive baseline)",
-	feature: null  , 
+	feature: "featureDisplay2"  , 
 	type: "display",
 	banner_info : {
 	    title : "3D-CAM Part 2: Interviewer Ratings" ,
