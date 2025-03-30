@@ -1,7 +1,7 @@
 "use client" ; 
 
 import React, { useState } from "react";
-import { Typography , Container, Box, Tabs, Tab, TextField } from "@mui/material";
+import { Typography , Container, Box, Tabs, Tab, TextField, Button } from "@mui/material";
 import AssessmentScreen from "./AssessmentScreen";
 import SummaryScreen from "./SummaryScreen";
 import PastAssessments from "./PastAssessments";
@@ -18,6 +18,8 @@ import DD from "./DeliriumDiagram"
 
 */
 
+
+
 const App: React.FC = () => {
 
 
@@ -30,6 +32,7 @@ const App: React.FC = () => {
     
     const [tabIndex, setTabIndex] = useState(0);
     const [selectedPatientId, setSelectedPatientId] = useState<string | null>("RM O8");
+    const [showDiagram, setShowDiagram] = useState(false) 
 
     let initBannerInfo = {
 	header : '3D-CAM',
@@ -39,9 +42,21 @@ const App: React.FC = () => {
 	setSelectedPatientId, 
     }
 
+
+    let initItem = {
+	display_text : "Welcome to the 3D-CAM Assessment" 
+    }
     
     const [bannerInfo, setBannerInfo] = useState(initBannerInfo);
-    const [diagramColors, setDiagramColors] = useState(initDiagramColors);        
+    const [diagramColors, setDiagramColors] = useState(initDiagramColors);
+    const [currentItem   , setCurrentItem ] = useState(initItem) ; 
+
+
+    React.useEffect( ()=> {
+
+	
+    }, [currentItem])
+    
 
     return (
 	<Box
@@ -56,16 +71,80 @@ const App: React.FC = () => {
 	    <Banner {...bannerInfo} />
 
 
-	    <Box flexGrow={1} > </Box>
+	    <Box flexGrow={1} >
+		<ShowItem
+		    info={{
+			text : "hey there" ,
+			answer_question : true,
+			pass_choice : "Correct" ,
+			fail_choice : "Incorrect"  
+		    }}
+		    />
 
-	    
-	    <DiagramSection colors={diagramColors} /> 
+	    </Box>
+
+
+	    { showDiagram ? 
+	      <DiagramSection colors={diagramColors} /> : <Box sx={{minHeight : "20%"}}>
+		  <hr style={{border: 'none', height: '1px',  backgroundColor : 'black'}}/> 
+	      </Box>
+	    }
 	    
 	</Box>
     );
 };
 
 export default App;
+
+const RectangularButton: React.FC<RectangularButtonProps> = ({ children, ...props }) => {
+  return (
+    <Button
+      variant="outlined"
+      sx={{
+        borderRadius: 0,
+        borderColor: 'black',
+        color: 'black',
+        backgroundColor: props.bgc,
+        
+      }}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+};
+
+
+
+const ShowItem = (props : any) => {
+    let {text, answer_question, pass_choice, fail_choice} = props.info; 
+
+      return  (
+      	  <Box display='flex' flexDirection='column' alignItems='center' justifyContent='space-around' width='100%'  height="100%" >
+	      <Box mt='5px'>
+		  {text}
+	      </Box>
+
+	      <Box display='flex' flexDirection='row' justifyContent='space-around' alignItems='center' width='100%'>
+		  <Box>
+		      <RectangularButton bgc="#8cc97c">
+			  {pass_choice}
+		      </RectangularButton>
+		  </Box>
+
+		  { fail_choice ? (
+		  <Box>
+		      <RectangularButton bgc="red">
+			  {fail_choice}			  
+		      </RectangularButton>
+		  </Box>
+			) : null 
+		  }
+	      </Box>
+	      
+	  </Box>
+      )
+}     
 
 const DiagramSection = ({colors} : any) => {
 
