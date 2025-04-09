@@ -1,0 +1,32 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+
+import { Box, TextField, Button, Typography } from "@mui/material";
+import * as tsw from "tidyscripts_web";
+
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const log    = tsw.common.logger.get_logger({id:"html"});
+const debug  = tsw.common.util.debug
+const fp     = tsw.common.fp
+
+
+const HTMLWidget = ({to_display   } : any) => {
+
+     useEffect( () => {
+	 log(`init html widget`)
+	 let el = document.getElementById("HTMLWIDGET")
+	 el.innerHTML = to_display ;
+	 log(`set inner html`) 
+     }, []) 
+
+    return (
+        <Box id='HTMLWIDGET' display="flex" flexDirection="column" height="100%" width="100%">
+        </Box>
+
+    );
+};
+
+export default HTMLWidget;
+

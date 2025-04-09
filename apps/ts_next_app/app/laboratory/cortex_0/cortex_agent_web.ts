@@ -6,6 +6,8 @@ import * as fbu from "../../../src/firebase_utils"
 import * as fnu from "../src/fn_util" 
 import * as bashr from "../../../src/bashr/index" 
 import * as tsw from "tidyscripts_web"
+import * as fb from "../../../src/firebase" ;
+
 
 const vi = tsw.util.voice_interface ; 
 
@@ -29,6 +31,13 @@ export function get_agent() {
     // 
     return coer ; 
 }
+
+
+export async function get_practice_question(ops : any) {
+    let {test_num, question_num} = ops; 
+    let qid = `t${test_num}_q${question_num}` ; 
+    return (await fb.fu.get_user_doc({ path: [qid] , app_id : "usync" }))
+} 
 
 
 export async function tes(fn_path  : string[], fn_args : any[] ) {
@@ -173,6 +182,36 @@ swift
 	return_type : "any"
     },
 
+    
+
+    {
+	description : `
+ Renders HTML to the user interface. Use this when the user requests to view rendered HTML. The parameter html is an html string that will be rendered. This must be an html string that contain the DOM content that should be rendered` , 
+	name        : "display_html" ,
+	parameters  : { html : "string" }, 
+	fn : async ( ops :any) => {
+	    let {html, event } = ops
+	    event({'type' : 'html_update' , html }); 
+	    return "done" 
+	}  , 
+	return_type : "any"
+    },
+
+
+
+    {
+	description : `Retrieves a practice question give the test number and question number. Must pass the question_num and test_num parameters` , 
+	name        : "get_practice_question" ,
+	parameters  : { test_num : "number", question_num : "number" }, 
+	fn : async ( ops :any) => {
+	    return await get_practice_question(ops) 
+	}  , 
+	return_type : "any"
+    },
+    
+
+    
+    
 
     
     {

@@ -31,13 +31,25 @@ import {
 } from "@mui/material"
 
 
+import * as fb from "../../../src/firebase" ;
+
+export async function get_question(qid : string) {
+    qid = qid || "t1_q1" ; 
+    return (await fb.fu.get_user_doc({ path: [qid] , app_id : "usync" }))
+} 
+
+/*
+   Todo -- create widget that can render HTML into it   
+*/ 
+
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import WidgetItem from "./WidgetItem" ;
 
 import * as cortex_utils from "./src/cortex_utils" 
 
 
-import Code_Widget from "./CodeWidget" 
+import Code_Widget from "./CodeWidget"
+import HTML_Widget from "./HTMLWidget" 
 
 /*
 
@@ -118,6 +130,7 @@ const  Component: NextPage = (props : any) => {
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
     const [text_input, set_text_input] = useState<string>('');
+    const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
 
     let init_code_params_ = {
 	code : `console.log("hello universe!")` ,
@@ -173,12 +186,19 @@ const  Component: NextPage = (props : any) => {
 	handle_code_change(evt.code_params) ; 
     }
 
+    const handle_html_update = (evt : any) => {
+	log(`Got html update event`)
+	log(evt) 
+	set_html_display(evt.html)
+    }
+    
     
     const event_dic  : {[k:string] : any}  = {
 	'thought' : handle_thought ,
 	'workspace_update' : handle_workspace_update,
 	'log' : handle_log ,
-	'code_update' : handle_code_update , 
+	'code_update' : handle_code_update ,
+	'html_update' : handle_html_update , 	
     }
     
     const handle_event = (evt : any) => {
@@ -233,6 +253,8 @@ const  Component: NextPage = (props : any) => {
 	}
 	
 	Object.assign(window, {
+	    fb,
+	    get_question, 
 	    tsw,
 	    wa ,
 	    debug ,
@@ -631,6 +653,31 @@ const  Component: NextPage = (props : any) => {
 
     )
 
+    const HTMLWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
+	<WidgetItem
+	title="HTML"
+	fullscreen={fullscreen}
+	onFocus={onFocus}
+	onClose={onClose}
+	>
+	    <Box id="html_display" sx={  {
+
+		overflowY: 'auto',
+		height : "95%" ,
+
+	scrollbarWidth: 'none',         // Firefox
+	'&::-webkit-scrollbar': {
+	    display: 'none',              // Chrome, Safari
+	}
+
+		
+	    } } >
+	    <HTML_Widget to_display={html_display} /> 
+	</Box> 
+	</WidgetItem>
+
+    )
+    
     
     
     return (
@@ -709,6 +756,11 @@ const  Component: NextPage = (props : any) => {
 		  <Grid size={{ xs: 12, md: 6 }}>
 		      <CodeWidget onFocus={() => setFocusedWidget('code')} />
 		  </Grid>
+
+
+		  <Grid size={{ xs: 12, md: 6 }}>
+		      <HTMLWidget onFocus={() => setFocusedWidget('html')} />
+		  </Grid>
 		  
 		  
 	      </Grid> ) 
@@ -727,6 +779,8 @@ const  Component: NextPage = (props : any) => {
 	    {focusedWidget === 'log' && <LogWidget fullscreen onClose={() => setFocusedWidget(null)} />}
 	    {focusedWidget === 'code' && <CodeWidget fullscreen onClose={() => setFocusedWidget(null)} />}	    
 
+	    {focusedWidget === 'html' && <HTMLWidget fullscreen onClose={() => setFocusedWidget(null)} />}	    
+	    
 
 
 	</Box>

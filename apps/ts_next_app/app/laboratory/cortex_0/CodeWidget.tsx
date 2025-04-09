@@ -29,7 +29,7 @@ import * as tsw from "tidyscripts_web";
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const log    = tsw.common.logger.get_logger({id:"data_editor"});
+const log    = tsw.common.logger.get_logger({id:"code_w"});
 const debug  = tsw.common.util.debug
 const fp     = tsw.common.fp
 
