@@ -58,7 +58,20 @@ export async function init() {
     let p = await b.newPage() ;
     await set_size(p, 1200, 1200) ;     
     return  p 
-}      
+}
+
+
+export async function native_browser() {
+    var b = await node.apis.playwright.get_browser_with_ops({
+	headless : false,
+	executablePath: "/usr/bin/google-chrome-stable", 
+    }) ;
+
+    let p = await b.newPage() ;
+    await set_size(p, 1200, 1200) ;     
+    return  p 
+    
+}
 
 
 export async function test(p : any ) {
