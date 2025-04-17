@@ -1,6 +1,4 @@
-Repository Overview
-
-This file provides a high‑level summary of the codebase to speed up future onboarding.
+This file provides a high‑level summary of the Cortex Directory codebase to speed up future onboarding.
 
 1. Page entry point
 - `page.tsx` re‑exports `app3.tsx` as the main Cortex UI.
@@ -43,4 +41,7 @@ This file provides a high‑level summary of the codebase to speed up future onb
 - Bokeh for live plotting.
 - Firebase utils (`src/firebase[_utils]`) for persistent storage & practice questions.
 
-*Save this file as `codex.md` for quick reference when restarting the development session.*
+
+
+---
+For a chronological log of incremental changes across sessions, see `codex_changes.md`.

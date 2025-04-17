@@ -21,9 +21,9 @@ declare var window : any ;
 // can update and then reload conversationally.
 
 
-export function get_agent() {
-    // init cortex 
-    let model = "gpt-4o" ;
+export function get_agent(modelName: string = "gpt-4o") {
+    // init cortex with chosen model
+    let model = modelName;
     let name  = "coer" ;
     let additional_system_msg = "Tidyscripts is the general name for your software architecture" 
     let ops   = { model , name, functions, additional_system_msg  } 

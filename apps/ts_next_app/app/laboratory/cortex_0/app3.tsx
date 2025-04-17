@@ -16,18 +16,22 @@ import {ObjectInspector } from 'react-inspector';
 import {
     Box,
     Button,
-    Input ,
+    Input,
     Switch,
     FormGroup,
     FormControlLabel,
     TextField,
     Accordion,
     AccordionSummary,
-    AccordionDetails, 
-    Typography, 
+    AccordionDetails,
+    Typography,
     Slider,
-    Paper ,
-    IconButton 
+    Paper,
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from "@mui/material"
 
 
@@ -78,8 +82,7 @@ const alpha_val = 0.4
 const light_primary = alpha(theme.palette.primary.main, alpha_val) 
 const light_secondary = alpha(theme.palette.secondary.main, alpha_val) 
 
-/* Get the agent */ 
-const COR = cortex_agent.get_agent() ;
+// Cortex agent instance will be managed via React state in-component
 
 /* grid item */ 
 const Item = styled(Paper)(({ theme }) => ({
@@ -129,6 +132,18 @@ const  Component: NextPage = (props : any) => {
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
+    // State for Cortex agent, re-created when ai_model changes
+    const [COR, setCOR] = useState(() =>
+        cortex_agent.get_agent(ai_model)
+    );
+
+    // Re-instantiate agent whenever model selection changes
+    useEffect(() => {
+        const oldAgent = COR;
+        oldAgent.off('event', handle_event);
+        const nextAgent = cortex_agent.get_agent(ai_model);
+        setCOR(nextAgent);
+    }, [ai_model]);
     const [text_input, set_text_input] = useState<string>('');
     const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
 
@@ -220,17 +235,17 @@ const  Component: NextPage = (props : any) => {
     /* E F F E C T S */ 
 
     useEffect( ()=> {
-	let speak = async function(content : string) {
-	    await  vi.speak_with_rate(content, playbackRate) ;
-	}
-	COR.configure_user_output(speak) 
-    }, [playbackRate])
+        let speak = async function(content : string) {
+            await vi.speak_with_rate(content, playbackRate);
+        }
+        COR.configure_user_output(speak)
+    }, [playbackRate, COR])
 
 
     useEffect( ()=> {
-	COR.on('event', handle_event)
-	return () => { COR.off('event' , handle_event) } 
-    }, [])
+        COR.on('event', handle_event)
+        return () => { COR.off('event', handle_event) }
+    }, [COR])
 
 
     useEffect(() => {
@@ -856,8 +871,26 @@ const  Component: NextPage = (props : any) => {
 
 			} 
 			}>
-			    <PauseCircleOutlineIcon />
-			</IconButton>
+        <PauseCircleOutlineIcon />
+        </IconButton>
+
+        {/* Model selector */}
+        <Box display='flex' flexDirection='row' justifyContent='center' width="100%" alignItems='center' sx={{ mt: 2 }}>
+          <FormControl size='small' sx={{ minWidth: 200 }}>
+            <InputLabel id="model-select-label">Model</InputLabel>
+            <Select
+              labelId="model-select-label"
+              value={ai_model}
+              label="Model"
+              onChange={e => set_ai_model(e.target.value as string)}
+            >
+              <MenuItem value="gpt-4o">gpt-4o</MenuItem>
+              <MenuItem value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</MenuItem>
+              <MenuItem value="o4-mini">o4-mini</MenuItem>
+              <MenuItem value="chatgpt-4o-latest">chatgpt-4o-latest</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
 
 
