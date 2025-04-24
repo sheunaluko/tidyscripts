@@ -16,7 +16,7 @@ const HTMLWidget = ({to_display   } : any) => {
 
      useEffect( () => {
 	 log(`init html widget`)
-	 let el = document.getElementById("HTMLWIDGET")
+	 let el = (document.getElementById("HTMLWIDGET") as any)
 	 el.innerHTML = to_display ;
 	 log(`set inner html`) 
      }, []) 

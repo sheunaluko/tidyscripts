@@ -96,10 +96,8 @@ const Main = () => {
 	setWidgetWidth(newValue);
     };
 
-    return (
-	<Box display="flex" flexDirection="column" height="100%" width="100%">
-
-	    <Box display="flex" justifyContent="center" marginBottom="20px" width="100%">
+    const WidgetSelector = () => {
+		    <Box display="flex" justifyContent="center" marginBottom="20px" width="100%">
 		<Grid container spacing={2} justifyContent="center">
 
 		    
@@ -120,7 +118,15 @@ const Main = () => {
 		</Grid>
 		
 	    </Box>
-	    
+
+    }
+
+    return (
+	<Box display="flex" flexDirection="column" paddingTop="5%" height="100%" width="100%">
+
+	<Box display="flex" justifyContent="center" alignItems="center" marginBottom="3%" width="100%">
+	    <Typography variant="h2" color="primary" >Automate.Care</Typography>
+	</Box>
 
 	
 	<Box flexGrow={1} width={`${widgetWidth}%`} margin="0 auto" display="flex" flexDirection="column">

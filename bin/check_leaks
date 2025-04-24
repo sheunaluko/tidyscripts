@@ -1,0 +1,1 @@
+gitleaks git --verbose --config gitleaks.toml

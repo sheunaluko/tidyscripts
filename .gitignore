@@ -2,9 +2,11 @@
 *#
 node_modules
 **/.turbo/
+**/.*/
 **/dist
 **/node_modules
 packages/ts_node/resources
+gitleaks.toml
 
 bin/bin_repl.js
 bin/bin_repl.ts
@@ -13,10 +15,10 @@ bin/account*
 local
 bin/local
 
-
 apps/ts_next_app/public/docs
 apps/ts_next_app/public/resources/docs
-apps/ts_next_app/.next 
+apps/ts_next_app/.next
+apps/ts_next_app/.next/**
 apps/ts_next_app/todo
 apps/ts_next_app/old_pages
  

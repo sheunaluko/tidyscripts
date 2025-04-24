@@ -12,16 +12,17 @@ let { get_json_from_url } = tsw.common ;
 
 import * as fb from "../../../../src/firebase" 
 
+export var default_model = "gpt-4o"; 
 
 /* Util function definitions */ 
 
 export async function generate_hp(ops : any ) {
 
-    let {clinical_information , client } = ops ; 
+    let {clinical_information , client, model } = ops ; 
 
     const prompt = generate_prompt(clinical_information);
     const response = await client.chat.completions.create({
-	model: "gpt-4o",
+	model: (model || default_model) , 
 	messages: [
 	    { role: 'system', content: 'You are an expert clinician that generates synthetic history and physical notes for the user.' },
 	    { role: 'user', content: prompt }
@@ -36,7 +37,7 @@ export async function generate_hp(ops : any ) {
 
 
 export async function get_individual_dashboard_info(ops: any) {
-    let { hp, client, dashboard_name } = ops;
+    let { hp, client, dashboard_name, model } = ops;
     
     // -- generate the prompt 
     let dashboard_prompt = await prompts.generate_full_prompt(hp, dashboard_name);
@@ -46,7 +47,7 @@ export async function get_individual_dashboard_info(ops: any) {
 
     // -- query the AI with the prompt
     const response = await client.chat.completions.create({
-        model: "gpt-4o",
+        model: ( model || "gpt-4o" ) ,
         messages: [
             { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
             { role: 'user', content: dashboard_prompt }
@@ -99,7 +100,7 @@ export async function wrapped_chat_completion(args : any) {
 
 export async function get_all_dashboard_info(ops : any ) {
 
-    let {hp , client } = ops
+    let {hp , client, model } = ops
 
     
     // -- generate the prompt 
@@ -110,7 +111,7 @@ export async function get_all_dashboard_info(ops : any ) {
 
     // -- query the AI with the prompt
     const response = await client.chat.completions.create({
-        model: "gpt-4o",
+        model: (model || default_model ) ,
         messages: [
             { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
             { role: 'user', content: dashboard_prompt }
@@ -224,7 +225,7 @@ export async function transform_hp_to_fhir({client, hp} : { [k:string] : any } )
 
     // -- query the AI with the prompt
     const response = await _client.chat.completions.create({
-        model: "gpt-4o",
+        model: (default_model || "gpt-4o") , 
         messages: [
             { role: 'system', content: 'You are an expert and enthusiastic clinical decision support tool' },
             { role: 'user', content: hp_to_fhir_prompt }

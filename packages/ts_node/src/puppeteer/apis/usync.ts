@@ -85,6 +85,26 @@ export async function main() {
     
 }
 
+export async function get_rows(p : any)  {
+    
+    let all_rows = await p.evaluate( ()=> {
+	//get_rows	
+	let rs = Array.from(document.querySelectorAll("tbody tr")) ; 
+	let tmp = [ ]  ; 
+	for (var i=0; i< rs.length ; i ++) {
+
+	    let name = rs[i].querySelector( "td:nth-child(2)" )!.textContent!.trim()
+	    tmp.push( {row: i, name } )
+
+	}
+	return tmp 
+
+    } ) ;
+
+    return all_rows 
+
+}
+
 export async function sync(p : any , to_be_synced : any) {
     log(`Syncing ${JSON.stringify(to_be_synced)}`)  ;
     for (var i = 0 ; i < to_be_synced.length ; i ++  ) {
@@ -129,22 +149,28 @@ export async function deactivate_row(p : any) {
 export async function get_row_data(p : any , i : number ) {
     // -
     log(`Getting info`)
-    var t_info = await row_info(p, i) ; await asnc.wait(1000) ; 
+    var t_info = await row_info(p, i) ; await asnc.wait(1000+Math.random()*1000) ; 
     
-    log(`activating`); await activate_row(p ,i ) ; await asnc.wait(6000) ;
+    log(`activating`); await activate_row(p ,i ) ;
+    let wait_t1 = 6000 + Math.random()*4000
+    log(`random waiting for: ${wait_t1} ms`)  ; 
+    await asnc.wait(wait_t1) ;
     // - 
-    log(`review`); await go_to_review_page(p) ; await asnc.wait(2000) ;
-    log(`#`); var num_q = await get_num_questions(p)  ; await asnc.wait(1000);  log(`num_q=${num_q}`) ;
+    log(`review`); await go_to_review_page(p) ; await asnc.wait(2000 + Math.random()*2000) ;
+    log(`#`); var num_q = await get_num_questions(p)  ; await asnc.wait(1000+Math.random()*1000);  log(`num_q=${num_q}`) ;
     // - 
     var t_data  = [ ] 
     log(`0`); await select_nth_q(p,0) ; await asnc.wait(4000) ;
     for (var x=0; x< num_q ; x++) {
-	let content  = await get_main_content(p) ;
+	let content  = await p.content() ;
 	let meta     = await get_q_metadata(p)   ;
 	let data = {content, meta }
 	log(`got data for ${JSON.stringify(meta)}`) 
 	t_data.push(data) ;
-	await next(p) ; await asnc.wait(5000) ; 
+	await next(p) ;
+	let wait_t = 5000 + Math.random()*5000
+	log(`random waiting for: ${wait_t} ms`)  ; 
+	await asnc.wait(wait_t) ; 
     }
 
     log(`deactivating`) ; await deactivate_row(p) ; await asnc.wait(4000) ;   
@@ -169,6 +195,9 @@ export async function process_row(p : any , r_num :number ) {
     log(`Will save for t_num: ${t_num}`) 
     await save_row_info(t_num , r_data) 
 } 
+
+
+
 
 
 // - go to review page
@@ -223,7 +252,10 @@ function init() {
 } 
 
 export async function launch() {
-    var b = await P.get_browser({executablePath : '/usr/bin/google-chrome', args: ['--start-maximized']}) ;
+    var b = await P.get_browser({
+	executablePath : '/usr/bin/google-chrome',
+	userDataDir: "./browser-user-data", 
+	args: ['--start-maximized']}) ;
     var p = await P.new_page({}) ;  log(`Launched browser and page`)  ;
     return {p,b}
 } 

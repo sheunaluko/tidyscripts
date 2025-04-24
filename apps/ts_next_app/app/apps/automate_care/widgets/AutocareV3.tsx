@@ -32,6 +32,14 @@ import {
     Grid
 } from '../../../../src/mui';
 
+import {
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
+} from "@mui/material"
+
+
 import { theme } from "../../../theme";
 import { alpha } from '@mui/system';
 import * as tsw from "tidyscripts_web";
@@ -171,7 +179,8 @@ const Autocare = () => {
     const [showImaging, setShowImaging] = useState(true);
     const [showReasoning, setShowReasoning] = useState(true);
     const [showMiscellaneous, setShowMiscellaneous] = useState(true);
-
+    const [ai_model, set_ai_model] = useState("o4-mini");
+    
     const init_loading_states = (v : Boolean) => {
 	const initialLoadingStates = DASHBOARD_TYPES.reduce((acc, type) => ({
             ...acc,
@@ -204,7 +213,7 @@ const Autocare = () => {
     const handleGenerate = async () => {
         setLoading(true);
 	let clinical_information = note 
-        const generatedNote = await generate_hp({clinical_information, client : hp_client}) 
+        const generatedNote = await generate_hp({clinical_information, client : hp_client, model : ai_model}) 
         setNote(generatedNote);
         setLoading(false);
     };
@@ -212,7 +221,7 @@ const Autocare = () => {
     const handleQuickAnalyze = async () => {
         setLoadingAnalyze(true);
         let hp = note;
-        let info = await get_all_dashboard_info({hp, client: analyze_client});
+        let info = await get_all_dashboard_info({hp, client: analyze_client, model : ai_model});
         debug.add('dashboardInfo', info);
         var jsonInfo = (info || [{ error: "There was an error parsing the JSON" }]);
         setDashboardInfo(jsonInfo);
@@ -229,7 +238,8 @@ const Autocare = () => {
                     const result = await get_individual_dashboard_info({
                         hp: note,
                         client: analyze_client,
-                        dashboard_name: dashboardName
+                        dashboard_name: dashboardName,
+			model : ai_model 
                     });
 
 
@@ -271,19 +281,23 @@ const Autocare = () => {
 	let response_format = Handoff_Response_Format ; //defines the response structuture (see top of file)
 
 	let args = {
-	    model : 'gpt-4o-mini-2024-07-18' ,
+	    model : ai_model , 
 	    messages : [ {role : 'system' , content : 'you are an expert medical assistant'} , { role : 'user' , content : prompt } ] ,
 	    response_format
 	}
 
 	// -- query the AI with the prompt
 	// note that this wraps/mimics the structured completion endpoint 
-	const response = await handoff_client.beta.chat.completions.parse(args) 
-
-	//response should actually be the structured json content now 
+	const _response = await handoff_client.beta.chat.completions.parse(args)
 
 	log("Received handoff response!")
-	debug.add("handoff_response" , response) ;
+	debug.add("handoff_response" , _response) ;
+	
+	const response = JSON.parse(_response.choices[0].message.content) ;
+	
+	//response should actually be the structured json content now 	
+	debug.add("parsed_response" , response) ;	
+
 
 	setGeneratedHandoff(response) ; 
         setLoadingHandoff(false);
@@ -342,8 +356,43 @@ const Autocare = () => {
 		    </p>
 
 		    <p style={{marginTop: "6px" }}>
-	    		2. Analyze the H&P for insights or generate a handoff for cross-covering physicians.
+	    		2. Click Quick or Deep Analyze to get recommendations, or click Get Handoff to generate a handoff
 		    </p>
+
+		    <p style={{marginTop: "6px" }}>
+	    		3. Optionally, choose which AI model to use 
+		    </p>
+
+
+		    <p style={{marginTop: "6px" , fontSize: '10px' }}>
+			*Note* Reasoning models may be more thorough but take much longer to run, see <a href="https://platform.openai.com/docs/models" ><u>here</u></a>
+		    </p>
+		
+
+        {/* Model selector */}
+        <Box display='flex' flexDirection='row' justifyContent='left' width="100%" alignItems='center' sx={{ mt: 2 }}>
+          <FormControl size='small' sx={{ minWidth: 200 }}>
+            <InputLabel id="model-select-label">Model</InputLabel>
+            <Select
+              labelId="model-select-label"
+              value={ai_model}
+              label="Model"
+              onChange={e => set_ai_model(e.target.value as string)}
+            >
+		<MenuItem value="o4-mini">o4-mini (reasoning)</MenuItem>
+		{/* <MenuItem value="o1-mini">o1-mini [reasoning]</MenuItem> */} 
+		<MenuItem value="gpt-4.1-mini">gpt-4.1-mini</MenuItem>
+		<MenuItem value="chatgpt-4o-latest">chatgpt-4o-latest (used in chat.openai.com)</MenuItem>
+		<MenuItem value="gpt-4o">gpt-4o</MenuItem>
+		<MenuItem value="gpt-4.1">gpt-4.1</MenuItem>
+		<MenuItem value="o1">o1 (reasoning)</MenuItem>						
+
+            </Select>
+          </FormControl>
+        </Box>
+
+		<br/>
+		
 
 
                     <TextField
