@@ -1,180 +1,182 @@
-
-'use client';
+ 'use client';
 
 import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
-import { Box, Typography, Button, CircularProgress } from "../../../src/mui";
+import {
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  ExpandMoreIcon,
+} from "../../../src/mui";
 import styles from '../../../styles/Default.module.css';
 
-// You'll need to set these up in your environment variables
+// Spotify OAuth settings (set in your .env)
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI;
 
+interface Playlist {
+  id: string;
+  name: string;
+  trackCount: number;
+}
 interface SpotifyTrack {
-    name: string;
-    artists: { name: string }[];
-    album: { name: string };
+  name: string;
+  artists: { name: string }[];
+  album: { name: string };
 }
 
-const SpotifilePage: NextPage = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [likedSongs, setLikedSongs] = useState<SpotifyTrack[]>([]);
-    const [accessToken, setAccessToken] = useState<string | null>(null);
+const SpotifileV2Page: NextPage = () => {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [tracksByPlaylist, setTracksByPlaylist] = useState<Record<string, SpotifyTrack[]>>({});
+  const [loadingTracks, setLoadingTracks] = useState<Record<string, boolean>>({});
 
-    useEffect(() => {
-        // Check if we're returning from Spotify auth
-        const hash = window.location.hash;
-        if (hash) {
-            const token = hash
-                .substring(1)
-                .split('&')
-                .find(elem => elem.startsWith('access_token'))
-                ?.split('=')[1];
-            
-            if (token) {
-                setAccessToken(token);
-                window.location.hash = '';
-            }
-        }
-    }, []);
+  // Parse access token from URL hash
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const token = hash
+        .substring(1)
+        .split('&')
+        .find(elem => elem.startsWith('access_token'))
+        ?.split('=')[1];
+      if (token) {
+        setAccessToken(token);
+        window.location.hash = '';
+      }
+    }
+  }, []);
 
-    const handleLogin = () => {
-        const scope = 'user-library-read';
-        window.location.href = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scope}&response_type=token`;
-    };
+  // Fetch playlists once token is set
+  useEffect(() => {
+    if (accessToken) fetchPlaylists();
+  }, [accessToken]);
 
-    const fetchLikedSongs = async () => {
-        if (!accessToken) return;
-        
-        setIsLoading(true);
-        try {
-            let allTracks: SpotifyTrack[] = [];
-            let url = 'https://api.spotify.com/v1/me/tracks?limit=50';
-            
-            while (url) {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-                const data = await response.json();
-                allTracks = [...allTracks, ...data.items.map((item: any) => item.track)];
-                
-                // Get next page URL if it exists
-                url = data.next;
-            }
-            
-            setLikedSongs(allTracks);
-        } catch (error) {
-            console.error('Error fetching liked songs:', error);
-        }
-        setIsLoading(false);
-    };
+  const handleLogin = () => {
+    if (!CLIENT_ID) {
+      console.error('Spotify CLIENT_ID is not set. Please configure NEXT_PUBLIC_SPOTIFY_CLIENT_ID.');
+      return;
+    }
+    const scope = 'playlist-read-private playlist-read-collaborative';
+    // Use configured redirect URI or fallback to current page URL (without hash)
+    const redirectUri = REDIRECT_URI || window.location.href.split('#')[0];
+    if (!redirectUri) {
+      console.error('Redirect URI is not available. Please configure NEXT_PUBLIC_REDIRECT_URI.');
+      return;
+    }
+    const authUrl =
+      `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&response_type=token`;
+    window.location.href = authUrl;
+  };
 
-    const handleExportCSV = () => {
-        const csvContent = likedSongs
-            .map(track => `${track.name},${track.artists.map(a => a.name).join('; ')}`)
-            .join('\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'spotify-liked-songs.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+  const fetchPlaylists = async () => {
+    if (!accessToken) return;
+    setLoadingPlaylists(true);
+    try {
+      let all: Playlist[] = [];
+      let url: string | null = 'https://api.spotify.com/v1/me/playlists?limit=50';
+      while (url) {
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const data = await res.json();
+        const items = (data.items || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          trackCount: item.tracks?.total || 0,
+        }));
+        all = all.concat(items);
+        url = data.next;
+      }
+      setPlaylists(all);
+    } catch (err) {
+      console.error('Error fetching playlists:', err);
+    }
+    setLoadingPlaylists(false);
+  };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
-        if (accessToken) {
-            fetchLikedSongs();
-        }
-    }, [accessToken]);
+  const fetchPlaylistTracks = async (playlistId: string) => {
+    if (!accessToken) return;
+    if (tracksByPlaylist[playlistId]) return;
+    setLoadingTracks(prev => ({ ...prev, [playlistId]: true }));
+    try {
+      let allTracks: SpotifyTrack[] = [];
+      let url: string | null =
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
+      while (url) {
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const data = await res.json();
+        const items = (data.items || [])
+          .map((item: any) => item.track)
+          .filter((t: any) => t != null)
+          .map((track: any) => ({
+            name: track.name,
+            artists: track.artists,
+            album: track.album,
+          }));
+        allTracks = allTracks.concat(items);
+        url = data.next;
+      }
+      setTracksByPlaylist(prev => ({ ...prev, [playlistId]: allTracks }));
+    } catch (err) {
+      console.error(`Error fetching tracks for ${playlistId}:`, err);
+    }
+    setLoadingTracks(prev => ({ ...prev, [playlistId]: false }));
+  };
 
-    return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <h1 className={styles.title}>Spotifile</h1>
-                {accessToken && !isLoading && likedSongs.length > 0 && (
-                    <Button 
-                        variant="outlined" 
-                        onClick={handleExportCSV}
-                    >
-                        Export to CSV
-                    </Button>
-                )}
-            </Box>
-            
-            <p className={styles.description}>
-                View your Spotify liked songs
-            </p>
-
-            <Box sx={{ mt: 4 }}>
-                {!accessToken ? (
-                    <Button 
-                        variant="contained" 
-                        onClick={handleLogin}
-                        sx={{ mb: 3 }}
-                    >
-                        Login with Spotify
-                    </Button>
-                ) : (
-                    <Box>
-                        {isLoading ? (
-                            <CircularProgress />
-                        ) : (
-                            <Box>
-                                <Typography variant="h6" sx={{ mb: 2 }}>
-                                    Your Liked Songs ({likedSongs.length})
-                                </Typography>
-                                <Box sx={{ 
-                                    maxHeight: '60vh', 
-                                    overflowY: 'auto',
-                                    pr: 2,
-                                    '&::-webkit-scrollbar': {
-                                        width: '8px',
-                                    },
-                                    '&::-webkit-scrollbar-track': {
-                                        backgroundColor: 'rgba(0,0,0,0.1)',
-                                        borderRadius: '4px',
-                                    },
-                                    '&::-webkit-scrollbar-thumb': {
-                                        backgroundColor: 'rgba(0,0,0,0.2)',
-                                        borderRadius: '4px',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(0,0,0,0.3)',
-                                        },
-                                    },
-                                }}>
-                                    {likedSongs.map((track, index) => (
-                                        <Box 
-                                            key={index} 
-                                            sx={{ 
-                                                mb: 1, 
-                                                p: 1, 
-                                                borderRadius: 1,
-                                                '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                                            }}
-                                        >
-                                            <Typography variant="body1">
-                                                {track.name}
-                                            </Typography>
-                                            <Typography variant="body2" color="textSecondary">
-                                                {track.artists.map(a => a.name).join(', ')} • {track.album.name}
-                                            </Typography>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            </Box>
-                        )}
-                    </Box>
-                )}
-            </Box>
-        </Box>
-    );
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <h1 className={styles.title}>Spotifile V2</h1>
+      </Box>
+      <p className={styles.description}>View your Spotify playlists and their tracks</p>
+      <Box sx={{ mt: 4 }}>
+        {!accessToken ? (
+          <Button variant="contained" onClick={handleLogin}>
+            Login with Spotify
+          </Button>
+        ) : loadingPlaylists ? (
+          <CircularProgress />
+        ) : (
+          playlists.map(pl => (
+            <Accordion key={pl.id} onChange={(_, expanded) => expanded && fetchPlaylistTracks(pl.id)}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>
+                  {pl.name} ({pl.trackCount})
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {loadingTracks[pl.id] ? (
+                  <CircularProgress />
+                ) : tracksByPlaylist[pl.id] ? (
+                  <Box>
+                    {tracksByPlaylist[pl.id].map((track, idx) => (
+                      <Box key={idx} sx={{ mb: 1 }}>
+                        <Typography variant="body1">{track.name}</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {track.artists.map(a => a.name).join(', ')} • {track.album.name}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : null}
+              </AccordionDetails>
+            </Accordion>
+          ))
+        )}
+      </Box>
+    </Box>
+  );
 };
 
-export default SpotifilePage; 
+export default SpotifileV2Page;
