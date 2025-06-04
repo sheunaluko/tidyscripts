@@ -84,7 +84,7 @@ const SpotifileV2Page: NextPage = () => {
       let all: Playlist[] = [];
       let url: string | null = 'https://api.spotify.com/v1/me/playlists?limit=50';
       while (url) {
-        const res = await fetch(url, {
+        const res : any  = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         const data = await res.json();
@@ -112,7 +112,7 @@ const SpotifileV2Page: NextPage = () => {
       let url: string | null =
         `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
       while (url) {
-        const res = await fetch(url, {
+        const res : any = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         const data = await res.json();

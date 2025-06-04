@@ -34,7 +34,7 @@ const AllLinks = () => {
   return (
       <Box sx={{ width : "100%", height : "100%" , display : "flex", flexDirection : "column", alignItems: "center", justifyContent : "center" }} >
 
-	  <MLink href="/laboratory/3dcam">
+	  <MLink href="/laboratory/3dcam_v2">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">3D-CAM Tool</Typography>
 		  <p>

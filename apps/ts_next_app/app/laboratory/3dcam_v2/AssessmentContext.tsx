@@ -122,7 +122,10 @@ const resetAssessment = () => {
       }
     }
 
+      console.log("Responses")
+      console.log(responses)       
       return nextIndex
+
 
   };
 
@@ -132,6 +135,28 @@ const resetAssessment = () => {
 
   };
 
+
+    const haveProcessedFeature4 = useMemo( () => {
+	const f4 = responses[4]
+	if (! f4 ) { return false }
+
+	let {feature4_obs1 , feature4_obs2  } = f4 ;
+
+	if ( feature4_obs1 == 'pass' && feature4_obs2 == 'pass' ) {
+	    console.log("Feature 4 processed based on both passing") 
+	    return true 
+	}
+
+	if ( feature4_obs1 == 'fail' || feature4_obs2 == 'fail' ) {
+	    console.log("Feature 4 processed based on one failing") 	    
+	    return true 
+	}
+
+	return false 
+	
+    }, [responses] )
+
+    
   const deliriumPresent = useMemo(() => {
     let CAM =  (
       features["1"] &&
@@ -141,20 +166,36 @@ const resetAssessment = () => {
 
       let Override = features["Override"]
 
-      let val = ( CAM || Override )
-      if (val) { console.log( `delirium positive -> CAM=${CAM}, Override=${Override}`) } 
+      if (Override) {
+	  console.log("Override positive")
+	  return true 
+      } 
+
+      let val = ( CAM && haveProcessedFeature4 ) 
+      if (val) { console.log( `delirium positive -> CAM=${CAM}, F4=${haveProcessedFeature4}`) } 
       return val
 
       
   }, [features]);
 
+  const overridePresent = useMemo(() => {
+
+      let Override = features["Override"]
+
+      return Override 
+      
+  }, [features]);
+
+    
   return (
     <AssessmentContext.Provider
       value={{
         currentItem: ITEMS[index],
         answer,
-        features,
-        deliriumPresent,
+          features,
+	  haveProcessedFeature4, 	  
+          deliriumPresent,
+	  overridePresent, 
           responses,
 	  patientId,
 	  setPatientId ,
