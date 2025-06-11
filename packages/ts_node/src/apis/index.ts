@@ -1,4 +1,5 @@
 import * as firestore from "@google-cloud/firestore"
+import * as spotdl from "./spotdl"
 import * as bokeh from "./bokeh"
 import * as binanceus from "./binanceus"
 import * as coinbase from "./coinbase"
@@ -23,5 +24,6 @@ export {
   pubmed,
   bokeh,
   openai,
-  langchain
+  langchain,
+  spotdl 
 } 
