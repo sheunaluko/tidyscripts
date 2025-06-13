@@ -28,6 +28,25 @@ const {embedding1024, prompt} = ailand ;
 
    We need an ontology schema however 
 
+
+   Todo => 
+   - use entity extractor first to review what entities are being discussed  (use higher quality model) 
+   - for each entity calculate its emedding and add it to the vector store with the payload: 
+     { kind: 'entity' , category : '---' , id : '----' }  
+      - if an existing entity (with same exact id) is there, then do not add it 
+
+   - What if relations are stored in the database like this 
+      { kind: 'relation' , name : 'association' , source : eid , target : eid } 
+
+      where eid is Embedding({source/target}.id) 
+
+   Then when you ask, what is associated with RA, the system does a query for the 
+   relation association, filters for source/target to be RA (or an entity e where Embedding(e) is close to Embedding(RA ) 
+
+   
+      
+
+
  */
 
 
