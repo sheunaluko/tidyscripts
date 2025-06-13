@@ -8,11 +8,13 @@ import * as oai from "./oai"
 import * as amie from "./amie/index"
 import * as tnlp from "./tnlp"
 import * as cryptography from "./cryptography"
+import * as ailand from "./ailand"
 
 import OpenAI from "openai" 
 
 
 export {
+    ailand, 
     aidx,
     loinc,
     medications,
