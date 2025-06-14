@@ -9,8 +9,6 @@ const {debug}  = common.util;
 
 export async function check_for_eid(eid : string, client : any ) {
 
-    /* need to search for eid match */
-
     /*
        Need to filter by payload only 
 
@@ -27,6 +25,27 @@ export async function check_for_eid(eid : string, client : any ) {
     }
     
 }
+
+export async function check_for_rid(rid : string, client : any ) {
+
+    /*
+       Need to filter by payload only 
+
+     */
+
+    let res  = await client.query("tom", {  filter : { must : [ { key : 'rid' , match  :  { value : rid }}]}});
+    debug.add("check_for_rid_res", res) ;
+    if (res && res.points && (res.points.length > 0 ) )  {
+	log(`Found rid match for ${rid}`)
+	return true 
+    } else {
+	log(`Missing rid match for ${rid}`)	
+	return false 
+    }
+    
+}
+
+
 
 export function eid_to_uuid(eid : string) {
     return common.apis.cryptography.uuid_from_text(eid) ; 
@@ -59,7 +78,6 @@ export async function add_embeddings( e : Entity ) : Promise<EntityWithEmbedding
     return result
 } 
 
-
 export async function entity_exists(e : Entity, client : any) {
     let {eid} = e ;
     let eid_present = await check_for_eid(eid, client) ;
@@ -72,4 +90,8 @@ export async function entity_exists(e : Entity, client : any) {
 	log("no entity match found")
 	return false 
     }
+}
+
+export {
+    embedding1024 
 }

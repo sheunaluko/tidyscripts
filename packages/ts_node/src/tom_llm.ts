@@ -4,17 +4,23 @@ const {embedding1024, structured_prompt} = ailand ;
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 
-const {debug}  = common.util; 
+const {debug}  = common.util;
+
+const log = common.logger.get_logger({id : 'tlm'}); 
 
 /* 
  *  LLM UTILS 
  */
 
+const  lower_case_string = z.string().transform( (str:string)  => str.toLowerCase()) ;
+
+
+
 export async function extract_entities(text : string, tier : string) {
 
     let categories = z.enum(["condition", "symptom" , "medication", "procedure", "imaging", "lab test", "diagnostic test", "organ", "organ system", "clinical finding"]) ;
 
-    let lower_case_string = z.string().transform( (str:string)  => str.toLowerCase()) ; 
+
 
     let entity_rf = zodTextFormat(
 	z.object({
@@ -41,6 +47,72 @@ ${text}
     debug.add('entity_result' , result) 
     return result.entities 
 }     
+
+
+
+
+
+
+export async function extract_relations(text : string, entities : any , tier : string) {
+
+
+    log(`fn::extract_relations`) ;
+
+    log(`building output format`)
+    let relations_rf = zodTextFormat(
+	z.object({
+	    'relations' : z.array(z.object( { name : lower_case_string,
+					      source : lower_case_string,
+					      target : lower_case_string } ))
+	})  , 
+	'relations'
+    )
+
+    log(`rendering entities as text`)
+    let rendered_entities = entities.map( (e:any)=> JSON.stringify(e) ).join("\n\n")
+    
+	
+    let prompt = `
+You are provided with input text and a list of entities within this text. Your job is to understand and extract the relationships between the entities, as described by the input text.
+
+You will provide your output in the form of a relation object, which has the following fields:
+name: the name of the relationsip, such as "causes" or "associated with" or "prevents"
+source: the source entity of the relation
+source: the target entity of the relation
+
+Make sure source and target use the exact format as provided in the entities object shown below. 
+
+Focus only on the following entities:
+
+ENTITIES OF INTEREST:
+---
+${rendered_entities}
+---
+
+Here is the input text:
+
+INPUT:
+---
+${text}
+---`
+    
+    debug.add('relation_prompt' , prompt)     
+    let result = await structured_prompt(prompt, relations_rf, (tier || 'top' ) ) as any 
+    debug.add('relation_result' , result) 
+    return result.relations
+}     
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
