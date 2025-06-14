@@ -56,11 +56,13 @@ const {debug} = common.util ;
    - add a provenance field into the relation payload
 
    Optimizations:
-   - Promise.all( ... ) 
+   - [x] Promise.all( ... ) 
 
  */
 
-
+export async function ingest_text( text: string){
+    return await extract_and_store_entities_and_relations(text) ; 
+}
 
 export async function extract_and_store_entities_from_text( text : string) {
     log(`fn:extract/store/entities/text\nextracting entities...`) 

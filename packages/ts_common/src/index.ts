@@ -7,7 +7,9 @@ import * as asnc from "./async"
 import * as apis from "./apis"
 import * as midi_encoder from "./midi_encoder"
 import * as dates from "./dates"
-import * as external from "./external" 
+import * as external from "./external"
+
+export * as tes from "./tes"
 
 const log = logger.get_logger({ id: "common" });
 

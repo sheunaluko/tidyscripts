@@ -14,13 +14,9 @@ const log = common.logger.get_logger({id : 'tlm'});
 
 const  lower_case_string = z.string().transform( (str:string)  => str.toLowerCase()) ;
 
-
-
 export async function extract_entities(text : string, tier : string) {
 
     let categories = z.enum(["condition", "symptom" , "medication", "procedure", "imaging", "lab test", "diagnostic test", "organ", "organ system", "clinical finding"]) ;
-
-
 
     let entity_rf = zodTextFormat(
 	z.object({
