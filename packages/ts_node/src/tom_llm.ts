@@ -12,17 +12,19 @@ const {debug}  = common.util;
 
 export async function extract_entities(text : string, tier : string) {
 
-    let categories = z.enum(["condition", "symptom" , "medication", "procedure", "imaging", "lab test", "diagnostic test", "organ", "organ system", "clinical finding"]) ; 
+    let categories = z.enum(["condition", "symptom" , "medication", "procedure", "imaging", "lab test", "diagnostic test", "organ", "organ system", "clinical finding"]) ;
+
+    let lower_case_string = z.string().transform( (str:string)  => str.toLowerCase()) ; 
 
     let entity_rf = zodTextFormat(
 	z.object({
-	    'entities' : z.array(z.object( { entity : z.string(), category : categories, importance : z.number() } ))
+	    'entities' : z.array(z.object( { eid : lower_case_string, category : categories, importance : z.number() } ))
 	}), 
 	'entities'
     )
 	
     let prompt = `
-Please extract all entities from the input and categorize them by the correct category. Include an importance score that is 0-1 and scores how relevant / important an entity is to the text as a whole
+Please extract all entities from the input and categorize them by the correct category. The entity id (or eid) is the the field that stores the name of the entity. Include an importance score that is 0-1 and scores how relevant / important an entity is to the text as a whole
 
 The allowed categories include: condition, symptom , medication, procedure, imaging, lab test, diagnostic test, organ, organ system, clinical finding
 
@@ -35,9 +37,9 @@ ${text}
 `
 
     debug.add('entity_prompt' , prompt)     
-    let result = await structured_prompt(prompt, entity_rf, (tier || 'top' ) )
+    let result = await structured_prompt(prompt, entity_rf, (tier || 'top' ) ) as any 
     debug.add('entity_result' , result) 
-    return result
+    return result.entities 
 }     
 
 

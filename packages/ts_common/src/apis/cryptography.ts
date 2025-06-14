@@ -42,4 +42,27 @@ export async function object_sha256(o : object ): Promise<string> {
 
 
 
+/**
+ * Generates a UUID v5-like identifier by hashing text with SHA-256.
+ * @param text The input text.
+ * @returns A UUID string.
+ */
+export async function uuid_from_text(text: string): Promise<string> {
 
+  // -- 
+  const hashHex = await sha256(text);
+
+  // Use first 32 hex characters (128 bits) for UUID
+  const hex = hashHex.slice(0, 32);
+
+  // Format into UUID: 8-4-4-4-12
+  const uuid = [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20, 32)
+  ].join('-');
+
+  return uuid;
+}

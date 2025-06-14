@@ -9,12 +9,13 @@
 
 
 import {QdrantClient} from '@qdrant/js-client-rest';
-import * as common from "tidyscripts_common"
-import * as llm from './tom_llm' 
-
+import * as common from "tidyscripts_common" ;
+import * as llm from './tom_llm' ; 
+import * as tu from "./tom_util"  ;  
 
 const {ailand} = common.apis ;
-const {embedding1024, prompt} = ailand ; 
+const {embedding1024, prompt} = ailand ;
+const {debug} = common.util ; 
 
 /*
    TOM 
@@ -30,10 +31,10 @@ const {embedding1024, prompt} = ailand ;
 
 
    Todo => 
-   - use entity extractor first to review what entities are being discussed  (use higher quality model) 
-   - for each entity calculate its emedding and add it to the vector store with the payload: 
+   - [x] use entity extractor first to review what entities are being discussed  (use higher quality model) 
+   - [x] for each entity calculate its emedding and add it to the vector store with the payload: 
      { kind: 'entity' , category : '---' , id : '----' }  
-      - if an existing entity (with same exact id) is there, then do not add it 
+      - [x]  if an existing entity (with same exact id) is there, then do not add it 
 
    - What if relations are stored in the database like this 
       { kind: 'relation' , name : 'association' , source : eid , target : eid } 
@@ -43,12 +44,132 @@ const {embedding1024, prompt} = ailand ;
    Then when you ask, what is associated with RA, the system does a query for the 
    relation association, filters for source/target to be RA (or an entity e where Embedding(e) is close to Embedding(RA ) 
 
-   
-      
 
+   STATUS -> right now the error is in writing the entity to the DB, because it needs an ID
+
+   Todo: import uuid library and use that as an id 
 
  */
 
+
+
+export async function extract_and_store_entities_from_text( text : string) {
+    log(`fn:extract/store/entities/text\nextracting entities...`) 
+    let entities = await llm.extract_entities(text, "top") as any;
+    debug.add('entities', entities) ;
+
+    log(`Processing...`) 
+    for (var i =0 ;i < entities.length ; i ++) {
+	await process_entity( entities[i] )  
+    }
+    
+    
+}
+
+interface Relation {
+    kind : "Relation" ,
+    name : string,     
+    source_eid :  string,
+    dest_eid :  string ,
+
+}
+
+interface RelationWithID extends Relation {
+    rid : string,
+}
+
+
+export async function add_relation_id( r: Relation ) {
+    //first we check if the relation already exists in the database
+    //a relation id uniquely specifies a relation by concatenating the name_source_eid_dest_eid
+    let { name, source_eid, dest_eid }  = r ; 
+    let rid = `${name}:: (${source_eid}) -> (${dest_eid})`
+    return {
+	...r ,rid 
+    }
+} 
+
+export async function add_relation_to_db(r : Relation) {
+    
+    let relation_with_id = await add_relation_id(r) ;
+    let {name, source_eid, dest_eid , rid } = relation_with_id ;
+
+    //check the database (tom collection) for an object with rid field equal to this one
+
+    //if it is found then log we are skipping
+
+    //if it is not found then we calculate the embedding of the name field and
+    //create a data point , log the point, before adding to qdrant db
+    
+    
+
+}
+
+export async function test_extraction() {
+    let text = llm.example_texts[0] ;
+    return extract_and_store_entities_from_text(text) ; 
+}
+
+
+export async function process_entity( e : tu.Entity ) {
+    log(`fn:process_entity`)
+    console.log(e) 
+
+    log('getting client') 
+    const client = await get_client()
+
+    //ensure the tom collection exists
+    await init_tom_collection() ; 
+
+    
+    //parse the entity
+    var { eid, category } = e ;
+    
+    //first check if it exists in the DB
+    log(`Checking existence for eid=${eid}, category=${category}`) ; 
+    let exists = await tu.entity_exists(e , client ) ;
+    log(`exists=${exists}`) ;
+
+    if (exists) {
+	log(`Entity ${eid} already exists and will be skipped`) ; 
+    } else {
+	log(`Entity ${eid} DOES NOT exist`) ; 	
+	log(`Calculating embeddings...`) ;
+	let with_embeddings = await tu.add_embeddings(e) ;
+	let  {
+	    category , eid_vector, category_vector 
+	} = with_embeddings ;
+
+	//put the entity into the database
+	log(`Writing entity to db`)
+
+	const pt = {
+	    //what if i make the id the hash of the eid? 
+	    id : await tu.eid_to_uuid(eid) ,  // had a bug here because of omiting await :( 
+	    vector : {
+		eid : eid_vector ,
+		category : category_vector 
+	    } , 
+	    payload : {
+		eid : with_embeddings.eid,			
+		category ,
+	    } 
+	}
+ 
+	log(`The following pt will be uploaded`) ;
+	console.log(pt) 
+	
+	await client.upsert('tom' , {
+	    wait : true ,
+	    points : [
+		pt 
+	    ]
+	});
+
+	log(`Done`) 
+
+    }
+}
 
 
 
@@ -87,13 +208,15 @@ export function get_client() {
 	log(`Initializing client with url: ${database_url}`) ;
 	let c = new QdrantClient({url: database_url  });
 	client = c ;
-	client_initialized = true ; 
+
+	log(`Finished initializing client`) 
+	client_initialized = true ;
 	return c ; 
     }
 }
 
 export async function get_collections() {
-    return (await (get_client()).getCollections()).collections 
+    return (await ( get_client()).getCollections()).collections 
 }
 
 
@@ -111,7 +234,11 @@ export async function init_tom_collection() {
 	log(`T O M .  collection does not exist, need to initialize`) ;
 	let c = get_client() ;
 	let r = await c.createCollection( 'tom' , {
-	    vectors : {size : 1024 , distance : 'Cosine' } 
+	    vectors : {
+	
+		eid : { size : 1024 , distance : 'Dot'}  ,
+		category : { size : 1024 , distance : 'Dot'}  ,
+	    } 
 	})
 	log(`result`) 
 	console.log(r)

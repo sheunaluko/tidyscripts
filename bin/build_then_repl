@@ -1,0 +1,1 @@
+./bin/build_common ; ./bin/build_node ; ./bin/repl
