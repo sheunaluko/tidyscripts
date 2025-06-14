@@ -53,7 +53,10 @@ const {debug} = common.util ;
    2) build educational pipelines for teaching TOM (ingesting the data and converting to db entries)
 
    Extensions:
-   - add a provenance field into the relation payload 
+   - add a provenance field into the relation payload
+
+   Optimizations:
+   - Promise.all( ... ) 
 
  */
 
@@ -75,19 +78,18 @@ export async function extract_and_store_entities_and_relations( text : string) {
     let entities = await llm.extract_entities(text, "top") as any;
     debug.add('entities', entities) ;
 
-    log(`Processing entities...`) 
-    for (var i =0 ;i < entities.length ; i ++) {
-	await process_entity( entities[i] )  
-    }
+    log(`\n\n ---> Processing entities asynchronously...`)
+    await Promise.all( entities.map( process_entity ) )
+    log(`\n\n ---> DONE processing entities asynchronously...`)
+    
 
     log(`Done processing entities, now proceeding to relations`);
     let relations = await llm.extract_relations(text, entities, 'top');
     debug.add('relations', relations ) ;      
 
-    log(`Processing relations...`) 
-    for (var i =0 ;i < relations.length ; i ++) {
-	await process_relation( relations[i] )  
-    }    
+    log(`\n\n ---> Processing Relations asynchronously...`)
+    await Promise.all( relations.map( process_relation ) )
+    log(`\n\n ---> DONE processing Relations asynchronously...`)
 
     log(`Done`) 
 }
