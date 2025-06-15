@@ -60,8 +60,75 @@ const {debug} = common.util ;
 
  */
 
-export async function ingest_text( text: string){
-    return await extract_and_store_entities_and_relations(text) ; 
+export async function ingest_text(text: string) {
+  return await extract_and_store_entities_and_relations(text);
+}
+
+/**
+ * Like ingest_text but returns which entities and relations were actually added (did not exist already).
+ */
+export async function ingest_text_with_summary(
+  text: string
+): Promise<{ added_entities: tu.Entity[]; added_relations: RelationWithID[] }> {
+  const client = await get_client();
+  await init_tom_collection();
+
+  const entities = (await llm.extract_entities(text, 'top')) as tu.Entity[];
+  debug.add('entities', entities);
+
+  const added_entities: tu.Entity[] = [];
+  for (const e of entities) {
+    const exists = await tu.entity_exists(e, client);
+    if (!exists) {
+      await process_entity(e);
+      added_entities.push(e);
+    }
+  }
+
+  const relationsRaw = await llm.extract_relations(text, entities, 'top');
+  debug.add('relations', relationsRaw);
+
+  const added_relations: RelationWithID[] = [];
+  for (const r of relationsRaw) {
+    const relObj = add_relation_id({
+      name: r.name,
+      source_eid: r.source,
+      dest_eid: r.target,
+      kind: 'Relation',
+    });
+    const existsRel = await tu.check_for_rid(relObj.rid, client);
+    if (!existsRel) {
+      await process_relation(r);
+      added_relations.push(relObj);
+    }
+  }
+
+  const timestamp = new Date().toISOString();
+  const entityConcat = added_entities.map((e) => e.eid).join(' ');
+  const relationConcat = added_relations.map((r) => r.rid).join(' ');
+  const primaryVec = await embedding1024(entityConcat);
+  const secondaryVec = await embedding1024(relationConcat);
+  const updateId = await tu.uuid_from_sha256(text);
+  
+  const payload = {
+    kind: 'knowledge_update',
+    text,
+    entity_eids: added_entities.map((e) => e.eid),
+    relation_rids: added_relations.map((r) => r.rid),
+    timestamp,
+  };
+  await client.upsert('tom', {
+    wait: true,
+    points: [
+      {
+        id: updateId,
+        vector: { primary: primaryVec, secondary: secondaryVec },
+        payload,
+      },
+    ],
+  });
+
+  return { added_entities, added_relations, db_update : {...payload, id : updateId}   };
 }
 
 export async function extract_and_store_entities_from_text( text : string) {

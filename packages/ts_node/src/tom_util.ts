@@ -51,6 +51,10 @@ export function eid_to_uuid(eid : string) {
     return common.apis.cryptography.uuid_from_text(eid) ; 
 }
 
+export function uuid_from_sha256(t : string) {
+    return common.apis.cryptography.uuid_from_text(t) 
+}
+
 export interface Entity  {
     kind : 'entity',
     category : string , 
