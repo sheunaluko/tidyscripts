@@ -45,12 +45,17 @@ const {debug} = common.util ;
    relation association, filters for source/target to be RA (or an entity e where Embedding(e) is close to Embedding(RA ) 
 
 
-   STATUS -> I have implemented the ability to parse unstructured text into entities and relations,
-   and to load those (along with embeddings) into the qdrant db
+   STATUS -> 
+
+   I have implemented the ability to parse unstructured text into entities and relations,
+   and to load those (along with embeddings) into the qdrant db 
+
+   I have also impplemented ability to call remotely via TES, and to get summary of db insertions (as well as db_update object which tracks learning)  
+
 
    Todo:
    1) start building some kind of interface over TOM , for querying, monitoring, etc.
-   2) build educational pipelines for teaching TOM (ingesting the data and converting to db entries)
+   2) [~] build educational pipelines for teaching TOM (ingesting the data and converting to db entries)
 
    Extensions:
    - add a provenance field into the relation payload
@@ -69,54 +74,94 @@ export async function ingest_text(text: string) {
  */
 export async function ingest_text_with_summary(
   text: string
-): Promise<{ added_entities: tu.Entity[]; added_relations: RelationWithID[] }> {
+): Promise<{
+  added_entities: tu.Entity[];
+  added_relations: RelationWithID[];
+  db_update: {
+    kind: string;
+    text: string;
+    entity_eids: string[];
+    relation_rids: string[];
+    timestamp: string;
+    id: string;
+  };
+}> {
+  log(`fn:ingest_text_with_summary`);
   const client = await get_client();
   await init_tom_collection();
 
+  log(`Extracting entities...`);
   const entities = (await llm.extract_entities(text, 'top')) as tu.Entity[];
   debug.add('entities', entities);
+  log(`Found ${entities.length} entities`);
 
-  const added_entities: tu.Entity[] = [];
-  for (const e of entities) {
-    const exists = await tu.entity_exists(e, client);
-    if (!exists) {
-      await process_entity(e);
-      added_entities.push(e);
-    }
-  }
+  log(`Processing entities asynchronously...`);
+  const added_entities = (
+    await Promise.all(
+      entities.map(async (e) => {
+        log(`Checking existence for entity eid=${e.eid}, category=${e.category}`);
+        const exists = await tu.entity_exists(e, client);
+        log(`Entity ${e.eid} exists=${exists}`);
+        if (!exists) {
+          log(`Adding new entity ${e.eid}`);
+          await process_entity(e);
+          return e;
+        }
+        log(`Skipping existing entity ${e.eid}`);
+        return null;
+      })
+    )
+  ).filter((e): e is tu.Entity => e !== null);
+  log(`Added ${added_entities.length} new entities`);
 
+  log(`Extracting relations...`);
   const relationsRaw = await llm.extract_relations(text, entities, 'top');
   debug.add('relations', relationsRaw);
+  log(`Found ${relationsRaw.length} relations`);
 
-  const added_relations: RelationWithID[] = [];
-  for (const r of relationsRaw) {
-    const relObj = add_relation_id({
-      name: r.name,
-      source_eid: r.source,
-      dest_eid: r.target,
-      kind: 'Relation',
-    });
-    const existsRel = await tu.check_for_rid(relObj.rid, client);
-    if (!existsRel) {
-      await process_relation(r);
-      added_relations.push(relObj);
-    }
-  }
+  log(`Processing relations asynchronously...`);
+  const added_relations = (
+    await Promise.all(
+      relationsRaw.map(async (r :any) => {
+        const relObj = add_relation_id({
+          name: r.name,
+          source_eid: r.source,
+          dest_eid: r.target,
+          kind: 'Relation',
+        });
+        log(`Checking existence for relation rid=${relObj.rid}`);
+        const existsRel = await tu.check_for_rid(relObj.rid, client);
+        log(`Relation ${relObj.rid} exists=${existsRel}`);
+        if (!existsRel) {
+          log(`Adding new relation ${relObj.rid}`);
+          await process_relation(r);
+          return relObj;
+        }
+        log(`Skipping existing relation ${relObj.rid}`);
+        return null;
+      })
+    )
+  ).filter((r): r is RelationWithID => r !== null);
+  log(`Added ${added_relations.length} new relations`);
 
   const timestamp = new Date().toISOString();
   const entityConcat = added_entities.map((e) => e.eid).join(' ');
   const relationConcat = added_relations.map((r) => r.rid).join(' ');
+  log(
+    `Computing embeddings for update: entities='${entityConcat}', relations='${relationConcat}'`
+  );
   const primaryVec = await embedding1024(entityConcat);
   const secondaryVec = await embedding1024(relationConcat);
   const updateId = await tu.uuid_from_sha256(text);
-  
+
   const payload = {
     kind: 'knowledge_update',
     text,
-    entity_eids: added_entities.map((e) => e.eid),
-    relation_rids: added_relations.map((r) => r.rid),
+    entity_eids: added_entities.map((e :any) => e.eid),
+    relation_rids: added_relations.map((r : any)  => r.rid),
     timestamp,
   };
+  log(`Upserting knowledge_update with id=${updateId}`);
   await client.upsert('tom', {
     wait: true,
     points: [
@@ -127,8 +172,10 @@ export async function ingest_text_with_summary(
       },
     ],
   });
-
-  return { added_entities, added_relations, db_update : {...payload, id : updateId}   };
+  log(
+    `Finished ingest_text_with_summary: added ${added_entities.length} entities, ${added_relations.length} relations, update id=${updateId}`
+  );
+  return { added_entities, added_relations, db_update: { ...payload, id: updateId } };
 }
 
 export async function extract_and_store_entities_from_text( text : string) {
