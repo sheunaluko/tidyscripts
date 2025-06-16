@@ -27,22 +27,15 @@ const {debug} = common.util ;
    Above we have a vector database reference, AI query capability, and Embedding capability 
    We can combine all this to create a powerful system. 
 
-   We need an ontology schema however 
 
-
-   Todo => 
+   Done => 
    - [x] use entity extractor first to review what entities are being discussed  (use higher quality model) 
    - [x] for each entity calculate its emedding and add it to the vector store with the payload: 
      { kind: 'entity' , category : '---' , id : '----' }  
       - [x]  if an existing entity (with same exact id) is there, then do not add it 
 
-   - What if relations are stored in the database like this 
+   - [x] What if relations are stored in the database like this 
       { kind: 'relation' , name : 'association' , source : eid , target : eid } 
-
-      where eid is Embedding({source/target}.id) 
-
-   Then when you ask, what is associated with RA, the system does a query for the 
-   relation association, filters for source/target to be RA (or an entity e where Embedding(e) is close to Embedding(RA ) 
 
 
    STATUS -> 
@@ -59,6 +52,10 @@ const {debug} = common.util ;
 
    Extensions:
    - add a provenance field into the relation payload
+
+   Thoughts: 
+   Time information can be built using DB primitives (entity of 1982,  then have a relation which references a  temporal relation and connects it with a time entity) 
+   Same concept can be used for source attributions :) 
 
    Optimizations:
    - [x] Promise.all( ... ) 
