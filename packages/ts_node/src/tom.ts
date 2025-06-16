@@ -10,7 +10,8 @@
 
 import {QdrantClient} from '@qdrant/js-client-rest';
 import * as common from "tidyscripts_common" ;
-import * as llm from './tom_llm' ; 
+import * as llm from './tom_llm' ;
+export * as queries from './tom_queries' ; 
 import * as tu from "./tom_util"  ;  
 
 const {ailand} = common.apis ;
