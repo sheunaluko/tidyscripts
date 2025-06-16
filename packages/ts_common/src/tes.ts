@@ -40,3 +40,33 @@ export async function local_tes_call(call: CallData): Promise<any> {
 
     return result;
 }
+/**
+ * Build a dynamic proxy that forwards property accesses and calls
+ * to the local TES server via local_tes_call().
+ */
+function makeRemote(path: string[] = []): any {
+    const proxyTarget = () => { /* no-op */ };
+    return new Proxy(proxyTarget, {
+        get(_target, prop: string | symbol) {
+            // Avoid treating root proxy as a Promise
+            if (prop === 'then' && path.length === 0) {
+                return undefined;
+            }
+            // Forward symbol-keyed properties to the target
+            if (typeof prop === 'symbol') {
+                return Reflect.get(proxyTarget, prop);
+            }
+            // Recurse into nested path
+            return makeRemote(path.concat(prop.toString()));
+        },
+        apply(_target, _thisArg, args: any[]) {
+            // Finally invoke the remote call
+            return local_tes_call({ fn_path: path, fn_args: args });
+        }
+    });
+}
+
+/**
+ * Root proxy exposing all TES-callable functions under .common, .node, etc.
+ */
+export const remote = makeRemote();
