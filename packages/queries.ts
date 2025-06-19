@@ -28,8 +28,14 @@ export interface Relation {
   };
 }
 
-// Default client connects to localhost:6333
-const client = new QdrantClient();
+// Lazy-initialized, cached Qdrant client
+let clientInstance: QdrantClient | undefined;
+function getClient(): QdrantClient {
+  if (!clientInstance) {
+    clientInstance = new QdrantClient();
+  }
+  return clientInstance;
+}
 const COLLECTION = 'tom';
 
 /**
@@ -39,7 +45,7 @@ async function scrollAll(collectionName: string, filter: any, withPayload = true
   const all: any[] = [];
   let offset: string | number | undefined;
   do {
-    const res = await client.scroll(collectionName, {
+    const res = await getClient().scroll(collectionName, {
       filter,
       limit: 100,
       offset,
@@ -86,7 +92,7 @@ export async function getEntitiesByCategory(category: string): Promise<Entity[]>
  */
 export async function findNearestEntitiesByEntity(eid: string, limit = 5): Promise<Entity[]> {
   // Retrieve the source entity to obtain its primary vector
-  const [record] = await client.retrieve(COLLECTION, {
+  const [record] = await getClient().retrieve(COLLECTION, {
     ids: [eid],
     with_payload: false,
     with_vector: true,
@@ -95,7 +101,7 @@ export async function findNearestEntitiesByEntity(eid: string, limit = 5): Promi
   const vecField = record.vector as any;
   const primaryVec: number[] = Array.isArray(vecField) ? vecField : vecField.primary;
   // Search for nearest entities (excluding itself)
-  const results = await client.search(COLLECTION, {
+  const results = await getClient().search(COLLECTION, {
     vector: { name: 'primary', vector: primaryVec },
     filter: {
       must: { key: 'kind', match: { value: 'entity' } },
@@ -133,7 +139,7 @@ export async function findConnectedEntities(sourceEid: string, relationName: str
   });
   const destIds = rels.map(r => (r.payload as Relation).dest_eid);
   if (destIds.length === 0) return [];
-  const recs = await client.retrieve(COLLECTION, { ids: destIds, with_payload: true });
+  const recs = await getClient().retrieve(COLLECTION, { ids: destIds, with_payload: true });
   return recs.map(r => r.payload as Entity);
 }
 
@@ -141,7 +147,7 @@ export async function findConnectedEntities(sourceEid: string, relationName: str
  * Perform semantic search on entities using secondary (category) vector.
  */
 export async function semanticSearchEntities(queryVec: number[], limit = 5): Promise<Entity[]> {
-  const results = await client.search(COLLECTION, {
+  const results = await getClient().search(COLLECTION, {
     vector: { name: 'secondary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'entity' } } },
     limit,
@@ -155,7 +161,7 @@ export async function semanticSearchEntities(queryVec: number[], limit = 5): Pro
  */
 export async function semanticSearchRelations(queryVec: number[], limit = 5): Promise<Relation[]> {
   // Default uses primary (name) vector for relation semantic search
-  const results = await client.search(COLLECTION, {
+  const results = await getClient().search(COLLECTION, {
     vector: { name: 'primary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'relation' } } },
     limit,
@@ -168,7 +174,7 @@ export async function semanticSearchRelations(queryVec: number[], limit = 5): Pr
  * Semantic search on entities using the primary (eid) vector.
  */
 export async function semanticSearchEntitiesByPrimary(queryVec: number[], limit = 5): Promise<Entity[]> {
-  const results = await client.search(COLLECTION, {
+  const results = await getClient().search(COLLECTION, {
     vector: { name: 'primary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'entity' } } },
     limit,
@@ -195,7 +201,7 @@ export async function semanticSearchRelationsByPrimary(queryVec: number[], limit
  * Semantic search on relations using the secondary (rid) vector.
  */
 export async function semanticSearchRelationsBySecondary(queryVec: number[], limit = 5): Promise<Relation[]> {
-  const results = await client.search(COLLECTION, {
+  const results = await getClient().search(COLLECTION, {
     vector: { name: 'secondary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'relation' } } },
     limit,

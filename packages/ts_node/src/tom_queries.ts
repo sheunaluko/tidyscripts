@@ -1,4 +1,4 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
+import { get_client } from './tom';
 
 /**
  * Entity stored in the 'tom' collection.
@@ -28,8 +28,6 @@ export interface Relation {
   };
 }
 
-// Default client connects to localhost:6333
-const client = new QdrantClient();
 const COLLECTION = 'tom';
 
 /**
@@ -39,7 +37,7 @@ async function scrollAll(collectionName: string, filter: any, withPayload = true
   const all: any[] = [];
   let offset: string | number | undefined;
   do {
-    const res = await client.scroll(collectionName, {
+    const res = await get_client().scroll(collectionName, {
       filter,
       limit: 100,
       offset,
@@ -57,7 +55,7 @@ async function scrollAll(collectionName: string, filter: any, withPayload = true
  */
 export async function getAllEntities() {
   const records = await scrollAll(COLLECTION, { must: { key: 'kind', match: { value: 'entity' } } });
-  return records.map(r => r.payload);
+  return records.map( (r:any) =>  r.payload);
 }
 
 /**
@@ -65,7 +63,7 @@ export async function getAllEntities() {
  */
 export async function getAllRelations() {
   const records = await scrollAll(COLLECTION, { must: { key: 'kind', match: { value: 'relation' } } });
-  return records.map(r => r.payload ); 
+  return records.map( (r:any) =>  r.payload ); 
 }
 
 /**
@@ -78,7 +76,7 @@ export async function getEntitiesByCategory(category: string)  {
       { key: 'category', match: { value: category } },
     ],
   });
-  return records.map(r => r.payload );
+  return records.map( (r:any) =>  r.payload );
 }
 
 /**
@@ -86,7 +84,7 @@ export async function getEntitiesByCategory(category: string)  {
  */
 export async function findNearestEntitiesByEntity(eid: string, limit = 5)  {
   // Retrieve the source entity to obtain its primary vector
-  const [record] = await client.retrieve(COLLECTION, {
+  const [record] = await get_client().retrieve(COLLECTION, {
     ids: [eid],
     with_payload: false,
     with_vector: true,
@@ -95,7 +93,7 @@ export async function findNearestEntitiesByEntity(eid: string, limit = 5)  {
   const vecField = record.vector as any;
   const primaryVec: number[] = Array.isArray(vecField) ? vecField : vecField.primary;
   // Search for nearest entities (excluding itself)
-  const results = await client.search(COLLECTION, {
+  const results = await get_client().search(COLLECTION, {
     vector: { name: 'primary', vector: primaryVec },
     filter: {
       must: { key: 'kind', match: { value: 'entity' } },
@@ -104,7 +102,7 @@ export async function findNearestEntitiesByEntity(eid: string, limit = 5)  {
     limit,
     with_payload: true,
   });
-  return results.map(r => r.payload );
+  return results.map( (r:any) =>  r.payload );
 }
 
 /**
@@ -117,7 +115,7 @@ export async function getRelationsForEntity(sourceEid: string)  {
       { key: 'source_eid', match: { value: sourceEid } },
     ],
   });
-  return records.map(r => r.payload );
+  return records.map( (r:any) =>  r.payload );
 }
 
 /**
@@ -131,23 +129,23 @@ export async function findConnectedEntities(sourceEid: string, relationName: str
       { key: 'name', match: { value: relationName } },
     ],
   });
-  const destIds = rels.map(r => (r.payload as any).dest_eid);
+  const destIds = rels.map( (r:any) =>  (r.payload as any).dest_eid);
   if (destIds.length === 0) return [];
-  const recs = await client.retrieve(COLLECTION, { ids: destIds, with_payload: true });
-  return recs.map(r => r.payload);
+  const recs = await get_client().retrieve(COLLECTION, { ids: destIds, with_payload: true });
+  return recs.map( (r:any) =>  r.payload);
 }
 
 /**
  * Perform semantic search on entities using secondary (category) vector.
  */
 export async function semanticSearchEntities(queryVec: number[], limit = 5)  {
-  const results = await client.search(COLLECTION, {
+  const results = await get_client().search(COLLECTION, {
     vector: { name: 'secondary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'entity' } } },
     limit,
     with_payload: true,
   });
-  return results.map(r => r.payload );
+  return results.map( (r:any) =>  r.payload );
 }
 
 /**
@@ -155,26 +153,26 @@ export async function semanticSearchEntities(queryVec: number[], limit = 5)  {
  */
 export async function semanticSearchRelations(queryVec: number[], limit = 5) {
   // Default uses primary (name) vector for relation semantic search
-  const results = await client.search(COLLECTION, {
+  const results = await get_client().search(COLLECTION, {
     vector: { name: 'primary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'relation' } } },
     limit,
     with_payload: true,
   });
-  return results.map(r => r.payload );
+  return results.map( (r:any) =>  r.payload );
 }
 
 /**
  * Semantic search on entities using the primary (eid) vector.
  */
 export async function semanticSearchEntitiesByPrimary(queryVec: number[], limit = 5)  {
-  const results = await client.search(COLLECTION, {
+  const results = await get_client().search(COLLECTION, {
     vector: { name: 'primary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'entity' } } },
     limit,
     with_payload: true,
   });
-  return results.map(r => r.payload );
+  return results.map( (r:any) =>  r.payload );
 }
 
 /**
@@ -195,11 +193,11 @@ export async function semanticSearchRelationsByPrimary(queryVec: number[], limit
  * Semantic search on relations using the secondary (rid) vector.
  */
 export async function semanticSearchRelationsBySecondary(queryVec: number[], limit = 5)  {
-  const results = await client.search(COLLECTION, {
+  const results = await get_client().search(COLLECTION, {
     vector: { name: 'secondary', vector: queryVec },
     filter: { must: { key: 'kind', match: { value: 'relation' } } },
     limit,
     with_payload: true,
   });
-  return results.map(r => r.payload );
+  return results.map( (r:any) =>  r.payload );
 }
