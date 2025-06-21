@@ -22,7 +22,9 @@ Given the following information:
 
 Generate a patient handoff with the following parameters:
 
-{parameters} 
+{parameters}
+
+Use the Handoff Conciseness percentage to adjust output length: 100% means one concise sentence per diagnosis group followed by at most two plan items (preferably one).
 `
 
 export var default_parameters = ` 

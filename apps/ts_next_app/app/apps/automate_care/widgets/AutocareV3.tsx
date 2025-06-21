@@ -36,7 +36,8 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Slider
 } from "@mui/material"
 
 
@@ -180,6 +181,7 @@ const Autocare = () => {
     const [showReasoning, setShowReasoning] = useState(true);
     const [showMiscellaneous, setShowMiscellaneous] = useState(true);
     const [ai_model, set_ai_model] = useState("o4-mini");
+    const [handoffConciseness, setHandoffConciseness] = useState<number>(50);
     
     const init_loading_states = (v : Boolean) => {
 	const initialLoadingStates = DASHBOARD_TYPES.reduce((acc, type) => ({
@@ -273,8 +275,11 @@ const Autocare = () => {
     
     const handleHandoff = async () => {
         setLoadingHandoff(true);
-	let patient_information = note 	
-	let prompt = shop.template.replace("{patient_information}",patient_information).replace("{parameters}",shop.default_parameters)	
+	let patient_information = note;
+	const dynamicParameters = `${shop.default_parameters}\nHandoff Conciseness: ${handoffConciseness}%`;
+	const prompt = shop.template
+	    .replace("{patient_information}", patient_information)
+	    .replace("{parameters}", dynamicParameters);
 
 	debug.add("handoff_prompt", prompt) ;
 
@@ -472,6 +477,19 @@ const Autocare = () => {
                     >
                         Get Handoff
                     </Button>
+
+                    <Box display="inline-flex" flexDirection="column" alignItems="center" sx={{ ml: "10px", mt: "6px" }}>
+                        <Typography variant="body2" sx={{ mb: "4px" }}>Handoff Conciseness</Typography>
+                        <Slider
+                            value={handoffConciseness}
+                            onChange={(e, value) => setHandoffConciseness(value as number)}
+                            valueLabelDisplay="auto"
+                            min={0}
+                            max={100}
+                            sx={{ width: 150 }}
+                        />
+                    </Box>
+		
 		    
                 </React.Fragment>
             )}
@@ -482,7 +500,7 @@ const Autocare = () => {
 
 
 		    let render_diagnosis_group = (dg :any) =>  {
-			let headers = dg.diagnoses.map( (d : any) => `**#${d}**` ).join("") 
+			let headers = dg.diagnoses.map( (d : any) => `**#${d}**` ).join("\n\n") 
 			let plan = dg.plan_items.map( (p : any) => `\-&nbsp;*${p}*&nbsp;\n\n` ).join("") 
 			return `${headers}&nbsp;\n\n${dg.narrative_summary}&nbsp;\n\n${plan}`
 		    }
