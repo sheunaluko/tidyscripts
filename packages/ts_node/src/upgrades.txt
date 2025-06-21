@@ -1,0 +1,53 @@
+Summary of necessary changes to tom_surreal.ts:
+
+1. Authentication Signature Update
+   - Change the `.signin` call from:
+     ```ts
+     await db.signin({ user: 'root', pass: 'root' });
+     ```
+     to:
+     ```ts
+     await db.signin({ username: 'root', password: 'root' });
+     ```
+   - This aligns with the SDK v2 `AnyAuth` API (`RootAuth`) which expects `username` and `password` fields.
+
+2. Entity Schema Alignment
+   - The DDL for the `entity` table defines a schema field `eid` with `ASSERT $value != ''`.
+   - In `process_entity`, include the `eid` attribute in the payload:
+     ```ts
+     await db.create('entity', {
+       id: e.eid,
+       eid: e.eid,                  // schema-defined field
+       category: e.category,
+       primary_vec: eid_vector,
+       secondary_vec: category_vector,
+     });
+     ```
+   - Omitting the `eid` attribute will violate the DDL assertion and cause errors.
+
+3. Relation Schema Alignment
+   - The DDL for the `relation` table defines a schema field `rid` with `ASSERT $value != ''`.
+   - In `process_relation`, include the `rid` attribute in the payload:
+     ```ts
+     await db.create('relation', {
+       id: rid,
+       rid: rid,                    // schema-defined field
+       name: r.name,
+       source_eid: r.source,
+       dest_eid: r.target,
+       primary_vec: name_emb,
+       secondary_vec: rid_emb,
+     });
+     ```
+   - Without `rid`, the schema assertion will fail.
+
+4. Optional: Method Call Ordering
+   - The official flow is `connect` → `use` → `signin`, though `signin` then `use` still works.
+   - For clarity and consistency with documentation, consider reordering:
+     ```ts
+     await db.connect(DB_URL);
+     await db.use({ namespace: NS, database: DB });
+     await db.signin({ username: 'root', password: 'root' });
+     ```
+
+Implementing these changes will ensure `tom_surreal.ts` is fully compatible with the SurrealDB SDK v2 API and the defined database schema.

@@ -1,0 +1,40 @@
+:: r = await node.tom_surreal.tom_surreal.demo()
+[Demo] 1/7: Configuring database URL...
+[Demo] 2/8: Connecting & initializing schema...
+[tom-surreal-v2]:: Connecting to SurrealDB → http://127.0.0.1:8000/rpc as user=root
+[tom-surreal-v2]:: Schema already initialized, skipping DDL
+✔ Connected
+[Demo] 3/8: Clearing existing tables (entity, relation, knowledge_update)...
+✔ Tables cleared
+[Demo] 3/7: Ingesting text with summary: Influenza infection causes fever and cough.
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+[oai]:: running openai NOT in browser
+✔ Added entities: [ 'influenza infection', 'fever', 'cough' ]
+✔ Added relations: [
+  'causes:: (influenza infection) -> (cough)',
+  'causes:: (influenza infection) -> (fever)'
+]
+[Demo] 4/7: Querying all entities...
+→ Total entities: 3
+[Demo] 5/7: Semantic search on primary_vec using first entity
+Uncaught:
+ResponseError: There was a problem with the database: Parse error: Invalid function/constant path
+ --> [1:35]
+  |
+1 | SELECT *, score FROM entity WHERE vsearch(primary_vec, $v, $k) LIMIT $k
+  |                                   ^^^^^^^
+
+    at Surreal.queryRaw (/home/oluwa/dev/tidyscripts/node_modules/surrealdb/dist/index.cjs:1:60066)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
