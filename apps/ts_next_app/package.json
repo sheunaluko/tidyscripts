@@ -8,7 +8,10 @@
         "build": "next build",
         "build:dev": "NODE_ENV=development next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage"
     },
     "dependencies": {
         "@chakra-ui/icons": "^2.2.4",
@@ -34,10 +37,15 @@
         "webpack-cli": "^5.1.4"
     },
     "devDependencies": {
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.3.0",
+        "@testing-library/user-event": "^14.6.1",
         "@types/node": "^20",
         "@types/react": "^18",
         "@types/react-dom": "^18",
         "eslint-config-next": "14.2.2",
+        "jest": "^30.0.2",
+        "jest-environment-jsdom": "^30.0.2",
         "typescript": "^5"
     }
 }
