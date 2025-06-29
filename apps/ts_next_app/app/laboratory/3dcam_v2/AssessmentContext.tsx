@@ -7,7 +7,6 @@ type ResponseMap = { [feature: string]: { [itemId: string]: "pass" | "fail" } };
 
 type AssessmentContextType  = any ;
 
-
 const AssessmentContext = createContext<AssessmentContextType | null>(null);
 
 export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -143,12 +142,12 @@ const resetAssessment = () => {
 	let {feature4_obs1 , feature4_obs2  } = f4 ;
 
 	if ( feature4_obs1 == 'pass' && feature4_obs2 == 'pass' ) {
-	    console.log("Feature 4 processed based on both passing") 
+	    console.log("Feature 4 processed based and both passing") 
 	    return true 
 	}
 
 	if ( feature4_obs1 == 'fail' || feature4_obs2 == 'fail' ) {
-	    console.log("Feature 4 processed based on one failing") 	    
+	    console.log("Feature 4 processed based and one failing") 	    
 	    return true 
 	}
 
