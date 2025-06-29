@@ -12,12 +12,6 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "ts_common": "*",
-    "ts_node": "*",
-    "ts_web": "*",
-    "ts_web_umd": "*"
-  },
   "devDependencies": {
     "typedoc-plugin-markdown": "^4.2.7"
   }
