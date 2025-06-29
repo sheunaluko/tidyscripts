@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "turbo run build && turbo run docs",
+    "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "dev": "turbo run dev",

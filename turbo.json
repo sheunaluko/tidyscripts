@@ -14,6 +14,23 @@
 		"apps/ts_next_app/generated/**"	  		
 	    ]
 	},
+	"ts_next_app#build": {
+	    "dependsOn": [ "docs#build" ],
+	    "outputs": [
+		".next/**"
+	    ]
+	},
+	"docs#build": {
+	    "dependsOn": [ 
+		"tidyscripts_common#build",
+		"tidyscripts_node#build", 
+		"tidyscripts_web#build",
+		"tidyscripts_web_umd#build"
+	    ],
+	    "outputs": [
+		"../ts_next_app/public/docs/**"
+	    ]
+	},
 	"publish_package": {
 	    "dependsOn": [
 		"build",

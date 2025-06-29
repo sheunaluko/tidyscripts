@@ -1,0 +1,2 @@
+set -e;
+npx turbo build; cd apps/ts_next_app ; npx jest --runInBand --silent ; 
