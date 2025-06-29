@@ -56,7 +56,7 @@ export async function demo(t : string): Promise<void> {
 
     log('[Demo] (4) Querying all entities...');
     const allEntities = (await tom_surreal.queries.getAllEntities()) as any[];
-    log(allEntities) 
+    log(`Num entities: ${allEntities.length}`) 
 
     log('✔  DEMO complete :) ');
 }

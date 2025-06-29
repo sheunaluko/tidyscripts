@@ -17,20 +17,28 @@ const debug = common.util.debug;
 
 var _client : any = null  ; 
 
+/*
+   Todo - update relation extraction to include metadata 
+*/
+
 export async function get_client() {
     if (_client) return _client;
     log(`Connecting to SurrealDB → `);
     const db = new Surreal();
     let url = process.env['SURREAL_DB_URL']  as string ;
+    let user = process.env['SURREAL_DB_USER']  as string
+    let pw = process.env['SURREAL_DB_PW']  as string
+    
     log(`Using surreal url=${url}`) ;
+    log(`Using surreal user=${user}`) ;    
     
     // Open a connection and authenticate
     await db.connect(url, {
-	namespace: "",
-	database: "",
+	namespace: "tom",
+	database: "tom",
 	auth: {
-	    username: "",
-	    password: "",
+	    username: user,
+	    password: pw,
 	}
     });
 
@@ -88,7 +96,7 @@ export const check_for_rid = (name : string, rid: string, c?: any) => check_for_
 //-------------------------------------------------------------
 
 export function format_id(s : string) {
-    return s.replace(" " , "_") ; 
+    return s.replace( new RegExp(" ", 'g') , "_" )  ; 
 }
 
 export async function process_entity(e: Entity) {
@@ -100,12 +108,13 @@ export async function process_entity(e: Entity) {
 	return ; 
     } 
     
-    const { eid_vector, eid, category   } = await add_embeddings(e);
+    var { eid_vector, eid, category   } = await add_embeddings(e);
 
-    let formatted_eid = format_id(eid) ; 
+    let formatted_eid = format_id(eid) ;
+    category          = format_id(category) ; 
 
     let entity = {
-	id: eid_to_uuid(formatted_eid) ,
+	id: formatted_eid , 
 	eid: formatted_eid ,                 
 	category , 
 	eid_vector , 
@@ -113,39 +122,34 @@ export async function process_entity(e: Entity) {
 
     log(`creating entity`)
     debug.add('entity' , entity)
-    
-    await db.create('entity', entity);
 
-    log(`Ensuring the the category exists`)
-    let category_id = format_id(category) ;
+    await db.query(`INSERT IGNORE INTO entity $entity;`, {entity} ) ;
+    
+    log(`Ensuring that the category exists`)
+    let category_id = category ; 
     debug.add("category_id" , category_id) ;
     
-    let category_exists = await check_for_id('category', category_id, db)  ;
-    
-    if (!category_exists) {
-	log(`Category ${category_id} does not exist`)
-	log(`Creating category:${category_id}`)
-	await db.query(`
-	    CREATE type::thing("category",$category_id) CONTENT { 
+    log(`Ensuring category:${category_id}`)
+    await db.query(`
+	    INSERT IGNORE INTO category { 
+                  id  : $category_id , 
+                  name : $category_id , 
                   created : time::now()  
             } 
-	`, { category_id }  ) ;
-	log(`Finished with db query`)
-	
-    } else {
-	log(`Category ${category_id} DOES exist, will skip creation `)
-    }
-
+    `, { category_id }  ) ;
+    log(`Finished with category query`)
     
     log(`Now creating category relation`) ;
     
     await db.query(`
 
-        RELATE type::thing("entity", $e1) -> has_category -> type::thing("category", $c1) ; 
+        LET $e = type::thing("entity", $e1) ; 
+        LET $c = type::thing("category", $c1);
+        RELATE $e -> has_category -> $c ; 
 
     `, {
 	e1 : entity.eid  ,
-	c1 : entity.category 
+	c1 : category_id , 
     });
 
     
@@ -156,17 +160,22 @@ export async function process_entity(e: Entity) {
 interface RelationBase { kind: 'relation'; name: string; source_eid: string; dest_eid: string; }
 
 export function add_relation_id(r: RelationBase) {
-    let rid = format_id(`${r.source_eid}->${r.name}->${r.dest_eid}`) ; 
+    let rid = format_id(`${r.source_eid}->${r.name}->${r.dest_eid}`) ;
     return { ...r, rid  }
 }
 
+export async function reset_tom_db() {
+    const db = await get_client();
+    log(`Resetting db`)
+    return await db.query(`REMOVE DB tom ; DEFINE DB tom;`) 
+}
 
 
 export async function process_relation(r: { name: string; source: string; target: string }) {
     
     const db = await get_client();
     
-    const base: RelationBase = { kind: 'relation', name: format_id(r.name), source_eid: r.source, dest_eid: r.target };
+    const base: RelationBase = { kind: 'relation', name: format_id(r.name), source_eid: format_id(r.source), dest_eid: format_id(r.target) };
     
     const relation = add_relation_id(base);
     
@@ -186,13 +195,16 @@ export async function process_relation(r: { name: string; source: string; target
     log(`Proceeding with db query to add relation`)
 
     await db.query(`
-     RELATE type:thing("entity",$source_eid) -> type::thing("entity",$dest_eid) CONTENT { 
-         name : $name, 
-         rid  : $rid, 
-         rid_vector : $rid_vector  
-                    
+     LET $in  = type::thing("entity",$source_eid) ; 
+     LET $out = type::thing("entity",$dest_eid) ; 
+     LET $table = type::table($name) ; 
+
+     RELATE $in->$table->$out CONTENT { 
+         id : $rid  , 
+         rid : $rid , 
+         rid_vector : $rid_vector 
      }
-    `, { name, rid, rid_vector }) ; 
+    `, { name, rid, rid_vector, source_eid, dest_eid  }) ; 
 
     log(`Finished`)  ;
 
@@ -226,9 +238,19 @@ async function extract_entities(text: string, tier = 'top') {
 	}),
 	'entities',
     );
-    const prompt = `Extract medical entities with category + importance (0-1).\nINPUT:\n${text}`;
+    const prompt = `
+Extract medical entities with category + importance (0-1).
+
+Make sure the eid field (entity id) is a human readable string which is the direct name of the entity
+
+INPUT:
+${text}
+`;
     const res: any = await structured_prompt(prompt, rf, tier);
-    return res.entities as Entity[];
+    let entities = res.entities as Entity[];
+    debug.add('extracted_entities' , entities )
+    return entities; 
+
 }
 
 async function extract_relations(text: string, entities: Entity[], tier = 'top') {
@@ -249,7 +271,10 @@ ${text}
     `;
     
     const res: any = await structured_prompt(prompt, rf, tier);
-    return res.relations as { name: string; source: string; target: string }[];
+    let relations = res.relations as { name: string; source: string; target: string }[];
+
+    debug.add('relations', relations) ;
+    return relations 
     
 }
 
@@ -304,14 +329,16 @@ export async function ingest_text_with_summary(text: string) {
 
     log(`Got relations, now summarizing knowledge update...`) 	
 
-    await db.create('knowledge_update', {
+    let knowledge_update = { 
 	id: uuid_from_sha256(text),
 	text,
 	entity_eids: added_entities.map((e) => e.eid),
 	relation_rids: added_relations.map((r) => r.rid),
 	timestamp: new Date().toISOString(),
 	text_vector: await embedding1024(text),
-    });
+    } ;
+
+    db.query(`INSERT IGNORE INTO knowledge_update $knowledge_update`, { knowledge_update}); 
 
     log(`Finished saving knowledge update`)  ; 
     
