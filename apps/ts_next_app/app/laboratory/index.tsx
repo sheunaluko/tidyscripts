@@ -34,15 +34,17 @@ const AllLinks = () => {
   return (
       <Box sx={{ width : "100%", height : "100%" , display : "flex", flexDirection : "column", alignItems: "center", justifyContent : "center" }} >
 
-	  <MLink href="/laboratory/3dcam_v2">
+
+	  <MLink href="/laboratory/3d_cam_test_suite/index.html">
 	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">3D-CAM Tool</Typography>
+		  <Typography variant="h5" color="primary">3D-CAM Test Suite</Typography>
 		  <p>
-		      Delirium Assessment Tool (3D-CAM) 
+		      3D-CAM App Verification Results 
 		  </p>
 	      </Card >
 	  </MLink>
 
+	  
 	  <MLink href="/laboratory/cortex_0">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Cortex</Typography>

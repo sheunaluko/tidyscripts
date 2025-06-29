@@ -2,10 +2,10 @@
     Tidyscripts Evaluation Server client API
 */
 
-import * as common from "tidyscripts_common";
+import {get_logger}  from "./logger";
+import * as debug from "./util/debug";
 
-const log = common.logger.get_logger({ id: "tes" });
-const debug = common.util.debug;
+const log = get_logger({ id: "tes" });
 
 interface CallData {
     fn_path: string[];  // path to the function that should be called (starts with node or common)

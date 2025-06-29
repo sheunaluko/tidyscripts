@@ -12,33 +12,23 @@ Tidyscripts includes libraries for cryptography, functional programming, graphin
 
 ### Usage
 
+#### Live Applications
+Check out the (live application)[https://tidyscripts.com] to explore it's features
+
 #### Web library
 For import into react project or other website.
 In your project directory simply run: 
 `npm install tidyscripts_web`
-
-
 
 #### Node library
 For import by node process.
 In your project directory simply run: 
 `npm install tidyscripts_node`
 
-## Local Development
-
-
-### Generate docs
-``` npx typedoc ```
-
-### Build packages 
-``` npm run build ```
-
-### Sync git repository
-``` ./bin/sync COMMIT_MSG ``` 
 
 ## Contact - 
 Twitter - @shayaluko\
-Instagram - @sheunaluko\
+Instagram - @shaybutterproductions\
 Linked In - sheun-aluko
 
 

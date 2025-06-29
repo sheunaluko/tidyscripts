@@ -22,6 +22,19 @@ const customJestConfig = {
     '!app/**/page.tsx', // Exclude Next.js page files
     '!app/**/layout.tsx', // Exclude Next.js layout files
   ],
+  // Generate a static HTML report under public/laboratory/3d_cam_test_suite
+  reporters: [
+    'default',
+    [
+      'jest-html-reporters',
+      {
+        publicPath: 'public/laboratory/3d_cam_test_suite',
+        filename: 'index.html',
+        expand: true,
+        pageTitle: '3D‑CAM Test Suite'
+      }
+    ]
+  ],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

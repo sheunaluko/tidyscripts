@@ -201,7 +201,7 @@ const resetAssessment = () => {
 	  showDiagram,
 	  setShowDiagram ,
 	  complete ,
-	  resetAssessment, 
+	  resetAssessment,
       }}
     >
       {children}

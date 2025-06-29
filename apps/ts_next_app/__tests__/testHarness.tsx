@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, RenderResult, act } from '@testing-library/react';
-import { AssessmentProvider, useAssessment } from '../app/laboratory/3dcam_v2/AssessmentContext';
-import { ITEMS } from '../app/laboratory/3dcam_v2/new_items';
-import { Item } from '../app/laboratory/3dcam_v2/types';
+import { AssessmentProvider, useAssessment } from '../app/apps/3dcam_v2/AssessmentContext';
+import { ITEMS } from '../app/apps/3dcam_v2/new_items';
+import { Item } from '../app/apps/3dcam_v2/types';
 
 // Component to extract context values for testing
 interface TestContextExtractorProps {
