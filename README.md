@@ -6,14 +6,14 @@ A documented and clean collection of typescript code for composability and re-us
   
 <img src="https://storage.googleapis.com/tidyscripts/tidyscripts_architecture.png" width="70%"/>
 
-The holy grail of typescript development lies before you. The Tidyscripts monorepo leverages npm workspaces, vercel and nextjs, and turbo repo to deliver a powerhouse developer experience in a tiny package. At the core is the tidyscripts_common package, which is imported by the tidyscripts_node and tidyscripts_web packages. These, in turn, are imported by the tidyscripts nextjs application, which is deployed on vercel to a global edge computing network. This provides unprecedented full stack typescript library and application development, distribution, and deployment.
+The holy grail of typescript development lies before you. The Tidyscripts monorepo leverages npm workspaces, vercel and nextjs, and turbo repo to deliver a tremendously powerful and optimized developer experience. At the core is the tidyscripts_common package, which is imported by the tidyscripts_node and tidyscripts_web packages. These, in turn, are imported by the tidyscripts nextjs application, which is deployed on vercel to a global edge computing network. This provides unprecedented full stack typescript library and application development, distribution, and deployment.
 
 Tidyscripts includes libraries for cryptography, functional programming, graphing, financial/cryptocurrency analysis, and much more.
 
 ### Usage
 
 #### Live Applications
-Check out the (live application)[https://tidyscripts.com] to explore it's features
+Check out the [live application](https://www.tidyscripts.com) to explore it's features
 
 #### Web library
 For import into react project or other website.
