@@ -9,7 +9,7 @@
         "build:dev": "NODE_ENV=development next build",
         "start": "next start",
         "lint": "next lint",
-        "test": "jest",
+        "test": "NODE_ENV=test npx jest --runInBand --silent",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
     },
