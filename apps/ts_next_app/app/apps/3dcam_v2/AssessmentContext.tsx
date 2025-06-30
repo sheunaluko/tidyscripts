@@ -202,6 +202,7 @@ const resetAssessment = () => {
 	  setShowDiagram ,
 	  complete ,
 	  resetAssessment,
+	  index 
       }}
     >
       {children}
