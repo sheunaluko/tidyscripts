@@ -1,7 +1,0 @@
-import * as ytt from "./yt_transcript";
-
-
-export function get_summary(url : string) {
-
-
-} 
