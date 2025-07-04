@@ -146,6 +146,21 @@ export async function deactivate_row(p : any) {
     await p.goBack() ;
 }
 
+export async function back6s(p : any ) {
+    try {
+	await p.goBack({timeout:6000}) ; 
+    } catch (e :any) {
+	log(`Caught error in back6s`)
+	console.log(e)
+    }
+}
+
+export async function deactivate_row2(p : any) {
+    await back6s(p) ;
+    await back6s(p) ; 
+}
+
+
 export async function get_row_data(p : any , i : number ) {
     // -
     log(`Getting info`)
@@ -206,6 +221,9 @@ export async function get_row_data2(p : any , i : number ) {
 	await asnc.wait(wait_t) ; 
     }
 
+    log(`deactivating row (2)`)
+    await deactivate_row2(p) ; 
+
     log(`returning result`) ; 
 
     var result = {t_info , t_data }
@@ -236,6 +254,13 @@ export async function process_row2(p : any , r_num :number ) {
     await save_row_info(t_num , r_data) 
 } 
 
+export async function process_rows(p : any, rs : number[]) {
+    for (var i of rs ) {
+	log(`Processing row ${i}`) ;
+	await process_row2(p, i) ;
+	await asnc.wait(6000) ; 
+    }
+}
 
 
 
