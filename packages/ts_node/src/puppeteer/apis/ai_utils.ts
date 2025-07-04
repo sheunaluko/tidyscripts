@@ -5,8 +5,6 @@ import * as oai from "../../apis/openai/index"
 
 const log = logger.get_logger({id : "aiu"}) ; 
 
-export const openai = new OpenAI(); //default for v4 is to use the env var 
-
 /*
  * Module generated with AI assistance (gpt o1-preview) 
  */
