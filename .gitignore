@@ -36,3 +36,4 @@ packages/ts_node/local
 apps/ts_next_app/.env.local
 data
 data/**
+browser-user-data/

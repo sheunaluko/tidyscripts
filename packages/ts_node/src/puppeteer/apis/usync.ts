@@ -179,6 +179,39 @@ export async function get_row_data(p : any , i : number ) {
     return result 
 }
 
+export async function get_row_data2(p : any , i : number ) {
+    // -
+    log(`Getting info`)
+    var t_info = await row_info(p, i) ; await asnc.wait(1000+Math.random()*1000) ; 
+    
+    log(`activating`); await activate_row(p ,i ) ;
+    let wait_t1 = 6000 + Math.random()*4000
+    log(`random waiting for: ${wait_t1} ms`)  ; 
+    await asnc.wait(wait_t1) ;
+    // - 
+    log(`review`); await go_to_review_page(p) ; await asnc.wait(2000 + Math.random()*2000) ;
+    log(`#`); var num_q = await get_num_questions(p)  ; await asnc.wait(1000+Math.random()*1000);  log(`num_q=${num_q}`) ;
+    // - 
+    var t_data  = [ ] 
+    log(`0`); await select_nth_q(p,0) ; await asnc.wait(4000) ;
+    for (var x=0; x< num_q ; x++) {
+	let content  = await p.content() ;
+	let meta     = await get_q_metadata(p)   ;
+	let data = {content, meta }
+	log(`got data for ${JSON.stringify(meta)}`) 
+	t_data.push(data) ;
+	await next(p) ;
+	let wait_t = 5000 + Math.random()*5000
+	log(`random waiting for: ${wait_t} ms`)  ; 
+	await asnc.wait(wait_t) ; 
+    }
+
+    log(`returning result`) ; 
+
+    var result = {t_info , t_data }
+    return result 
+}
+
 
 export async function save_row_info(t_num : number, r_data : any) {
     let fdir = path.join(dir,`t${t_num}`) 
@@ -191,6 +224,13 @@ export async function save_row_info(t_num : number, r_data : any) {
 
 export async function process_row(p : any , r_num :number ) {
     let r_data = await get_row_data(p, r_num) ;
+    let t_num = r_data.t_info.split("\t")[1]!.trim()
+    log(`Will save for t_num: ${t_num}`) 
+    await save_row_info(t_num , r_data) 
+} 
+
+export async function process_row2(p : any , r_num :number ) {
+    let r_data = await get_row_data2(p, r_num) ;
     let t_num = r_data.t_info.split("\t")[1]!.trim()
     log(`Will save for t_num: ${t_num}`) 
     await save_row_info(t_num , r_data) 
