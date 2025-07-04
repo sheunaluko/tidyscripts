@@ -22,8 +22,15 @@ import * as tsc  from "tidyscripts_common" ;
 import * as path from 'path';
 import { OpenAI } from 'openai';
 
-// Create client
-export const openai = new OpenAI(); //default for v4 is to use the env var for API key
+// Create client lazily
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+    if (!_openai) {
+        _openai = new OpenAI(); //default for v4 is to use the env var for API key
+    }
+    return _openai;
+}
 
 // Create a logging object
 const log = tsc.logger.get_logger({ id: "directory_analyzer" });
@@ -291,7 +298,7 @@ async function query_gpt4o_with_repository_context(dir: string, user_query: stri
         throw new Error(`Token limit exceeded. Tokens remaining for user query: ${remaining_tokens}, Prompt size without user query: ${prompt_tokens - count_tokens(user_query)}`);
     }
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o',
         messages: [
             { role: 'system', content: 'You are a helpful assistant specialized in code analysis.' },

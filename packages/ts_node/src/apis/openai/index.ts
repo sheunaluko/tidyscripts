@@ -10,7 +10,14 @@ import * as directory_analyzer from "./directory_analyzer"
 export {directory_analyzer} ; 
 
 
-export const client = new OpenAI(); //default for v4 is to use the env var for API key
+let _client: OpenAI | null = null;
+
+export function getClient(): OpenAI {
+    if (!_client) {
+        _client = new OpenAI(); //default for v4 is to use the env var for API key
+    }
+    return _client;
+}
 
 
 /**
@@ -27,7 +34,7 @@ export async function send_message(message: string, max_tokens : number): Promis
 
     log('using req object:') ;
     console.log(reqObj) 
-    const response = await client.chat.completions.create(reqObj as any); 
+    const response = await getClient().chat.completions.create(reqObj as any); 
     return response
 }
 
@@ -40,7 +47,7 @@ export async function chat_completion(messages: any, model : string, max_tokens 
     
     try {
 
-	const chatCompletion = await client.chat.completions.create({
+	const chatCompletion = await getClient().chat.completions.create({
 	    model, 
 	    messages,
 	    max_tokens, 
