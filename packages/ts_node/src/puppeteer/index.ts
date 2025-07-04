@@ -24,6 +24,34 @@ const log = common.logger.get_logger({id: "pup"}) ;
 var started = false;
 var browser : any  = null 
 
+
+export async function remote_connect(port : number ) {
+
+    let url = `http://localhost:${port}/json/version` ; 
+    log(`Getting info from url=${url}...`)
+    const res = await fetch(url);
+    const { webSocketDebuggerUrl } = await res.json();
+
+    let wsurl = webSocketDebuggerUrl ;
+    log(`Got debuggerURL = ${wsurl}`) ; 
+
+    log(`Connecting`) 
+    let browser = await puppeteer.connect({
+	browserWSEndpoint: wsurl,
+    });
+
+    log(`Creating page`)     
+    let page = await browser.newPage();
+    await page.goto('https://tidyscripts.com');
+
+    log(`Done`)
+
+    return {
+	browser, page 
+    }
+
+}
+
 export async function get_browser(ops : any) : Promise<any> {
 
     if (browser) { return browser } else {
