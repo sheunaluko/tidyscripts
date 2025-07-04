@@ -46,20 +46,8 @@ export async function remote_connect(port : number ) {
 
     log(`Setting view port`) 
 
-    // Get the actual window size
-    const windowSize = await page.evaluate(() => {
-	return {
-	    width: window.screen.availWidth,
-	    height: window.screen.availHeight
-	};
-    });
-
-    // Set viewport to match window size
-    await page.setViewport({
-	width: windowSize.width,
-	height: windowSize.height
-    });
-
+    await matchViewportToBrowserWindow(page) ;
+    
     log(`Done`)
 
     return {
@@ -67,6 +55,25 @@ export async function remote_connect(port : number ) {
     }
 
 }
+
+async function matchViewportToBrowserWindow(page : any) {
+  // Get the actual browser window's inner dimensions
+  const windowSize = await page.evaluate(() => {
+    return {
+      width: window.outerWidth,
+      height: window.outerHeight
+    };
+  });
+  
+  // Set viewport to match the browser window
+  await page.setViewport({
+    width: windowSize.width,
+    height: windowSize.height
+  });
+  
+  return windowSize; 
+}
+
 
 export async function get_browser(ops : any) : Promise<any> {
 
