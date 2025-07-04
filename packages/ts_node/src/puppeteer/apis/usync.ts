@@ -11,7 +11,7 @@ export const log = logger.get_logger({id: "usync"})
 export const url   = process.env['USYNC_URL'] as string
 export const email = process.env['USYNC_EMAIL'] as string
 export const pw    = process.env['USYNC_PW'] as string
-export const dir   = process.env['USYNC_DIR'] as string
+export var   dir   = process.env['USYNC_DIR'] as string
 
 export const config  = { url, email, pw, dir }
 
@@ -22,6 +22,13 @@ const element_map = {
     pw_field    : '#login-password', 
     btn         : '#login_btn'
 }
+
+
+export async function set_dir(s : string) {
+    log(`Setting dir to: ${s}`) ;
+    dir = s ; 
+}
+
 
 export async function loaded(p: any) {
     try {
@@ -150,8 +157,7 @@ export async function back6s(p : any ) {
     try {
 	await p.goBack({timeout:6000}) ; 
     } catch (e :any) {
-	log(`Caught error in back6s`)
-	console.log(e)
+	log(`Caught error in back6s, ignoring`)
     }
 }
 
@@ -248,6 +254,7 @@ export async function process_row(p : any , r_num :number ) {
 } 
 
 export async function process_row2(p : any , r_num :number ) {
+
     let r_data = await get_row_data2(p, r_num) ;
     let t_num = r_data.t_info.split("\t")[1]!.trim()
     log(`Will save for t_num: ${t_num}`) 
@@ -255,6 +262,7 @@ export async function process_row2(p : any , r_num :number ) {
 } 
 
 export async function process_rows(p : any, rs : number[]) {
+    log(`Using dir: ${dir}`) 
     for (var i of rs ) {
 	log(`Processing row ${i}`) ;
 	await process_row2(p, i) ;
@@ -262,6 +270,10 @@ export async function process_rows(p : any, rs : number[]) {
     }
 }
 
+export async function test_dir() {
+    log(`Using dir: ${dir}`)
+    await save_row_info(1000, [{'test' : true }]) ; 
+}
 
 
 
