@@ -4,7 +4,7 @@
   "description": "Code/apis for typescript projects that run in the Node.js runtime",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -rf ./dist; tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist  --resolveJsonModule --strict",
+    "build": "tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist  --resolveJsonModule --strict",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch_package": "npm version patch;",
     "publish_package": "npm publish ; "
