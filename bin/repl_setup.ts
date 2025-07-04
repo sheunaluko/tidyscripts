@@ -13,11 +13,6 @@ Welcome to the Tidyscripts REPL (Read Eval Print Loop)
 What exciting journey awaits you??
 `
 
-const modules = [
-    { name: 'node', path: '../packages/ts_node/dist/index', mod: node },
-    { name: 'common', path: '../packages/ts_common/dist/index', mod: common },
-    { name: 'dev', path: './dev/index', mod: dev }
-];
 
 async function init_repl() { 
 
