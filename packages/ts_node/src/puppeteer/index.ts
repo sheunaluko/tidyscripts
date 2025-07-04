@@ -44,6 +44,22 @@ export async function remote_connect(port : number ) {
     let page = await browser.newPage();
     await page.goto('https://tidyscripts.com');
 
+    log(`Setting view port`) 
+
+    // Get the actual window size
+    const windowSize = await page.evaluate(() => {
+	return {
+	    width: window.screen.availWidth,
+	    height: window.screen.availHeight
+	};
+    });
+
+    // Set viewport to match window size
+    await page.setViewport({
+	width: windowSize.width,
+	height: windowSize.height
+    });
+
     log(`Done`)
 
     return {
