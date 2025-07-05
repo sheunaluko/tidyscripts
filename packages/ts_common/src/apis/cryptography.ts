@@ -36,7 +36,7 @@ export function buffer_to_hex(buffer: ArrayBuffer): string {
  * @param o - The object to hash
  * @returns The sha256 hash 
  */
-export async function object_sha256(o : object ): Promise<string> {
+export async function object_sha256(o : any ): Promise<string> {
     return await sha256( stringify(o) ) ; 
 }
 

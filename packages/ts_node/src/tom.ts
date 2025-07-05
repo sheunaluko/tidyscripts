@@ -1,502 +1,562 @@
 /**
  * Tidyscripts Ontology Of Medicine 
  *
- * Leverages qdrant database and ai API to build, update, and serve a medical ontology
+ * Leverages surrealdb database and ai API to build, update, and serve a medical ontology
  * Input: unstructured text 
- * Output: Ontology update 
+ * Output: Ontology creation / update 
  *  
  */
 
+import * as common       from 'tidyscripts_common';
+import { z }             from 'zod';
+import { zodTextFormat } from 'openai/helpers/zod';
+const { ailand } = common.apis;
+const {CacheUtils} = common.apis.cache ; 
+const { embedding1024, structured_prompt } = ailand;
+import {FileSystemCache} from "./apis/node_cache" ;
+import Surreal, { RecordId } from 'surrealdb'; 
 
-import {QdrantClient} from '@qdrant/js-client-rest';
-import * as common from "tidyscripts_common" ;
-import * as llm from './tom_llm' ;
-export * as queries from './tom_queries' ; 
-import * as tu from "./tom_util"  ;  
+const log   = common.logger.get_logger({ id: 'tom' });
+const debug = common.util.debug;
+var _client : any = null  ; 
 
-const {ailand} = common.apis ;
-const {embedding1024, prompt} = ailand ;
-const {debug} = common.util ; 
+
+var default_tier = 'top' ;
+
+export function set_default_tier(t : string) {
+    default_tier = t ; 
+}
 
 /*
-   TOM 
-   
-   let t = await get_tom_collection() ; 
-   let resp = await prompt("ai query" , "quick")
-   let embedding = await embedding1024("to embed")
+   Todo - update relation extraction to include metadata 
+*/
 
-   Above we have a vector database reference, AI query capability, and Embedding capability 
-   We can combine all this to create a powerful system. 
-
-
-   Done => 
-   - [x] use entity extractor first to review what entities are being discussed  (use higher quality model) 
-   - [x] for each entity calculate its emedding and add it to the vector store with the payload: 
-     { kind: 'entity' , category : '---' , id : '----' }  
-      - [x]  if an existing entity (with same exact id) is there, then do not add it 
-
-   - [x] What if relations are stored in the database like this 
-      { kind: 'relation' , name : 'association' , source : eid , target : eid } 
-
-
-   STATUS -> 
-
-   I have implemented the ability to parse unstructured text into entities and relations,
-   and to load those (along with embeddings) into the qdrant db 
-
-   I have also impplemented ability to call remotely via TES, and to get summary of db insertions (as well as db_update object which tracks learning)  
-
-
-   Todo:
-   1) start building some kind of interface over TOM , for querying, monitoring, etc.
-   2) [~] build educational pipelines for teaching TOM (ingesting the data and converting to db entries)
-
-   Extensions:
-   - add a provenance field into the relation payload
-
-   Thoughts: 
-   Time information can be built using DB primitives (entity of 1982,  then have a relation which references a  temporal relation and connects it with a time entity) 
-   Same concept can be used for source attributions :) 
-
-   Optimizations:
-   - [x] Promise.all( ... ) 
-
- */
-
-export async function ingest_text(text: string) {
-  return await extract_and_store_entities_and_relations(text);
-}
-
-/**
- * Like ingest_text but returns which entities and relations were actually added (did not exist already).
- */
-export async function ingest_text_with_summary(
-  text: string
-): Promise<{
-  added_entities: tu.Entity[];
-  added_relations: RelationWithID[];
-  db_update: {
-    kind: string;
-    text: string;
-    entity_eids: string[];
-    relation_rids: string[];
-    timestamp: string;
-    id: string;
-  };
-}> {
-  log(`fn:ingest_text_with_summary`);
-  const client = await get_client();
-  await init_tom_collection();
-
-  log(`Extracting entities...`);
-  const entities = (await llm.extract_entities(text, 'top')) as tu.Entity[];
-  debug.add('entities', entities);
-  log(`Found ${entities.length} entities`);
-
-  log(`Processing entities asynchronously...`);
-  const added_entities = (
-    await Promise.all(
-      entities.map(async (e) => {
-        log(`Checking existence for entity eid=${e.eid}, category=${e.category}`);
-        const exists = await tu.entity_exists(e, client);
-        log(`Entity ${e.eid} exists=${exists}`);
-        if (!exists) {
-          log(`Adding new entity ${e.eid}`);
-          await process_entity(e);
-          return e;
-        }
-        log(`Skipping existing entity ${e.eid}`);
-        return null;
-      })
-    )
-  ).filter((e): e is tu.Entity => e !== null);
-  log(`Added ${added_entities.length} new entities`);
-
-  log(`Extracting relations...`);
-  const relationsRaw = await llm.extract_relations(text, entities, 'top');
-  debug.add('relations', relationsRaw);
-  log(`Found ${relationsRaw.length} relations`);
-
-  log(`Processing relations asynchronously...`);
-  const added_relations = (
-    await Promise.all(
-      relationsRaw.map(async (r :any) => {
-        const relObj = add_relation_id({
-          name: r.name,
-          source_eid: r.source,
-          dest_eid: r.target,
-          kind: 'Relation',
-        });
-        log(`Checking existence for relation rid=${relObj.rid}`);
-        const existsRel = await tu.check_for_rid(relObj.rid, client);
-        log(`Relation ${relObj.rid} exists=${existsRel}`);
-        if (!existsRel) {
-          log(`Adding new relation ${relObj.rid}`);
-          await process_relation(r);
-          return relObj;
-        }
-        log(`Skipping existing relation ${relObj.rid}`);
-        return null;
-      })
-    )
-  ).filter((r): r is RelationWithID => r !== null);
-  log(`Added ${added_relations.length} new relations`);
-
-  const timestamp = new Date().toISOString();
-  const entityConcat = added_entities.map((e) => e.eid).join(' ');
-  const relationConcat = added_relations.map((r) => r.rid).join(' ');
-  log(
-    `Computing embeddings for update: entities='${entityConcat}', relations='${relationConcat}'`
-  );
-  const primaryVec = await embedding1024(entityConcat);
-  const secondaryVec = await embedding1024(relationConcat);
-  const updateId = await tu.uuid_from_sha256(text);
-
-  const payload = {
-    kind: 'knowledge_update',
-    text,
-    entity_eids: added_entities.map((e :any) => e.eid),
-    relation_rids: added_relations.map((r : any)  => r.rid),
-    timestamp,
-  };
-  log(`Upserting knowledge_update with id=${updateId}`);
-  await client.upsert('tom', {
-    wait: true,
-    points: [
-      {
-        id: updateId,
-        vector: { primary: primaryVec, secondary: secondaryVec },
-        payload,
-      },
-    ],
-  });
-  log(
-    `Finished ingest_text_with_summary: added ${added_entities.length} entities, ${added_relations.length} relations, update id=${updateId}`
-  );
-  return { added_entities, added_relations, db_update: { ...payload, id: updateId } };
-}
-
-export async function extract_and_store_entities_from_text( text : string) {
-    log(`fn:extract/store/entities/text\nextracting entities...`) 
-    let entities = await llm.extract_entities(text, "top") as any;
-    debug.add('entities', entities) ;
-
-    log(`Processing...`) 
-    for (var i =0 ;i < entities.length ; i ++) {
-	await process_entity( entities[i] )  
-    }
-}
-
-export async function extract_and_store_entities_and_relations( text : string) {
-    log(`fn:entitiesANDrelations`) 
-    let entities = await llm.extract_entities(text, "top") as any;
-    debug.add('entities', entities) ;
-
-    log(`\n\n ---> Processing entities asynchronously...`)
-    await Promise.all( entities.map( process_entity ) )
-    log(`\n\n ---> DONE processing entities asynchronously...`)
+export async function get_client() {
+    if (_client) return _client;
+    log(`Connecting to SurrealDB → `);
+    const db = new Surreal();
+    let url = process.env['SURREAL_DB_URL']  as string ;
+    let user = process.env['SURREAL_DB_USER']  as string
+    let pw = process.env['SURREAL_DB_PW']  as string
     
-
-    log(`Done processing entities, now proceeding to relations`);
-    let relations = await llm.extract_relations(text, entities, 'top');
-    debug.add('relations', relations ) ;      
-
-    log(`\n\n ---> Processing Relations asynchronously...`)
-    await Promise.all( relations.map( process_relation ) )
-    log(`\n\n ---> DONE processing Relations asynchronously...`)
-
-    log(`Done`) 
-}
-
-
-export async function process_relation(r  : any ) {
+    log(`Using surreal url=${url}`) ;
+    log(`Using surreal user=${user}`) ;    
     
-    let relation = {
-	name : r.name, 
-	source_eid : r.source,
-	dest_eid : r.target,
-	kind : "Relation" 
-    } ;
-
-    log(`Adding the following relation to db`)
-    console.log(relation)
-    
-    let result = await add_relation_to_db(relation);
-    debug.add('relation_add_result' , result) 
-
-    log(`Done`) 
-    return result 
-}
-
-
-
-
-
-
-interface Relation {
-    kind : string,
-    name : string,     
-    source_eid :  string,
-    dest_eid :  string ,
-
-}
-
-interface RelationWithID extends Relation {
-    rid : string,
-}
-
-
-export  function add_relation_id( r: Relation ) {
-    //first we check if the relation already exists in the database
-    //a relation id uniquely specifies a relation by concatenating the name_source_eid_dest_eid
-    let { name, source_eid, dest_eid }  = r ; 
-    let rid = `${name}:: (${source_eid}) -> (${dest_eid})`
-    return {
-	...r ,rid 
-    }
-} 
-
-/*
-   Some thoughts on 'relations'
-   
-   the relation name can be used to create more specificity, such as
-   'causes_infrequently' , or 'usually preceded by'
-
-   There are some benefits of this:
-   
-   1) the embedding of the name will inherit this semantic specificity and be useful in the future (finding similar relations, merging relations)
-
-   2) It keeps the payload simple
-
-   3) It encourages building higher level features on top of queries that retrieve many sub associations and create a gestalt or final impression based on these  
-   
-   
- */
-
-export async function add_relation_to_db(r : Relation) {
-
-    const client = get_client() ; 
-    
-    let relation_with_id = await add_relation_id(r) ;
-    let {name, source_eid, dest_eid , rid } = relation_with_id ;
-
-    //check the database (tom collection) for an object with rid field equal to this one
-    let exists = await tu.check_for_rid(rid, client) ;
-
-    if (exists) {
-	//if it is found then log we are skipping
-	log(`Relation with rid=${rid} already exists, and will be skipped`)
-	return 
-    }
-
-    //if it is not found then we calculate the embedding of the name field
-    let name_embedding = await tu.embedding1024(name)
-    let rid_embedding  = await tu.embedding1024(rid) 
-
-    
-    //create a data point , log the point, before adding to qdrant db
-
-    const pt = {
-	//what if i make the id the hash of the rid? 
-	id : await tu.eid_to_uuid(rid) ,  
-	vector : {
-	    primary :  name_embedding,
-	    secondary : rid_embedding, 
-	} , 
-	payload : {
-	    rid , 
-	    name ,
-	    source_eid,
-	    dest_eid , 
-	    kind : "relation" 
-	} 
-    } ; 
-    
-    log(`The following pt will be uploaded`) ;
-    console.log(pt) 
-    
-    await client.upsert('tom' , {
-	wait : true ,
-	points : [
-	    pt 
-	]
+    // Open a connection and authenticate
+    await db.connect(url, {
+	namespace: "tom",
+	database: "tom",
+	auth: {
+	    username: user,
+	    password: pw,
+	}
     });
 
-    log(`Done`) 
+    log(`got client`) ; 
+
+    _client = db;
+    return db;
+}
+
+//-------------------------------------------------------------
+// 2.  UTILITIES (UUIDs, embeddings, existence checks)
+//-------------------------------------------------------------
+
+
+const cacheDir = '/tmp/tom_surreal' ;
+export const fs_cache = new FileSystemCache<any>({
+    cacheDir,
+    onlyLogHitsMisses : true,
+    logPrefix: "surreal_cache" ,
+    namespace: "tom_surreal" , 
+});
+
+export const cached_embedding = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
+export const cached_structured_prompt = CacheUtils.memoize( structured_prompt, fs_cache ) ; 
+
+// --
+
+export function eid_to_uuid(eid: string) {
+    return common.apis.cryptography.uuid_from_text(eid);
+}
+export function uuid_from_sha256(text: string) {
+    return common.apis.cryptography.uuid_from_text(text);
+}
+
+export interface Entity {
+    kind: 'entity';
+    category: string;
+    eid: string;
+}
+export interface EntityWithEmbeddings extends Entity {
+    eid_vector: number[];
+}
+
+export async function add_embeddings(e: Entity): Promise<EntityWithEmbeddings> {
+    const eid_vector      = await embedding1024(e.eid);
+    return { ...e, eid_vector} 
+}
+
+async function check_for_id(table: string, id: string, client?: InstanceType<typeof Surreal>) {
+    const db = client ?? (await get_client());
+    // Query returns a tuple of one array of rows; cast to expected type
+    const result = await db.query(`SELECT id FROM ${table} WHERE id = $id LIMIT 1`, { id }) as [{ id: string }[]];
+    const row = result[0]?.[0];
+    let id_exists = ( row ? true : false ) ;
+
+    if (id_exists) {
+	log(`Id=${id} exists in table=${table} already`) 
+    } else {
+	log(`Id=${id} DOES NOT exist in table=${table} already`) 	
+    }
+    
+    return id_exists 
+    
+}
+export const check_for_eid = (eid: string, c?: any) => check_for_id('entity', eid, c);
+export const check_for_rid = (name : string, rid: string, c?: any) => check_for_id(name, rid, c);
+
+//-------------------------------------------------------------
+// 3.  ENTITY & RELATION WRITERS
+//-------------------------------------------------------------
+
+export function format_id(s : string) {
+    return s.replace( new RegExp(" ", 'g') , "_" )  ; 
+}
+
+export async function process_entity(e: Entity) {
+    
+    const db = await get_client();
+    
+    if (await check_for_eid(e.eid, db)) {
+	log(`Finished processing entity ${e.eid}, already exists`)
+	return ; 
+    } 
+    
+    var { eid_vector, eid, category   } = await add_embeddings(e);
+
+    let formatted_eid = format_id(eid) ;
+    category          = format_id(category) ; 
+
+    let entity = {
+	id: formatted_eid , 
+	eid: formatted_eid ,                 
+	category , 
+	eid_vector , 
+    }
+
+    log(`creating entity`)
+    debug.add('entity' , entity)
+
+    await db.query(`INSERT IGNORE INTO entity $entity;`, {entity} ) ;
+    
+    log(`Ensuring that the category exists`)
+    let category_id = category ; 
+    debug.add("category_id" , category_id) ;
+    
+    log(`Ensuring category:${category_id}`)
+    await db.query(`
+	    INSERT IGNORE INTO category { 
+                  id  : $category_id , 
+                  name : $category_id , 
+                  created : time::now()  
+            } 
+    `, { category_id }  ) ;
+    log(`Finished with category query`)
+    
+    log(`Now creating category relation`) ;
+    
+    await db.query(`
+
+        LET $e = type::thing("entity", $e1) ; 
+        LET $c = type::thing("category", $c1);
+        RELATE $e -> has_category -> $c ; 
+
+    `, {
+	e1 : entity.eid  ,
+	c1 : category_id , 
+    });
 
     
+    log(`Finished processing entity and its category`) 
+    
+}
+
+interface RelationBase { kind: 'relation'; name: string; source_eid: string; dest_eid: string; }
+
+export function add_relation_id(r: RelationBase) {
+    let rid = format_id(`${r.source_eid}->${r.name}->${r.dest_eid}`) ;
+    return { ...r, rid  }
+}
+
+export async function reset_tom_db() {
+    const db = await get_client();
+    log(`Resetting db`)
+    return await db.query(`REMOVE DB tom ; DEFINE DB tom;`) 
+}
+
+
+export async function process_relation(r: { name: string; source: string; target: string }) {
+    
+    const db = await get_client();
+    
+    const base: RelationBase = { kind: 'relation', name: format_id(r.name), source_eid: format_id(r.source), dest_eid: format_id(r.target) };
+    
+    const relation = add_relation_id(base);
+    
+    let {rid, name, source_eid, dest_eid} = relation ;
+
+    //check if it exists already
+    let relation_exists = await check_for_id(name, rid ) ;
+    if (relation_exists) {
+	log(`Relation with id=${rid} already exists`) ;
+	return null
+    } else {
+	log(`Relation with id=${rid} DOES NOT exist`) ;	
+    }
+	
+    const rid_vector  = await embedding1024(rid);
+
+    log(`Proceeding with db query to add relation`)
+
+    await db.query(`
+     LET $in  = type::thing("entity",$source_eid) ; 
+     LET $out = type::thing("entity",$dest_eid) ; 
+     LET $table = type::table($name) ; 
+
+     RELATE $in->$table->$out CONTENT { 
+         id : $rid  , 
+         rid : $rid , 
+         rid_vector : $rid_vector 
+     }
+    `, { name, rid, rid_vector, source_eid, dest_eid  }) ; 
+
+    log(`Finished`)  ;
+
+    return rid 
+}
+
+//-------------------------------------------------------------
+// 4.  LLM HELPERS (entity / relation extraction, code synthesis)
+//-------------------------------------------------------------
+const lc_string = z.string().transform((s) => s.toLowerCase());
+const id_string = lc_string.transform( (s) => s.replace(/ /g ,"_") ) ;
+
+const Categories = [
+    'condition',
+    'symptom',
+    'medication',
+    'procedure',
+    'imaging',
+    'lab test',
+    'diagnostic test',
+    'organ',
+    'organ system',
+    'clinical finding',
+] as const;
+
+async function extract_entities(text: string, tier? : string) {
+
+    tier = tier || default_tier
+    log(`Using tier=${tier}`)
+    
+    const rf = zodTextFormat(
+	z.object({
+	    entities: z.array(z.object({ eid: id_string, category: z.enum(Categories), importance: z.number() })),
+	}),
+	'entities',
+    );
+    const prompt = `
+
+You are a medical knowledge expert helping to build a clinical decision support system. 
+
+Extract all medical entities in the text, including the category of each entity and its relative importance (0-1) in the text.
+
+Each entity will be identified by the eid field (entity id) which is a human readable string which is the direct name of the entity
+
+INPUT:
+${text}
+`;
+    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    let entities = res.entities as Entity[];
+    debug.add('extracted_entities' , entities )
+    return entities; 
+
+}
+
+async function extract_relations(text: string, entities: Entity[], tier? : string) {
+
+    tier = tier || default_tier
+    log(`Using tier=${tier}`)
+    
+    const rf = zodTextFormat(
+	z.object({ relations: z.array(z.object({ name: lc_string, source: lc_string, target: lc_string  })) }),
+	'relations',
+    );
+    
+    const prompt = `
+
+You are a medical knowledge expert helping to build a clinical decision support system. 
+
+Examine the text and identify relationships between the listed entities. 
+
+Each relationship should include a name (the name of the relationship), the source (the source entity entity id - eid) and the target (the target eid). 
+
+The name should concisely capture the essence of the relationship, and avoid being too wordy. 
+
+Make your choices and output as clean and consitent as possible since your output will be used for building a medical grade knowledge graph.
+
+ENTITIES:
+${JSON.stringify(entities)} 
+
+INPUT TEXT:
+${text}
+
+    `;
+    
+    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    let relations = res.relations as { name: string; source: string; target: string }[];
+
+    debug.add('relations', relations) ;
+    return relations 
+    
+}
+
+async function validate_relations(relations: { name: string; source: string; target: string }[], tier?: string) {
+    tier = tier || default_tier;
+    log(`Validating relations using tier=${tier}`);
+    
+    const rf = zodTextFormat(
+        z.object({ rejected_relations: z.array(z.number()) }),
+        'rejected_relations',
+    );
+    
+    // Build relations string with indices in format: index: source -> name -> target
+    const relations_string = relations.map((r, index) => 
+        `${index}: ${r.source} -> ${r.name} -> ${r.target}`
+    ).join('\n');
+    
+    const prompt = `
+You are a medical knowledge expert helping to build a clinical decision support system.
+
+Examine the following medical relations and identify which ones should be rejected.
+
+IMPORTANT: Be CONSERVATIVE in rejecting relations. Only reject relations that are:
+1. Anatomically impossible (e.g., "heart -> located_in -> brain")
+2. Medically contradictory (e.g., "fever -> decreases -> body_temperature")
+3. Logically nonsensical (e.g., "aspirin -> symptom_of -> headache")
+4. Extremely highly unlikley to be true (e.g., "dialysis -> treats -> cellulitis") 
+
+DO NOT reject relations that are:
+- Plausible medical associations (symptoms, conditions, treatments)
+- Less common but possible medical relationships
+- Relationships you're uncertain about
+- Common symptom-condition relationships
+
+
+Only return the indices of relations that are clearly medically impossible or contradictory.
+When in doubt, DO NOT reject the relation.
+
+RELATIONS TO VALIDATE:
+${relations_string}
+    `;
+
+    debug.add('validation_prompt' , prompt) ; 
+    
+    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    const rejected_relation_indices = res.rejected_relations as number[];
+    
+    const validated_relations = relations.filter((r, index) => !rejected_relation_indices.includes(index));
+    const rejected_relations = relations.filter((r, index) => rejected_relation_indices.includes(index));
+    
+    debug.add('validated_relations', validated_relations);
+    debug.add('rejected_relations', rejected_relations);
+    
+    return {
+        validated_relations,
+        rejected_relations
+    };
+}
+
+async function extract_relations_with_metadata(text: string, entities: Entity[], tier? : string) {
+
+    tier = tier || default_tier
+    log(`Using tier=${tier}`)
     
 
-}
+    const metadata = z.array( z.array(z.string()).length(2) ) ; 
+    
+    const rf = zodTextFormat(
+	z.object({ relations: z.array(z.object({ name: lc_string, source: lc_string, target: lc_string, metadata : metadata })) }),
+	'relations',
+    );
+    
+    const prompt = `
 
-export async function test_entity_extraction() {
-    let text = llm.example_texts[0] ;
-    return extract_and_store_entities_from_text(text) ; 
-}
+You are a medical knowledge expert helping to build a clinical decision support system. 
 
-export async function test_full_extraction_and_storage() {
-    log(`fn:full_test`) 
-    let text = llm.example_texts[0] ;
-    return await extract_and_store_entities_and_relations( text ) ; 
-}
+Examine the text and identify relationships between the listed entities. 
 
-export async function test_entity_and_association_extraction() {
-    log(`fn:test_entity_and_association_extraction`) 
-    let text = llm.example_texts[0] ;
-    log(`getting entities`)
-    let entities = await llm.extract_entities(text, 'top') ;
-    debug.add('entities', entities ) ;
-    log(`getting relations`)    
-    let relations = await llm.extract_relations(text, entities, 'top');
-    debug.add('relations', relations ) ;      
+Each relationship should include a name (the name of the relationship), the source (the source entity entity id - eid) and the target (the target eid), as well as metadata. 
+
+The name should capture the essence of the relationship, and avoid trying to capture all nuances of the relationship which can instead be done with the metadata field. 
+
+Each relationship might need further qualification or context, and this is provided by the metadata field in the relation which is an array of key,value pairs (as strings) that let you make various qualifications or context clarifications on the relationship which is being defined. 
+
+Each pair of strings in the metadata array should though of as key,value pairs that would be parsed into a record object and should be structured as follows: 
+
+The first string is a qualfier on the relation, such as: 
+
+if, when, only if, unless, during, after, before, within, severity, frequency, probability, duration, intensity, evidence_level 
+
+or any other qualifier you deem appropriate. 
+
+The second string is the object of the qualifier that finishes the context/clarificaiton needed 
+
+If no metadata is necessary or appropriate then return an EMPTY array. 
+
+Make your choices and output as clean and consitent as possible since your output will be used for building a medical grade knowledge graph.
+
+ENTITIES:
+${JSON.stringify(entities)} 
+
+INPUT TEXT:
+${text}
+
+    `;
+    
+    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    let relations = res.relations as { name: string; source: string; target: string }[];
+
+    debug.add('relations', relations) ;
     return relations 
     
 }
 
 
-export async function process_entity( e : tu.Entity ) {
-    log(`fn:process_entity`)
-    console.log(e) 
+//-------------------------------------------------------------
+// 5.  INGESTION API
+//-------------------------------------------------------------
+export async function ingest_text(text: string) {
+    return extract_and_store_entities_and_relations(text);
+}
 
-    log('getting client') 
-    const client = await get_client()
+export async function extract_and_store_entities_and_relations(text: string) {
+    const entities = await extract_entities(text);
+    await Promise.all(entities.map(process_entity));
+    const rels = await extract_relations(text, entities);
+    await Promise.all(rels.map(process_relation));
+}
 
-    //ensure the tom collection exists
-    await init_tom_collection() ; 
+export var test_text_1 = `An immune system illness that mainly causes dry eyes and dry mouth. Sjogren's syndrome is an immune system illness. It occurs when the body's immune system attacks its own healthy cells. Sjogren's often occurs with other immune ailments, such as rheumatoid arthritis and lupus. The two most common symptoms are dry eyes and a dry mouth. Eyes might itch or burn. The mouth might feel full of cotton. Treatments include eye drops, medicines and eye surgery to relieve symptoms.`
 
+export async function ontologize(text : string) {
+
+    log(`Extracting entities`) 
+    const entities = await extract_entities(text);
+
+    debug.add('entities' , entities) ; 
+    log(`Got entities, now extracting relations`) 
     
-    //parse the entity
-    var { eid, category } = e ;
+    const relations = await extract_relations(text, entities);
+
+    debug.add('relations' , relations) ;
+    log(`Got relations`);
+
+    var  {validated_relations , rejected_relations} = await validate_relations(relations  ) ; 
+									       
+
+    return {
+	entities, relations  , text , validated_relations, rejected_relations 
+    } 
+
+}
+
+
+export async function test1() { return await ontologize(test_text_1) } ; 
+
+export async function ingest_text_with_summary(text: string) {
+
+    log(`Getting client`) 
+    const db = await get_client();
+
+    log(`Extracting entities`) 
+    const ents = await extract_entities(text);
+    const added_entities: Entity[] = [];
+    await Promise.all(
+	ents.map(async (e) => {
+	    if (!(await check_for_eid(e.eid, db))) {
+		await process_entity(e);
+		added_entities.push(e);
+	    }
+	}),
+    );
+
+    log(`Got entities, now extraction relations`) 
     
-    //first check if it exists in the DB
-    log(`Checking existence for eid=${eid}, category=${category}`) ; 
-    let exists = await tu.entity_exists(e , client ) ;
-    log(`exists=${exists}`) ;
+    const relsRaw = await extract_relations(text, ents);
+    const added_relations: { rid: string }[] = [];
 
-    if (exists) {
-	log(`Entity ${eid} already exists and will be skipped`) ; 
-    } else {
-	log(`Entity ${eid} DOES NOT exist`) ; 	
-	log(`Calculating embeddings...`) ;
-	let with_embeddings = await tu.add_embeddings(e) ;
-	let  {
-	    category , eid_vector, category_vector 
-	} = with_embeddings ;
-
-	//put the entity into the database
-	log(`Writing entity to db`)
-
-	const pt = {
-	    //what if i make the id the hash of the eid? 
-	    id : await tu.eid_to_uuid(eid) ,  // had a bug here because of omiting await :( 
-	    vector : {
-		primary : eid_vector ,
-		secondary : category_vector 
-	    } , 
-	    payload : {
-		eid : with_embeddings.eid,			
-		category ,
-		kind : "entity" 
-	    } 
+    let process_and_add_relation = async function(r :any) {
+	let rid = await process_relation(r)  ;
+	if (rid) {
+	    log(`Adding relation with rid=${rid}`) 
+	    added_relations.push( {rid}  ) 
+	} else {
+	    log(`Skipping relation with rid=${rid}`) 	    
 	}
- 
-	log(`The following pt will be uploaded`) ;
-	console.log(pt) 
-	
-	await client.upsert('tom' , {
-	    wait : true ,
-	    points : [
-		pt 
-	    ]
-	});
-
-	log(`Done`) 
-
     }
+    
+    await Promise.all( relsRaw.map( process_and_add_relation  ) ) 
+
+    log(`Got relations, now summarizing knowledge update...`) 	
+
+    let knowledge_update = { 
+	id: uuid_from_sha256(text),
+	text,
+	entity_eids: added_entities.map((e) => e.eid),
+	relation_rids: added_relations.map((r) => r.rid),
+	timestamp: new Date().toISOString(),
+	text_vector: await embedding1024(text),
+    } ;
+
+    db.query(`INSERT IGNORE INTO knowledge_update $knowledge_update`, { knowledge_update}); 
+
+    log(`Finished saving knowledge update`)  ; 
+    
+    return { added_entities, added_relations };
 }
 
+//TODO
+
+// vector search 
+
+export const queries = {
+    getAllEntities: async () => (await get_client()).query('SELECT * FROM entity').then((r:any) => r[0]),
+    getEntitiesByCategory: async (cat: string) => (await get_client()).query('SELECT * FROM entity WHERE category = $c', { c: cat }).then((r : any) => r[0])
+    
+}
+    
 
 
+//-------------------------------------------------------------
+// UMBRELLA EXPORT OBJECT
+//-------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-/*
-  UTILS BELOW -> 
- */
-
-
-var client : any = null ;
-var client_initialized : boolean = false ; 
-var database_url = "http://127.0.0.1:6333"  
-const log = common.logger.get_logger({id : 'tom' }) ;
-
-
-export function set_database_url(url : string) {
-    database_url = url ;
-    client_initialized = false ; 
+const util =  {
+    eid_to_uuid,
+    uuid_from_sha256,
+    add_embeddings,
+    check_for_eid,
+    check_for_rid
 }
 
-export function get_client() {
-    if (client_initialized) {
-	log("Returning (already) initialized client") 
-	return client
-	
-    } else {
-	
-	log(`Initializing client with url: ${database_url}`) ;
-	let c = new QdrantClient({url: database_url  });
-	client = c ;
-
-	log(`Finished initializing client`) 
-	client_initialized = true ;
-	return c ; 
-    }
+const _internals = { 
+    get_client,
 }
 
-export async function get_collections() {
-    return (await ( get_client()).getCollections()).collections 
-}
+export { 
+    util, 
+    _internals ,
+} 
 
-
-//checks if the tom collection exists in the qdrant database
-export async function tom_collection_exists() {
-    let colls = await get_collections()
-    let names = colls.map((x:any)=>x.name) ;
-    return names.includes('tom') 
-}
-
-export async function init_tom_collection() {
-    //first checks if it exists - if not it initializes it
-    if (! await tom_collection_exists() ) {
-	
-	log(`T O M .  collection does not exist, need to initialize`) ;
-	let c = get_client() ;
-	let r = await c.createCollection( 'tom' , {
-	    vectors : {
-	
-		primary : { size : 1024 , distance : 'Dot'}  ,
-		secondary : { size : 1024 , distance : 'Dot'}  ,
-	    } 
-	})
-	log(`result`) 
-	console.log(r)
-	log(`done`) 
-    } else {
-	log(`T O M .  collection already initialized`) ;
-    }
-}
-
-export async function get_tom_collection() {
-    await init_tom_collection() ;
-    return await ( (get_client()).getCollection('tom') ) 
-}
-
-
-
-export {llm}
