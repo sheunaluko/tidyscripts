@@ -1,6 +1,6 @@
 
 import * as cryptography from './cryptography';
-import {get_logger} from "../logger" ; 
+import {get_logger,color_string} from "../logger" ; 
 
 /**
  * # TidyScripts Cache System
@@ -621,12 +621,17 @@ export abstract class BaseCache<T = any> implements ICache<T> {
     
     if (operation === 'hit') {
       this.stats.hits++;
-      this.stats.hitRate = this.stats.hits / (this.stats.hits + this.stats.misses) || 0;
-      this.log(`Cache hit: key=${context?.key || 'unknown'} hitRate=${(this.stats.hitRate * 100).toFixed(2)}%`);
+	this.stats.hitRate = this.stats.hits / (this.stats.hits + this.stats.misses) || 0;
+
+	let HIT = color_string('green' , 'Cache hit') ; 
+	
+      this.log(`${HIT}: key=${context?.key || 'unknown'} hitRate=${(this.stats.hitRate * 100).toFixed(2)}%`);
     } else if (operation === 'miss') {
       this.stats.misses++;
-      this.stats.hitRate = this.stats.hits / (this.stats.hits + this.stats.misses) || 0;
-      this.log(`Cache miss: key=${context?.key || 'unknown'} reason=${context?.reason || 'unknown'} hitRate=${(this.stats.hitRate * 100).toFixed(2)}%`);
+	this.stats.hitRate = this.stats.hits / (this.stats.hits + this.stats.misses) || 0;
+
+	let MISS = color_string('red', 'Cache miss') ; 
+      this.log(`${MISS}: key=${context?.key || 'unknown'} reason=${context?.reason || 'unknown'} hitRate=${(this.stats.hitRate * 100).toFixed(2)}%`);
     } else if (operation === 'set') {
       this.stats.sets++;
     } else if (operation === 'delete') {
@@ -1003,7 +1008,7 @@ export class MemoryCache<T = any> extends BaseCache<T> {
       return null;
     }
     
-    this.log('Cache hit', { key, fullKey });
+    //this.log('Cache hit', { key, fullKey });
     this.updateStats('hit', { key, fullKey });
     return entry.value;
   }

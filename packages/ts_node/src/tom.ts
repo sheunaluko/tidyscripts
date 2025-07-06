@@ -1,10 +1,19 @@
 /**
  * Tidyscripts Ontology Of Medicine 
  *
- * Leverages surrealdb database and ai API to build, update, and serve a medical ontology
+ * Leverages surrealdb (multimodal: embedding/graph/table) database and AI APIs to build, update, and serve a medical ontology
+ * with built in entity and relation deduplication 
+ * 
  * Input: unstructured text 
  * Output: Ontology creation / update 
- *  
+ * 
+ * Usage: 
+ * ```
+ * let results = await ingest_text("diuretics are used to treat heart failure exacerbations")  
+ * //see ingest_text docs below 
+ * ```
+ * 
+ * @packageDocumentation   
  */
 
 import * as common       from 'tidyscripts_common';
@@ -17,6 +26,7 @@ import {FileSystemCache} from "./apis/node_cache" ;
 import Surreal, { RecordId } from 'surrealdb'; 
 
 const log   = common.logger.get_logger({ id: 'tom' });
+const {color_string} = common.logger ; 
 const debug = common.util.debug;
 var _client : any = null  ; 
 
@@ -28,7 +38,11 @@ export function set_default_tier(t : string) {
 }
 
 /*
-   Todo - update relation extraction to include metadata 
+   Todo - 
+   [ ] Add check to process_relations fn to ensure that all referenced eids exist , can create helper fn check_for_ids( ids : eid[]) ; 
+        - if any eids missing then THROW error with logging 
+   [x] update relation extraction to include metadata  (did not work well as of Sun Jul  6 04:43:57 EDT 2025) 
+
 */
 
 export async function get_client() {
@@ -93,28 +107,45 @@ export interface EntityWithEmbeddings extends Entity {
 }
 
 export async function add_embeddings(e: Entity): Promise<EntityWithEmbeddings> {
-    const eid_vector      = await embedding1024(e.eid);
+    const eid_vector      = await cached_embedding(e.eid);
     return { ...e, eid_vector} 
 }
 
-async function check_for_id(table: string, id: string, client?: InstanceType<typeof Surreal>) {
+
+async function check_for_eid(eid: string, client?: InstanceType<typeof Surreal>) {
     const db = client ?? (await get_client());
     // Query returns a tuple of one array of rows; cast to expected type
-    const result = await db.query(`SELECT id FROM ${table} WHERE id = $id LIMIT 1`, { id }) as [{ id: string }[]];
+    const result = await db.query(`SELECT eid FROM entity WHERE eid = $eid LIMIT 1`, { eid }) as [{ eid: string }[]];
     const row = result[0]?.[0];
     let id_exists = ( row ? true : false ) ;
 
     if (id_exists) {
-	log(`Id=${id} exists in table=${table} already`) 
+	log(`id=${eid} ${color_string('green','exists')}`)
     } else {
-	log(`Id=${id} DOES NOT exist in table=${table} already`) 	
+	log(`id=${eid} ${color_string('red','doesnt exist')}`) ; 
     }
     
     return id_exists 
     
 }
-export const check_for_eid = (eid: string, c?: any) => check_for_id('entity', eid, c);
-export const check_for_rid = (name : string, rid: string, c?: any) => check_for_id(name, rid, c);
+
+async function check_for_rid(rid: string, client?: InstanceType<typeof Surreal>) {
+    const db = client ?? (await get_client());
+    // Query returns a tuple of one array of rows; cast to expected type
+    const result = await db.query(`SELECT rid FROM relations WHERE rid = $rid LIMIT 1`, { rid }) as [{ rid: string }[]];
+    const row = result[0]?.[0];
+    let id_exists = ( row ? true : false ) ;
+
+    if (id_exists) {
+	log(`id=${rid} ${color_string('green','exists')}`)
+    } else {
+	log(`id=${rid} ${color_string('red','doesnt exist')}`)
+    }
+
+    return id_exists 
+    
+}
+
 
 //-------------------------------------------------------------
 // 3.  ENTITY & RELATION WRITERS
@@ -129,20 +160,17 @@ export async function process_entity(e: Entity) {
     const db = await get_client();
     
     if (await check_for_eid(e.eid, db)) {
-	log(`Finished processing entity ${e.eid}, already exists`)
-	return ; 
+	//log(`Finished processing entity ${e.eid}, already exists`)
+	return false ; 
     } 
     
     var { eid_vector, eid, category   } = await add_embeddings(e);
 
-    let formatted_eid = format_id(eid) ;
-    category          = format_id(category) ; 
-
     let entity = {
-	id: formatted_eid , 
-	eid: formatted_eid ,                 
+	id: eid, 
+	eid , 
 	category , 
-	eid_vector , 
+	eid_vector  
     }
 
     log(`creating entity`)
@@ -167,7 +195,6 @@ export async function process_entity(e: Entity) {
     log(`Now creating category relation`) ;
     
     await db.query(`
-
         LET $e = type::thing("entity", $e1) ; 
         LET $c = type::thing("category", $c1);
         RELATE $e -> has_category -> $c ; 
@@ -178,7 +205,8 @@ export async function process_entity(e: Entity) {
     });
 
     
-    log(`Finished processing entity and its category`) 
+    log(`Finished processing entity and its category`)
+    return true ; 
     
 }
 
@@ -207,15 +235,15 @@ export async function process_relation(r: { name: string; source: string; target
     let {rid, name, source_eid, dest_eid} = relation ;
 
     //check if it exists already
-    let relation_exists = await check_for_id(name, rid ) ;
+    let relation_exists = await check_for_rid(rid , db ) ;
     if (relation_exists) {
-	log(`Relation with id=${rid} already exists`) ;
-	return null
+	//log(`Relation with id=${rid} already exists`) ;
+	return false 
     } else {
-	log(`Relation with id=${rid} DOES NOT exist`) ;	
+	//log(`Relation with id=${rid} does not exist`) ;	
     }
 	
-    const rid_vector  = await embedding1024(rid);
+    const rid_vector  = await cached_embedding(rid);
 
     log(`Proceeding with db query to add relation`)
 
@@ -227,13 +255,18 @@ export async function process_relation(r: { name: string; source: string; target
      RELATE $in->$table->$out CONTENT { 
          id : $rid  , 
          rid : $rid , 
-         rid_vector : $rid_vector 
      }
-    `, { name, rid, rid_vector, source_eid, dest_eid  }) ; 
+    `, { name, rid, source_eid, dest_eid  }) ;
+
+
+    log(`Proceeding with db query to store rid vector`)
+
+    let relation_data = { rid, rid_vector, name  }; 
+    await db.query(`INSERT IGNORE INTO relations $relation_data`, {relation_data})
 
     log(`Finished`)  ;
 
-    return rid 
+    return rid
 }
 
 //-------------------------------------------------------------
@@ -279,6 +312,14 @@ ${text}
 `;
     const res: any = await cached_structured_prompt(prompt, rf, tier);
     let entities = res.entities as Entity[];
+    debug.add('raw_entities' , entities )    
+
+    log(`formatting entities`) ; 
+    for (var e of entities) {
+	e.eid = format_id(e.eid);
+	e.category = format_id(e.category); 	
+    }
+    
     debug.add('extracted_entities' , entities )
     return entities; 
 
@@ -437,16 +478,6 @@ ${text}
 //-------------------------------------------------------------
 // 5.  INGESTION API
 //-------------------------------------------------------------
-export async function ingest_text(text: string) {
-    return extract_and_store_entities_and_relations(text);
-}
-
-export async function extract_and_store_entities_and_relations(text: string) {
-    const entities = await extract_entities(text);
-    await Promise.all(entities.map(process_entity));
-    const rels = await extract_relations(text, entities);
-    await Promise.all(rels.map(process_relation));
-}
 
 export var test_text_1 = `An immune system illness that mainly causes dry eyes and dry mouth. Sjogren's syndrome is an immune system illness. It occurs when the body's immune system attacks its own healthy cells. Sjogren's often occurs with other immune ailments, such as rheumatoid arthritis and lupus. The two most common symptoms are dry eyes and a dry mouth. Eyes might itch or burn. The mouth might feel full of cotton. Treatments include eye drops, medicines and eye surgery to relieve symptoms.`
 
@@ -473,58 +504,75 @@ export async function ontologize(text : string) {
 }
 
 
-export async function test1() { return await ontologize(test_text_1) } ; 
+//test 1 is an interesting case of the validation removing appropriately wrong/vague relations 
+export async function test1() { return await ontologize(test_text_1) } ;
+export async function test2() { return await ingest_text(test_text_1) } ;
 
-export async function ingest_text_with_summary(text: string) {
+/**
+ * Main function for ingesting text 
+ * Will take input text as a string and will extract entities and relations, validated them
+ * Then uploade them into surrealdb instance 
+ */
+export async function ingest_text(text: string) {
 
     log(`Getting client`) 
     const db = await get_client();
 
-    log(`Extracting entities`) 
-    const ents = await extract_entities(text);
-    const added_entities: Entity[] = [];
+    log(`Ontologizing`)
+    let {entities, validated_relations, rejected_relations} = await ontologize(text) ;
+
+    
+    var added_entities: Entity[] = [];
+    var skipped_entities: Entity[] = [];    
+
+    log(`Processing entities`) ; 
     await Promise.all(
-	ents.map(async (e) => {
-	    if (!(await check_for_eid(e.eid, db))) {
-		await process_entity(e);
-		added_entities.push(e);
+	entities.map(async (e:any) => {
+	    let added = await process_entity(e) ;
+	    let action = "" ; 
+	    if (added ) { 
+		added_entities.push(e) ; action = "added" ; 
+	    } else {
+		skipped_entities.push(e) ; action = "skipped" ; 
 	    }
-	}),
+	    
+	    //log(`${action} entity:: ${e.eid}`)	 ; 
+	})
+    ); 
+
+    var added_relations : any[] = [] ; 
+    var skipped_relations : any[] = [] ; 
+
+    log(`Processing relations`) ; 
+    await Promise.all(
+	validated_relations.map(async (r:any) => {
+	    let added = await process_relation(r) ;
+	    let action = "" ;
+	    if (added ) {
+		added_relations.push(r) ; action = "added"; 
+	    } else {
+		skipped_relations.push(r) ; action = "skipped" ; 
+	    }
+
+	})
     );
-
-    log(`Got entities, now extraction relations`) 
     
-    const relsRaw = await extract_relations(text, ents);
-    const added_relations: { rid: string }[] = [];
-
-    let process_and_add_relation = async function(r :any) {
-	let rid = await process_relation(r)  ;
-	if (rid) {
-	    log(`Adding relation with rid=${rid}`) 
-	    added_relations.push( {rid}  ) 
-	} else {
-	    log(`Skipping relation with rid=${rid}`) 	    
-	}
-    }
-    
-    await Promise.all( relsRaw.map( process_and_add_relation  ) ) 
-
-    log(`Got relations, now summarizing knowledge update...`) 	
+    log(`Summarizing knowledge update...`) 	
 
     let knowledge_update = { 
 	id: uuid_from_sha256(text),
 	text,
-	entity_eids: added_entities.map((e) => e.eid),
-	relation_rids: added_relations.map((r) => r.rid),
+	entity_eids: added_entities.map((e:any) => e.eid),
+	relation_rids: added_relations.map((r:any) => r.rid),
 	timestamp: new Date().toISOString(),
-	text_vector: await embedding1024(text),
+	text_vector: await cached_embedding(text),
     } ;
 
     db.query(`INSERT IGNORE INTO knowledge_update $knowledge_update`, { knowledge_update}); 
 
     log(`Finished saving knowledge update`)  ; 
     
-    return { added_entities, added_relations };
+    return { added_entities, added_relations, entities, validated_relations, rejected_relations, skipped_relations, skipped_entities };
 }
 
 //TODO

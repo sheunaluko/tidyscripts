@@ -60,4 +60,18 @@ export function get_logger(ops : LoggerOps) {
 
       
   }
-} 
+}
+
+export function color_string(color : string, text : string) {
+    let code = colors[color] ;
+    let reset = colors['reset'] ; 
+    return `${code}${text}${reset}` ; 
+}
+
+export var colors : any = { 
+    // ANSI escape codes for common colors
+    red : '\x1b[31m' , 
+    green :'\x1b[32m' ,
+    reset : '\x1b[0m' ,  // Resets formatting to default
+}
+

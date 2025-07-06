@@ -127,7 +127,7 @@ export class FileSystemCache<T = any> extends BaseCache<T> {
         return null;
       }
       
-      this.log('Cache hit', { key, fullKey });
+      //this.log('Cache hit', { key, fullKey });
       this.updateStats('hit', { key, fullKey });
       return entry.value;
     } catch (error) {
