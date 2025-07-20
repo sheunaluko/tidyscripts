@@ -131,6 +131,15 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>	  
 
+	  <MLink href="/laboratory/graph">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Graph Visualization </Typography>
+		  <p>
+		      Interactive graph visualization powered by Sigma.js with physics simulation
+		  </p>
+	      </Card >
+	  </MLink>
+
 	  <MLink href="/laboratory/bokeh">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Bokeh Interface </Typography>

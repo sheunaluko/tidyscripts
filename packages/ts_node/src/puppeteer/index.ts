@@ -16,6 +16,7 @@
 import puppeteer from 'puppeteer' ;
 import * as common from 'tidyscripts_common'  ;
 import * as apis from "./apis/index"
+import * as speech from "./speech"
 import * as oai from "../apis/openai/index"
 import * as gem from "../apis/gemini/index" 
 
@@ -184,7 +185,7 @@ export async function summarize_page_interactions(page : any) {
     return re 
 } 
 
-export { puppeteer, apis }
+export { puppeteer, apis, speech }
 
 
 

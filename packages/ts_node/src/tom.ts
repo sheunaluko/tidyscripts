@@ -17,6 +17,7 @@
  */
 
 import * as common       from 'tidyscripts_common';
+import {path}            from "./io" ;
 import { z }             from 'zod';
 import { zodTextFormat } from 'openai/helpers/zod';
 const { ailand } = common.apis;
@@ -41,6 +42,7 @@ export function set_default_tier(t : string) {
    Todo - 
    [ ] Add check to process_relations fn to ensure that all referenced eids exist , can create helper fn check_for_ids( ids : eid[]) ; 
         - if any eids missing then THROW error with logging 
+   [ ] Also can use the check_for_ids fn before any entities are added - filter out ALL that already exist (saves a db ping for each) 
    [x] update relation extraction to include metadata  (did not work well as of Sun Jul  6 04:43:57 EDT 2025) 
 
 */
@@ -77,12 +79,13 @@ export async function get_client() {
 //-------------------------------------------------------------
 
 
-const cacheDir = '/tmp/tom_surreal' ;
+const cacheDir = path.join(process.env['TIDYSCRIPTS_DATA_DIR'] as string, '.cache/tom' ) ;
+
 export const fs_cache = new FileSystemCache<any>({
     cacheDir,
     onlyLogHitsMisses : true,
     logPrefix: "surreal_cache" ,
-    namespace: "tom_surreal" , 
+    namespace: "tom" , 
 });
 
 export const cached_embedding = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
@@ -218,13 +221,24 @@ export function add_relation_id(r: RelationBase) {
 }
 
 export async function reset_tom_db() {
+    //Not actually working currently -- permisions issue? I ended up pasting manually runnign the query to reset the db 
     const db = await get_client();
     log(`Resetting db`)
-    return await db.query(`REMOVE DB tom ; DEFINE DB tom;`) 
+    return await db.query(`
+REMOVE DB tom ;
+
+DEFINE DB tom;
+
+DEFINE INDEX ridx ON relations FIELDS rid_vector HNSW DIMENSION 1024 DIST COSINE;
+DEFINE INDEX eidx ON entity    FIELDS eid_vector HNSW DIMENSION 1024 DIST COSINE;`) 
 }
 
+interface RelationMetadata {
+   kud_id  : string  ,  //knowledge_update_id 
+} 	  
 
-export async function process_relation(r: { name: string; source: string; target: string }) {
+
+export async function process_relation(r: { name: string; source: string; target: string }, metadata: RelationMetadata  ) {
     
     const db = await get_client();
     
@@ -243,26 +257,27 @@ export async function process_relation(r: { name: string; source: string; target
 	//log(`Relation with id=${rid} does not exist`) ;	
     }
 	
-    const rid_vector  = await cached_embedding(rid);
-
+    let relation_data = { name, rid, source_eid, dest_eid, kud_id : metadata.kud_id  } ;
     log(`Proceeding with db query to add relation`)
-
+    
     await db.query(`
      LET $in  = type::thing("entity",$source_eid) ; 
      LET $out = type::thing("entity",$dest_eid) ; 
-     LET $table = type::table($name) ; 
+     LET $table = type::table($name) ;
+     LET $kud  = type::thing("knowledge_update",$kud_id) ; 
 
      RELATE $in->$table->$out CONTENT { 
          id : $rid  , 
          rid : $rid , 
+         kud : $kud , 
      }
-    `, { name, rid, source_eid, dest_eid  }) ;
-
+    `, relation_data) ;
 
     log(`Proceeding with db query to store rid vector`)
 
-    let relation_data = { rid, rid_vector, name  }; 
-    await db.query(`INSERT IGNORE INTO relations $relation_data`, {relation_data})
+    const rid_vector  = await cached_embedding(rid);    
+    let relation_vector_data = { rid, rid_vector, name  }; 
+    await db.query(`INSERT IGNORE INTO relations $relation_vector_data`, {relation_vector_data})
 
     log(`Finished`)  ;
 
@@ -506,15 +521,23 @@ export async function ontologize(text : string) {
 
 //test 1 is an interesting case of the validation removing appropriately wrong/vague relations 
 export async function test1() { return await ontologize(test_text_1) } ;
-export async function test2() { return await ingest_text(test_text_1) } ;
+export async function test2() { return await ingest_text(test_text_1, { test :true }) } ;
 
 /**
  * Main function for ingesting text 
  * Will take input text as a string and will extract entities and relations, validated them
  * Then uploade them into surrealdb instance 
  */
-export async function ingest_text(text: string) {
+export async function ingest_text(text: string, metadata : any) {
 
+    /*
+       Todo - create metadata support  
+       
+     */
+
+    const knowledge_id = await uuid_from_sha256(text)
+    log(`KNOWLEDGE UPDATE ID=${knowledge_id}`)
+    
     log(`Getting client`) 
     const db = await get_client();
 
@@ -546,7 +569,7 @@ export async function ingest_text(text: string) {
     log(`Processing relations`) ; 
     await Promise.all(
 	validated_relations.map(async (r:any) => {
-	    let added = await process_relation(r) ;
+	    let added = await process_relation(r, {kud_id: knowledge_id}) ;
 	    let action = "" ;
 	    if (added ) {
 		added_relations.push(r) ; action = "added"; 
@@ -560,8 +583,8 @@ export async function ingest_text(text: string) {
     log(`Summarizing knowledge update...`) 	
 
     let knowledge_update = { 
-	id: uuid_from_sha256(text),
-	text,
+	id: knowledge_id,
+	metadata  , 
 	entity_eids: added_entities.map((e:any) => e.eid),
 	relation_rids: added_relations.map((r:any) => r.rid),
 	timestamp: new Date().toISOString(),
@@ -570,7 +593,16 @@ export async function ingest_text(text: string) {
 
     db.query(`INSERT IGNORE INTO knowledge_update $knowledge_update`, { knowledge_update}); 
 
-    log(`Finished saving knowledge update`)  ; 
+    log(`Finished saving knowledge update`)  ;
+
+    log(`Will link relations to knowledge update`)  ;
+
+    //--- code here 
+
+
+
+
+    
     
     return { added_entities, added_relations, entities, validated_relations, rejected_relations, skipped_relations, skipped_entities };
 }

@@ -65,7 +65,24 @@ export function read_json(fname : string)  { return JSON.parse(read_file(fname))
  * Reads a directory and returns file names
  * 
  */
-export function read_dir(fname : string)  {  return fs.readdirSync(fname) } 
+export function read_dir(dir : string)  {  return fs.readdirSync(dir) } 
+
+/**
+ * Reads a directory and returns SORTED FULL file names
+ * 
+ */
+export function read_sorted_full_paths(dir : string)  {
+    let fnames = read_dir(dir) ; 
+
+    let sorted = fnames.sort((a:string, b:string) =>
+        a.localeCompare(b, undefined, { numeric: true })
+    )
+
+    return sorted.map( (f:string) =>  path.join(dir,f) )
+
+}
+
+
 
 /**
  * Appends file extension to fname if not already there. 
