@@ -151,7 +151,15 @@ const ForceAtlas2Layout: FC<{
 
   useEffect(() => {
     onLayoutChange?.(isRunning);
-  }, [isRunning, onLayoutChange]);
+    
+    // When layout stops running, auto-zoom to fit all nodes
+    if (!isRunning && enableAnimation) {
+      setTimeout(() => {
+        const camera = sigma.getCamera();
+        camera.animatedReset({ duration: 1000 });
+      }, 500); // Small delay to ensure layout is fully stopped
+    }
+  }, [isRunning, onLayoutChange, enableAnimation, sigma]);
 
   useEffect(() => {
     if (enableAnimation) {
@@ -295,38 +303,8 @@ export const GraphComponent: FC<GraphComponentProps> = ({
     onNodeHover?.(nodeId);
   };
 
-  const restartLayout = () => {
-    window.location.reload(); // Simple restart for now
-  };
-
   return (
     <div className={className} style={style}>
-      {enableAnimation && (
-        <div style={{ marginBottom: '10px' }}>
-          <button
-            onClick={restartLayout}
-            disabled={isLayoutRunning}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isLayoutRunning ? 'not-allowed' : 'pointer',
-              opacity: isLayoutRunning ? 0.6 : 1,
-              marginRight: '10px'
-            }}
-          >
-            {isLayoutRunning ? 'Physics Running...' : 'Restart Animation'}
-          </button>
-          {hoveredNode && (
-            <span style={{ color: '#666', fontSize: '14px' }}>
-              Hovering: <strong>{hoveredNode}</strong>
-            </span>
-          )}
-        </div>
-      )}
-      
       <SigmaContainer
         style={{
           width: typeof width === 'number' ? `${width}px` : width,

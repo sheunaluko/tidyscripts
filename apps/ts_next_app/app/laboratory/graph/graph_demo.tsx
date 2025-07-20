@@ -59,13 +59,12 @@ const GraphDemo: React.FC = () => {
         </h1>
       </div>
 
-      {/* Main Content Area with 10% margins */}
+      {/* Main Content Area */}
       <div style={{ 
         flex: 1,
-        margin: '0 10%',
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px 0'
+        padding: '20px'
       }}>
         {/* Dataset Selection Buttons */}
         <div style={{ 
@@ -124,7 +123,7 @@ const GraphDemo: React.FC = () => {
               gravity: 1,
               scalingRatio: 2,
               edgeWeightInfluence: 0,
-              slowDown: 50,
+              slowDown: 100,
               animationDuration: 8000,
               outboundAttractionDistribution: false
             }}
