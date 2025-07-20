@@ -609,7 +609,14 @@ export async function ingest_text(text: string, metadata : any) {
 
 //TODO
 
-// vector search 
+// vector search
+
+
+export async function query(q :string, data : any ) {
+    log(`Getting client`) 
+    const db = await get_client();
+    return await db.query( q , { ... data } ) ; 
+}
 
 export const queries = {
     getAllEntities: async () => (await get_client()).query('SELECT * FROM entity').then((r:any) => r[0]),

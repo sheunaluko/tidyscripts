@@ -44,6 +44,7 @@ export interface GraphSettings {
   adjustSizes?: boolean;
   slowDown?: number;
   animationDuration?: number;
+  outboundAttractionDistribution? : boolean; 
 }
 
 export interface GraphComponentProps {
@@ -99,6 +100,8 @@ const GraphLoader: FC<{ data: GraphData }> = ({ data }) => {
         size: edgeData.size || (edgeData.weight ? edgeData.weight * 2 : 2),
         color: edgeData.color || '#95a5a6',
         weight: edgeData.weight || 1,
+        label: edgeData.metadata?.label || '',
+        type: edgeData.metadata?.directed ? 'arrow' : 'line', // Use arrow only if directed: true
         metadata: edgeData.metadata
       };
       
@@ -317,10 +320,15 @@ export const GraphComponent: FC<GraphComponentProps> = ({
           defaultNodeColor: '#3498db',
           defaultEdgeColor: '#95a5a6',
           enableEdgeEvents: true,
-          renderEdgeLabels: false,
+          renderEdgeLabels: true,
+          edgeLabelFont: 'Arial, sans-serif',
+          edgeLabelSize: 12,
+          edgeLabelWeight: 'normal',
+          edgeLabelColor: { color: '#666' },
           labelFont: 'Arial, sans-serif',
           labelSize: 14,
-          labelWeight: 'bold'
+          labelWeight: 'bold',
+          allowInvalidContainer: true
         }}
       >
         <GraphLoader data={data} />

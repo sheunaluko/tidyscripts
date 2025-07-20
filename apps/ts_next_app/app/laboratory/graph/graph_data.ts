@@ -68,16 +68,16 @@ export const systemArchitectureData: GraphData = {
     }
   ],
   edges: [
-    { source: 'hub', target: 'serviceA', weight: 3, metadata: { protocol: 'HTTPS', latency: '5ms' } },
-    { source: 'hub', target: 'serviceB', weight: 2.5, metadata: { protocol: 'HTTPS', latency: '8ms' } },
-    { source: 'hub', target: 'database', weight: 4, metadata: { protocol: 'SQL', latency: '2ms' } },
-    { source: 'serviceA', target: 'cache', weight: 2, metadata: { protocol: 'Redis', latency: '1ms' } },
-    { source: 'serviceB', target: 'gateway', weight: 1.5, metadata: { protocol: 'REST', latency: '10ms' } },
-    { source: 'database', target: 'analytics', weight: 1, metadata: { protocol: 'ETL', latency: '50ms' } },
-    { source: 'cache', target: 'monitoring', weight: 0.8, metadata: { protocol: 'Metrics', latency: '20ms' } },
-    { source: 'gateway', target: 'analytics', weight: 0.5, metadata: { protocol: 'Logs', latency: '30ms' } },
-    { source: 'loadBalancer', target: 'hub', weight: 3.5, metadata: { protocol: 'TCP', latency: '3ms' } },
-    { source: 'loadBalancer', target: 'gateway', weight: 2, metadata: { protocol: 'HTTP', latency: '7ms' } }
+    { source: 'hub', target: 'serviceA', weight: 3, metadata: { protocol: 'HTTPS', latency: '5ms', directed: true } },
+    { source: 'hub', target: 'serviceB', weight: 2.5, metadata: { protocol: 'HTTPS', latency: '8ms', directed: true } },
+    { source: 'hub', target: 'database', weight: 4, metadata: { protocol: 'SQL', latency: '2ms', directed: true } },
+    { source: 'serviceA', target: 'cache', weight: 2, metadata: { protocol: 'Redis', latency: '1ms', directed: true } },
+    { source: 'serviceB', target: 'gateway', weight: 1.5, metadata: { protocol: 'REST', latency: '10ms', directed: true } },
+    { source: 'database', target: 'analytics', weight: 1, metadata: { protocol: 'ETL', latency: '50ms', directed: true } },
+    { source: 'cache', target: 'monitoring', weight: 0.8, metadata: { protocol: 'Metrics', latency: '20ms', directed: true } },
+    { source: 'gateway', target: 'analytics', weight: 0.5, metadata: { protocol: 'Logs', latency: '30ms', directed: true } },
+    { source: 'loadBalancer', target: 'hub', weight: 3.5, metadata: { protocol: 'TCP', latency: '3ms', directed: true } },
+    { source: 'loadBalancer', target: 'gateway', weight: 2, metadata: { protocol: 'HTTP', latency: '7ms', directed: true } }
   ]
 };
 
@@ -121,14 +121,14 @@ export const organizationData: GraphData = {
     { id: 'finance_mgr', label: 'Finance Manager', size: 15, color: '#c5cae9', metadata: { department: 'Finance', level: 4 } }
   ],
   edges: [
-    { source: 'ceo', target: 'cto', weight: 3, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'ceo', target: 'cfo', weight: 3, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'cto', target: 'vp_eng', weight: 2.5, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'cto', target: 'vp_product', weight: 2.5, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'vp_eng', target: 'eng_lead1', weight: 2, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'vp_eng', target: 'eng_lead2', weight: 2, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'vp_product', target: 'product_mgr', weight: 2, metadata: { relationship: 'reports to', type: 'direct' } },
-    { source: 'cfo', target: 'finance_mgr', weight: 2, metadata: { relationship: 'reports to', type: 'direct' } },
+    { source: 'cto', target: 'ceo', weight: 3, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'cfo', target: 'ceo', weight: 3, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'vp_eng', target: 'cto', weight: 2.5, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'vp_product', target: 'cto', weight: 2.5, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'eng_lead1', target: 'vp_eng', weight: 2, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'eng_lead2', target: 'vp_eng', weight: 2, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'product_mgr', target: 'vp_product', weight: 2, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
+    { source: 'finance_mgr', target: 'cfo', weight: 2, metadata: { relationship: 'reports to', type: 'direct', directed: true } },
     { source: 'vp_eng', target: 'product_mgr', weight: 1, metadata: { relationship: 'collaborates', type: 'cross-functional' } },
     { source: 'eng_lead1', target: 'eng_lead2', weight: 1.5, metadata: { relationship: 'coordinates', type: 'peer' } }
   ]
@@ -189,10 +189,138 @@ export const denseNetworkData: GraphData = {
   ]
 };
 
+// Directed Workflow Dataset
+export const directedWorkflowData: GraphData = {
+  nodes: [
+    { id: 'start', label: 'Start', size: 18, color: '#27ae60', metadata: { type: 'trigger', status: 'active' } },
+    { id: 'validate', label: 'Validate Input', size: 16, color: '#3498db', metadata: { type: 'process', duration: '2s' } },
+    { id: 'decision', label: 'Check Approval', size: 20, color: '#f39c12', metadata: { type: 'decision', criteria: 'amount > $1000' } },
+    { id: 'autoApprove', label: 'Auto Approve', size: 15, color: '#2ecc71', metadata: { type: 'action', automated: true } },
+    { id: 'manualReview', label: 'Manual Review', size: 15, color: '#e67e22', metadata: { type: 'action', assignee: 'manager' } },
+    { id: 'approved', label: 'Approved', size: 16, color: '#27ae60', metadata: { type: 'status', final: true } },
+    { id: 'rejected', label: 'Rejected', size: 16, color: '#e74c3c', metadata: { type: 'status', final: true } },
+    { id: 'notify', label: 'Send Notification', size: 14, color: '#9b59b6', metadata: { type: 'action', method: 'email' } },
+    { id: 'end', label: 'End', size: 14, color: '#95a5a6', metadata: { type: 'terminator', status: 'complete' } }
+  ],
+  edges: [
+    { 
+      source: 'start', 
+      target: 'validate', 
+      weight: 2, 
+      metadata: { 
+        label: 'receives input',
+        type: 'data_flow',
+        description: 'User submits request',
+        directed: true
+      }
+    },
+    { 
+      source: 'validate', 
+      target: 'decision', 
+      weight: 2, 
+      metadata: { 
+        label: 'validated data',
+        type: 'data_flow',
+        description: 'Input passes validation checks',
+        directed: true
+      }
+    },
+    { 
+      source: 'decision', 
+      target: 'autoApprove', 
+      weight: 1.5, 
+      metadata: { 
+        label: 'amount ≤ $1000',
+        type: 'condition',
+        description: 'Low value transactions auto-approved',
+        directed: true
+      }
+    },
+    { 
+      source: 'decision', 
+      target: 'manualReview', 
+      weight: 1.5, 
+      metadata: { 
+        label: 'amount > $1000',
+        type: 'condition',
+        description: 'High value requires manual review',
+        directed: true
+      }
+    },
+    { 
+      source: 'autoApprove', 
+      target: 'approved', 
+      weight: 2, 
+      metadata: { 
+        label: 'approved',
+        type: 'status_change',
+        description: 'Automatically approved by system',
+        directed: true
+      }
+    },
+    { 
+      source: 'manualReview', 
+      target: 'approved', 
+      weight: 1, 
+      metadata: { 
+        label: 'manager approves',
+        type: 'decision',
+        description: 'Manager reviews and approves',
+        directed: true
+      }
+    },
+    { 
+      source: 'manualReview', 
+      target: 'rejected', 
+      weight: 1, 
+      metadata: { 
+        label: 'manager rejects',
+        type: 'decision',
+        description: 'Manager reviews and rejects',
+        directed: true
+      }
+    },
+    { 
+      source: 'approved', 
+      target: 'notify', 
+      weight: 2, 
+      metadata: { 
+        label: 'success notification',
+        type: 'action',
+        description: 'Send approval notification to user',
+        directed: true
+      }
+    },
+    { 
+      source: 'rejected', 
+      target: 'notify', 
+      weight: 2, 
+      metadata: { 
+        label: 'rejection notification',
+        type: 'action',
+        description: 'Send rejection notification to user',
+        directed: true
+      }
+    },
+    { 
+      source: 'notify', 
+      target: 'end', 
+      weight: 1.5, 
+      metadata: { 
+        label: 'complete',
+        type: 'completion',
+        description: 'Workflow completed',
+        directed: true
+      }
+    }
+  ]
+};
+
 export const graphDatasets = {
   'System Architecture': systemArchitectureData,
   'Social Network': socialNetworkData,
   'Organization Chart': organizationData,
   'Star Network': starData,
-  'Dense Network': denseNetworkData
+  'Dense Network': denseNetworkData,
+  'Directed Workflow': directedWorkflowData
 };

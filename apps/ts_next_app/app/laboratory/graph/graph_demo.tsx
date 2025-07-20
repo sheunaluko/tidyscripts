@@ -25,7 +25,9 @@ const GraphDemo: React.FC = () => {
     console.log('Edge clicked:', edgeId);
     if (metadata) {
       console.log('Edge metadata:', metadata);
-      alert(`Edge: ${edgeId}\n\n${JSON.stringify(metadata, null, 2)}`);
+      const description = metadata.description ? `\n\nDescription: ${metadata.description}` : '';
+      const label = metadata.label ? `Label: ${metadata.label}` : `Edge: ${edgeId}`;
+      alert(`${label}${description}\n\n${JSON.stringify(metadata, null, 2)}`);
     }
   };
 
