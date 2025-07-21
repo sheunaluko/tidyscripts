@@ -162,7 +162,23 @@ export function get_journal(a : Article){
     let x = dom_path_by_child_name( p , a ) ; 
     return dom_sub_nodes(x) ; 
 }
- 
+
+/**
+ * Extract  the abstract
+ */
+export function get_abstract( a : Article) {
+    /*
+    method 1 
+    let p = [ "medlinecitation","article", "abstract", "abstracttext"]
+    return dom_path_sub_nodes(p, a) ;
+    */
+
+    // @ts-ignore 
+    let txt = dom_path_by_child_name(["medlinecitation", "abstract" , "abstracttext"], a).children.map((y:any)=>y.data).filter((y:any)=> y !== undefined).join(" ") ;
+
+    return txt 
+    
+}
 
 const article_extractors : any = { 
     'pmid' : get_pmid, 
@@ -170,7 +186,8 @@ const article_extractors : any = {
     'date'  : get_date , 
     'authors' : get_authors, 
     'mesh_headings' : get_mesh_headings  , 
-    'journal' : get_journal , 
+    'journal' : get_journal ,
+    'abstract' : get_abstract 
 }
 
 /**
@@ -214,13 +231,15 @@ export function get_parsed_articles(fpath : string, xml : any): any{
     let num = num_articles(xml)  ; 
     let result : any = Array(num).fill(null) ;  
     for (var i = 0 ; i < num ; i++){ 
-        let article = get_article(xml,i) ; 
-        result[i] = parse_article(article) ; 
+        let article = get_article(xml,i) ;
+	let tmp = parse_article(article) ;
+	tmp.index = i ; 
+        result[i] = tmp ; 
         if ( i % 1000 == 0 ) {
             log(`Progress: ${i}/${num}`) ; 
         }
     }
-    return result 
+    return {result, xml} 
 }
 
 

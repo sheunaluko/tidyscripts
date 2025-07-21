@@ -78,8 +78,16 @@ export async function get_client() {
 // 2.  UTILITIES (UUIDs, embeddings, existence checks)
 //-------------------------------------------------------------
 
+var parent_cache_dir = process.cwd()  ; 
+if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
+    parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
+    log(`Found tidyscripts data dir for cache use`) 
+} else {
+    log(`Unable to find tidyscripts data dir for cache use`) 
+}
 
-const cacheDir = path.join(process.env['TIDYSCRIPTS_DATA_DIR'] as string, '.cache/tom' ) ;
+const cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
+log(`Using cacheDir = ${cacheDir}`) ; 
 
 export const fs_cache = new FileSystemCache<any>({
     cacheDir,
