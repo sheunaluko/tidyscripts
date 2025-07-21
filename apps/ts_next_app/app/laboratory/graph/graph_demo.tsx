@@ -1,16 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
-import { GraphComponent, GraphData } from './graph';
+import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { graphDatasets } from './graph_data';
+import { convertSurrealToSigma, convertSurrealToSigmaEnhanced } from './graph_utils';
+import surrealExampleData from './tidyscripts_data.json';
+
+const GraphComponent = dynamic(() => import('../graph/md_graph').then(mod => ({ default: mod.GraphComponent })), {
+  ssr: false,
+  loading: () => <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>Loading graph...</div>
+});
+
 
 const GraphDemo: React.FC = () => {
   const [selectedDataset, setSelectedDataset] = useState<string>('System Architecture');
-  const [currentData, setCurrentData] = useState<GraphData>(graphDatasets['System Architecture']);
+  const [currentData, setCurrentData] = useState<any>(graphDatasets['System Architecture']);
+  const [surrealData, setSurrealData] = useState<any>(null);
+
+  // Convert SurrealDB data on component mount
+  useEffect(() => {
+    try {
+      // The JSON file contains a single object, so we wrap it in an array
+      const dataArray = (Array.isArray(surrealExampleData) ? surrealExampleData : [surrealExampleData] ) as any ; 
+      const convertedData = convertSurrealToSigmaEnhanced(dataArray, {
+        baseNodeSize: 15,
+        maxNodeSize: 35,
+        useConnectionSizing: true
+      }) as any;
+      setSurrealData(convertedData);
+      console.log('Converted SurrealDB data:', convertedData);
+    } catch (error) {
+      console.error('Error converting SurrealDB data:', error);
+    }
+  }, []);
 
   const handleDatasetChange = (datasetName: string) => {
     setSelectedDataset(datasetName);
-    setCurrentData(graphDatasets[datasetName as keyof typeof graphDatasets]);
+    if (datasetName === 'SurrealDB Example' && surrealData) {
+      setCurrentData(surrealData);
+    } else {
+      setCurrentData(graphDatasets[datasetName as keyof typeof graphDatasets]);
+    }
   };
 
   const handleNodeClick = (nodeId: string, metadata?: Record<string, any>) => {
@@ -57,7 +87,7 @@ const GraphDemo: React.FC = () => {
           fontWeight: '600',
           color: '#2c3e50'
         }}>
-          Interactive Graph Visualization
+          Graph Visualization Test
         </h1>
       </div>
 
@@ -106,6 +136,36 @@ const GraphDemo: React.FC = () => {
               {datasetName}
             </button>
           ))}
+          {/* SurrealDB Example Button */}
+          {surrealData && (
+            <button
+              onClick={() => handleDatasetChange('SurrealDB Example')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: selectedDataset === 'SurrealDB Example' ? '#e74c3c' : 'white',
+                color: selectedDataset === 'SurrealDB Example' ? 'white' : '#2c3e50',
+                border: '2px solid #e74c3c',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                minWidth: '140px'
+              }}
+              onMouseOver={(e) => {
+                if (selectedDataset !== 'SurrealDB Example') {
+                  e.currentTarget.style.backgroundColor = '#fadbd8';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (selectedDataset !== 'SurrealDB Example') {
+                  e.currentTarget.style.backgroundColor = 'white';
+                }
+              }}
+            >
+              Tidyscripts
+            </button>
+          )}
         </div>
 
         {/* Graph Container */}
@@ -121,13 +181,19 @@ const GraphDemo: React.FC = () => {
             data={currentData}
             width="100%"
             height="100%"
-            settings={{
-              gravity: 1,
-              scalingRatio: 2,
+              settings={{
+
+	      gravity: 0.0001,
+              scalingRatio: 300,
               edgeWeightInfluence: 0,
-              slowDown: 100,
+              slowDown: 1000,
+	      adjustSizes : false ,
+	      strongGravityMode : false, 
               animationDuration: 8000,
-              outboundAttractionDistribution: false
+	      linLogMode : false, 
+              outboundAttractionDistribution: false, 
+		  
+
             }}
             enableAnimation={true}
             enableHoverEffects={true}

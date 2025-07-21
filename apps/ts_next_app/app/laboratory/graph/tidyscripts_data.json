@@ -1,0 +1,97 @@
+[
+  {
+    "eid": "tidyscripts_common",
+    "outgoing_edges": [
+      {
+        "id": "common_to_node",
+        "in": "entity:tidyscripts_common", 
+        "out": "entity:tidyscripts_node",
+        "rid": "tidyscripts_common->provides_base_for->tidyscripts_node"
+      },
+      {
+        "id": "common_to_web",
+        "in": "entity:tidyscripts_common",
+        "out": "entity:tidyscripts_web", 
+        "rid": "tidyscripts_common->provides_base_for->tidyscripts_web"
+      }
+    ],
+    "outgoing_nodes": [
+      {
+        "category": "package",
+        "eid": "tidyscripts_node"
+      },
+      {
+        "category": "package", 
+        "eid": "tidyscripts_web"
+      }
+    ]
+  },
+  {
+    "eid": "tidyscripts_node",
+    "outgoing_edges": [
+      {
+        "id": "node_to_app",
+        "in": "entity:tidyscripts_node",
+        "out": "entity:app",
+        "rid": "tidyscripts_node->powers->app"
+      }
+    ],
+    "outgoing_nodes": [
+      {
+        "category": "application",
+        "eid": "app"
+      }
+    ]
+  },
+  {
+    "eid": "tidyscripts_web", 
+    "outgoing_edges": [
+      {
+        "id": "web_to_app",
+        "in": "entity:tidyscripts_web",
+        "out": "entity:app",
+        "rid": "tidyscripts_web->powers->app"
+      }
+    ],
+    "outgoing_nodes": [
+      {
+        "category": "application",
+        "eid": "app"
+      }
+    ]
+  },
+  {
+    "eid": "app",
+    "outgoing_edges": [
+      {
+        "id": "app_to_vercel",
+        "in": "entity:app", 
+        "out": "entity:vercel",
+        "rid": "app->deployed_on->vercel"
+      }
+    ],
+    "outgoing_nodes": [
+      {
+        "category": "platform",
+        "eid": "vercel"
+      }
+    ]
+  },
+  {
+    "eid": "vercel",
+    "outgoing_edges": [
+      {
+        "id": "vercel_to_you",
+        "in": "entity:vercel",
+        "out": "entity:you", 
+        "rid": "vercel->serves->you"
+      }
+    ],
+    "outgoing_nodes": [
+      {
+        "category": "user",
+        "eid": "you"
+      }
+    ]
+  }
+]

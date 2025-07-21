@@ -607,12 +607,152 @@ export async function ingest_text(text: string, metadata : any) {
     return { added_entities, added_relations, entities, validated_relations, rejected_relations, skipped_relations, skipped_entities };
 }
 
-//TODO
 
-// vector search
+// vector search (by entity, relation name, knowledge update text , and relation id (rid)  ) 
+
+export async function entity_vector_search(eid : string, limit : number) {
+    limit = limit || 5 ; 
+    let e1 = await cached_embedding(format_id(eid)) ; 
+    let query = `
+select eid, vector::distance::knn() AS distance from entity where eid_vector <|${limit},40|> $e1 ORDER BY distance asc
+    ` ;
+    log(`Query=${query}`)
+    return await _query(query, {e1}) ; 
+}
+
+export async function rid_vector_search(rid : string, limit : number) {
+    limit = limit || 5 ; 
+    let e1 = await cached_embedding(format_id(rid)) ; 
+    let query = `
+select rid, vector::distance::knn() AS distance from relations where rid_vector <|${limit},40|> $e1 ORDER BY distance asc 
+    ` ;
+    log(`query=${query}`)
+    return await _query(query, {e1 }) ; 
+}
 
 
-export async function query(q :string, data : any ) {
+export async function knowledge_update_vector_search(text : string, limit : number) {
+    limit = limit || 5 ; 
+    let e1 = await cached_embedding(text) ; 
+    let query = `
+select id, metadata, vector::distance::knn() AS distance from knowledge_update where text_vector <|${limit},40|> $e1 ORDER BY distance asc 
+    ` ;
+    log(`query=${query}`) ; 
+    return await _query(query, {e1}) ; 
+}
+
+
+
+export async function relation_name_vector_search(name : string, limit : number) {
+    // can use fetch to replace record ids with the actual content (todo later when processing result - the associated_relation_ids) 
+    limit = limit || 5 ; 
+    let e1 = await cached_embedding(name) ; 
+    let query = `
+select id, associated_relations, name, vector::distance::knn() AS distance from relation_names where name_embedding <|${limit},40|> $e1 ORDER BY distance asc 
+    ` ;
+    log(`query=${query}`) ; 
+    return await _query(query, {e1}) ; 
+    
+}
+
+
+export async function old_all_relationships_for_entity(eid : string) {
+    let query = `
+
+     LET $e  = type::thing("entity",$eid) ; 
+
+     SELECT  eid,
+       ->(SELECT * FROM ?)->? AS outgoing,
+       <-(SELECT * FROM ?)<-? AS incoming
+    FROM $e ;
+    `
+
+    return await _query(query, {eid}) ; 
+}
+
+export async function all_relationships_for_entity(eid : string) {
+    let query = `
+
+     LET $e  = type::thing("entity",$eid) ; 
+
+     SELECT  eid,
+       ->(SELECT * FROM ? AS outgoing_edges)->? AS outgoing_nodes,
+       <-(SELECT * FROM ? AS incoming_edges) <-? AS incoming_nodes
+    FROM $e FETCH entity, outgoing_edges , incoming_edges , outgoing_nodes, incoming_nodes 
+    `
+
+    return await _query(query, {eid}) ; 
+}
+
+
+
+/* 
+   Todo 
+
+   [ ] create a function that takes a relation name, expands it using vector search and passes the first N matches to an AI to determine which 10 are are SIMILAR ENOUGH to be considered synonomous , then it returns that subset  
+
+   [ ] Retrieve all content for a given EID -- similar to above though where it expands it via embedding search then does AI pass to select subset, then retrieves all content for all matches 
+
+*/ 
+
+
+
+
+
+/*
+ * this was implemented after the initial first pass 
+ * this is done --> 
+ */ 
+export async function create_relation_name_vector_table() {
+
+    log(`getting relations`) 
+    let rdata = (await _query(`select rid, name, id from relations`,{}) as any ) [0] ;
+
+    for (var i =0; i < rdata.length ; i ++ ) {
+	
+	let {id , name, rid } = rdata[i]
+	let relation_id = id.id 
+	log(`\n\nProcessing i=${i}/${rdata.length}, name=${name}, rid=${rid}, id=${relation_id}`) ;
+
+	let name_embedding = await cached_embedding(name) ; 
+
+	let init_data = {
+	    name,
+	    name_embedding,
+	    associated_relations : [ ] ,
+	    id : name, 
+	}
+
+	let query = ` 
+
+    LET $rel      = type::thing("relations",$relation_id) ;
+    LET $relname  = type::thing("relation_names",$name) ;
+
+    insert ignore into relation_names $init_data  ;  -- only adds if the id does not exist 
+
+    update $relname set associated_relations += $rel ; 
+	`
+
+	await _query(query , {  relation_id , name, init_data } ) 
+	
+    }
+    
+
+    log(`Done`) 
+
+}
+
+
+
+
+
+
+export var tests = {
+    'entity1' : async () => (await  entity_vector_search("conjunctivitis" , 6) ) ,
+    'entity2' : async () => (await  entity_vector_search("rheumatoid arthritis flare" , 6) ) ,
+}
+
+export async function _query(q :string, data : any ) {
     log(`Getting client`) 
     const db = await get_client();
     return await db.query( q , { ... data } ) ; 

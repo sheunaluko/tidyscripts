@@ -24,6 +24,7 @@
         "@mui/system": "^6.4.7",
         "@react-sigma/core": "^5.0.4",
         "@react-sigma/layout-forceatlas2": "^5.0.4",
+        "@sigma/edge-curve": "^3.1.0",
         "ace-builds": "^1.37.1",
         "crypto": "^1.0.1",
         "eslint": "^8.57.0",

@@ -54,7 +54,66 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
+	  <MLink href="/laboratory/knowledge_graph_viz">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Graph Visualization </Typography>
+		  <p>
+		      Interactive Medical Knowledge Graph Visualization :) 
+		  </p>
+	      </Card >
+	  </MLink>
 	  
+
+	  <MLink href="/laboratory/graph">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Test Graph  </Typography>
+		  <p>
+		      Knowledge Graph Test Component
+		  </p>
+	      </Card >
+	  </MLink>
+
+	  
+
+	  
+
+	  <MLink href="/laboratory/vip">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Voice Interface Panel [VIP] </Typography>
+		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
+	      </Card >
+	  </MLink> 
+
+	  <MLink href="/laboratory/local_storage_interface">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Local Storage Interface </Typography>
+		  <p>User Interface for editing the LocalStorage object of your devices browser</p>
+	      </Card >
+	  </MLink>
+
+	  
+	  <MLink href="/laboratory/console_ui">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Console Interface </Typography>
+		  <p>User Interface for interacting with browser console (useful for debugging mobile apps)</p>
+	      </Card >
+	  </MLink>
+	  
+
+	  <MLink href="/laboratory/spotifile">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Spotifile</Typography>
+		  <p>
+		      Spotify file management and playlist tools
+		  </p>
+	      </Card>
+	  </MLink>
+
+
+
+
+	  {/*
+
 	  <MLink href="/laboratory/ride">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">RIDE </Typography>
@@ -129,16 +188,8 @@ const AllLinks = () => {
 		  <Typography variant="h5" color="primary">Microbiology </Typography>
 		  <p>Antiobiogram on Steroids (in progress)</p>
 	      </Card >
-	  </MLink>	  
-
-	  <MLink href="/laboratory/graph">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Graph Visualization </Typography>
-		  <p>
-		      Interactive graph visualization powered by Sigma.js with physics simulation
-		  </p>
-	      </Card >
 	  </MLink>
+
 
 	  <MLink href="/laboratory/bokeh">
 	      <Card style={card_style}>
@@ -149,13 +200,6 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>	  
 	  
-	  <MLink href="/laboratory/vip">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Voice Interface Panel [VIP] </Typography>
-		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
-	      </Card >
-	  </MLink> 
-
 
 	  
 	  <MLink href="/laboratory/log_interface">
@@ -167,20 +211,6 @@ const AllLinks = () => {
 
 
 
-	  <MLink href="/laboratory/local_storage_interface">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Local Storage Interface </Typography>
-		  <p>User Interface for editing the LocalStorage object of your devices browser</p>
-	      </Card >
-	  </MLink>
-
-	  
-	  <MLink href="/laboratory/console_ui">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Console Interface </Typography>
-		  <p>User Interface for interacting with browser console (useful for debugging mobile apps)</p>
-	      </Card >
-	  </MLink>
 
 	  <MLink href="/laboratory/device_orientation">
 	      <Card style={card_style}>
@@ -196,14 +226,8 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
-	  <MLink href="/laboratory/spotifile">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Spotifile</Typography>
-		  <p>
-		      Spotify file management and playlist tools
-		  </p>
-	      </Card>
-	  </MLink>
+
+	  */}
 
       </Box>
   );
