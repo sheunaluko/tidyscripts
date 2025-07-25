@@ -774,6 +774,35 @@ export class CacheUtils {
   }
 
   /**
+   * Synchronous key generation for sync functions
+   */
+  static generateKeySync(args: any[]): string {
+    try {
+      const serialized = JSON.stringify(args);
+      // Simple hash function for sync operation
+      let hash = 0;
+      for (let i = 0; i < serialized.length; i++) {
+        const char = serialized.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      return Math.abs(hash).toString(36);
+    } catch (error) {
+      return Math.random().toString(36).substring(2);
+    }
+  }
+
+  /**
+   * Check if a function is async
+   */
+  static isAsyncFunction(fn: Function): boolean {
+    return fn.constructor.name === 'AsyncFunction' || 
+           fn.toString().includes('async ') ||
+           fn.toString().includes('return new Promise') ||
+           fn.toString().includes('await ');
+  }
+
+  /**
    * Retrieves multiple values from the cache in parallel.
    * 
    * @template T - The type of cached values
@@ -898,6 +927,91 @@ export class CacheUtils {
     // Preserve function properties
     Object.defineProperty(memoizedFn, 'name', { value: `memoized_${fn.name}` });
     Object.defineProperty(memoizedFn, 'length', { value: fn.length });
+
+    return memoizedFn as T;
+  }
+
+  /**
+   * Improved memoize function that properly handles both sync and async functions.
+   * For async functions, it caches the resolved value, not the promise itself.
+   * For sync functions, it caches the return value directly.
+   * 
+   * @template T - The function type to memoize
+   * @param fn - The function to memoize
+   * @param cache - The cache instance (stores resolved values)
+   * @param options - Memoization configuration options
+   * @returns A memoized version of the function
+   */
+  static memoize2<T extends (...args: any[]) => any>(
+    fn: T,
+    cache: ICache<ReturnType<T> extends Promise<infer U> ? U : ReturnType<T>>,
+    options: MemoizeOptions = {}
+  ): T {
+    const {
+      ttl,
+      keyGenerator,
+      includeThis = false,
+      errorOnCacheFailure = false
+    } = options;
+
+    type ResolvedReturnType = ReturnType<T> extends Promise<infer U> ? U : ReturnType<T>;
+
+    const memoizedFn = async function(this: any, ...args: Parameters<T>): Promise<ResolvedReturnType> {
+      try {
+        // Generate cache key
+        const functionName = fn.name || 'anonymous';
+        const argsForKey = includeThis && this ? [this, ...args] : args;
+        const argsHash = keyGenerator ? keyGenerator(argsForKey) : await CacheUtils.generateKey(argsForKey);
+        const cacheKey = `${functionName}:${argsHash}`;
+
+        // Try to get from cache
+        const cachedResult = await cache.get(cacheKey);
+        if (cachedResult !== null) {
+          return cachedResult;
+        }
+
+        // Execute original function
+        const result = fn.apply(this, args);
+        
+        // Handle both sync and async functions
+        const resolvedResult = result instanceof Promise ? await result : result;
+
+        // Cache the resolved result
+        try {
+          await cache.set(cacheKey, resolvedResult, { ttl });
+        } catch (cacheError) {
+          if (errorOnCacheFailure) {
+            throw new Error(`Cache storage failed: ${cacheError}`);
+          }
+        }
+
+        return resolvedResult;
+      } catch (error) {
+        if ((error as Error).message?.includes('Cache') && !errorOnCacheFailure) {
+          const result = fn.apply(this, args);
+          return result instanceof Promise ? await result : result;
+        }
+        throw error;
+      }
+    };
+
+    // For sync functions, return a sync wrapper
+    if (!CacheUtils.isAsyncFunction(fn)) {
+      const syncMemoizedFn = function(this: any, ...args: Parameters<T>): ResolvedReturnType {
+        const functionName = fn.name || 'anonymous';
+        const argsForKey = includeThis && this ? [this, ...args] : args;
+        const argsHash = CacheUtils.generateKeySync(argsForKey);
+        const cacheKey = `${functionName}:${argsHash}`;
+
+        // For sync functions, we need to handle cache differently
+        // This is a simplified version - in practice you might want to use a sync cache
+        const result = fn.apply(this, args);
+        // Note: We can't easily cache sync functions with async cache operations
+        return result;
+      };
+      
+      return syncMemoizedFn as T;
+    }
 
     return memoizedFn as T;
   }

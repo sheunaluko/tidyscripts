@@ -11,6 +11,7 @@ import * as yts from "./yts"
 import * as tes from "./tes" 
 export * as playwright from "./playwright" 
 export * as tom from "./tom"
+export * as tts from "./tts"
 
 export {
     //firebase_admin ,
