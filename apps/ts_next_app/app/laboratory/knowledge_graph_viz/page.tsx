@@ -18,7 +18,7 @@ const log = common.logger.get_logger({id:'kgv'}) ;
 
 // Transform search text for SurrealDB queries
 const text_transform = (text: string): string => {
-  return text.replace(/\s+/g, '_');
+  return text.toLowerCase().replace(/\s+/g, '_');
 }; 
 
 // Dummy data representing TidyScripts architecture
@@ -152,7 +152,7 @@ const KnowledgeGraphViz: React.FC = () => {
       const transformedText = text_transform(searchText);
       log(`Searching using text: ${searchText} -> transformed: ${transformedText}`)
       
-      const tmp = await common.tes.remote.node.tom.all_relationships_for_entity(transformedText) as any ;
+      const tmp = await common.tes.cloud.node.tom.all_relationships_for_entity(transformedText) as any ;
       debug.add('tmp', tmp) ; 
       const result = tmp.result[1][0] ;
       debug.add('result' , result) ; 
@@ -211,7 +211,7 @@ const KnowledgeGraphViz: React.FC = () => {
             color: '#2c3e50'
           }}
         >
-          Knowledge Graph Visualization
+	    Nova | Medical Visualizer 
         </h1>
       </div>
 

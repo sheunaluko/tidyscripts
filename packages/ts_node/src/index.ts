@@ -11,3 +11,4 @@ export * as fhir_server from './fhir_server'
 export * as bashr   from './bashr/index'
 export * as tom           from './tom'
 
+export * as tes from "./tes" 
