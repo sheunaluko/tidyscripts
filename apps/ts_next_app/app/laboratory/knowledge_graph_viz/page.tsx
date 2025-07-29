@@ -152,9 +152,8 @@ const KnowledgeGraphViz: React.FC = () => {
       const transformedText = text_transform(searchText);
       log(`Searching using text: ${searchText} -> transformed: ${transformedText}`)
       
-      const tmp = await common.tes.cloud.node.tom.all_relationships_for_entity(transformedText) as any ;
-      debug.add('tmp', tmp) ; 
-      const result = tmp.result[1][0] ;
+	const tmp = await common.tes.cloud.node.tom.all_relationships_for_entity(transformedText) as any ;
+	const result  = tmp.result; 
       debug.add('result' , result) ; 
       
       // Convert the result to an array if it's a single object

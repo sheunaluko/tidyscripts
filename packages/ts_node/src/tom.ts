@@ -686,10 +686,18 @@ export async function all_relationships_for_entity(eid : string) {
      SELECT  eid,
        ->(SELECT * FROM ? AS outgoing_edges)->? AS outgoing_nodes,
        <-(SELECT * FROM ? AS incoming_edges) <-? AS incoming_nodes
+
     FROM $e FETCH entity, outgoing_edges , incoming_edges , outgoing_nodes, incoming_nodes 
     `
 
-    return await _query(query, {eid}) ; 
+    let tmp = await _query(query, {eid}) ;
+    let data = tmp[1][0] ;
+
+    data.outgoing_nodes = data.outgoing_nodes.map( (x:any)=> { delete x['eid_vector'] ; return x }  )
+    data.incoming_nodes = data.incoming_nodes.map( (x:any)=> { delete x['eid_vector'] ; return x  }  )
+
+    return data 
+    
 }
 
 

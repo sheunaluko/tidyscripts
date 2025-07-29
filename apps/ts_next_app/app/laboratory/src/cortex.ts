@@ -302,6 +302,8 @@ export class Cortex extends EventEmitter  {
 	this.prompt_history.push(jsonData) ; 
 
 	//debugger;
+	let {prompt_tokens, completion_tokens, total_tokens} = jsonData.usage ;
+	this.log_event(`Token Usage=${total_tokens}`) ;
 	
 	let output  = jsonData.choices[0].message.parsed ;
 

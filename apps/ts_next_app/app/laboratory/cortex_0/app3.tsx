@@ -248,6 +248,7 @@ const  Component: NextPage = (props : any) => {
 
 
     useEffect( ()=> {
+    	log(`Detected cor change`) 
         COR.on('event', handle_event)
         return () => { COR.off('event', handle_event) }
     }, [COR])
