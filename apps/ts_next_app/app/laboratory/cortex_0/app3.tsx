@@ -137,7 +137,10 @@ const  Component: NextPage = (props : any) => {
         cortex_agent.get_agent(ai_model)
     );
 
-    
+
+    var get_agent = function() {
+	return COR 
+    }
 
     // Re-instantiate agent whenever model selection changes
     useEffect(() => {
@@ -276,7 +279,7 @@ const  Component: NextPage = (props : any) => {
 	    wa ,
 	    debug ,
 	    get_ai_response ,
-	    get_agent : ()=>  (COR ) , 
+	    get_agent, 
 	    transcription_cb ,
 	    workspace : {} ,
 	    last_ai_message,
@@ -289,7 +292,7 @@ const  Component: NextPage = (props : any) => {
 	    delete window.workspace 
 	}
 
-    } , [] ) ; //init script is called in "on_init_audio"    
+    } , [COR] ) ; //init script is called in "on_init_audio", update when COR changes    
 
     useEffect( ()=> {
 	transcribeRef.current = transcribe 
