@@ -28,14 +28,17 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
       sx={{
         backgroundColor: 'background.paper',
         p: 2,
-        height: fullscreen ? '50vh' : '300px',
+          height: fullscreen ? '100%' : '300px',
+	  width : "100%" ,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         ...sx,
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+	<Box display="flex" justifyContent="space-between" alignItems="center" mb={1}
+
+	>
         <Typography variant="subtitle1">{title}</Typography>
         {fullscreen ? (
           <IconButton size="small" onClick={onClose}>
@@ -48,7 +51,11 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
         )}
       </Box>
 
-      <Box sx={{ overflowY: 'auto' , flexGrow: 1 , minHeight : 0   }}>{children}</Box>
+      <Box sx={{
+	  overflowY: 'auto' ,
+	  flexGrow: 1 ,
+	  minHeight : 0 ,
+      }}>{children}</Box>
     </Paper>
   );
 };

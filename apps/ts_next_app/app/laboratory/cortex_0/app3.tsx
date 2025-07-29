@@ -703,7 +703,7 @@ const  Component: NextPage = (props : any) => {
     
     return (
 
-	<Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , minWidth : '90%'}} >
+	<Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , width : '100%', padding : "5px" }} >
 
 	<Box display='flex' flexDirection='row' alignItems='center' >
 	    <Box>
@@ -753,7 +753,7 @@ const  Component: NextPage = (props : any) => {
 
 
 	{ !focusedWidget && (
-	      <Grid width="100%" height="100%" container spacing={2}>
+	      <Grid width="100%" height="100%" container spacing={2} padding="20px" >
 
 		  <Grid size={{ xs: 12, md: 6 }}>
 		      <ChatWidget onFocus={() => setFocusedWidget('chat')} />
