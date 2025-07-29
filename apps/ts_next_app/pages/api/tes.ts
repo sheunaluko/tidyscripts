@@ -4,7 +4,6 @@ import * as tsn from "tidyscripts_node"
 const { get_logger   } = tsn.common.logger ; 
 import {OpenAI} from "openai" ; 
 
-declare var URL : any ; 
 type Data = any ;
 
 const USER = process.env.SURREAL_DB_USER

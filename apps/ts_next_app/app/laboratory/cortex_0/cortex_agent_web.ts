@@ -9,7 +9,8 @@ import * as tsw from "tidyscripts_web"
 import * as fb from "../../../src/firebase" ;
 
 
-const vi = tsw.util.voice_interface ; 
+const vi = tsw.util.voice_interface ;
+const {common} = tsw; 
 
 declare var window : any ;
 
@@ -25,7 +26,16 @@ export function get_agent(modelName: string = "gpt-4o") {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
-    let additional_system_msg = "Tidyscripts is the general name for your software architecture" 
+    let additional_system_msg = `
+    Tidyscripts is the general name for your software architecture.
+
+    Tidyscripts Ontology of Medicine (TOM) is the name of a medical knowledge graph / database which you have access to.
+
+    When the user asks for information from TOM or from "the medical database", DO NOT PROVIDE information from anywhere else or from
+    your memory.
+
+
+`
     let ops   = { model , name, functions, additional_system_msg  } 
     let coer    = new c.Cortex( ops ) ;
     // 
@@ -90,29 +100,34 @@ var BASH_CLIENT : any = null ;
 
 const functions = [
 
-
     {
-	description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
-	name        : "set_listen_while_speaking" ,
-	parameters  : { value : "boolean" }   ,
+	description : "Search the TOM database for matching medical entities given a string" ,
+	name        : "search_tom_for_entities" ,
+	parameters  : { query : "string" }   ,
 	fn          : async (ops : any) => {
-	    let val = ops.value ; 
-	    vi.set_listen_while_speaking(JSON.parse(val))
-	    return `Set listen_while_speaking to ${val}` ; 
+	    let {query}  = ops; 
+	    let tmp = await common.tes.cloud.node.tom.entity_vector_search(query, 6) as any ;
+	    let result = tmp.result[0] ; 
+	    debug.add('evs_result' , result)  ; 
+	    return result  
 	} ,
-	return_type : "string"
+	return_type : "object"
     },
 
     {
-	description : "Gets the Cortex interface listen_while_speaking setting" ,
-	name        : "get_listen_while_speaking" ,
-	parameters  : null  ,
+	description : "Retrieve all defined relationships (information) for a specific entity in TOM. You must ensure that the query string provided is an exact match of the entity id from TOM, which you can find by using the search_tom_for_entities function" ,
+	name        : "get_information_for_entity" ,
+	parameters  : { query : "string" }   ,
 	fn          : async (ops : any) => {
-	    return vi.listen_while_speaking
+	    let {query}  = ops; 
+	    let tmp = await common.tes.cloud.node.tom.all_relationships_for_entity(query) as any ;
+	    debug.add('er_result' , tmp)  ; 
+	    return tmp   
 	} ,
-	return_type : "boolean"
+	return_type : "object"
     },
     
+
     
     
     {
@@ -217,7 +232,7 @@ swift
     {
 	description : `
 The workspace is a toplevel nested object named workspace which exists within the javascript environment.
-You update the workspace by proving javascript code to this function.
+You update the workspace by providing javascript code to this function.
 The code should directly provide the necessary manipulations to the workspace, and will be evaluated.
 After that, the user will automatically see the updated changes. 
 	`,
@@ -233,20 +248,6 @@ After that, the user will automatically see the updated changes.
 	return_type : "any"
     },
 
-    {
-	description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
-	name : "youtube_summary" ,
-	parameters : { url : "string"  , length_in_minutes : "string" } ,
-	fn : async (ops : any ) => {
-	    let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
-	    let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
-
-	    let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
-	    ops.event({type:'log' , log : msg})	    
-	    return await tes(fn_path , fn_args )
-	} ,
-	return_type : "string" , 
-    }, 
     
     { 
 	description : "Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation" , 
@@ -376,6 +377,48 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "any"
     }    
 
+    /* 
+    {
+	description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
+	name        : "set_listen_while_speaking" ,
+	parameters  : { value : "boolean" }   ,
+	fn          : async (ops : any) => {
+	    let val = ops.value ; 
+	    vi.set_listen_while_speaking(JSON.parse(val))
+	    return `Set listen_while_speaking to ${val}` ; 
+	} ,
+	return_type : "string"
+    },
+
+    {
+	description : "Gets the Cortex interface listen_while_speaking setting" ,
+	name        : "get_listen_while_speaking" ,
+	parameters  : null  ,
+	fn          : async (ops : any) => {
+	    return vi.listen_while_speaking
+	} ,
+	return_type : "boolean"
+    },
+
+    */
+
+    /*
+    {
+	description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
+	name : "youtube_summary" ,
+	parameters : { url : "string"  , length_in_minutes : "string" } ,
+	fn : async (ops : any ) => {
+	    let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
+	    let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
+
+	    let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
+	    ops.event({type:'log' , log : msg})	    
+	    return await tes(fn_path , fn_args )
+	} ,
+	return_type : "string" , 
+    },
+    */ 
+    
     
 ]
 

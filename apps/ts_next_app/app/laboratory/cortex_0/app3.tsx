@@ -133,9 +133,11 @@ const  Component: NextPage = (props : any) => {
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
     // State for Cortex agent, re-created when ai_model changes
-    const [COR, setCOR] = useState(() =>
+    var [COR, setCOR] = useState(() =>
         cortex_agent.get_agent(ai_model)
     );
+
+    
 
     // Re-instantiate agent whenever model selection changes
     useEffect(() => {
@@ -153,7 +155,7 @@ const  Component: NextPage = (props : any) => {
     }
 
     let init_code_params =   {
-	code : "import asyncio\nimport websockets\n\nasync def echo(websocket, path):\n    async for message in websocket:\n        await websocket.send(message)\n\nasync def main():\n    async with websockets.serve(echo, \"localhost\", 8765):\n        await asyncio.Future()  # run forever\n\nasyncio.run(main())" , 
+	code : "print(\"Welcome to Tidyscripts!\")" , 
 	mode : "python"
     }
     
@@ -274,7 +276,7 @@ const  Component: NextPage = (props : any) => {
 	    wa ,
 	    debug ,
 	    get_ai_response ,
-	    COR ,
+	    get_agent : ()=>  (COR ) , 
 	    transcription_cb ,
 	    workspace : {} ,
 	    last_ai_message,

@@ -162,6 +162,8 @@ export class Cortex extends EventEmitter  {
     is_running_function : boolean ; //tracks whether a function is currently being called
     function_input_ch  : Channel.Channel ;
 
+    prompt_history : any[];
+
     user_output : any ; 
     
     constructor(ops : CortexOps) {
@@ -175,6 +177,7 @@ export class Cortex extends EventEmitter  {
 	this.messages = [ ] ;
 	this.is_running_function = false;
 	this.function_input_ch = new Channel.Channel({name}) ;
+	this.prompt_history = [ ]; 
 	
 	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
@@ -295,6 +298,11 @@ export class Cortex extends EventEmitter  {
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
 	let jsonData = await fetchResponse.json()
+	debug.add('model_json_response', jsonData) ;
+	this.prompt_history.push(jsonData) ; 
+
+	//debugger;
+	
 	let output  = jsonData.choices[0].message.parsed ;
 
 	//add the message 
