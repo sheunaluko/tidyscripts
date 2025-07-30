@@ -96,9 +96,38 @@ export async function main_stream_log( ops : any ) {
 } 
 
 
-var BASH_CLIENT : any = null ; 
+var BASH_CLIENT : any = null ;
+
+/*
+
+   Todo:
+
+   -- its interesting -- it can already quiz me on random question... if i could just capture the interaction somehow
+      -- and convert it to metadata 
+   
+   -- search for medical fact   (does vector search on text field in knowledge_update)
+   -- add access times to the 'retrieve random fact'
+   -- add a function 'quiz_user_on_random_fact'
+      - retrieves a fact -- if the fact has a question it asks it -- 
+   
+   -- create function for UPDATING the fact object with a question
+
+   
+ */
 
 const functions = [
+
+    {
+	description : "Retrieve a random fact to test the user" ,
+	name        : "retrieve_random_medical_fact" ,
+	parameters  : null, 
+	fn          : async (ops : any) => {
+	    let result = await common.tes.localhost.dev.tom.get_random_study_record()
+	    debug.add('random_fact' , result)  ; 
+	    return result  
+	} ,
+	return_type : "object"
+    },
 
     {
 	description : "Search the TOM database for matching medical entities given a string" ,

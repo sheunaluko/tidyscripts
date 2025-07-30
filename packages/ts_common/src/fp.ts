@@ -276,6 +276,13 @@ export function repeat<T>(thing : T, num : number) : string[]{
     
 }
 
+/**
+ * Returns random element of the array 
+ */
+export function rand_element(arr : any[]) {
+    return arr[Math.floor(Math.random() * arr.length)]
+}
+
 export function range(n : number,end : any = null): number[] {
 
     if(end) { 	
