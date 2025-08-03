@@ -11,7 +11,7 @@ import * as fb from "../../../src/firebase" ;
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw; 
-
+const {debug} =  common.util ; 
 declare var window : any ;
 
 /**

@@ -1,0 +1,1888 @@
+{
+  "Allergy and Immunology": {
+    "percentage": "2%",
+    "subcategories": {
+      "Anaphylaxis": {
+        "percentage": "<2%",
+        "topics": [
+          "General anaphylaxis",
+          "Aspirin idiosyncrasy",
+          "Stinging insect hypersensitivity",
+          "Desensitization therapy",
+          "Serum sickness"
+        ]
+      },
+      "Asthma": {
+        "percentage": "<2%",
+        "topics": [
+          "General asthma",
+          "Exercise- and cold-induced asthma",
+          "Allergic bronchopulmonary aspergillosis",
+          "Nasal polyps and aspirin sensitivity",
+          "Occupational asthma",
+          "Asthma and pregnancy",
+          "Asthma mimics (including vocal cord dysfunction)"
+        ]
+      },
+      "Rhinitis, sinusitis, and conjunctivitis": {
+        "percentage": "<2%",
+        "topics": [
+          "Allergic rhinitis",
+          "Acute and chronic sinusitis",
+          "Allergic conjunctivitis",
+          "Upper airway cough syndrome"
+        ]
+      },
+      "Food allergy": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Urticaria and angioedema": {
+        "percentage": "<2%",
+        "topics": [
+          "Hereditary angioedema",
+          "Drug-induced urticaria and angioedema",
+          "Other causes of urticarial and anaphylaxis",
+          "Contrast-related allergy"
+        ]
+      },
+      "Skin disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Atopic dermatitis",
+          "Contact dermatitis"
+        ]
+      },
+      "Drug allergy other than drug-induced urticaria and angioedema": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Primary immunodeficiency disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Primary humoral immunodeficiency",
+          "Cellular immunodeficiency other than human",
+          "immunodeficiency virus (HIV) infection",
+          "Complement deficiency"
+        ]
+      },
+      "Allergic complications of transfusions": {
+        "percentage": "<2%",
+        "topics": [
+          "Hemolytic transfusions reactions",
+          "Transfusion-related acute lung injury",
+          "Transfusion-related urticaria and anaphylaxis"
+        ]
+      },
+      "Autoimmune systemic disorders (including IgG4 related disorders)": {
+        "percentage": "<2%",
+        "topics": [
+          "Mastocytosis",
+          "Allergic interstitial nephritis",
+          "Eosinophilic esophagitis",
+          "Eosinophilic pneumonia",
+          "Eosinophilic granulomatosis with polyangiitis",
+          "Hypersensitivity pneumonitis (extrinsic allergic alveolitis)"
+        ]
+      }
+    }
+  },
+  "Cardiovascular Disease": {
+    "percentage": "14%",
+    "subcategories": {
+      "Pericardial disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Pericarditis",
+          "Pericardial effusion",
+          "Constrictive pericarditis"
+        ]
+      },
+      "Ischemic heart disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Stable angina pectoris",
+          "Acute coronary syndrome (ACS)",
+          "ACS complications",
+          "Heart failure from ischemic cardiomyopathy",
+          "Non-cardiac chest pain",
+          "Other ischemic heart disease (coronary artery disease, spasm)"
+        ]
+      },
+      "Dysrhythmias and conduction defects": {
+        "percentage": "<2%",
+        "topics": [
+          "Conduction defects",
+          "Bradyarrhythmias",
+          "Tachyarrhythmias",
+          "Other dysrhythmias (cardiac resuscitation)"
+        ]
+      },
+      "Congenital heart disease in adults": {
+        "percentage": "<2%",
+        "topics": [
+          "Atrial septal defect and patent foramen ovale",
+          "Bicuspid aortic valve",
+          "Other congenital heart disease (patent ductus arteriosus,",
+          "ventricular septal defect, pulmonic stenosis)"
+        ]
+      },
+      "Valvular heart disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Aortic stenosis",
+          "Aortic regurgitation",
+          "Mitral regurgitation",
+          "Mitral stenosis",
+          "Prosthetic heart valve"
+        ]
+      },
+      "Myocardial disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Heart failure with preserved ejection fraction (HFpEF)",
+          "Myocarditis",
+          "Hypertrophic cardiomyopathy with and without obstruction",
+          "Restrictive cardiomyopathy",
+          "Dilated cardiomyopathy",
+          "Cor pulmonale",
+          "Undifferentiated myocardial disease"
+        ]
+      },
+      "Endocarditis and other cardiovascular infection": {
+        "percentage": "<2%",
+        "topics": [
+          "Endocarditis",
+          "Infections of the pericardial space",
+          "Endocarditis prophylaxis",
+          "Cardiovascular implantable device infection"
+        ]
+      },
+      "Vascular disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Carotid artery disease",
+          "Peripheral arterial disease",
+          "Pulmonary vascular disease",
+          "Venous disease of the lower extremities",
+          "Superior vena cava syndrome (not due to cancer)"
+        ]
+      },
+      "Syncope": {
+        "percentage": "<2%",
+        "topics": [
+          "Reflex syncope (vasovagal and situational)",
+          "Orthostatic hypotension",
+          "Cardiac syncope (structural and electrical"
+        ]
+      },
+      "Preoperative consultation": {
+        "percentage": "<2%",
+        "topics": [
+          "No testing required",
+          "Testing indicated"
+        ]
+      },
+      "Lipid disorders": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Antithrombotic therapy in cardiovascular disease": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Miscellaneous cardiovascular disease (physical examination": {
+        "percentage": "<2%",
+        "topics": [
+          "findings, murmurs)"
+        ]
+      }
+    }
+  },
+  "Dermatology": {
+    "percentage": "3%",
+    "subcategories": {
+      "Dermatitis (eczemas)": {
+        "percentage": "<2%",
+        "topics": [
+          "Atopic dermatitis",
+          "Contact dermatitis",
+          "Photodermatitis",
+          "Stasis dermatitis",
+          "Hand dermatitis",
+          "Drug eruptions",
+          "Nummular dermatitis",
+          "Exfoliative dermatitis (erythroderma, not including",
+          "mycosis fungoides)",
+          "Seborrheic dermatitis"
+        ]
+      },
+      "Dermatologic immunology": {
+        "percentage": "<2%",
+        "topics": [
+          "Urticaria and angioedema",
+          "Leukocytoclastic vasculitis"
+        ]
+      },
+      "Vascular dermatoses": {
+        "percentage": "<2%",
+        "topics": [
+          "Erythema multiforme",
+          "Erythema nodosum",
+          "Telangiectasia",
+          "Leg ulcers"
+        ]
+      },
+      "Acne and rosacea": {
+        "percentage": "<2%",
+        "topics": [
+          "Acne vulgaris",
+          "Rosacea"
+        ]
+      },
+      "Papulosquamous dermatoses": {
+        "percentage": "<2%",
+        "topics": [
+          "Psoriasis",
+          "Pityriasis rosea",
+          "Lichen planus"
+        ]
+      },
+      "Skin and soft tissue infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Dermatophytes",
+          "Herpes zoster and varicella",
+          "Viral exanthems other than varicella",
+          "Cellulitis, erypsipelas, and skin abscess",
+          "Necrotizing soft-tissue infections and gas gangrene",
+          "Lymphadenitis and lymphangitis",
+          "Ectoparasites (lice, scabies, and others)"
+        ]
+      },
+      "Vesiculobullous dermatoses": {
+        "percentage": "<2%",
+        "topics": [
+          "Pemphigus vulgaris",
+          "Dermatitis herpetiformis"
+        ]
+      },
+      "Pigment disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Vitiligo and other hypopigmentation disorders",
+          "Melasma (chloasma)",
+          "Acanthosis nigricans",
+          "Xeroderma pigmentosa"
+        ]
+      },
+      "Photosensitivity dermatoses": {
+        "percentage": "<2%",
+        "topics": [
+          "Porphyria cutanea tarda",
+          "Photodermatitis"
+        ]
+      },
+      "Alopecia": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Nodules and tumors of the skin": {
+        "percentage": "<2%",
+        "topics": [
+          "Seborrheic keratosis",
+          "Actinic keratosis",
+          "Warts, corns, and skin tags",
+          "Squamous cell carcinoma of the skin",
+          "Basal cell carcinoma of the skin",
+          "Melanoma and nevi",
+          "Mycosis fungoides",
+          "Other nodules or tumors of skin (dermatofibroma)"
+        ]
+      },
+      "Cutaneous manifestations of nutritional deficiencies": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Disorders of the nails": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Environmental injury of skin": {
+        "percentage": "<2%",
+        "topics": [
+          "Frostbite"
+        ]
+      },
+      "Pressure injuries": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Dermatologic emergencies": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Endocrinology, Diabetes, and Metabolism": {
+    "percentage": "9%",
+    "subcategories": {
+      "Adrenal disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Adrenal hormonal excess",
+          "Adrenal insufficiency",
+          "Adrenal masses and nodules"
+        ]
+      },
+      "Thyroid disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Hyperthyroidism",
+          "Hypothyroidism",
+          "Thyroiditis (not Hashimoto or peripartum)",
+          "Thyroid nodules and thyroid cancer",
+          "Euthyroid sick syndrome",
+          "Thyroid storm",
+          "Myxedema coma",
+          "Thyroid disease in pregnancy, peripartum,",
+          "or postpartum period"
+        ]
+      },
+      "Endocrine causes of secondary hypertension": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Lipid disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypercholesterolemia",
+          "Hypertriglyceridemia (not including chylomicronemia)",
+          "Chylomicronemia syndrome",
+          "Diet and hyperlipidemia"
+        ]
+      },
+      "Ovarian disorders and female reproductive health": {
+        "percentage": "<2%",
+        "topics": [
+          "Polycystic ovary syndrome",
+          "Premature ovarian failure",
+          "Female infertility",
+          "Hormonal therapy (contraception, postmenopausal",
+          "replacement therapy, abnormal uterine bleeding)"
+        ]
+      },
+      "Testes and male reproductive health": {
+        "percentage": "<2%",
+        "topics": [
+          "Male hypogonadism",
+          "Male infertility",
+          "Erectile dysfunction",
+          "Gynecomastia"
+        ]
+      },
+      "Diabetes mellitus": {
+        "percentage": "<2%",
+        "topics": [
+          "Type 1 diabetes mellitus",
+          "Type 2 diabetes mellitus",
+          "Diabetes mellitus and pregnancy",
+          "Complications of diabetes mellitus"
+        ]
+      },
+      "Disorders of calcium metabolism and bone": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypercalcemia",
+          "Hypocalcemia (not including vitamin D deficiency)",
+          "Hyperphosphatemia",
+          "Hypophosphatemia",
+          "Osteoporosis",
+          "Vitamin D deficiency and osteomalacia",
+          "Chronic kidney disease-mineral and bone disorder"
+        ]
+      },
+      "Hypothalamic disorders": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Anterior pituitary disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Pituitary tumors",
+          "Hypopituitarism"
+        ]
+      },
+      "Posterior pituitary and water homeostasis": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypernatremia",
+          "Hyponatremia"
+        ]
+      },
+      "Endocrine tumors and endocrine manifestations of tumors": {
+        "percentage": "<2%",
+        "topics": [
+          "Insulinoma",
+          "Carcinoid syndrome",
+          "Other endocrine tumors or manifestations of tumors"
+        ]
+      },
+      "Hypoglycemia not due to insulinoma": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Polyglandular autoimmune disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Multiple endocrine hypofunction"
+        ]
+      }
+    }
+  },
+  "Gastroenterology": {
+    "percentage": "9%",
+    "subcategories": {
+      "Esophageal disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Gastroesophageal reflux",
+          "Barrett esophagus",
+          "Esophageal cancer screening",
+          "Esophageal motility disorders",
+          "Medication-induced esophageal disorder",
+          "Esophageal diverticula",
+          "Esophageal strictures or webs",
+          "Gastroesophageal varices",
+          "Infectious esophagitis (Candida, herpes simplex virus,",
+          "cytomegalovirus)",
+          "Mallory-Weiss syndrome",
+          "Other esophageal disease (eosinophilic esophagitis,",
+          "esophageal rupture)"
+        ]
+      },
+      "Stomach and duodenal disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Helicobacter pylori infection",
+          "Peptic ulcer disease (other than Helicobacter pylori)",
+          "Gastritis and gastropathy",
+          "Non-ulcer dyspepsia",
+          "Disorders of gastric emptying"
+        ]
+      },
+      "Small intestinal disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Celiac disease",
+          "Bacterial overgrowth syndrome",
+          "Short bowel syndrome",
+          "Ischemic bowel disease",
+          "Crohn disease including Crohn colitis",
+          "Gastroenteritis other than antibiotic colitis",
+          "Other small intestinal disease (diarrhea [osmotic,",
+          "post-surgical, bile salt-induced, nocturnal],",
+          "gastric bypass complications)"
+        ]
+      },
+      "Colonic and anorectal disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Colorectal cancer screening",
+          "Colon polyposis syndrome and other genetic",
+          "colon cancer syndromes",
+          "Diverticular disease",
+          "Ulcerative colitis",
+          "Irritable bowel syndrome",
+          "Hemorrhoids and fissures",
+          "Antibiotic colitis",
+          "Acute appendicitis",
+          "Radiation colitis",
+          "Other colonic or anorectal disease (constipation,",
+          "fecal incontinence, neutropenic and lymphocytic colitis)"
+        ]
+      },
+      "Pancreatic disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Acute pancreatitis",
+          "Chronic pancreatitis",
+          "Cystic fibrosis",
+          "Neuroendocrine tumors of the pancreas",
+          "Infections of the pancreas and pancreatic abscess",
+          "Other pancreatic disease"
+        ]
+      },
+      "Biliary tract disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Cholelithiasis",
+          "Cholecystitis",
+          "Choledocholithiasis",
+          "Cholangitis",
+          "Primary sclerosing cholangitis",
+          "Sphincter of Oddi dysfunction"
+        ]
+      },
+      "Liver disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Viral hepatitis",
+          "Liver abscess",
+          "Cirrhosis",
+          "Drug-induced liver disease other than acetaminophen",
+          "Autoimmune hepatitis",
+          "Primary biliary cholangitis",
+          "Cholestasis",
+          "Wilson disease",
+          "Liver disease in pregnancy",
+          "Hemochromatosis",
+          "Hepatic vein thrombosis (Budd-Chiari syndrome)",
+          "Fatty liver and nonalcoholic steatohepatitis",
+          "Alcoholic hepatitis",
+          "Fulminant liver failure",
+          "Gilbert syndrome",
+          "Hepatocellular carcinoma screening",
+          "Liver transplantation",
+          "Other liver disease"
+        ]
+      },
+      "Gastrointestinal complications of HIV infection": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Gastrointestinal hemorrhage": {
+        "percentage": "<2%",
+        "topics": [
+          "Upper gastrointestinal hemorrhage",
+          "Lower gastrointestinal hemorrhage",
+          "Hemorrhage of unknown source"
+        ]
+      }
+    }
+  },
+  "Hematology": {
+    "percentage": "6%",
+    "subcategories": {
+      "Hypoproliferative anemia": {
+        "percentage": "<2%",
+        "topics": [
+          "Aplastic anemia",
+          "Anemia of chronic disease or organ failure",
+          "(including kidney failure)",
+          "Iron deficiency anemia",
+          "Sideroblastic anemia",
+          "Megaloblastic anemia",
+          "Lead intoxication"
+        ]
+      },
+      "Hemolytic anemia": {
+        "percentage": "<2%",
+        "topics": [
+          "Glucose-6-phosphate dehydrogenase deficiency",
+          "Autoimmune hemolytic anemia",
+          "Microangiopathic hemolytic anemia",
+          "Other hemolytic anemia"
+        ]
+      },
+      "Hemoglobinopathies and thalassemias": {
+        "percentage": "<2%",
+        "topics": [
+          "Thalassemias",
+          "Hemoglobinopathies"
+        ]
+      },
+      "Leukocyte disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Acute leukemia",
+          "Chronic leukemia",
+          "Leukocyte disorders (marrow infiltration, myelosuppression,",
+          "leukopenia, leukocytosis, eosinophilia)"
+        ]
+      },
+      "Platelet disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Idiopathic thrombocytopenic purpura",
+          "Qualitative defects of platelet function (drugs only)",
+          "Heparin-induced thrombocytopenia (HIT)",
+          "Essential thrombocythemia"
+        ]
+      },
+      "Coagulation factor disorders and thrombotic disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Coagulation factor deficiencies",
+          "Primary hypercoagulable states (including AT3 deficiency,",
+          "APC resistance)",
+          "Antiphospholipid antibody syndrome",
+          "Undifferentiated thrombotic disorders"
+        ]
+      },
+      "Porphyria": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Myeloproliferative disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Polycythemia vera and other erythrocytosis",
+          "Essential thrombocythemia",
+          "Agnogenic myeloid metaplasia and myelofibrosis"
+        ]
+      },
+      "Myelodysplastic syndrome": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Hematologic malignancies": {
+        "percentage": "<2%",
+        "topics": [
+          "Chronic leukemias",
+          "Acute leukemia",
+          "Non-Hodgkin lymphoma",
+          "Hodgkin disease",
+          "Plasma cell disorder"
+        ]
+      },
+      "Transfusion medicine (principles and complications)": {
+        "percentage": "<2%",
+        "topics": [
+          "Indications for transfusion",
+          "Complications of transfusions"
+        ]
+      },
+      "Hematologic complications of HIV infection": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Bone marrow transplantation (late complications only)": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Infectious Disease": {
+    "percentage": "9%",
+    "subcategories": {
+      "Skin and soft tissue infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Dermatophytes",
+          "Herpes zoster and varicella",
+          "Viral exanthems other than varicella",
+          "Cellulitis",
+          "Impetigo",
+          "Necrotizing soft tissue infections and gas gangrene",
+          "Lymphadenitis and lymphangitis",
+          "Diabetic foot infections",
+          "Undifferentiated skin and soft tissue infections"
+        ]
+      },
+      "Central nervous system (CNS) infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Meningitis",
+          "Brain abscess",
+          "Encephalitis",
+          "Epidural abscess",
+          "Iatrogenic and postoperative CNS infections",
+          "Undifferentiated central nervous system infection"
+        ]
+      },
+      "Upper respiratory tract infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Acute and chronic sinusitis",
+          "Otitis media and externa",
+          "Mastoiditis",
+          "Common cold",
+          "Pharyngitis",
+          "Epiglottitis",
+          "Deep infections of head and neck",
+          "Other upper respiratory tract infections (pertussis)"
+        ]
+      },
+      "Eye infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Preseptal cellulitis",
+          "Conjunctivitis",
+          "Keratitis",
+          "Endophthalmitis",
+          "Uveitis/Iritis",
+          "Orbital infections"
+        ]
+      },
+      "Lower respiratory tract infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Bronchitis",
+          "Pneumonia",
+          "Lung abscess",
+          "Tuberculosis (TB)",
+          "Infections of the pleural space and empyema"
+        ]
+      },
+      "Endocarditis and other cardiovascular infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Endocarditis",
+          "Infections of the pericardial space",
+          "Endocarditis prophylaxis",
+          "Suppurative thrombophlebitis",
+          "Catheter-related infections",
+          "Device and pocket infections"
+        ]
+      },
+      "Hepatic infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Viral hepatitis",
+          "Liver abscess",
+          "Cholecystitis",
+          "Cholangitis"
+        ]
+      },
+      "Enteric infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Esophagitis (Candida, herpes simplex virus,",
+          "cytomegalovirus)",
+          "Gastroenteritis",
+          "Infections of the pancreas and pancreatic abscess",
+          "Bacterial peritonitis",
+          "Intra-abdominal abscess other than liver or",
+          "pancreas abscess",
+          "Acquired immunodeficiency syndrome (AIDS) and"
+        ]
+      },
+      "human immunodeficiency virus (HIV) infection": {
+        "percentage": "<2%",
+        "topics": [
+          "Transmission and prevention of HIV",
+          "Prevention of opportunistic infections",
+          "Immune reconstitution inflammatory syndrome",
+          "Neurologic complications of HIV infection",
+          "Pulmonary complications of HIV infection",
+          "Gastrointestinal complications of HIV infection",
+          "Hematologic complications of HIV infection",
+          "Oncologic complications of HIV infection",
+          "Rheumatologic complications of HIV infection",
+          "Cardio-metabolic complications of HIV therapy and infection",
+          "Oral complications of HIV infection"
+        ]
+      },
+      "Sexually transmitted diseases and infections of reproductive organs": {
+        "percentage": "<2%",
+        "topics": [
+          "Urethritis",
+          "Genital ulcers",
+          "Vulvovaginitis",
+          "Cervicitis",
+          "Epididymitis",
+          "Salpingitis and other infections of female pelvis",
+          "Syphilis",
+          "Human papillomavirus and anogenital warts",
+          "Undifferentiated sexually transmitted diseases"
+        ]
+      },
+      "Urinary tract infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Asymptomatic bacteriuria",
+          "Cystitis and pyelonephritis",
+          "Perinephric abscess",
+          "Prostatitis",
+          "Epididymitis"
+        ]
+      },
+      "Infectious arthritis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Osteomyelitis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Bacteremia and sepsis syndrome": {
+        "percentage": "<2%",
+        "topics": [
+          "Fever and neutropenia",
+          "Systemic inflammatory response syndrome (SIRS)",
+          "and septic shock",
+          "Toxic shock syndrome",
+          "Undifferentiated bacteremia and sepsis syndromes"
+        ]
+      },
+      "Rheumatic fever": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Poststreptococcal glomerulonephritis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Procedure-and device-associated infections": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Nosocomial infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Infection control including isolation",
+          "Hospital-acquired infections and prevention",
+          "Needlestick injury and postexposure prophylaxis",
+          "Undifferentiated nosocomial infections"
+        ]
+      },
+      "Prevention of infectious disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Immunization",
+          "Infection prevention and control including",
+          "isolation precautions",
+          "Needlestick injury and postexposure prophylaxis",
+          "Travel-related illness prevention",
+          "Other preventions of infectious disease"
+        ]
+      },
+      "Travel-related illness (fever, rash, diarrhea, and other)": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Infectious disease outbreaks": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Specific causative organisms": {
+        "percentage": "<2%",
+        "topics": [
+          "Viral diseases",
+          "Prion diseases",
+          "Rickettsioses and ehrlichioses",
+          "Bacterial diseases",
+          "Chlamydial diseases",
+          "Mycoplasmal diseases",
+          "Mycoses (fungal infections)",
+          "Protozoan and helminthic diseases (including malaria)",
+          "Ectoparasites (including lice and scabies)",
+          "Vector-borne diseases"
+        ]
+      },
+      "Fever of unknown origin": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Miscellaneous": {
+    "percentage": "2%",
+    "subcategories": {
+      "Primarily epidemiology": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Primarily ethics": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Primarily safety and quality improvement": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Miscellaneous pulmonary disorders (indications for spirometry)": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Nephrology and Urology": {
+    "percentage": "6%",
+    "subcategories": {
+      "Acute kidney injury": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypotension- or shock-induced acute kidney injury",
+          "Toxic kidney injury",
+          "Rhabdomyolysis",
+          "Hepatorenal syndrome",
+          "Disseminated atheroembolism",
+          "(cholesterol emboli syndrome)",
+          "Other acute kidney injury",
+          "Myeloma-induced kidney disease"
+        ]
+      },
+      "Chronic kidney disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Kidney dialysis",
+          "Kidney transplantation",
+          "Strategies to prevent progression of chronic kidney disease",
+          "Undifferentiated chronic kidney disease"
+        ]
+      },
+      "Tubulointerstitial disease": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Glomerular disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Lupus nephritis and glomerulonephritis",
+          "Minimal change disease",
+          "Focal and segmental glomerulosclerosis",
+          "Membranous nephropathy",
+          "Membranoproliferative glomerulonephritis",
+          "IgA nephropathy",
+          "Anti-glomerular basement membrane syndrome",
+          "Vasculitis and the kidney",
+          "Other glomerular disorders (post-infectious,hematuria)",
+          "Essential hypertension",
+          "Primary aldosteronism and mineralocorticoid excess",
+          "Renovascular hypertension"
+        ]
+      },
+      "Urinary tract infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Asymptomatic bacteriuria",
+          "Cystitis and pyelonephritis",
+          "Perinephric abscess",
+          "Prostatitis",
+          "Epididymitis"
+        ]
+      },
+      "Nephrolithiasis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Other kidney disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Renal vein thrombosis",
+          "Obstructive uropathy (acute or chronic)",
+          "Diabetic nephropathy",
+          "Cystic kidney disease (polycystic, medullary sponge,",
+          "medullary cystic)"
+        ]
+      },
+      "Urologic cancer screening": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Prostate disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Benign prostatic hyperplasia",
+          "Undifferentiated prostate disorders"
+        ]
+      },
+      "Other urologic disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Testicular torsion",
+          "Scrotal and testicular nodules or masses other",
+          "than testicular carcinoma",
+          "Erectile dysfunction"
+        ]
+      },
+      "Urinary incontinence": {
+        "percentage": "<2%",
+        "topics": [
+          "Urinary incontinence in women",
+          "Urinary incontinence in men"
+        ]
+      },
+      "Water and electrolyte balance": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypernatremia",
+          "Hyponatremia",
+          "Hypokalemia",
+          "Hyperkalemia",
+          "Hypercalcemia and hypercalciuria",
+          "Hypocalcemia",
+          "Hyperphosphatemia",
+          "Hypophosphatemia",
+          "Hypermagnesemia",
+          "Hypomagnesemia",
+          "Metabolic acidosis",
+          "Metabolic alkalosis",
+          "Respiratory acidosis",
+          "Respiratory alkalosis",
+          "Mixed acid-base disturbance"
+        ]
+      },
+      "Hematuria": {
+        "percentage": "<2%",
+        "topics": [
+          "Glomerular cause",
+          "Non-glomerular cause"
+        ]
+      }
+    }
+  },
+  "Neurology": {
+    "percentage": "4%",
+    "subcategories": {
+      "Seizures": {
+        "percentage": "<2%",
+        "topics": [
+          "Cerebrovascular disease (without specific diagnosis)",
+          "Transient ischemic attack",
+          "Stroke",
+          "Cavernous sinus thrombosis",
+          "Other cerebrovascular disease (less common",
+          "anatomic locations, mechanisms)"
+        ]
+      },
+      "Headache and facial pain": {
+        "percentage": "<2%",
+        "topics": [
+          "Primary headache",
+          "Cluster headache",
+          "Secondary headache and facial pain"
+        ]
+      },
+      "Nerve root syndromes and mechanical lesions of the spine": {
+        "percentage": "<2%",
+        "topics": [
+          "Cervical root disease",
+          "Lumbar disc herniation, lumbosacral radiculopathy,",
+          "sciatica",
+          "Spinal stenosis"
+        ]
+      },
+      "Peripheral neuropathy": {
+        "percentage": "<2%",
+        "topics": [
+          "Acute inflammatory demyelinating polyneuropathy",
+          "(Guillain-Barre syndrome)",
+          "Carpal tunnel syndrome and other entrapment neuropathies",
+          "Meralgia paresthetica",
+          "Fibular (peroneal) neuropathy",
+          "Diabetic neuropathy",
+          "Postherpetic neuralgia",
+          "Drugs and toxins"
+        ]
+      },
+      "Cranial neuropathy": {
+        "percentage": "<2%",
+        "topics": [
+          "Bell palsy and other facial nerve disorders",
+          "Disorders of eye movement from cranial",
+          "neuropathy (III, IV, VI)",
+          "Vestibular neuronitis (acute labyrinthitis)"
+        ]
+      },
+      "Disorders of cerebral function": {
+        "percentage": "<2%",
+        "topics": [
+          "Dementia",
+          "Aphasia",
+          "Medical causes of delirium"
+        ]
+      },
+      "Movement disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Parkinson disease and parkinsonism",
+          "Essential tremor",
+          "Other movement disorders (including other tremors,",
+          "dystonias, chorea, myoclonus, tardive dyskinesia,",
+          "restless leg syndrome)"
+        ]
+      },
+      "Central nervous system (CNS) infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Meningitis",
+          "Brain abscess",
+          "Encephalitis",
+          "Epidural abscess",
+          "Neurologic complications of HIV infection",
+          "Progressive multifocal leukoencephalopathy",
+          "Autoimmune encephalitis"
+        ]
+      },
+      "Central nervous system (CNS) tumors": {
+        "percentage": "<2%",
+        "topics": [
+          "Brain tumors",
+          "Spinal cord tumors and compression",
+          "Carcinomatous meningitis",
+          "Paraneoplastic neurologic syndromes"
+        ]
+      },
+      "Diseases of muscle and neuromuscular junction": {
+        "percentage": "<2%",
+        "topics": [
+          "Myasthenia gravis and Lambert-Eaton syndrome",
+          "Polymyositis and dermatomyositis",
+          "Drug-induced myopathy",
+          "Myotonic dystrophy and other inherited myopathies",
+          "Other diseases of muscle and",
+          "neuromuscular junction"
+        ]
+      },
+      "Multiple sclerosis and other demyelinating diseases": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Other neurologic disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Neurocutaneous syndromes",
+          "Head injury",
+          "Spinal cord injury and disorders",
+          "Idiopathic intracranial hypertension",
+          "Motor neuron disease",
+          "Neuroleptic malignant syndrome",
+          "Cerebellar ataxias"
+        ]
+      },
+      "Neuro-ophthalmology": {
+        "percentage": "<2%",
+        "topics": [
+          "Optic nerve disorders, including optic neuritis",
+          "Pupillary abnormalities including anisocoria",
+          "Disorders of eye movement",
+          "Papilledema"
+        ]
+      },
+      "Miscellaneous neurologic disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Vertigo",
+          "Gait and balance disorders"
+        ]
+      }
+    }
+  },
+  "Obstetrics and Gynecology": {
+    "percentage": "3%",
+    "subcategories": {
+      "Diseases of the vulva and external genitalia": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Breast disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Breast nodules",
+          "Mastitis and breast-feeding",
+          "Other breast disorders (cyclic pain, nipple discharge)"
+        ]
+      },
+      "Ovarian disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Polycystic ovary syndrome",
+          "Ovarian cysts",
+          "Ovarian cancer"
+        ]
+      },
+      "Uterine disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Uterine fibroids",
+          "Endometriosis",
+          "Endometrial cancer",
+          "Cervical cancer"
+        ]
+      },
+      "Vaginal disorders other than vulvovaginitis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Pregnancy": {
+        "percentage": "<2%",
+        "topics": [
+          "Hypertension in pregnancy",
+          "Asthma and pregnancy",
+          "Hyperthyroidism during pregnancy or peripartum period",
+          "Liver disease in pregnancy",
+          "Peripartum cardiomyopathy",
+          "Ectopic pregnancy",
+          "Diabetes mellitus and pregnancy",
+          "Urinary tract infections in pregnancy",
+          "Nutritional deficiencies"
+        ]
+      },
+      "Menstrual disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Dysmenorrhea",
+          "Amenorrhea",
+          "Abnormal uterine bleeding"
+        ]
+      },
+      "Menopause - management, risks, and benefits of therapy": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Family planning and reproductive health": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Sexually transmitted diseases and infections of reproductive organs": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Medical Oncology": {
+    "percentage": "6%",
+    "subcategories": {
+      "Lung cancer (clinical presentation and diagnosis)": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Breast cancer": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Neoplasms of the head and neck": {
+        "percentage": "<2%",
+        "topics": [
+          "Thyroid nodules and thyroid cancer",
+          "Other neoplasms of the head and neck (not thyroid cancer)"
+        ]
+      },
+      "Gastrointestinal or hepatic cancer": {
+        "percentage": "<2%",
+        "topics": [
+          "Esophageal carcinoma",
+          "Stomach cancer",
+          "Colorectal cancer",
+          "Pancreatic carcinoma other than pancreatic endocrine tumors",
+          "Hepatocellular carcinoma",
+          "Gallbladder cancer",
+          "Anal cancer"
+        ]
+      },
+      "Urologic cancer": {
+        "percentage": "<2%",
+        "topics": [
+          "Renal cell carcinoma",
+          "Bladder carcinoma",
+          "Prostate carcinoma",
+          "Testicular carcinoma and tumors"
+        ]
+      },
+      "Gynecologic cancer": {
+        "percentage": "<2%",
+        "topics": [
+          "Ovarian cancer",
+          "Endometrial cancer",
+          "Cervical cancer",
+          "Vulvar cancer"
+        ]
+      },
+      "Bone tumors": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Central nervous system (CNS) tumors": {
+        "percentage": "<2%",
+        "topics": [
+          "Brain tumors (primary or metastatic)",
+          "Spinal cord tumors and compression",
+          "Carcinomatous meningitis"
+        ]
+      },
+      "Skin cancer": {
+        "percentage": "<2%",
+        "topics": [
+          "Squamous cell carcinoma of the skin",
+          "Basal cell carcinoma of the skin",
+          "Melanoma and nevi",
+          "Mycosis fungoides"
+        ]
+      },
+      "Hematologic malignancies": {
+        "percentage": "<2%",
+        "topics": [
+          "Chronic leukemia",
+          "Acute leukemia",
+          "Non-Hodgkin lymphoma",
+          "Hodgkin disease",
+          "Plasma cell disorder"
+        ]
+      },
+      "Soft tissue cancer": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Oncologic complications of HIV infection": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Cancer of unknown primary": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Cancer prevention": {
+        "percentage": "<2%",
+        "topics": [
+          "Smoking cessation",
+          "Environmental carcinogens",
+          "Inherited cancer risk",
+          "Lifestyle interventions"
+        ]
+      },
+      "Oncologic emergencies": {
+        "percentage": "<2%",
+        "topics": [
+          "Superior vena cava syndrome",
+          "Fever and neutropenia",
+          "Brain tumors",
+          "Spinal cord tumors and compression",
+          "Cardiac tamponade from neoplastic pericarditis",
+          "Tumor lysis syndrome",
+          "Hypercalcemia"
+        ]
+      },
+      "Complications of cancer and its treatment": {
+        "percentage": "<2%",
+        "topics": [
+          "Pain (including neuropathy)",
+          "Dyspnea",
+          "Paraneoplastic syndromes",
+          "Lymphedema",
+          "Nausea, vomiting, diarrhea, constipation",
+          "Cardiotoxicity",
+          "Radiation toxicity",
+          "Immunotherapy",
+          "Other complications of cancer treatment"
+        ]
+      },
+      "Cancer survivorship": {
+        "percentage": "<2%",
+        "topics": [
+          "Surveillance",
+          "Second malignancies",
+          "Psychosocial and financial considerations <?"
+        ]
+      }
+    }
+  },
+  "Ophthalmology": {
+    "percentage": "1%",
+    "subcategories": {
+      "Conjunctivitis": {
+        "percentage": "<1%",
+        "topics": [
+          "Viral conjunctivitis",
+          "Bacterial conjunctivitis",
+          "Allergic conjunctivitis",
+          "Other conjunctivitis (keratoconjunctivitis sicca",
+          "[dry eyes], undifferentiated)"
+        ]
+      },
+      "Glaucoma": {
+        "percentage": "<1%",
+        "topics": []
+      },
+      "Cataracts": {
+        "percentage": "<1%",
+        "topics": []
+      },
+      "Diseases of the cornea": {
+        "percentage": "<1%",
+        "topics": [
+          "Corneal abrasion",
+          "Keratitis (infections of the cornea)"
+        ]
+      },
+      "Neuro-ophthalmology": {
+        "percentage": "<1%",
+        "topics": [
+          "Optic nerve disorders, including optic neuritis",
+          "Pupillary abnormalities, including anisocoria",
+          "Disorders of eye movement",
+          "Papilledema"
+        ]
+      },
+      "Retinal disease": {
+        "percentage": "<1%",
+        "topics": [
+          "Macular degeneration",
+          "Retinal detachment",
+          "Diabetic retinopathy",
+          "Amaurosis fugax",
+          "Temporal arteritis",
+          "Roth spot"
+        ]
+      },
+      "Uveitis": {
+        "percentage": "<1%",
+        "topics": []
+      },
+      "Miscellaneous ophthalmologic disorders": {
+        "percentage": "<1%",
+        "topics": [
+          "Episcleritis and scleritis",
+          "Preseptal cellulitis",
+          "Endophthalmitis",
+          "Orbital infections"
+        ]
+      }
+    }
+  },
+  "Otolaryngology and Dental Medicine": {
+    "percentage": "1%",
+    "subcategories": {
+      "Disorders of the nose and paranasal sinuses": {
+        "percentage": "<1%",
+        "topics": [
+          "Allergic rhinitis",
+          "Acute and chronic sinusitis",
+          "Disturbances of taste and smell",
+          "Epistaxis"
+        ]
+      },
+      "Diseases of the ear": {
+        "percentage": "<1%",
+        "topics": [
+          "Benign paroxysmal positional vertigo",
+          "Vestibular neuronitis and acute labyrinthitis",
+          "Meniere disease",
+          "Acoustic neuroma",
+          "Presbycusis and other hearing loss",
+          "Otitis media and externa",
+          "Cholesteatoma",
+          "Other disorders of the ear and mastoid"
+        ]
+      },
+      "Diseases of the oral cavity, pharynx, and salivary glands": {
+        "percentage": "<1%",
+        "topics": [
+          "Pharyngitis",
+          "Epiglottitis",
+          "Deep infections of head and neck",
+          "Parotid disease",
+          "Diseases of the oral mucosa and the tongue",
+          "Other disorders of the oral cavity, pharynx,",
+          "or salivary glands"
+        ]
+      },
+      "Diseases of the larynx and airway": {
+        "percentage": "<1%",
+        "topics": []
+      }
+    }
+  },
+  "Psychiatry": {
+    "percentage": "4%",
+    "subcategories": {
+      "Mood disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Depression and suicide",
+          "Bipolar disorder",
+          "Other mood disorders (psychogenic erectile dysfunction,",
+          "premenstrual dysphoric disorder)"
+        ]
+      },
+      "Eating disorders -(not including obesity)": {
+        "percentage": "<2%",
+        "topics": [
+          "Anorexia nervosa",
+          "Bulimia"
+        ]
+      },
+      "Substance use disorder": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Schizophrenia and delusional (paranoid) disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Complications of drug therapy",
+          "Delusional disorder, somatic type"
+        ]
+      },
+      "Anxiety disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Obsessive-compulsive disorder",
+          "Phobias",
+          "Post-traumatic stress disorders",
+          "Generalized anxiety disorder",
+          "Panic disorder"
+        ]
+      },
+      "Somatoform disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Somatic symptom disorder",
+          "Hypochondriasis",
+          "Conversion disorders"
+        ]
+      },
+      "Sexual disorders and gender dysphoria": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Sleep disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Insomnia",
+          "Narcolepsy"
+        ]
+      },
+      "Factitious disorders": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Personality disorders": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Neuroleptic malignant disorder": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Pulmonary Disease": {
+    "percentage": "9%",
+    "subcategories": {
+      "Occupational and environmental lung disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Organic inhalations (hypersensitivity pneumonitis)",
+          "Inorganic inhalations (pneumoconiosis)",
+          "Occupational asthma",
+          "High-altitude illness",
+          "Carbon monoxide poisoning"
+        ]
+      },
+      "Restrictive lung disease other than interstitial lung": {
+        "percentage": "<2%",
+        "topics": [
+          "and pleural disease",
+          "Pulmonary complications of obesity",
+          "Chest wall disorders",
+          "Neuromuscular disorders",
+          "Undifferentiated restrictive lung disease"
+        ]
+      },
+      "Interstitial lung disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Idiopathic pulmonary fibrosis",
+          "Sarcoidosis",
+          "Radiation pneumonitis",
+          "Drug-induced interstitial lung disease",
+          "Connective tissue disorders and vasculitis",
+          "Eosinophilic pneumonia",
+          "Anti-glomerular basement membrane syndrome"
+        ]
+      },
+      "Pulmonary vascular disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Pulmonary embolism",
+          "Idiopathic pulmonary arterial hypertension",
+          "Cor pulmonale",
+          "Superior vena cava syndrome",
+          "Hepatopulmonary syndrome"
+        ]
+      },
+      "Pleural disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Noninfectious pleural effusion",
+          "Infections of the pleural space and empyema",
+          "Pneumothorax"
+        ]
+      },
+      "Lower respiratory tract infections": {
+        "percentage": "<2%",
+        "topics": [
+          "Bronchitis",
+          "Pneumonia",
+          "Lung abscess",
+          "Tuberculosis",
+          "Infection of the pleural space and empyema"
+        ]
+      },
+      "Bronchiectasis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Congenital lung disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Cystic fibrosis",
+          "Alpha-1-antitrypsin deficiency"
+        ]
+      },
+      "Acute respiratory distress syndrome (ARDS)": {
+        "percentage": "<2%",
+        "topics": [
+          "Fat embolism",
+          "Transfusion-related acute lung injury",
+          "Acute respiratory distress syndrome (not including fat embolism)"
+        ]
+      },
+      "Lung cancer": {
+        "percentage": "<2%",
+        "topics": [
+          "Paraneoplastic syndromes",
+          "Undifferentiated lung cancer"
+        ]
+      },
+      "Sleep medicine": {
+        "percentage": "<2%",
+        "topics": [
+          "Obesity-hypoventilation syndrome",
+          "Obstructive sleep apnea",
+          "Insomnia",
+          "Parasomnia"
+        ]
+      },
+      "Management of ventilators": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Pulmonary complications of HIV infection": {
+        "percentage": "<2%",
+        "topics": [
+          "Dyspnea",
+          "Hemoptysis",
+          "Solitary pulmonary nodule"
+        ]
+      }
+    }
+  },
+  "Rheumatology and Orthopedics": {
+    "percentage": "9%",
+    "subcategories": {
+      "Crystal-induced arthropathy": {
+        "percentage": "<2%",
+        "topics": [
+          "Pseudogout",
+          "Hydroxyapatite deposition disease"
+        ]
+      },
+      "Regional musculoskeletal syndromes": {
+        "percentage": "<2%",
+        "topics": [
+          "Back pain",
+          "Shoulder syndromes",
+          "Elbow syndromes",
+          "Wrist and hand syndromes",
+          "Hip and pelvic pain",
+          "Knee syndromes",
+          "Foot and ankle syndromes",
+          "Other bursitis"
+        ]
+      },
+      "Spondyloarthropathies": {
+        "percentage": "<2%",
+        "topics": [
+          "Ankylosing spondylitis",
+          "Reactive arthritis",
+          "Psoriatic arthritis",
+          "Enteropathic arthritis including arthritis with",
+          "inflammatory bowel disease",
+          "Other spondyloarthropathies"
+        ]
+      },
+      "Rheumatoid arthritis": {
+        "percentage": "<2%",
+        "topics": [
+          "General clinical presentation: Skeletal disease",
+          "Systemic manifestations",
+          "Adverse effects of antirheumatic drugs",
+          "Other topics in rheumatoid arthritis"
+        ]
+      },
+      "Systemic lupus erythematosus (SLE)": {
+        "percentage": "<2%",
+        "topics": [
+          "General clinical presentation",
+          "Specific organ system complications",
+          "Discoid lupus and other cutaneous manifestations",
+          "Drug-induced lupus",
+          "Other topics in systemic lupus erythematosus"
+        ]
+      },
+      "Systemic sclerosis": {
+        "percentage": "<2%",
+        "topics": [
+          "Scleroderma, generalized",
+          "CREST syndrome",
+          "Scleroderma and interstitial lung disease",
+          "Raynaud phenomenon"
+        ]
+      },
+      "Vasculitis": {
+        "percentage": "<2%",
+        "topics": [
+          "Polyarteritis nodosa",
+          "Eosinophilic granulomatosis with polyangiitis",
+          "Leukocytoclastic vasculitis",
+          "Large-vessel vasculitis",
+          "ANCA-associated vasculitis"
+        ]
+      },
+      "Other primary rheumatic disorders": {
+        "percentage": "<2%",
+        "topics": [
+          "Dermatomyositis and polymyositis",
+          "Relapsing polychondritis",
+          "Behçet disease",
+          "Rheumatic fever",
+          "Sjögren syndrome",
+          "Fibromyalgia",
+          "Juvenile rheumatoid arthritis",
+          "Adult Still disease",
+          "Marfan and Ehlers-Danlos syndromes",
+          "Scoliosis",
+          "Arthropathy of hemochromatosis"
+        ]
+      },
+      "Infectious arthritis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Metabolic and other bone disease": {
+        "percentage": "<2%",
+        "topics": [
+          "Hyperparathyroidism",
+          "Avascular necrosis and osteonecrosis",
+          "Osteogenesis imperfecta"
+        ]
+      },
+      "Osteoarthritis": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Sports injuries and trauma": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Charcot-Marie-Tooth Disease": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Mixed connective tissue disease": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Select topics in Rheumatology": {
+        "percentage": "<2%",
+        "topics": []
+      }
+    }
+  },
+  "Geriatric Syndromes": {
+    "percentage": "3%",
+    "subcategories": {
+      "Pressure injuries": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Venous ulcers and chronic wounds": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "End-of-life and palliative care of the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Ethics in the elderly": {
+        "percentage": "<2%",
+        "topics": [
+          "Assessment of decisional capacity and competency and",
+          "surrogate decision-making in the elderly"
+        ]
+      },
+      "Constipation in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Disorders of swallowing in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Urinary tract infections in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Incontinence in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Dementia in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Delirium in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Dizziness and vertigo in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Nutrition in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Ophthalmology in the elderly": {
+        "percentage": "<2%",
+        "topics": [
+          "Cataracts",
+          "Age-related macular degeneration",
+          "Ischemic optic nerve or retinal disease other",
+          "than giant cell arteritis",
+          "Glaucoma"
+        ]
+      },
+      "Psychiatry in the elderly": {
+        "percentage": "<2%",
+        "topics": [
+          "Depression in the elderly",
+          "Sleep disorders in the elderly",
+          "Neuropsychological testing of the elderly"
+        ]
+      },
+      "Hip fracture in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Common foot problems in the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Principles of the geriatric assessment": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Rehabilitation and the elderly": {
+        "percentage": "<2%",
+        "topics": []
+      },
+      "Other primary geriatric topics": {
+        "percentage": "<2%",
+        "topics": [
+          "Clinical pharmacology and aging",
+          "Epidemiology and aging",
+          "Nursing home care",
+          "Home care",
+          "Presbycusis and hearing loss in the elderly",
+          "Elder mistreatment",
+          "Sexual function in the elderly",
+          "January 2025"
+        ]
+      }
+    }
+  }
+}

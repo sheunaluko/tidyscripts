@@ -62,6 +62,15 @@ const AllLinks = () => {
 		  </p>
 	      </Card >
 	  </MLink>
+
+	  <MLink href="/laboratory/abim_blueprint">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">ABIM Outline Study Tool</Typography>
+		  <p>
+		      Interactive ABIM Internal Medicine exam blueprint with AI-powered high-yield topic summaries
+		  </p>
+	      </Card >
+	  </MLink>
 	  
 
 	  <MLink href="/laboratory/graph">
