@@ -78,26 +78,54 @@ export async function get_client() {
 // 2.  UTILITIES (UUIDs, embeddings, existence checks)
 //-------------------------------------------------------------
 
-var parent_cache_dir = process.cwd()  ; 
-if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
-    parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
-    log(`Found tidyscripts data dir for cache use`) 
+var embedding_fn : any = null ;
+var structured_prompt_fn : any = null ;  
+
+/*
+   In future, will need to enable vercel caching strategy, but for now - will disable cahcing if running on vercel 
+ */ 
+
+if (process.env['VERCEL']) {
+
+    
+    log(`Detected vercel environment - thus will NOT enable filesystem cache `) ;
+    embedding_fn = embedding1024 ;
+    structured_prompt_fn = structured_prompt ;  
+    
 } else {
-    log(`Unable to find tidyscripts data dir for cache use`) 
+
+    log(`Not running on vercel, thus will enable filesystem caching`) ; 
+
+    var parent_cache_dir = process.cwd()  ; 
+    if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
+	parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
+	log(`Found tidyscripts data dir for cache use`) 
+    } else {
+	log(`Unable to find tidyscripts data dir for cache use`) 
+    }
+
+    var cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
+    log(`Using cacheDir = ${cacheDir}`) ; 
+
+    var fs_cache = new FileSystemCache<any>({
+	    cacheDir,
+	    onlyLogHitsMisses : true,
+	    logPrefix: "surreal_cache" ,
+	    namespace: "tom" , 
+    }); 
+
+    embedding_fn = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
+    structured_prompt_fn = CacheUtils.memoize( structured_prompt, fs_cache ) ; 
 }
 
-const cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
-log(`Using cacheDir = ${cacheDir}`) ; 
+/*
+   Now the embedding_fn and structured_prompt_fn should be set  
+*/
 
-export const fs_cache = new FileSystemCache<any>({
-    cacheDir,
-    onlyLogHitsMisses : true,
-    logPrefix: "surreal_cache" ,
-    namespace: "tom" , 
-});
-
-export const cached_embedding = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
-export const cached_structured_prompt = CacheUtils.memoize( structured_prompt, fs_cache ) ; 
+export {
+    embedding_fn,
+    structured_prompt_fn 
+}
 
 // --
 
@@ -118,7 +146,7 @@ export interface EntityWithEmbeddings extends Entity {
 }
 
 export async function add_embeddings(e: Entity): Promise<EntityWithEmbeddings> {
-    const eid_vector      = await cached_embedding(e.eid);
+    const eid_vector      = await embedding_fn(e.eid);
     return { ...e, eid_vector} 
 }
 
@@ -283,7 +311,7 @@ export async function process_relation(r: { name: string; source: string; target
 
     log(`Proceeding with db query to store rid vector`)
 
-    const rid_vector  = await cached_embedding(rid);    
+    const rid_vector  = await embedding_fn(rid);    
     let relation_vector_data = { rid, rid_vector, name  }; 
     await db.query(`INSERT IGNORE INTO relations $relation_vector_data`, {relation_vector_data})
 
@@ -333,7 +361,7 @@ Each entity will be identified by the eid field (entity id) which is a human rea
 INPUT:
 ${text}
 `;
-    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    const res: any = await structured_prompt_fn(prompt, rf, tier);
     let entities = res.entities as Entity[];
     debug.add('raw_entities' , entities )    
 
@@ -378,7 +406,7 @@ ${text}
 
     `;
     
-    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    const res: any = await structured_prompt_fn(prompt, rf, tier);
     let relations = res.relations as { name: string; source: string; target: string }[];
 
     debug.add('relations', relations) ;
@@ -427,7 +455,7 @@ ${relations_string}
 
     debug.add('validation_prompt' , prompt) ; 
     
-    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    const res: any = await structured_prompt_fn(prompt, rf, tier);
     const rejected_relation_indices = res.rejected_relations as number[];
     
     const validated_relations = relations.filter((r, index) => !rejected_relation_indices.includes(index));
@@ -489,7 +517,7 @@ ${text}
 
     `;
     
-    const res: any = await cached_structured_prompt(prompt, rf, tier);
+    const res: any = await structured_prompt_fn(prompt, rf, tier);
     let relations = res.relations as { name: string; source: string; target: string }[];
 
     debug.add('relations', relations) ;
@@ -596,7 +624,7 @@ export async function ingest_text(text: string, metadata : any) {
 	entity_eids: added_entities.map((e:any) => e.eid),
 	relation_rids: added_relations.map((r:any) => r.rid),
 	timestamp: new Date().toISOString(),
-	text_vector: await cached_embedding(text),
+	text_vector: await embedding_fn(text),
     } ;
 
     db.query(`INSERT IGNORE INTO knowledge_update $knowledge_update`, { knowledge_update}); 
@@ -620,7 +648,7 @@ export async function ingest_text(text: string, metadata : any) {
 
 export async function entity_vector_search(eid : string, limit : number) {
     limit = limit || 5 ; 
-    let e1 = await cached_embedding(format_id(eid)) ; 
+    let e1 = await embedding_fn(format_id(eid)) ; 
     let query = `
 select eid, vector::distance::knn() AS distance from entity where eid_vector <|${limit},40|> $e1 ORDER BY distance asc
     ` ;
@@ -630,7 +658,7 @@ select eid, vector::distance::knn() AS distance from entity where eid_vector <|$
 
 export async function rid_vector_search(rid : string, limit : number) {
     limit = limit || 5 ; 
-    let e1 = await cached_embedding(format_id(rid)) ; 
+    let e1 = await embedding_fn(format_id(rid)) ; 
     let query = `
 select rid, vector::distance::knn() AS distance from relations where rid_vector <|${limit},40|> $e1 ORDER BY distance asc 
     ` ;
@@ -641,7 +669,7 @@ select rid, vector::distance::knn() AS distance from relations where rid_vector 
 
 export async function knowledge_update_vector_search(text : string, limit : number) {
     limit = limit || 5 ; 
-    let e1 = await cached_embedding(text) ; 
+    let e1 = await embedding_fn(text) ; 
     let query = `
 select id, metadata, vector::distance::knn() AS distance from knowledge_update where text_vector <|${limit},40|> $e1 ORDER BY distance asc 
     ` ;
@@ -654,7 +682,7 @@ select id, metadata, vector::distance::knn() AS distance from knowledge_update w
 export async function relation_name_vector_search(name : string, limit : number) {
     // can use fetch to replace record ids with the actual content (todo later when processing result - the associated_relation_ids) 
     limit = limit || 5 ; 
-    let e1 = await cached_embedding(name) ; 
+    let e1 = await embedding_fn(name) ; 
     let query = `
 select id, associated_relations, name, vector::distance::knn() AS distance from relation_names where name_embedding <|${limit},40|> $e1 ORDER BY distance asc 
     ` ;
@@ -730,7 +758,7 @@ export async function create_relation_name_vector_table() {
 	let relation_id = id.id 
 	log(`\n\nProcessing i=${i}/${rdata.length}, name=${name}, rid=${rid}, id=${relation_id}`) ;
 
-	let name_embedding = await cached_embedding(name) ; 
+	let name_embedding = await embedding_fn(name) ; 
 
 	let init_data = {
 	    name,
