@@ -1,0 +1,99 @@
+# AI Agent I/O Package Development Prompt
+
+You are working in a TypeScript (Node.js) src directory. Create a new sub-package called `agent_io` in a subfolder within this directory.
+
+## Package Structure Requirements
+
+```
+src/
+└── agent_io/
+    ├── index.ts          // Main export file
+    ├── file-operations.ts // File read/write/patch operations
+    ├── directory-operations.ts // Directory listing/searching
+    ├── search-operations.ts // Content searching utilities
+    ├── types.ts          // Shared TypeScript interfaces
+    └── utils.ts          // Helper functions
+```
+
+## Core Functionality Requirements
+
+Create function primitives for AI agents to develop code autonomously on the local system:
+
+### File Operations
+- **Read files** with optional line number ranges and encoding detection
+- **Write files** with backup/rollback capabilities
+- **Patch files** with precise line-based modifications, insertions, and deletions
+- **Copy/move/delete files** with safety checks
+
+### Directory Operations  
+- **List directory contents** with filtering and recursive options
+- **Search directories** by file patterns, extensions, and metadata
+- **Create/remove directories** with proper error handling
+
+### Search Operations
+- **Search file contents** for keywords, regex patterns, and code constructs
+- **Multi-file search** with context and line number reporting
+- **Find and replace** operations across files with preview mode
+
+### Additional Utilities
+- **File metadata** operations (size, permissions, timestamps)
+- **Path resolution** and validation utilities
+
+## Technical Requirements
+
+### Token Optimization
+- Use line numbers extensively to minimize character count in responses
+- Implement range-based operations (e.g., "lines 10-25")
+- Provide compact but informative output formats
+- Include line counts and byte sizes in operation results
+
+### Cross-Platform Compatibility
+- Use Node.js `fs/promises` for all filesystem operations
+- Implement proper path handling with `path` module
+- Handle different line endings and file encodings
+
+### Error Handling & Debugging
+Each function must return a structured result object containing:
+```typescript
+interface OperationResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  metadata: {
+    operation: string;
+    timestamp: Date;
+    executionTime: number;
+    filesAffected?: string[];
+    linesProcessed?: number;
+  };
+}
+```
+
+### TypeDoc Documentation Standards
+- Complete JSDoc comments for all exported functions
+- Include `@param` descriptions with types and constraints  
+- Document `@returns` with structure and possible error states
+- Provide `@example` usage demonstrations
+- Add `@throws` documentation for expected error conditions
+
+### Safety & Validation Features
+- Input validation for all file paths and operations
+- Backup creation before file modifications
+
+## Export Structure
+
+The `index.ts` should export all functionality in organized namespaces:
+
+```typescript
+export * as files from './file-operations';
+export * as directories from './directory-operations'; 
+export * as search from './search-operations';
+export * from './types';
+```
+
+## Additional Considerations
+
+3. **Concurrency**: Handle multiple simultaneous operations safely
+4. **Logging**: Include optional verbose logging for debugging
+
+Create production-ready code with comprehensive error handling, type safety, and clear documentation that enables an AI agent to perform sophisticated file system operations efficiently.
