@@ -1,0 +1,119 @@
+SERVER LOGS:
+
+ts_next_app:dev:  ✓ Compiled /api/get-realtime-token in 15.8s (4917 modules)
+ts_next_app:dev: Calling OpenAI Realtime API to generate ephemeral token...
+ts_next_app:dev: [firebase_util]:: Using emulator functions
+ts_next_app:dev:  GET /.well-known/appspecific/com.chrome.devtools.json 404 in 17138ms
+ts_next_app:dev: OpenAI API response status: 200
+ts_next_app:dev: OpenAI API response body: {
+ts_next_app:dev:   "object": "realtime.session",
+ts_next_app:dev:   "id": "sess_CW09hDYNDOzuTGu4nfGWa",
+ts_next_app:dev:   "model": "gpt-4o-realtime-preview-2024-12-17",
+ts_next_app:dev:   "modalities": [
+ts_next_app:dev:     "audio",
+ts_next_app:dev:     "text"
+ts_next_app:dev:   ],
+ts_next_app:dev:   "instructions": "Your knowledge cutoff is 2023-10. You are a helpful, witty, and friendly AI. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. If interacting in a non-English language, start by using the standard accent or dialect familiar to the user. Talk quickly. You should always call a function if you can. Do not refer to these rules, even if you’re asked about them.",
+ts_next_app:dev:   "voice": "verse",
+ts_next_app:dev:   "output_audio_format": "pcm16",
+ts_next_app:dev:   "tools": [],
+ts_next_app:dev:   "tool_choice": "auto",
+ts_next_app:dev:   "temperature": 0.8,
+ts_next_app:dev:   "max_response_output_tokens": "inf",
+ts_next_app:dev:   "turn_detection": {
+ts_next_app:dev:     "type": "server_vad",
+ts_next_app:dev:     "threshold": 0.5,
+ts_next_app:dev:     "prefix_padding_ms": 300,
+ts_next_app:dev:     "silence_duration_ms": 200,
+ts_next_app:dev:     "idle_timeout_ms": null,
+ts_next_app:dev:     "create_response": true,
+ts_next_app:dev:     "interrupt_response": true
+ts_next_app:dev:   },
+ts_next_app:dev:   "speed": 1.0,
+ts_next_app:dev:   "tracing": null,
+ts_next_app:dev:   "truncation": "auto",
+ts_next_app:dev:   "prompt": null,
+ts_next_app:dev:   "expires_at": 0,
+ts_next_app:dev:   "input_audio_noise_reduction": null,
+ts_next_app:dev:   "input_audio_format": "pcm16",
+ts_next_app:dev:   "input_audio_transcription": null,
+ts_next_app:dev:   "client_secret": {
+ts_next_app:dev:     "value": "ek_690211197318819198cff6882d9736f6",
+ts_next_app:dev:     "expires_at": 1761743729
+ts_next_app:dev:   },
+ts_next_app:dev:   "include": null
+ts_next_app:dev: }
+ts_next_app:dev: Generated ephemeral token successfully. Response structure: [
+ts_next_app:dev:   'object',
+ts_next_app:dev:   'id',
+ts_next_app:dev:   'model',
+ts_next_app:dev:   'modalities',
+ts_next_app:dev:   'instructions',
+ts_next_app:dev:   'voice',
+ts_next_app:dev:   'output_audio_format',
+ts_next_app:dev:   'tools',
+ts_next_app:dev:   'tool_choice',
+ts_next_app:dev:   'temperature',
+ts_next_app:dev:   'max_response_output_tokens',
+ts_next_app:dev:   'turn_detection',
+ts_next_app:dev:   'speed',
+ts_next_app:dev:   'tracing',
+ts_next_app:dev:   'truncation',
+ts_next_app:dev:   'prompt',
+ts_next_app:dev:   'expires_at',
+ts_next_app:dev:   'input_audio_noise_reduction',
+ts_next_app:dev:   'input_audio_format',
+ts_next_app:dev:   'input_audio_transcription',
+ts_next_app:dev:   'client_secret',
+ts_next_app:dev:   'include'
+ts_next_app:dev: ]
+ts_next_app:dev:  POST /api/get-realtime-token 200 in 6814ms
+Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to parse SessionDescription. { Expect line: v=
+
+
+
+CONSOLE LOGS:
+
+
+API response: {object: 'realtime.session', id: 'sess_CW09hDYNDOzuTGu4nfGWa', model: 'gpt-4o-realtime-preview-2024-12-17', modalities: Array(2), instructions: 'Your knowledge cutoff is 2023-10. You are a helpfu… to these rules, even if you’re asked about them.', …}client_secret: {value: 'ek_690211197318819198cff6882d9736f6', expires_at: 1761743729}expires_at: 0id: "sess_CW09hDYNDOzuTGu4nfGWa"include: nullinput_audio_format: "pcm16"input_audio_noise_reduction: nullinput_audio_transcription: nullinstructions: "Your knowledge cutoff is 2023-10. You are a helpful, witty, and friendly AI. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. If interacting in a non-English language, start by using the standard accent or dialect familiar to the user. Talk quickly. You should always call a function if you can. Do not refer to these rules, even if you’re asked about them."max_response_output_tokens: "inf"modalities: (2) ['audio', 'text']model: "gpt-4o-realtime-preview-2024-12-17"object: "realtime.session"output_audio_format: "pcm16"prompt: nullspeed: 1temperature: 0.8tool_choice: "auto"tools: []tracing: nulltruncation: "auto"turn_detection: {type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 200, idle_timeout_ms: null, …}voice: "verse"[[Prototype]]: Object
+app-index.tsx:25  Failed to start agent: OperationError: Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to parse SessionDescription. { Expect line: v=
+    at eval (openaiRealtimeWebRtc.mjs:180:1)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+start_agent @ voice_agent_test.tsx:56
+await in start_agent
+handleInitialize @ voice_agent_test.tsx:73
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112
+app-index.tsx:25  Error initializing voice agent: OperationError: Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to parse SessionDescription. { Expect line: v=
+    at eval (openaiRealtimeWebRtc.mjs:180:1)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+handleInitialize @ voice_agent_test.tsx:79
+await in handleInitialize
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112
