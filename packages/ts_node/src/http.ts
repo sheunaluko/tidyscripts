@@ -77,13 +77,13 @@ export async function get_json_with_headers(url : string, headers: any) {
  */ 
 export async function download_url_to_file(url : string, fname : string) {
     const res = await fetch(url);
-    io.ensure_parents(fname) ; 
+    io.ensure_parents(fname) ;
     const fileStream = fs.createWriteStream(fname);
     await new Promise((resolve, reject) => {
 	var body = Readable.fromWeb(res.body as any);
 	body.pipe(fileStream);
 	body.on("error", reject);
-	fileStream.on("finish", resolve);
+	fileStream.on("finish", (resolve as any) );
     });
 }
 

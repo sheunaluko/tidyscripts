@@ -32,7 +32,9 @@ backup
 package-lock.json
 packages/ts_node/local
 
+**/.env
 .env
+apps/firebase/functions/.env
 apps/ts_next_app/.env.local
 data
 data/**

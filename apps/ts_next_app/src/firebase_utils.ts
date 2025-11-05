@@ -40,7 +40,15 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export var store_embedding_function = httpsCallable(functions, "storeEmbedding")
-export var retrieve_embedding_function = httpsCallable(functions,"retrieveEmbedding")   
+export var retrieve_embedding_function = httpsCallable(functions,"retrieveEmbedding")
+export var test_auth = httpsCallable(functions,"testAuth")
+export var surreal_query = httpsCallable(functions,"surrealQuery")
+export var new_user_table = httpsCallable(functions,"newUserTable")
+
+export function get_firebase_function(name : string) {
+    return httpsCallable(functions, name) 
+} 
+
 const db = getFirestore(app);
 
 if (typeof window !== "undefined") { 

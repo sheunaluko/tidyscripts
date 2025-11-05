@@ -6,18 +6,40 @@ import {logger, util} from "tidyscripts_common"
 const ORG = process.env.OPENAI_ORG
 const API_KEY = process.env.OPENAI_API_KEY
 
-const log = logger.get_logger({id : "openai"}) ; 
+const log = logger.get_logger({id : "openai"}) ;
 
 /*
 const configuration = new Configuration({
-    organization: ORG, 
-    apiKey: API_KEY, 
+    organization: ORG,
+    apiKey: API_KEY,
 });
  */
 
-log(`OPENAI API KEY: ${API_KEY}`) 
+// Create client lazily to avoid initialization errors when OPENAI_API_KEY is not set
+let _client: OpenAI | null = null;
 
-export const client = new OpenAI(); //default for v4 is to use the env var 
+function getClient(): OpenAI {
+    if (!_client) {
+        log(`OPENAI API KEY: ${API_KEY}`)
+        _client = new OpenAI(); //default for v4 is to use the env var
+    }
+    return _client;
+}
+
+// Export for backward compatibility
+export const client = {
+    get chat() { return getClient().chat; },
+    get completions() { return getClient().completions; },
+    get embeddings() { return getClient().embeddings; },
+    get files() { return getClient().files; },
+    get images() { return getClient().images; },
+    get audio() { return getClient().audio; },
+    get moderations() { return getClient().moderations; },
+    get models() { return getClient().models; },
+    get fineTuning() { return getClient().fineTuning; },
+    get beta() { return getClient().beta; },
+    get batches() { return getClient().batches; }
+}; 
 
 
 /**

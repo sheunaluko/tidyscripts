@@ -96,7 +96,7 @@ export async function start_agent(providedKey: string | undefined, instructions:
     // Create a tool to detect when user says they're done
     const conversationComplete = tool({
       name: 'conversation_complete',
-      description: 'Call this when the user indicates they are done with the conversation (e.g., says "I\'m done", "that\'s all", "goodbye", etc.)',
+      description: 'Call this when the user indicates they are done with the conversation (e.g., says "Im done", "thats all", "goodbye", etc.)',
       parameters: z.object({
         reason: z.string().optional().describe('Why the conversation is ending'),
       }),
@@ -293,7 +293,7 @@ const VoiceAgentTest = () => {
                     )}
                     {isConnected && (
                         <Typography variant='body2' color='success' sx={{ mt: 2 }}>
-                            Voice agent is ready! Say "I'm done" when finished, or click Generate Summary below.
+                            Voice agent is ready! Say Im done when finished, or click Generate Summary below.
                         </Typography>
                     )}
 

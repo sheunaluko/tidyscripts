@@ -1,0 +1,3 @@
+echo "Rebuilding functions" ; 
+cd functions ;
+tsc ; 
