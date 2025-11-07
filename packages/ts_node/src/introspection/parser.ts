@@ -198,28 +198,13 @@ export function traverseNodes(node: JDocNode, parentPath: string = ''): ParsedNo
       const childNodes = traverseNodes(child, filePath);
       results.push(...childNodes);
 
-      // If we processed the parent, attach children to it
-      if (results.length > 0 && shouldGenerateEmbedding(node.kind)) {
-        const parent = results[results.length - 1 - childNodes.length];
-        if (parent && parent.id === node.id) {
-          parent.children.push(...childNodes);
-        }
-      }
-    }
-  }
-
-  // For methods, also check signatures array
-  if (node.kind === NodeKind.Class || node.kind === NodeKind.Interface) {
-    if (node.children) {
-      for (const child of node.children) {
-        if (child.kind === NodeKind.Method || child.kind === NodeKind.Property) {
-          const methodNodes = traverseNodes(child, filePath);
-          if (results.length > 0) {
-            const parent = results.find(r => r.id === node.id);
-            if (parent) {
-              parent.children.push(...methodNodes);
-            }
-          }
+      // If we processed the parent, attach immediate child to it (not all descendants)
+      if (shouldGenerateEmbedding(node.kind) && childNodes.length > 0) {
+        const parent = results.find(r => r.id === node.id);
+        // Only add the immediate child node (first in childNodes array), not all descendants
+        const immediateChild = childNodes[0];
+        if (parent && immediateChild && shouldGenerateEmbedding(child.kind)) {
+          parent.children.push(immediateChild);
         }
       }
     }

@@ -5,6 +5,7 @@ A Retrieval Augmented Generation (RAG) system for the tidyscripts codebase that 
 ## ✅ Implementation Status
 
 **Part 1 Complete**: Codebase → Database (All 11 modules implemented)
+**Phase 1A Complete**: CONTAINS edges implemented and tested (15/15 tests passing)
 
 ## Architecture
 
@@ -205,9 +206,9 @@ ts-node validate.ts
 - **file_metadata** - File-level tracking for incremental updates
 
 ### Relationships
-- **CONTAINS** - Module → Function/Class/Interface
-- **USES** - Function/Class → Type
-- **IMPORTS** - Module → Module (future)
+- **CONTAINS** - ✅ Module → Function/Class/Interface (Phase 1A: Implemented & Tested)
+- **USES** - Function/Class → Type (Phase 1B: Future)
+- **IMPORTS** - Module → Module (Phase 1C: Future)
 
 ## Two-Hash Strategy
 
@@ -266,6 +267,12 @@ function isEmptyString(str: string): boolean {
 - `getTableCounts(db)` - Get counts of all tables
 - `getCacheStats(db)` - Get embedding cache statistics
 
+### Relationship Operations (Phase 1A)
+- `createContainsEdge(db, parentTable, parentId, childTable, childId)` - Create single CONTAINS edge
+- `deleteOutgoingEdges(db, table, nodeId)` - Delete all outgoing edges for a node
+- `createContainsEdgesForNode(db, parentNode)` - Create edges for all children (recursive, batched)
+- `getTableNameForKind(kind)` - Get table name for a NodeKind
+
 ### Configuration
 - `loadConfig()` - Load complete configuration
 - `loadSurrealConfig()` - Load SurrealDB config only
@@ -318,7 +325,8 @@ After initial sync of tidyscripts codebase (~3.4MB jdoc.json):
 SELECT
   (SELECT count() FROM function_node)[0].count AS functions,
   (SELECT count() FROM class_node)[0].count AS classes,
-  (SELECT count() FROM module_node)[0].count AS modules
+  (SELECT count() FROM module_node)[0].count AS modules,
+  (SELECT count() FROM CONTAINS)[0].count AS edges
 ```
 
 ### Cache Statistics
@@ -335,6 +343,24 @@ FROM embedding_cache
 SELECT name, filePath
 FROM function_node
 WHERE docstring = '' OR docstring IS NULL
+```
+
+### Query CONTAINS Edges (Phase 1A)
+```sql
+-- What does a module contain?
+SELECT ->CONTAINS->function_node.*
+FROM module_node
+WHERE name = 'apis'
+
+-- Which module contains a function?
+SELECT <-CONTAINS<-module_node.*
+FROM function_node
+WHERE name = 'initialize_microphone'
+
+-- Count edges for a module
+SELECT count(->CONTAINS) as child_count
+FROM module_node
+WHERE name = 'apis'
 ```
 
 ## Next Steps (Part 2)

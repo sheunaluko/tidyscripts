@@ -4,6 +4,7 @@
  * Run this script to validate the database after sync.
  */
 
+import Surreal from 'surrealdb';
 import {
   connect,
   disconnect,
@@ -27,7 +28,7 @@ async function validate() {
   const configSummary = getConfigSummary();
   logger.info('Configuration:', { summary: configSummary });
 
-  let db;
+  let db: Surreal | undefined;
 
   try {
     // Connect
@@ -64,6 +65,23 @@ async function validate() {
       totalNodes,
     });
 
+    // Get edge counts
+    const [containsCountResult] = await db.query('SELECT COUNT() as count FROM CONTAINS GROUP ALL');
+    const containsEdgeCount = (containsCountResult?.[0] as any)?.count || 0;
+
+    logger.info('Edge Counts:', {
+      CONTAINS: containsEdgeCount,
+    });
+
+    // Show sample edges
+    if (containsEdgeCount > 0) {
+      const [sampleEdges] = await db.query('SELECT in, out FROM CONTAINS LIMIT 5');
+      const edgesArray = sampleEdges as any[];
+      logger.info('Sample CONTAINS edges:', {
+        samples: edgesArray?.map(e => `${e.in} -> ${e.out}`) || [],
+      });
+    }
+
     // Get cache statistics
     const cacheStats = await getCacheStats(db);
     const hitRate = cacheStats.total_entries > 0 && cacheStats.total_usage > 0
@@ -83,12 +101,12 @@ async function validate() {
     logger.info('Fetching sample data...');
 
     // Get sample functions
-    const sampleFunctions = await db.query<[any[]]>('SELECT * FROM function_node LIMIT 3');
-    const funcResults = sampleFunctions?.[0]?.result;
+    const sampleFunctions = await db.query('SELECT * FROM function_node LIMIT 3');
+    const funcResults = sampleFunctions?.[0] as any;
     if (funcResults && funcResults.length > 0) {
       logger.info('Sample Functions:', {
         count: funcResults.length,
-        samples: funcResults.map(f => ({
+        samples: funcResults.map((f: any) => ({
           name: f.name,
           filePath: f.filePath,
           docstring: f.docstring?.slice(0, 80) + '...',
@@ -97,12 +115,12 @@ async function validate() {
     }
 
     // Get sample classes
-    const sampleClasses = await db.query<[any[]]>('SELECT * FROM class_node LIMIT 3');
-    const classResults = sampleClasses?.[0]?.result;
+    const sampleClasses = await db.query('SELECT * FROM class_node LIMIT 3');
+    const classResults = sampleClasses?.[0] as any;
     if (classResults && classResults.length > 0) {
       logger.info('Sample Classes:', {
         count: classResults.length,
-        samples: classResults.map(c => ({
+        samples: classResults.map((c: any) => ({
           name: c.name,
           filePath: c.filePath,
           docstring: c.docstring?.slice(0, 80) + '...',
@@ -111,10 +129,10 @@ async function validate() {
     }
 
     // Check for nodes without docstrings
-    const noDocstrings = await db.query<[{ count: number }[]]>(
+    const noDocstrings = await db.query(
       'SELECT count() FROM function_node WHERE docstring = "" OR docstring IS NULL'
     );
-    const noDocCount = noDocstrings?.[0]?.result?.[0]?.count || 0;
+    const noDocCount = (noDocstrings?.[0]?.[0] as any)?.count || 0;
     logger.info('Functions without docstrings:', { count: noDocCount });
 
     // Validation checks
@@ -138,6 +156,10 @@ async function validate() {
       {
         name: 'Files tracked',
         pass: counts.files > 0,
+      },
+      {
+        name: 'CONTAINS edges created',
+        pass: containsEdgeCount > 0,
       },
       {
         name: 'Cache has usage > 1',

@@ -279,6 +279,136 @@ export async function syncAllFiles(db: Surreal, pathFilter?: string): Promise<Sy
 }
 
 // ============================================================================
+// Sync Analysis (Dry Run)
+// ============================================================================
+
+/**
+ * Analyze what will be synced without actually syncing
+ *
+ * Returns expected counts for validation purposes.
+ *
+ * @param pathFilter - Optional path filter (e.g., "packages/ts_web/src/apis")
+ * @returns Expected counts for nodes, files, and edges
+ */
+export async function analyzeSync(pathFilter?: string): Promise<{
+  files: number;
+  nodes: {
+    total: number;
+    functions: number;
+    classes: number;
+    modules: number;
+    interfaces: number;
+    type_aliases: number;
+    methods: number;
+  };
+  edges: {
+    contains: number;
+  };
+  fileBreakdown: Array<{
+    filePath: string;
+    nodeCount: number;
+    edgeCount: number;
+  }>;
+}> {
+  // Load jdoc.json
+  const jdocPath = getJdocPath();
+  const jdoc = await loadJdoc(jdocPath);
+
+  // Extract and group nodes
+  const allNodes = extractAllNodes(jdoc);
+  const nodesByFile = groupNodesByFile(allNodes);
+
+  // Apply path filter if provided
+  let filesToProcess = nodesByFile;
+  if (pathFilter) {
+    const filtered = new Map<string, any[]>();
+    for (const [filePath, nodes] of nodesByFile) {
+      if (filePath.includes(pathFilter)) {
+        filtered.set(filePath, nodes);
+      }
+    }
+    filesToProcess = filtered;
+  }
+
+  // Count nodes by type and track per-file statistics
+  let functions = 0;
+  let classes = 0;
+  let modules = 0;
+  let interfaces = 0;
+  let type_aliases = 0;
+  let methods = 0;
+
+  const fileBreakdown: Array<{
+    filePath: string;
+    nodeCount: number;
+    edgeCount: number;
+  }> = [];
+
+  let totalContainsEdges = 0;
+
+  for (const [filePath, nodes] of filesToProcess) {
+    let fileEdgeCount = 0;
+
+    // Count nodes and edges for this file
+    for (const node of nodes) {
+      // Count node type
+      switch (node.kind) {
+        case NodeKind.Function:
+          functions++;
+          break;
+        case NodeKind.Class:
+          classes++;
+          break;
+        case NodeKind.Module:
+          modules++;
+          break;
+        case NodeKind.Interface:
+          interfaces++;
+          break;
+        case NodeKind.TypeAlias:
+          type_aliases++;
+          break;
+        case NodeKind.Method:
+          methods++;
+          break;
+      }
+
+      // Count edges from this node to its immediate children
+      if (node.children && node.children.length > 0) {
+        fileEdgeCount += node.children.length;
+      }
+    }
+
+    totalContainsEdges += fileEdgeCount;
+
+    fileBreakdown.push({
+      filePath,
+      nodeCount: nodes.length,
+      edgeCount: fileEdgeCount,
+    });
+  }
+
+  const totalNodes = functions + classes + modules + interfaces + type_aliases + methods;
+
+  return {
+    files: filesToProcess.size,
+    nodes: {
+      total: totalNodes,
+      functions,
+      classes,
+      modules,
+      interfaces,
+      type_aliases,
+      methods,
+    },
+    edges: {
+      contains: totalContainsEdges,
+    },
+    fileBreakdown,
+  };
+}
+
+// ============================================================================
 // Main Entry Point
 // ============================================================================
 

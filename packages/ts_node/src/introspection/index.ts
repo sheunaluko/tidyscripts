@@ -61,7 +61,7 @@
 // Public API - Synchronization
 // ============================================================================
 
-export { fullSync, incrementalSync, syncFile, syncAllFiles } from './sync';
+export { fullSync, incrementalSync, syncFile, syncAllFiles, analyzeSync } from './sync';
 
 // ============================================================================
 // Public API - Database Operations
