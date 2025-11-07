@@ -39,3 +39,7 @@ apps/ts_next_app/.env.local
 data
 data/**
 browser-user-data/
+
+**/user_response
+
+**/.surreal_docs
