@@ -48,6 +48,14 @@ Unit tests for the tidyscripts introspection system modules.
    - Mixed change handling
    - Statistics calculation
 
+7. **sync.test.ts** - Synchronization path filtering
+   - Path filter matching logic
+   - File inclusion/exclusion
+   - Subdirectory handling
+   - Case sensitivity
+   - Integration with node grouping
+   - NOTE: Database operations in sync.ts are tested via integration tests
+
 ## Running Tests
 
 ### Run All Tests
@@ -97,27 +105,32 @@ runner.run(async () => {
 });
 ```
 
-## What's NOT Tested
+## What's NOT Tested (Unit Tests)
+
+These components are validated through **integration testing** during actual sync runs:
 
 ### Database Operations (database.ts)
-- Requires running SurrealDB instance
-- Would need integration tests, not unit tests
-- Could be tested with mocked DB client
+- **Why not unit tested**: Requires running SurrealDB instance
+- **How tested**: Integration tests via `fullSync()` and `validate.ts`
+- **Alternative**: Could use mocked DB client, but integration testing provides better coverage
+- **Tested during**: Step 3 of instructions.md (filtered sync on web.apis module)
 
-### Sync Operations (sync.ts)
-- Depends on database operations
-- Requires full system setup
-- Better suited for integration tests
+### Sync Database Integration (sync.ts)
+- **Why not unit tested**: Depends on database operations (tested separately in sync.test.ts for logic)
+- **How tested**: Integration tests via `fullSync()` with real database
+- **Note**: Path filtering logic IS tested in sync.test.ts
+- **Tested during**: Step 3 of instructions.md
 
-### Schema (schema.ts)
-- Static SQL definitions
-- Could validate syntax but minimal value
-- Better tested through actual database initialization
+### Schema Initialization (schema.ts)
+- **Why not unit tested**: Static SQL definitions
+- **How tested**: Validated when `initializeSchema()` runs during sync
+- **Tested during**: Step 3 of instructions.md (schema creation happens automatically)
 
 ### OpenAI API Calls (embeddings.ts)
-- Would require API key or extensive mocking
-- Actual API calls tested through integration tests
-- Text generation is tested
+- **Why not unit tested**: Would require API key or extensive mocking
+- **How tested**: Real API calls during sync
+- **Note**: Embedding text generation IS tested in embeddings.test.ts
+- **Tested during**: Step 3 of instructions.md (generates real embeddings)
 
 ## Adding New Tests
 

@@ -671,10 +671,13 @@ function syncFile(
 ): Promise<void>;
 
 function syncAllFiles(
-  db: any
+  db: any,
+  pathFilter?: string  // Optional: filter files by path (e.g., "packages/ts_web/src/apis")
 ): Promise<void>;
 
-function fullSync(): Promise<void>; // Main entry point
+function fullSync(
+  pathFilter?: string  // Optional: filter files by path for focused testing
+): Promise<void>; // Main entry point
 ```
 
 ---

@@ -8,10 +8,10 @@ All 13 modules have been implemented with the following enhancements:
 - ✅ All core modules (types → sync)
 - ✅ Structured logging integrated across all modules
 - ✅ SurrealDB API updated to new 'surrealdb' package
-- ✅ Unit tests created for 6 core modules
+- ✅ Unit tests created for 7 core modules (constants, config, hasher, parser, embeddings, reconciler, sync)
 - ✅ Validation script ready
 
-**Your Mission**: Test the modules, run a full sync, debug any issues, and validate the database.
+**Your Mission**: Test the modules, run a focused sync on a single module (web.apis), debug any issues, and validate the database.
 
 ---
 
@@ -45,6 +45,7 @@ All 13 modules have been implemented with the following enhancements:
 ✅ tests/parser.test.ts     - Docstring & type parsing
 ✅ tests/embeddings.test.ts - Embedding text generation
 ✅ tests/reconciler.test.ts - Reconciliation logic
+✅ tests/sync.test.ts       - Path filtering logic
 ✅ tests/run-all.ts         - Master test runner
 ```
 
@@ -172,57 +173,48 @@ If missing, generate it with TypeDoc from your project root.
 
 ---
 
-## 🚀 Step 3: Run Initial Full Sync
+## 🚀 Step 3: Run Focused Test Sync (Recommended)
 
-Now attempt your first full synchronization.
+Before running a full sync on the entire codebase, test with a single module to validate the pipeline.
 
-### 3.1 Test Database Connection First
+### Why Test with a Single Module First?
 
-Before the full sync, test that you can connect:
+1. **Faster feedback** - Seconds to minutes instead of 10-40 minutes
+2. **Easier debugging** - Focused logs with less noise
+3. **Lower cost** - Fewer OpenAI API calls
+4. **Validates entire pipeline** - Tests all components with real data
+5. **Quick iteration** - Fix issues and re-test rapidly
+
+### 3.1 Recommended Test Module: web.apis
+
+The `web.apis` module is ideal for testing:
+- **Manageable size**: ~10-20 files
+- **Real-world code**: Actual TypeScript with functions, classes, types
+- **Representative**: Contains typical code patterns
+- **Fast**: Can complete in 1-3 minutes
+
+Path: `packages/ts_web/src/apis`
+
+### 3.2 Run Filtered Sync
 
 ```bash
 cd /home/oluwa/dev/tidyscripts/packages/ts_node/src/introspection
 
-# Quick connection test
-ts-node -e "
-import { connect, disconnect } from './database.js';
-(async () => {
-  try {
-    const db = await connect();
-    console.log('✅ Connected to SurrealDB!');
-    await disconnect(db);
-  } catch (error) {
-    console.error('❌ Connection failed:', error.message);
-  }
-})();
-"
-```
-
-**Expected**: `✅ Connected to SurrealDB!`
-
-**If it fails**:
-- Check SurrealDB is running
-- Verify environment variables
-- Check URL/namespace/database settings
-
-### 3.2 Run Full Sync (First Attempt)
-
-```bash
 # Set DEBUG logging for detailed output
 export TS_INTROSPECTION_LOG_LEVEL=DEBUG
 
-# Run full sync
-ts-node -e "import('./index.js').then(m => m.fullSync())"
+# Run filtered sync on web.apis module
+ts-node -e "import('./index.js').then(m => m.fullSync('packages/ts_web/src/apis'))"
 ```
 
-### What to Watch For
+### 3.3 What to Watch For
 
-The full sync will:
+The filtered sync will:
 1. **Connect to SurrealDB**
-2. **Initialize schema** (creates tables)
+2. **Initialize schema** (creates tables if needed)
 3. **Load jdoc.json** (~3.4MB)
-4. **Extract nodes** (functions, classes, modules, etc.)
-5. **Group nodes by file**
+4. **Apply path filter** (shows total files vs filtered files)
+5. **Process only matching files** (packages/ts_web/src/apis/*)
 6. **For each file**:
    - Hash the file
    - Reconcile (compare local vs remote)
@@ -233,41 +225,66 @@ The full sync will:
 ### Expected Output (Partial)
 
 ```
-[2025-11-06T...] [INFO] ╔══════════════════════════════════════╗
-[2025-11-06T...] [INFO] ║   Tidyscripts Introspection System   ║
-[2025-11-06T...] [INFO] ╚══════════════════════════════════════╝
+[2025-11-06T...] [INFO] ╔══════════════════════════════════════════════════════════╗
+[2025-11-06T...] [INFO] ║   Tidyscripts Introspection System - Filtered Sync      ║
+[2025-11-06T...] [INFO] ╚══════════════════════════════════════════════════════════╝
+[2025-11-06T...] [INFO] Path filter: { filter: "packages/ts_web/src/apis" }
 [2025-11-06T...] [INFO] Step 1: Connecting to SurrealDB...
-[2025-11-06T...] [INFO] Connected to SurrealDB {
-  url: "http://localhost:8000",
-  namespace: "tidyscripts",
-  database: "introspection"
-}
+[2025-11-06T...] [INFO] Connected to SurrealDB { ... }
 [2025-11-06T...] [INFO] Step 2: Checking schema...
-[2025-11-06T...] [INFO] Schema not found - initializing...
 [2025-11-06T...] [INFO] Step 3: Syncing files...
 [2025-11-06T...] [INFO] Loading jdoc.json { path: "/home/oluwa/..." }
-[2025-11-06T...] [INFO] Loaded jdoc.json { rootNode: "tidyscripts", kind: "Project", children: 50 }
-[2025-11-06T...] [INFO] Extracted nodes from jdoc.json { total: 500, functions: 300, classes: 100, ... }
-[2025-11-06T...] [INFO] Files to process { count: 50 }
-[2025-11-06T...] [INFO] [1/50] (2.0%) Processing: src/index.ts
-[2025-11-06T...] [INFO] Syncing file: src/index.ts { filePath: "..." }
-[2025-11-06T...] [INFO] Creating 10 new nodes... { count: 10 }
-[2025-11-06T...] [DEBUG] Embedding cache MISS - generating new embedding { contentHash: "a1b2c3d4...", textLength: 150 }
-[2025-11-06T...] [DEBUG] Embedding generated { textLength: 150, durationMs: 234 }
+[2025-11-06T...] [INFO] Path filter applied {
+  filter: "packages/ts_web/src/apis",
+  totalFiles: 150,
+  filteredFiles: 15
+}
+[2025-11-06T...] [INFO] Files to process { count: 15 }
+[2025-11-06T...] [INFO] [1/15] (6.7%) Processing: packages/ts_web/src/apis/index.ts
 ...
-[2025-11-06T...] ⏱️  File sync: src/index.ts: 5432ms (5.43s)
-...
-[2025-11-06T...] [INFO] All files synced { filesProcessed: 50, nodesCreated: 500, ... }
-[2025-11-06T...] [INFO] ╔══════════════════════════════════════╗
-[2025-11-06T...] [INFO] ║   Sync Complete - Statistics         ║
-[2025-11-06T...] [INFO] ╚══════════════════════════════════════╝
-[2025-11-06T...] [INFO] Files: { processed: 50 }
-[2025-11-06T...] [INFO] Nodes: { created: 500, updated: 0, deleted: 0, unchanged: 0, total: 500 }
-[2025-11-06T...] ⏱️  Full sync: 123456ms (123.46s)
 [2025-11-06T...] [SUCCESS] Full sync completed successfully!
 ```
 
 ### Duration Expectations
+
+- **Filtered sync (web.apis)**: 1-3 minutes
+- **Depends on**: Number of files (~15) and nodes (~50-100)
+- **OpenAI API**: Main bottleneck (rate limited)
+
+### If the Test Succeeds
+
+✅ **Congratulations!** Your pipeline is working correctly.
+
+You can now:
+1. **Validate the results** (proceed to Step 5)
+2. **Run a full sync** on the entire codebase (proceed to Step 4)
+3. **Test other modules** by changing the path filter
+
+### If the Test Fails
+
+See **Step 4: Debug Common Issues** for troubleshooting guidance.
+
+---
+
+## 🌍 Step 4: Run Full Sync (Optional)
+
+After successfully testing with a single module, you can optionally run a full sync on the entire codebase.
+
+**Note**: This step is optional. If you've successfully completed the filtered sync in Step 3 and validated the results in Step 5, you've already proven the system works. A full sync is only needed if you want to index the entire codebase.
+
+### 4.1 Run Full Sync
+
+```bash
+cd /home/oluwa/dev/tidyscripts/packages/ts_node/src/introspection
+
+# Set DEBUG logging for detailed output
+export TS_INTROSPECTION_LOG_LEVEL=DEBUG
+
+# Run full sync (no path filter)
+ts-node -e "import('./index.js').then(m => m.fullSync())"
+```
+
+### 4.2 Duration Expectations
 
 - **Small codebase** (~50 files): 5-10 minutes
 - **Medium codebase** (~100 files): 10-20 minutes
@@ -279,9 +296,9 @@ Most time is spent on:
 
 ---
 
-## 🐛 Step 4: Debug Common Issues
+## 🐛 Step 5: Debug Common Issues
 
-If the sync fails, here's how to debug:
+If any sync (filtered or full) fails, here's how to debug:
 
 ### Issue 1: Connection Errors
 
@@ -394,11 +411,11 @@ export TS_INTROSPECTION_LOG_LEVEL=ERROR
 
 ---
 
-## ✅ Step 5: Validate Database Contents
+## ✅ Step 6: Validate Database Contents
 
-After a successful sync, validate that data is correct.
+After a successful sync (filtered or full), validate that data is correct.
 
-### 5.1 Run Validation Script
+### 6.1 Run Validation Script
 
 ```bash
 cd /home/oluwa/dev/tidyscripts/packages/ts_node/src/introspection
@@ -440,7 +457,7 @@ ts-node validate.ts
 [SUCCESS] All checks passed!
 ```
 
-### 5.2 Manual Validation Queries
+### 6.2 Manual Validation Queries
 
 Connect to SurrealDB and run queries:
 
@@ -505,17 +522,17 @@ LIMIT 10;
 
 ---
 
-## 🔄 Step 6: Test Incremental Updates
+## 🔄 Step 7: Test Incremental Updates
 
 Test that incremental sync only updates changed files.
 
-### 6.1 Modify a File
+### 7.1 Modify a File
 
 1. **Pick a source file** from your codebase
 2. **Make a small change** (add a comment, update docstring)
 3. **Regenerate jdoc.json** with TypeDoc
 
-### 6.2 Run Incremental Sync
+### 7.2 Run Incremental Sync
 
 ```bash
 # Run incremental sync (auto-detects changed files)
@@ -528,7 +545,7 @@ ts-node -e "import('./index.js').then(m => m.incrementalSync())"
 - Cache hits for identical embeddings
 - Much faster than full sync
 
-### 6.3 Verify Results
+### 7.3 Verify Results
 
 Check logs for:
 ```
@@ -540,7 +557,7 @@ Check logs for:
 
 ---
 
-## 📊 Step 7: Review Performance & Statistics
+## 📊 Step 8: Review Performance & Statistics
 
 After a successful sync, review the performance metrics.
 
@@ -606,14 +623,17 @@ Database:
 
 1. ✅ All unit tests pass
 2. ✅ Database connection works
-3. ✅ Full sync completes without errors
+3. ✅ Filtered sync (web.apis) completes without errors
 4. ✅ Validation script shows all checks PASS
-5. ✅ Table counts match expected values
+5. ✅ Table counts match expected values (for filtered module)
 6. ✅ Embeddings have correct dimensionality (1536)
 7. ✅ Cache shows reuse (usageCount > 1 for some entries)
-8. ✅ Incremental sync only updates changed files
-9. ✅ No critical errors in logs
-10. ✅ Performance is acceptable
+8. ✅ No critical errors in logs
+9. ✅ Performance is acceptable
+
+**Optional Additional Validation**:
+- ✅ Full sync completes without errors (entire codebase)
+- ✅ Incremental sync only updates changed files
 
 ---
 
@@ -658,13 +678,13 @@ echo $TS_INTROSPECTION_LOG_LEVEL
 # Adjust logging level (optional)
 export TS_INTROSPECTION_LOG_LEVEL='DEBUG'  # Or INFO, WARN, ERROR, SILENT
 
-# Test database connection
-ts-node -e "import { connect, disconnect } from './database.js'; (async () => { const db = await connect(); console.log('✅ Connected!'); await disconnect(db); })();"
+# Run filtered sync on web.apis module (RECOMMENDED FOR TESTING)
+ts-node -e "import('./index.js').then(m => m.fullSync('packages/ts_web/src/apis'))"
 
-# Run full sync
+# Run full sync on entire codebase
 ts-node -e "import('./index.js').then(m => m.fullSync())"
 
-# Run incremental sync
+# Run incremental sync (auto-detects changed files)
 ts-node -e "import('./index.js').then(m => m.incrementalSync())"
 
 # Validate database

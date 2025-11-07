@@ -145,18 +145,20 @@ export async function syncFile(
 // ============================================================================
 
 /**
- * Sync all files from jdoc.json
+ * Sync all files from jdoc.json (optionally filtered by path pattern)
  *
  * Process:
  * 1. Load jdoc.json
  * 2. Extract and group nodes by file
- * 3. Sync each file individually
- * 4. Report final statistics
+ * 3. Filter files by path pattern (if provided)
+ * 4. Sync each file individually
+ * 5. Report final statistics
  *
  * @param db - SurrealDB instance
+ * @param pathFilter - Optional path filter (e.g., "packages/ts_web/src/apis")
  * @returns Sync statistics
  */
-export async function syncAllFiles(db: Surreal): Promise<SyncStats> {
+export async function syncAllFiles(db: Surreal, pathFilter?: string): Promise<SyncStats> {
   logger.startTimer('sync-all-files');
   const startTime = new Date();
   const stats: SyncStats = {
@@ -181,13 +183,30 @@ export async function syncAllFiles(db: Surreal): Promise<SyncStats> {
   const allNodes = extractAllNodes(jdoc);
   const nodesByFile = groupNodesByFile(allNodes);
 
-  logger.info('Files to process', { count: nodesByFile.size });
+  // Apply path filter if provided
+  let filesToProcess = nodesByFile;
+  if (pathFilter) {
+    const filtered = new Map<string, any[]>();
+    for (const [filePath, nodes] of nodesByFile) {
+      if (filePath.includes(pathFilter)) {
+        filtered.set(filePath, nodes);
+      }
+    }
+    filesToProcess = filtered;
+    logger.info('Path filter applied', {
+      filter: pathFilter,
+      totalFiles: nodesByFile.size,
+      filteredFiles: filesToProcess.size,
+    });
+  }
+
+  logger.info('Files to process', { count: filesToProcess.size });
 
   // Sync each file
   let fileIndex = 0;
-  for (const [filePath, nodes] of nodesByFile) {
+  for (const [filePath, nodes] of filesToProcess) {
     fileIndex++;
-    logger.logProgress(fileIndex, nodesByFile.size, `Processing: ${filePath}`);
+    logger.logProgress(fileIndex, filesToProcess.size, `Processing: ${filePath}`);
     logger.debug('Nodes in file', {
       filePath,
       nodeCount: nodes.length,
@@ -236,17 +255,26 @@ export async function syncAllFiles(db: Surreal): Promise<SyncStats> {
  * Process:
  * 1. Connect to SurrealDB
  * 2. Initialize schema (if needed)
- * 3. Sync all files
+ * 3. Sync all files (optionally filtered by path)
  * 4. Display statistics
  * 5. Disconnect
  *
+ * @param pathFilter - Optional path filter (e.g., "packages/ts_web/src/apis")
  * @throws Error if sync fails
  */
-export async function fullSync(): Promise<void> {
+export async function fullSync(pathFilter?: string): Promise<void> {
   logger.startTimer('full-sync');
   logger.info('╔══════════════════════════════════════════════════════════╗');
-  logger.info('║   Tidyscripts Introspection System - Full Sync          ║');
+  if (pathFilter) {
+    logger.info('║   Tidyscripts Introspection System - Filtered Sync      ║');
+  } else {
+    logger.info('║   Tidyscripts Introspection System - Full Sync          ║');
+  }
   logger.info('╚══════════════════════════════════════════════════════════╝');
+
+  if (pathFilter) {
+    logger.info('Path filter:', { filter: pathFilter });
+  }
 
   let db: Surreal | null = null;
 
@@ -266,9 +294,9 @@ export async function fullSync(): Promise<void> {
       logger.info('Schema already initialized');
     }
 
-    // Step 3: Sync all files
+    // Step 3: Sync all files (with optional filter)
     logger.info('Step 3: Syncing files...');
-    const syncStats = await syncAllFiles(db);
+    const syncStats = await syncAllFiles(db, pathFilter);
 
     // Step 4: Display final statistics
     const totalDuration = logger.endTimer('full-sync');

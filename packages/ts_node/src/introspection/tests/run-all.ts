@@ -12,6 +12,7 @@ const testFiles = [
   'parser.test.ts',
   'embeddings.test.ts',
   'reconciler.test.ts',
+  'sync.test.ts',
 ];
 
 async function runTest(file: string): Promise<boolean> {
