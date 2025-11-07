@@ -208,4 +208,7 @@ runner.run(async () => {
     assertEqual(withoutDocs.length, 1);
     assertEqual(withoutDocs[0].name, 'func2');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

@@ -6,8 +6,8 @@
 
 import Surreal from 'surrealdb';
 import { loadSurrealConfig } from './config';
-import { SCHEMA, TABLE_COUNTS_QUERY, CACHE_STATS_QUERY } from './schema';
-import { TABLE_NAMES } from './constants';
+import { SCHEMA, CACHE_STATS_QUERY } from './schema';
+import { TABLE_NAMES, NodeKind, getKindName } from './constants';
 import { logger } from './logger';
 import type {
   FunctionNode,
@@ -105,6 +105,17 @@ export async function initializeSchema(db: Surreal): Promise<void> {
     logger.success('Schema initialized successfully');
     logger.logTiming('Schema initialization', duration);
   } catch (error) {
+    const errorMessage = (error as Error).message || String(error);
+
+    // If schema already exists, treat as success
+    if (errorMessage.includes('already exists')) {
+      const duration = logger.endTimer('schema-init');
+      logger.info('Schema already exists (OK)');
+      logger.logTiming('Schema check', duration);
+      return;
+    }
+
+    // For other errors, log and throw
     logger.error('Failed to initialize schema', error as Error);
     throw new Error(`Failed to initialize schema: ${error}`);
   }
@@ -137,7 +148,9 @@ export async function isSchemaInitialized(db: Surreal): Promise<boolean> {
  */
 export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promise<void> {
   await db.query(
-    `INSERT INTO ${TABLE_NAMES.FUNCTION_NODE} {
+    `LET $tb = $table;
+     LET $id = type::string($nodeId);
+     CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
       filePath: $filePath,
@@ -150,6 +163,7 @@ export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promi
       lastUpdated: time::now()
     }`,
     {
+      table: TABLE_NAMES.FUNCTION_NODE,
       nodeId: node.nodeId,
       name: node.name,
       filePath: node.filePath,
@@ -220,7 +234,7 @@ export async function getFunctionNodesByFile(
     { filePath }
   );
 
-  return result?.[0]?.result || [];
+  return result?.[0] || [];
 }
 
 // ============================================================================
@@ -235,7 +249,9 @@ export async function getFunctionNodesByFile(
  */
 export async function insertClassNode(db: Surreal, node: ClassNode): Promise<void> {
   await db.query(
-    `INSERT INTO ${TABLE_NAMES.CLASS_NODE} {
+    `LET $tb = $table;
+     LET $id = type::string($nodeId);
+     CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
       filePath: $filePath,
@@ -247,6 +263,7 @@ export async function insertClassNode(db: Surreal, node: ClassNode): Promise<voi
       lastUpdated: time::now()
     }`,
     {
+      table: TABLE_NAMES.CLASS_NODE,
       nodeId: node.nodeId,
       name: node.name,
       filePath: node.filePath,
@@ -310,7 +327,9 @@ export async function deleteClassNode(db: Surreal, nodeId: number): Promise<void
  */
 export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<void> {
   await db.query(
-    `INSERT INTO ${TABLE_NAMES.MODULE_NODE} {
+    `LET $tb = $table;
+     LET $id = type::string($nodeId);
+     CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
       path: $path,
@@ -322,6 +341,7 @@ export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<v
       lastUpdated: time::now()
     }`,
     {
+      table: TABLE_NAMES.MODULE_NODE,
       nodeId: node.nodeId,
       name: node.name,
       path: node.path,
@@ -385,7 +405,9 @@ export async function deleteModuleNode(db: Surreal, nodeId: number): Promise<voi
  */
 export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Promise<void> {
   await db.query(
-    `INSERT INTO ${TABLE_NAMES.INTERFACE_NODE} {
+    `LET $tb = $table;
+     LET $id = type::string($nodeId);
+     CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
       filePath: $filePath,
@@ -397,6 +419,7 @@ export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Pro
       lastUpdated: time::now()
     }`,
     {
+      table: TABLE_NAMES.INTERFACE_NODE,
       nodeId: node.nodeId,
       name: node.name,
       filePath: node.filePath,
@@ -460,7 +483,9 @@ export async function deleteInterfaceNode(db: Surreal, nodeId: number): Promise<
  */
 export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Promise<void> {
   await db.query(
-    `INSERT INTO ${TABLE_NAMES.TYPE_ALIAS_NODE} {
+    `LET $tb = $table;
+     LET $id = type::string($nodeId);
+     CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
       filePath: $filePath,
@@ -473,6 +498,7 @@ export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Pro
       lastUpdated: time::now()
     }`,
     {
+      table: TABLE_NAMES.TYPE_ALIAS_NODE,
       nodeId: node.nodeId,
       name: node.name,
       filePath: node.filePath,
@@ -547,7 +573,7 @@ export async function getFileMetadata(
     { filePath }
   );
 
-  return result?.[0]?.result?.[0] || null;
+  return result?.[0]?.[0] || null;
 }
 
 /**
@@ -603,8 +629,8 @@ export async function getRemoteAssets(db: Surreal, filePath: string): Promise<Re
       { filePath }
     );
 
-    if (result?.[0]?.result) {
-      assets.push(...result[0].result);
+    if (result?.[0]) {
+      assets.push(...result[0]);
     }
   }
 
@@ -614,6 +640,161 @@ export async function getRemoteAssets(db: Surreal, filePath: string): Promise<Re
 // ============================================================================
 // Relationship Operations
 // ============================================================================
+
+/**
+ * Get table name for a node kind
+ *
+ * Maps NodeKind enum to SurrealDB table name.
+ *
+ * @param kind - NodeKind value
+ * @returns Table name
+ * @throws Error if kind is unknown
+ */
+export function getTableNameForKind(kind: NodeKind): string {
+  switch (kind) {
+    case NodeKind.Function:
+      return TABLE_NAMES.FUNCTION_NODE;
+    case NodeKind.Class:
+      return TABLE_NAMES.CLASS_NODE;
+    case NodeKind.Module:
+      return TABLE_NAMES.MODULE_NODE;
+    case NodeKind.Interface:
+      return TABLE_NAMES.INTERFACE_NODE;
+    case NodeKind.TypeAlias:
+      return TABLE_NAMES.TYPE_ALIAS_NODE;
+    case NodeKind.Method:
+      return TABLE_NAMES.FUNCTION_NODE; // Methods stored as functions
+    default:
+      throw new Error(`Unknown kind: ${kind} (${getKindName(kind)})`);
+  }
+}
+
+/**
+ * Create CONTAINS edge between parent and child nodes
+ *
+ * Links a container (module/class) to its contained nodes (functions/methods/classes).
+ *
+ * @param db - SurrealDB instance
+ * @param parentTable - Table name of parent ('module_node', 'class_node', etc)
+ * @param parentId - nodeId of parent
+ * @param childTable - Table name of child ('function_node', 'class_node', etc)
+ * @param childId - nodeId of child
+ */
+export async function createContainsEdge(
+  db: Surreal,
+  parentTable: string,
+  parentId: number,
+  childTable: string,
+  childId: number
+): Promise<void> {
+  await db.query(`
+    RELATE ${parentTable}:${parentId}->CONTAINS->${childTable}:${childId}
+  `);
+}
+
+/**
+ * Delete outgoing CONTAINS edges for a node
+ *
+ * Removes all edges where this node is the source (in).
+ * Preserves incoming edges where this node is the target (out).
+ *
+ * Use when updating a module/class that may have changed children.
+ *
+ * @param db - SurrealDB instance
+ * @param table - Table name
+ * @param nodeId - Node ID
+ */
+export async function deleteOutgoingEdges(
+  db: Surreal,
+  table: string,
+  nodeId: number
+): Promise<void> {
+  await db.query(`DELETE CONTAINS WHERE in = ${table}:${nodeId}`);
+}
+
+/**
+ * Collect all CONTAINS edges from a node tree (recursive, no DB calls)
+ *
+ * Traverses the node tree and collects all parent-child relationships.
+ *
+ * @param parentNode - Parent node with children array populated
+ * @param edges - Accumulated edges array (for recursion)
+ * @returns Array of edge definitions
+ */
+function collectContainsEdges(
+  parentNode: any, // ParsedNode type, but importing causes circular dependency
+  edges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> = []
+): Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> {
+  if (!parentNode.children || parentNode.children.length === 0) {
+    return edges;
+  }
+
+  const parentTable = getTableNameForKind(parentNode.kind);
+
+  for (const child of parentNode.children) {
+    const childTable = getTableNameForKind(child.kind);
+
+    // Add this edge
+    edges.push({
+      parentTable,
+      parentId: parentNode.id,
+      childTable,
+      childId: child.id,
+    });
+
+    // Recursively collect from child's children
+    if (child.children && child.children.length > 0) {
+      collectContainsEdges(child, edges);
+    }
+  }
+
+  return edges;
+}
+
+/**
+ * Create multiple CONTAINS edges in a single batch query
+ *
+ * More efficient than creating edges one-by-one - uses single DB call.
+ *
+ * @param db - SurrealDB instance
+ * @param edges - Array of edge definitions
+ */
+async function createContainsEdgesBatch(
+  db: Surreal,
+  edges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }>
+): Promise<void> {
+  if (edges.length === 0) return;
+
+  // Build batch RELATE query
+  const queries = edges
+    .map(edge => `RELATE ${edge.parentTable}:${edge.parentId}->CONTAINS->${edge.childTable}:${edge.childId}`)
+    .join('; ');
+
+  await db.query(queries);
+}
+
+/**
+ * Create CONTAINS edges for all children of a parent node (batched)
+ *
+ * Traverses the node tree to collect all edges, then creates them in a single batch.
+ * Much more efficient than one-by-one creation.
+ *
+ * @param db - SurrealDB instance
+ * @param parentNode - Parent node with children array populated
+ * @returns Number of edges created
+ */
+export async function createContainsEdgesForNode(
+  db: Surreal,
+  parentNode: any // ParsedNode type, but importing causes circular dependency
+): Promise<number> {
+  // Step 1: Collect all edges (no DB calls)
+  const edges = collectContainsEdges(parentNode, []);
+
+  // Step 2: Batch create (single DB call)
+  await createContainsEdgesBatch(db, edges);
+
+  return edges.length;
+}
 
 /**
  * Create CONTAINS relationships
@@ -650,16 +831,24 @@ export async function getTableCounts(db: Surreal): Promise<{
   embeddings: number;
   files: number;
 }> {
-  const result = await db.query(TABLE_COUNTS_QUERY);
+  // Run separate count queries for each table
+  // Use COUNT() with GROUP ALL to get total count, not per-row count
+  const [functionsResult] = await db.query('SELECT COUNT() as count FROM function_node GROUP ALL');
+  const [classesResult] = await db.query('SELECT COUNT() as count FROM class_node GROUP ALL');
+  const [modulesResult] = await db.query('SELECT COUNT() as count FROM module_node GROUP ALL');
+  const [interfacesResult] = await db.query('SELECT COUNT() as count FROM interface_node GROUP ALL');
+  const [typeAliasesResult] = await db.query('SELECT COUNT() as count FROM type_alias_node GROUP ALL');
+  const [embeddingsResult] = await db.query('SELECT COUNT() as count FROM embedding_cache GROUP ALL');
+  const [filesResult] = await db.query('SELECT COUNT() as count FROM file_metadata GROUP ALL');
 
-  return result?.[0]?.result?.[0] || {
-    functions: 0,
-    classes: 0,
-    modules: 0,
-    interfaces: 0,
-    type_aliases: 0,
-    embeddings: 0,
-    files: 0,
+  return {
+    functions: functionsResult?.[0]?.count || 0,
+    classes: classesResult?.[0]?.count || 0,
+    modules: modulesResult?.[0]?.count || 0,
+    interfaces: interfacesResult?.[0]?.count || 0,
+    type_aliases: typeAliasesResult?.[0]?.count || 0,
+    embeddings: embeddingsResult?.[0]?.count || 0,
+    files: filesResult?.[0]?.count || 0,
   };
 }
 
@@ -678,7 +867,7 @@ export async function getCacheStats(db: Surreal): Promise<{
 }> {
   const result = await db.query(CACHE_STATS_QUERY);
 
-  return result?.[0]?.result?.[0] || {
+  return result?.[0]?.[0] || {
     total_entries: 0,
     total_usage: 0,
     max_usage: 0,

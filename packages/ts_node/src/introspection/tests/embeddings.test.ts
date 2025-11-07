@@ -190,4 +190,7 @@ runner.run(async () => {
     const text = buildEmbeddingText(funcNode);
     assert(text.includes('Parameters:'), 'Should use function builder');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

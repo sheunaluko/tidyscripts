@@ -56,28 +56,28 @@ export type NodeKind = typeof NodeKind[keyof typeof NodeKind];
  * Helper to check if a kind is a container type (can have children)
  */
 export function isContainerKind(kind: number): boolean {
-  return [
+  return ([
     NodeKind.Project,
     NodeKind.Module,
     NodeKind.Class,
     NodeKind.Interface,
     NodeKind.Enum,
     NodeKind.TypeLiteral,
-  ].includes(kind);
+  ] as number[]).includes(kind);
 }
 
 /**
  * Helper to check if a kind should have an embedding generated
  */
 export function shouldGenerateEmbedding(kind: number): boolean {
-  return [
+  return ([
     NodeKind.Function,
     NodeKind.Class,
     NodeKind.Interface,
     NodeKind.Module,
     NodeKind.Method,
     NodeKind.TypeAlias,
-  ].includes(kind);
+  ] as number[]).includes(kind);
 }
 
 /**
@@ -108,6 +108,11 @@ export type NodeVariant = typeof NodeVariant[keyof typeof NodeVariant];
 // ============================================================================
 // Default Configuration Values
 // ============================================================================
+
+/**
+ * Default project root directory
+ */
+export const DEFAULT_PROJECT_ROOT = '/home/oluwa/dev/tidyscripts';
 
 /**
  * Default path to TypeDoc-generated JSON documentation
@@ -167,6 +172,7 @@ export const ENV_VARS = {
   SURREAL_USER: `${ENV_PREFIX}USER`,
   SURREAL_PASSWORD: `${ENV_PREFIX}PASSWORD`,
   JDOC_PATH: 'TS_INTROSPECTION_JDOC_PATH',
+  PROJECT_ROOT: 'TIDYSCRIPTS_HOME',
   OPENAI_API_KEY: 'OPENAI_API_KEY',
 } as const;
 

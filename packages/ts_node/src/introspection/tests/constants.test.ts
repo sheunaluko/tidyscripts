@@ -67,4 +67,7 @@ runner.run(async () => {
     assert(DEFAULT_JDOC_PATH.length > 0, 'Default jdoc path should be defined');
     assert(DEFAULT_JDOC_PATH.includes('jdoc.json'), 'Default path should reference jdoc.json');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

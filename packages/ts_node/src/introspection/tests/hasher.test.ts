@@ -117,4 +117,7 @@ runner.run(async () => {
     assert(hashesEqual(hash1, hash2), 'Same hashes should be equal');
     assert(!hashesEqual(hash1, hash3), 'Different hashes should not be equal');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

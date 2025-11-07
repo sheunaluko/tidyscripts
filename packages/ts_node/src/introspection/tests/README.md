@@ -2,6 +2,8 @@
 
 Unit tests for the tidyscripts introspection system modules.
 
+## ✅ Status: All 8 Test Suites Passing (70 Tests Total)
+
 ## Test Coverage
 
 ### Core Modules Tested
@@ -56,31 +58,50 @@ Unit tests for the tidyscripts introspection system modules.
    - Integration with node grouping
    - NOTE: Database operations in sync.ts are tested via integration tests
 
+8. **database.test.ts** - Database integration tests
+   - Connection to isolated TEST namespace (tidyscripts_test)
+   - Schema initialization
+   - Function node CRUD operations (insert, retrieve)
+   - File metadata operations
+   - Complete table cleanup (including edge tables)
+   - NOTE: Uses REAL database with isolated namespace for safety
+
 ## Running Tests
 
-### Run All Tests
+### Quick Start (Recommended)
 
 ```bash
-# From introspection directory
-ts-node tests/run-all.ts
+# Clean, build, and run all tests
+./run_test_suite.sh
 ```
 
-### Run Individual Test
+### Individual Steps
 
 ```bash
-# From introspection directory
-ts-node tests/constants.test.ts
-ts-node tests/config.test.ts
-ts-node tests/hasher.test.ts
-# ... etc
+# Build only (compiles to dist/)
+./build_tests.sh
+
+# Run only (requires build first)
+./run_tests.sh
 ```
 
-### Run from project root
+### From Project Root
 
 ```bash
-cd packages/ts_node/src/introspection
-ts-node tests/run-all.ts
+cd packages/ts_node/src/introspection/tests
+./run_test_suite.sh
 ```
+
+## Build System
+
+All tests are compiled with consistent flags:
+```bash
+tsc --skipLibCheck --target ES2020 --module commonjs --outDir dist
+```
+
+- **Input**: TypeScript `.ts` files in this directory
+- **Output**: JavaScript `.js` files in `dist/tests/`
+- **Dependencies**: Compiled source modules in `dist/`
 
 ## Test Framework
 
@@ -102,6 +123,9 @@ runner.run(async () => {
   runner.test('my test', () => {
     assertEqual(1 + 1, 2);
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });
 ```
 
@@ -110,10 +134,9 @@ runner.run(async () => {
 These components are validated through **integration testing** during actual sync runs:
 
 ### Database Operations (database.ts)
-- **Why not unit tested**: Requires running SurrealDB instance
-- **How tested**: Integration tests via `fullSync()` and `validate.ts`
-- **Alternative**: Could use mocked DB client, but integration testing provides better coverage
-- **Tested during**: Step 3 of instructions.md (filtered sync on web.apis module)
+- **Integration tests**: Now tested via `database.test.ts` with isolated TEST namespace
+- **Also tested during**: Step 3 of instructions.md (full sync on web.apis module)
+- **Note**: database.test.ts validates CRUD operations in a safe TEST namespace
 
 ### Sync Database Integration (sync.ts)
 - **Why not unit tested**: Depends on database operations (tested separately in sync.test.ts for logic)
@@ -184,10 +207,18 @@ Tests: 2 total, 1 passed, 1 failed
 
 ## Integration Testing
 
-For full system testing:
+### Database Integration (database.test.ts)
+- Connects to isolated TEST namespace (`tidyscripts_test`)
+- Tests real database CRUD operations
+- Complete cleanup (removes all tables and edge tables)
+- Runs as part of normal test suite
+
+### Full System Testing
+
+For complete end-to-end testing:
 
 1. **Setup**: Start SurrealDB, set env vars
-2. **Run**: `ts-node validate.ts`
+2. **Run**: `ts-node validate.ts` or follow instructions.md
 3. **Verify**: Check database contents
 
-See parent README.md for integration testing details.
+See parent README.md for full integration testing details.

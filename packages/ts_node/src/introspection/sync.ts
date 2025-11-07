@@ -20,7 +20,11 @@ import {
   getRemoteAssets,
   getTableCounts,
   getCacheStats,
+  createContainsEdgesForNode,
+  deleteOutgoingEdges,
+  getTableNameForKind,
 } from './database';
+import { NodeKind } from './constants';
 import {
   reconcile,
   processCreates,
@@ -113,6 +117,37 @@ export async function syncFile(
   await processCreates(diff.toCreate, db);
   await processUpdates(diff.toUpdate, remoteAssets, db);
   await processDeletes(diff.toDelete, db);
+
+  // Step 5.5: Create CONTAINS edges for nodes with children
+  logger.startTimer('create-edges');
+  let totalEdges = 0;
+
+  // For updated nodes: delete old outgoing edges first
+  for (const node of diff.toUpdate) {
+    if (node.children && node.children.length > 0) {
+      const tableName = getTableNameForKind(node.kind as NodeKind);
+      await deleteOutgoingEdges(db, tableName, node.id);
+    }
+  }
+
+  // For all nodes with children (created + updated): create edges
+  const nodesWithChildren = [...diff.toCreate, ...diff.toUpdate].filter(
+    n => n.children && n.children.length > 0
+  );
+
+  for (const node of nodesWithChildren) {
+    const edgeCount = await createContainsEdgesForNode(db, node);
+    totalEdges += edgeCount;
+  }
+
+  const edgeDuration = logger.endTimer('create-edges');
+  if (totalEdges > 0) {
+    logger.info('CONTAINS edges created', {
+      filePath,
+      edgeCount: totalEdges,
+    });
+    logger.logTiming(`Edge creation: ${filePath}`, edgeDuration);
+  }
 
   // Step 6: Update file metadata
   await updateFileMetadata(db, {

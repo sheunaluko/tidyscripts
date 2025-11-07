@@ -118,20 +118,3 @@ export { NodeKind, getKindName, shouldGenerateEmbedding } from './constants';
 
 export { logger, LogLevel, initializeLogger } from './logger';
 
-// ============================================================================
-// Legacy Function (for compatibility)
-// ============================================================================
-
-/**
- * Get codebase JSON documentation
- *
- * Legacy function name. Use fullSync() instead.
- *
- * @deprecated Use fullSync() instead
- */
-export async function get_codebase_json_documentation(): Promise<void> {
-  const { fullSync } = await import('./sync');
-  await fullSync();
-}
-
-

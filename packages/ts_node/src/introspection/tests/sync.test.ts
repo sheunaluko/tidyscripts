@@ -116,9 +116,9 @@ runner.run(async () => {
     }
 
     assertEqual(filtered.size, 3, 'Should match all subdirectories');
-    assert(filtered.has('packages/ts_web/src/apis/index.ts'));
-    assert(filtered.has('packages/ts_web/src/apis/firebase/index.ts'));
-    assert(filtered.has('packages/ts_web/src/apis/firebase/auth/index.ts'));
+    assert(filtered.has('packages/ts_web/src/apis/index.ts'), 'Should have apis/index.ts');
+    assert(filtered.has('packages/ts_web/src/apis/firebase/index.ts'), 'Should have firebase/index.ts');
+    assert(filtered.has('packages/ts_web/src/apis/firebase/auth/index.ts'), 'Should have auth/index.ts');
   });
 
   runner.test('path filter handles partial module names', () => {
@@ -139,7 +139,7 @@ runner.run(async () => {
     }
 
     assertEqual(filtered.size, 1, 'Should only match exact directory with trailing slash');
-    assert(filtered.has('packages/ts_web/src/apis/index.ts'));
+    assert(filtered.has('packages/ts_web/src/apis/index.ts'), 'Should match apis/index.ts');
     assert(!filtered.has('packages/ts_web/src/apis_v2/index.ts'), 'Should not match apis_v2');
   });
 
@@ -261,4 +261,7 @@ runner.run(async () => {
       'Should contain webApiFunc'
     );
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

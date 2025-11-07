@@ -3,7 +3,7 @@
  */
 
 import { spawn } from 'child_process';
-import { resolve } from 'path';
+import { resolve as resolvePath } from 'path';
 
 const testFiles = [
   'constants.test.ts',
@@ -18,9 +18,9 @@ const testFiles = [
 async function runTest(file: string): Promise<boolean> {
   return new Promise((resolve) => {
     const testPath = `./tests/${file}`;
-    const proc = spawn('ts-node', [testPath], {
+    const proc = spawn('npx', ['ts-node', testPath], {
       stdio: 'inherit',
-      cwd: resolve(__dirname, '..'),
+      cwd: resolvePath(__dirname, '..'),
     });
 
     proc.on('close', (code) => {

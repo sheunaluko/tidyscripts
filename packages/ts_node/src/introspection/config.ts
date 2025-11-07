@@ -6,6 +6,7 @@
 
 import {
   DEFAULT_JDOC_PATH,
+  DEFAULT_PROJECT_ROOT,
   DEFAULT_SURREAL_URL,
   DEFAULT_SURREAL_NAMESPACE,
   DEFAULT_SURREAL_DATABASE,
@@ -69,6 +70,18 @@ export function loadSurrealConfig(): SurrealConfig {
  */
 export function getJdocPath(): string {
   return process.env[ENV_VARS.JDOC_PATH] || DEFAULT_JDOC_PATH;
+}
+
+/**
+ * Get the project root directory
+ *
+ * Checks environment variable TIDYSCRIPTS_HOME first,
+ * falls back to default path.
+ *
+ * @returns Absolute path to project root
+ */
+export function getProjectRoot(): string {
+  return process.env[ENV_VARS.PROJECT_ROOT] || DEFAULT_PROJECT_ROOT;
 }
 
 /**

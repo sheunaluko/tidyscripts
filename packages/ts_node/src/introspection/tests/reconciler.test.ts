@@ -178,4 +178,7 @@ runner.run(async () => {
     assertEqual(stats.total, 0);
     assertEqual(stats.changeRate, '0%');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

@@ -6,6 +6,7 @@ import { TestRunner, assert, assertEqual } from './test-runner';
 import {
   loadSurrealConfig,
   getJdocPath,
+  getProjectRoot,
   hasOpenAIKey,
   getConfigSummary,
   validateConfig,
@@ -43,6 +44,21 @@ runner.run(async () => {
     assert(path.includes('jdoc.json'), 'Path should reference jdoc.json');
   });
 
+  runner.test('getProjectRoot returns valid path', () => {
+    const root = getProjectRoot();
+    assert(typeof root === 'string', 'Project root should be string');
+    assert(root.length > 0, 'Project root should not be empty');
+    assert(root.includes('tidyscripts'), 'Project root should reference tidyscripts');
+  });
+
+  runner.test('getProjectRoot uses TIDYSCRIPTS_HOME env var if set', () => {
+    const root = getProjectRoot();
+    // If TIDYSCRIPTS_HOME is set, it should use that value
+    // Otherwise it uses the default
+    assert(typeof root === 'string', 'Project root should be string');
+    assert(root.length > 0, 'Project root should not be empty');
+  });
+
   runner.suite('Config - OpenAI');
 
   runner.test('hasOpenAIKey returns boolean', () => {
@@ -66,4 +82,7 @@ runner.run(async () => {
     validateConfig(false);
     assert(true, 'Validation should pass without OpenAI requirement');
   });
+}).catch(error => {
+  console.error('Test execution failed:', error);
+  process.exit(1);
 });

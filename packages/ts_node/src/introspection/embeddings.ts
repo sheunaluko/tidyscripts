@@ -158,7 +158,7 @@ export function buildModuleEmbeddingText(node: ParsedNode): string {
   const docstring = node.docstring || 'No documentation';
 
   const exports = node.children
-    .filter(c => [NodeKind.Function, NodeKind.Class, NodeKind.Interface].includes(c.kind))
+    .filter(c => ([NodeKind.Function, NodeKind.Class, NodeKind.Interface] as number[]).includes(c.kind))
     .map(e => {
       const sig = getSignatureString(e);
       const doc = e.docstring || 'No documentation';
@@ -358,7 +358,7 @@ export async function getOrGenerateEmbedding(
     { hash: contentHash }
   );
 
-  const cachedResult = cached?.[0]?.result;
+  const cachedResult = cached?.[0];
   if (cachedResult && cachedResult.length > 0) {
     // Cache hit!
     await db.query(

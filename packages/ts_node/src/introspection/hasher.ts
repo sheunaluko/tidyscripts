@@ -11,7 +11,9 @@
 
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
+import * as path from 'path';
 import { HASH_ALGORITHM, HASH_ENCODING } from './constants';
+import { getProjectRoot } from './config';
 import type { ParsedNode } from './types';
 
 // ============================================================================
@@ -54,13 +56,18 @@ export function hashData(data: any): string {
  * Used for file-level change detection. If the file hash hasn't changed,
  * we can skip processing entirely.
  *
- * @param filePath - Path to file
+ * @param filePath - Path to file (relative to project root or absolute)
  * @returns Hex-encoded hash of file contents
  * @throws Error if file cannot be read
  */
 export async function hashFile(filePath: string): Promise<string> {
   try {
-    const content = await fs.readFile(filePath, 'utf-8');
+    // Resolve relative paths against project root
+    const absolutePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.join(getProjectRoot(), filePath);
+
+    const content = await fs.readFile(absolutePath, 'utf-8');
     return hashString(content);
   } catch (error) {
     throw new Error(`Failed to hash file ${filePath}: ${error}`);

@@ -254,7 +254,7 @@ DEFINE INDEX idx_file_path ON file_metadata FIELDS filePath UNIQUE;
 -- ============================================================================
 
 -- CONTAINS relationship: Module -> Function/Class/Interface
-DEFINE TABLE CONTAINS SCHEMAFULL;
+DEFINE TABLE CONTAINS TYPE RELATION SCHEMAFULL;
 
 DEFINE FIELD in ON CONTAINS TYPE record
   ASSERT $value != NONE;
@@ -263,7 +263,7 @@ DEFINE FIELD out ON CONTAINS TYPE record
   ASSERT $value != NONE;
 
 -- USES relationship: Function/Class -> Type
-DEFINE TABLE USES SCHEMAFULL;
+DEFINE TABLE USES TYPE RELATION SCHEMAFULL;
 
 DEFINE FIELD in ON USES TYPE record
   ASSERT $value != NONE;
@@ -272,7 +272,7 @@ DEFINE FIELD out ON USES TYPE record
   ASSERT $value != NONE;
 
 -- IMPORTS relationship: Module -> Module (for future use)
-DEFINE TABLE IMPORTS SCHEMAFULL;
+DEFINE TABLE IMPORTS TYPE RELATION SCHEMAFULL;
 
 DEFINE FIELD in ON IMPORTS TYPE record
   ASSERT $value != NONE;
@@ -298,6 +298,9 @@ export const CHECK_SCHEMA_QUERY = `
 /**
  * Get table counts query
  *
+ * @deprecated This query has a SQL syntax error (missing FROM clause).
+ * Use getTableCounts() function in database.ts instead, which runs separate queries.
+ *
  * Returns a query to get counts of all tables.
  */
 export const TABLE_COUNTS_QUERY = `
@@ -313,13 +316,16 @@ export const TABLE_COUNTS_QUERY = `
 
 /**
  * Get cache statistics query
+ *
+ * Note: We use array operations to aggregate stats properly
  */
 export const CACHE_STATS_QUERY = `
   SELECT
     count() AS total_entries,
-    math::sum(usageCount) AS total_usage,
-    math::max(usageCount) AS max_usage,
-    math::min(usageCount) AS min_usage,
-    math::mean(usageCount) AS avg_usage
+    math::sum((SELECT VALUE usageCount FROM embedding_cache)) AS total_usage,
+    math::max((SELECT VALUE usageCount FROM embedding_cache)) AS max_usage,
+    math::min((SELECT VALUE usageCount FROM embedding_cache)) AS min_usage,
+    math::mean((SELECT VALUE usageCount FROM embedding_cache)) AS avg_usage
   FROM embedding_cache
+  GROUP ALL
 `;

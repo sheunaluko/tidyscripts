@@ -1,0 +1,5 @@
+# Compiled test files
+dist/
+
+# Old compiled JS files (if any)
+*.test.js
