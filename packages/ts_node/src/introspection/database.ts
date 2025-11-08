@@ -149,7 +149,7 @@ export async function isSchemaInitialized(db: Surreal): Promise<boolean> {
 export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promise<void> {
   await db.query(
     `LET $tb = $table;
-     LET $id = type::string($nodeId);
+     LET $id = $nodeId;
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -250,7 +250,7 @@ export async function getFunctionNodesByFile(
 export async function insertClassNode(db: Surreal, node: ClassNode): Promise<void> {
   await db.query(
     `LET $tb = $table;
-     LET $id = type::string($nodeId);
+     LET $id = $nodeId;
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -328,7 +328,7 @@ export async function deleteClassNode(db: Surreal, nodeId: number): Promise<void
 export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<void> {
   await db.query(
     `LET $tb = $table;
-     LET $id = type::string($nodeId);
+     LET $id = $nodeId;
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -406,7 +406,7 @@ export async function deleteModuleNode(db: Surreal, nodeId: number): Promise<voi
 export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Promise<void> {
   await db.query(
     `LET $tb = $table;
-     LET $id = type::string($nodeId);
+     LET $id = $nodeId;
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -484,7 +484,7 @@ export async function deleteInterfaceNode(db: Surreal, nodeId: number): Promise<
 export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Promise<void> {
   await db.query(
     `LET $tb = $table;
-     LET $id = type::string($nodeId);
+     LET $id = $nodeId;
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -713,9 +713,10 @@ export async function deleteOutgoingEdges(
 }
 
 /**
- * Collect all CONTAINS edges from a node tree (recursive, no DB calls)
+ * Collect CONTAINS edges from a node to its IMMEDIATE children only (non-recursive, no DB calls)
  *
- * Traverses the node tree and collects all parent-child relationships.
+ * Creates edges only for direct parent->child relationships, not the entire subtree.
+ * This prevents duplicates when called on every node in a tree.
  *
  * @param parentNode - Parent node with children array populated
  * @param edges - Accumulated edges array (for recursion)
@@ -734,7 +735,7 @@ function collectContainsEdges(
   for (const child of parentNode.children) {
     const childTable = getTableNameForKind(child.kind);
 
-    // Add this edge
+    // Add edge to immediate child only
     edges.push({
       parentTable,
       parentId: parentNode.id,
@@ -742,10 +743,8 @@ function collectContainsEdges(
       childId: child.id,
     });
 
-    // Recursively collect from child's children
-    if (child.children && child.children.length > 0) {
-      collectContainsEdges(child, edges);
-    }
+    // NO recursion - only create edges to immediate children
+    // Each node will be processed separately, creating its own edges
   }
 
   return edges;
@@ -774,10 +773,10 @@ async function createContainsEdgesBatch(
 }
 
 /**
- * Create CONTAINS edges for all children of a parent node (batched)
+ * Create CONTAINS edges for IMMEDIATE children of a parent node (batched)
  *
- * Traverses the node tree to collect all edges, then creates them in a single batch.
- * Much more efficient than one-by-one creation.
+ * Creates edges only to direct children, not the entire subtree.
+ * Call this on every node with children to build the full graph without duplicates.
  *
  * @param db - SurrealDB instance
  * @param parentNode - Parent node with children array populated
@@ -787,7 +786,7 @@ export async function createContainsEdgesForNode(
   db: Surreal,
   parentNode: any // ParsedNode type, but importing causes circular dependency
 ): Promise<number> {
-  // Step 1: Collect all edges (no DB calls)
+  // Step 1: Collect edges to immediate children only (no DB calls)
   const edges = collectContainsEdges(parentNode, []);
 
   // Step 2: Batch create (single DB call)

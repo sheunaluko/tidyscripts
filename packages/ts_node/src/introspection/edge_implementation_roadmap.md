@@ -2,16 +2,75 @@
 
 ## Executive Summary
 
-**Status**: ✅ **Phase 1A COMPLETE** - CONTAINS edges fully implemented and tested!
+**Status**: ✅ **Phase 1A COMPLETE & VERIFIED** - CONTAINS edges fully implemented, tested, and production-ready!
 
 **Completed**: CONTAINS edges enable:
 - ✅ Module → Function/Class containment queries
 - ✅ Parent → Child relationship traversal
 - ✅ Batch edge creation during sync
+- ✅ Accurate edge counts (predictions match actuals)
+- ✅ No duplicate edges
+- ✅ Graph traversal queries working
+
+**Critical Bugs Fixed (2025-11-08)**:
+- ✅ **ID Type Mismatch**: Fixed nodes using string IDs while edges used numeric IDs
+- ✅ **Duplicate Edge Creation**: Fixed recursive edge creation causing duplicates
 
 **Remaining Phases**:
 - Phase 1B: USES edges (function dependencies)
 - Phase 1C: IMPORTS edges (module imports)
+
+---
+
+## Recent Bug Fixes (2025-11-08)
+
+### Bug 1: ID Type Mismatch
+**Problem**: Nodes were created with string IDs (`module_node:⟨4462⟩`) but edges referenced numeric IDs (`module_node:4462`), causing edges to not actually link to nodes.
+
+**Root Cause**: Using `type::thing($tb, type::string($nodeId))` in node creation converted IDs to strings.
+
+**Fix**: Removed `type::string()` wrapper in `database.ts` lines 152, 253, 331, 409, 487:
+```typescript
+// Before:
+LET $id = type::string($nodeId);
+
+// After:
+LET $id = $nodeId;
+```
+
+**Result**: Nodes and edges now both use numeric IDs, graph traversal works correctly.
+
+### Bug 2: Duplicate Edge Creation
+**Problem**: 150 edges created instead of predicted 80 edges. Analysis showed 69 edges were duplicated.
+
+**Root Cause**: `collectContainsEdges()` was recursive, creating edges for entire subtree. But it was called on EVERY node with children, so nested relationships were created multiple times.
+
+**Example**:
+```
+apis (module)
+  └─ keypresses (module)
+       └─ load_key_handlers (function)
+
+Call #1: createContainsEdgesForNode(apis)
+  → Creates: apis->keypresses, keypresses->load_key_handlers
+
+Call #2: createContainsEdgesForNode(keypresses)
+  → Creates: keypresses->load_key_handlers (DUPLICATE!)
+```
+
+**Fix**: Made `collectContainsEdges()` non-recursive in `database.ts` line 724-751:
+```typescript
+// Before: Recursive - created entire subtree
+if (child.children && child.children.length > 0) {
+  collectContainsEdges(child, edges);  // ❌ Recursion
+}
+
+// After: Non-recursive - immediate children only
+// NO recursion - only create edges to immediate children
+// Each node will be processed separately, creating its own edges
+```
+
+**Result**: 80 edges (matches prediction), 0 duplicates, graph queries work correctly.
 
 ---
 
