@@ -713,21 +713,28 @@ export async function deleteOutgoingEdges(
 }
 
 /**
- * Collect CONTAINS edges from a node to its IMMEDIATE children only (non-recursive, no DB calls)
+ * Collect CONTAINS and IMPORTS edges from a node to its IMMEDIATE children (non-recursive, no DB calls)
  *
  * Creates edges only for direct parent->child relationships, not the entire subtree.
  * This prevents duplicates when called on every node in a tree.
  *
+ * Module→Module relationships create IMPORTS edges (not CONTAINS).
+ * All other relationships create CONTAINS edges.
+ *
  * @param parentNode - Parent node with children array populated
- * @param edges - Accumulated edges array (for recursion)
- * @returns Array of edge definitions
+ * @returns Object with separate arrays for CONTAINS and IMPORTS edges
  */
-function collectContainsEdges(
-  parentNode: any, // ParsedNode type, but importing causes circular dependency
-  edges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> = []
-): Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> {
+function collectEdges(
+  parentNode: any // ParsedNode type, but importing causes circular dependency
+): {
+  containsEdges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }>;
+  importsEdges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }>;
+} {
+  const containsEdges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> = [];
+  const importsEdges: Array<{ parentTable: string; parentId: number; childTable: string; childId: number }> = [];
+
   if (!parentNode.children || parentNode.children.length === 0) {
-    return edges;
+    return { containsEdges, importsEdges };
   }
 
   const parentTable = getTableNameForKind(parentNode.kind);
@@ -735,19 +742,34 @@ function collectContainsEdges(
   for (const child of parentNode.children) {
     const childTable = getTableNameForKind(child.kind);
 
-    // Add edge to immediate child only
-    edges.push({
-      parentTable,
-      parentId: parentNode.id,
-      childTable,
-      childId: child.id,
-    });
+    // Module→Module relationships use IMPORTS edges
+    const isModuleToModule = parentTable === 'module_node' && childTable === 'module_node';
 
-    // NO recursion - only create edges to immediate children
-    // Each node will be processed separately, creating its own edges
+    if (isModuleToModule) {
+      logger.debug('Creating IMPORTS edge for module→module (from jdoc)', {
+        parentId: parentNode.id,
+        parentName: parentNode.name,
+        childId: child.id,
+        childName: child.name,
+      });
+      importsEdges.push({
+        parentTable,
+        parentId: parentNode.id,
+        childTable,
+        childId: child.id,
+      });
+    } else {
+      // All other relationships use CONTAINS edges
+      containsEdges.push({
+        parentTable,
+        parentId: parentNode.id,
+        childTable,
+        childId: child.id,
+      });
+    }
   }
 
-  return edges;
+  return { containsEdges, importsEdges };
 }
 
 /**
@@ -773,26 +795,42 @@ async function createContainsEdgesBatch(
 }
 
 /**
- * Create CONTAINS edges for IMMEDIATE children of a parent node (batched)
+ * Create CONTAINS and IMPORTS edges for IMMEDIATE children of a parent node (batched)
  *
  * Creates edges only to direct children, not the entire subtree.
- * Call this on every node with children to build the full graph without duplicates.
+ * Module→Module edges create IMPORTS relationships.
+ * All other edges create CONTAINS relationships.
  *
  * @param db - SurrealDB instance
  * @param parentNode - Parent node with children array populated
- * @returns Number of edges created
+ * @returns Number of edges created (both CONTAINS and IMPORTS)
  */
 export async function createContainsEdgesForNode(
   db: Surreal,
   parentNode: any // ParsedNode type, but importing causes circular dependency
 ): Promise<number> {
-  // Step 1: Collect edges to immediate children only (no DB calls)
-  const edges = collectContainsEdges(parentNode, []);
+  // Step 1: Collect edges to immediate children (separates CONTAINS and IMPORTS)
+  const { containsEdges, importsEdges } = collectEdges(parentNode);
 
-  // Step 2: Batch create (single DB call)
-  await createContainsEdgesBatch(db, edges);
+  // Step 2: Batch create CONTAINS edges
+  if (containsEdges.length > 0) {
+    await createContainsEdgesBatch(db, containsEdges);
+  }
 
-  return edges.length;
+  // Step 3: Batch create IMPORTS edges (for module→module from jdoc)
+  if (importsEdges.length > 0) {
+    const importsQueries = importsEdges
+      .map(edge => `RELATE ${edge.parentTable}:${edge.parentId}->IMPORTS->${edge.childTable}:${edge.childId}`)
+      .join('; ');
+    await db.query(importsQueries);
+
+    logger.debug('Created IMPORTS edges from jdoc structure', {
+      count: importsEdges.length,
+      parentNode: parentNode.name,
+    });
+  }
+
+  return containsEdges.length + importsEdges.length;
 }
 
 /**
@@ -858,18 +896,60 @@ export async function createImportsEdge(
 }
 
 /**
- * Create multiple IMPORTS edges in a single batch query
+ * Check if an IMPORTS edge already exists between two modules
  *
- * More efficient than creating edges one-by-one.
+ * @param db - SurrealDB instance
+ * @param fromNodeId - Source module node ID
+ * @param toNodeId - Target module node ID
+ * @returns True if edge exists, false otherwise
+ */
+async function importsEdgeExists(
+  db: Surreal,
+  fromNodeId: string,
+  toNodeId: string
+): Promise<boolean> {
+  const [result] = await db.query(`
+    SELECT * FROM IMPORTS
+    WHERE in = ${fromNodeId} AND out = ${toNodeId}
+    LIMIT 1
+  `);
+
+  return result && Array.isArray(result) && result.length > 0;
+}
+
+/**
+ * Create multiple IMPORTS edges with duplicate checking and stats tracking
+ *
+ * Checks each edge before inserting to avoid duplicates.
+ * Returns stats on attempted/created/skipped edges and list of new imports.
  *
  * @param db - SurrealDB instance
  * @param edges - Array of import edges
+ * @returns Stats and list of successfully created imports
  */
 export async function createImportsEdgesBatch(
   db: Surreal,
   edges: Array<{ fromPath: string; toPath: string }>
-): Promise<void> {
-  if (edges.length === 0) return;
+): Promise<{
+  stats: {
+    attempted: number;
+    created: number;
+    alreadyExisted: number;
+    failed: number;
+  };
+  newImports: Array<{ from: string; to: string }>;
+}> {
+  const stats = {
+    attempted: edges.length,
+    created: 0,
+    alreadyExisted: 0,
+    failed: 0,
+  };
+  const newImports: Array<{ from: string; to: string }> = [];
+
+  if (edges.length === 0) {
+    return { stats, newImports };
+  }
 
   // Build batch query - first collect all unique paths
   const allPaths = new Set<string>();
@@ -896,31 +976,56 @@ export async function createImportsEdgesBatch(
     }
   }
 
-  // Build RELATE queries for edges where both nodes exist
-  const relateQueries: string[] = [];
+  // Check each edge and create if it doesn't exist
   for (const edge of edges) {
     const fromNodeId = pathToNodeMap.get(edge.fromPath);
     const toNodeId = pathToNodeMap.get(edge.toPath);
 
-    if (fromNodeId && toNodeId) {
-      relateQueries.push(`RELATE ${fromNodeId}->IMPORTS->${toNodeId}`);
-    } else {
+    // Skip if either node not found
+    if (!fromNodeId || !toNodeId) {
       logger.warn('Skipping IMPORTS edge - node not found', {
         fromPath: edge.fromPath,
         toPath: edge.toPath,
         fromNodeId,
         toNodeId,
       });
+      stats.failed++;
+      continue;
+    }
+
+    // Check if edge already exists
+    const exists = await importsEdgeExists(db, fromNodeId, toNodeId);
+
+    if (exists) {
+      logger.debug('IMPORTS edge already exists, skipping', {
+        fromPath: edge.fromPath,
+        toPath: edge.toPath,
+      });
+      stats.alreadyExisted++;
+    } else {
+      // Create the edge
+      try {
+        await db.query(`RELATE ${fromNodeId}->IMPORTS->${toNodeId}`);
+        stats.created++;
+        newImports.push({
+          from: edge.fromPath,
+          to: edge.toPath,
+        });
+        logger.debug('Created new IMPORTS edge', {
+          fromPath: edge.fromPath,
+          toPath: edge.toPath,
+        });
+      } catch (error) {
+        logger.error('Failed to create IMPORTS edge', error as Error, {
+          fromPath: edge.fromPath,
+          toPath: edge.toPath,
+        });
+        stats.failed++;
+      }
     }
   }
 
-  if (relateQueries.length > 0) {
-    await db.query(relateQueries.join('; '));
-    logger.debug('Created IMPORTS edges batch', {
-      edgesCreated: relateQueries.length,
-      edgesSkipped: edges.length - relateQueries.length,
-    });
-  }
+  return { stats, newImports };
 }
 
 /**

@@ -298,14 +298,27 @@ export async function syncAllFiles(db: Surreal, pathFilter?: string): Promise<Sy
       }
     }
 
-    // Batch create all IMPORTS edges
+    // Batch create all IMPORTS edges (with duplicate checking)
     if (importEdges.length > 0) {
-      await createImportsEdgesBatch(db, importEdges);
+      const { stats, newImports } = await createImportsEdgesBatch(db, importEdges);
       const importsDuration = logger.endTimer('create-imports-edges');
-      logger.info('IMPORTS edges created', {
-        edgeCount: importEdges.length,
+
+      logger.info('IMPORTS edges from TypeScript analysis - Summary', {
+        attempted: stats.attempted,
+        created: stats.created,
+        alreadyExisted: stats.alreadyExisted,
+        failed: stats.failed,
         filesWithImports: fileImports.filter(f => f.imports.length > 0).length,
       });
+
+      // Log ALL new imports that were created (full list, not sample)
+      if (newImports.length > 0) {
+        logger.info('New IMPORTS discovered from TypeScript - FULL LIST', {
+          count: newImports.length,
+          imports: newImports,
+        });
+      }
+
       logger.logTiming('IMPORTS edge creation', importsDuration);
     } else {
       logger.endTimer('create-imports-edges');
