@@ -912,7 +912,7 @@ async function importsEdgeExists(
     SELECT * FROM IMPORTS
     WHERE in = ${fromNodeId} AND out = ${toNodeId}
     LIMIT 1
-  `);
+  `) as any;
 
   return result && Array.isArray(result) && result.length > 0;
 }
@@ -1156,13 +1156,13 @@ export async function getTableCounts(db: Surreal): Promise<{
 }> {
   // Run separate count queries for each table
   // Use COUNT() with GROUP ALL to get total count, not per-row count
-  const [functionsResult] = await db.query('SELECT COUNT() as count FROM function_node GROUP ALL');
-  const [classesResult] = await db.query('SELECT COUNT() as count FROM class_node GROUP ALL');
-  const [modulesResult] = await db.query('SELECT COUNT() as count FROM module_node GROUP ALL');
-  const [interfacesResult] = await db.query('SELECT COUNT() as count FROM interface_node GROUP ALL');
-  const [typeAliasesResult] = await db.query('SELECT COUNT() as count FROM type_alias_node GROUP ALL');
-  const [embeddingsResult] = await db.query('SELECT COUNT() as count FROM embedding_cache GROUP ALL');
-  const [filesResult] = await db.query('SELECT COUNT() as count FROM file_metadata GROUP ALL');
+  const [functionsResult] = await db.query('SELECT COUNT() as count FROM function_node GROUP ALL') as any;
+  const [classesResult] = await db.query('SELECT COUNT() as count FROM class_node GROUP ALL') as any;
+  const [modulesResult] = await db.query('SELECT COUNT() as count FROM module_node GROUP ALL') as any;
+  const [interfacesResult] = await db.query('SELECT COUNT() as count FROM interface_node GROUP ALL') as any;
+  const [typeAliasesResult] = await db.query('SELECT COUNT() as count FROM type_alias_node GROUP ALL') as any;
+  const [embeddingsResult] = await db.query('SELECT COUNT() as count FROM embedding_cache GROUP ALL') as any;
+  const [filesResult] = await db.query('SELECT COUNT() as count FROM file_metadata GROUP ALL') as any;
 
   return {
     functions: functionsResult?.[0]?.count || 0,
@@ -1188,7 +1188,7 @@ export async function getCacheStats(db: Surreal): Promise<{
   min_usage: number;
   avg_usage: number;
 }> {
-  const result = await db.query(CACHE_STATS_QUERY);
+  const result = await db.query(CACHE_STATS_QUERY) as any;
 
   return result?.[0]?.[0] || {
     total_entries: 0,
