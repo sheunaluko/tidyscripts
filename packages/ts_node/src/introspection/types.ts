@@ -297,3 +297,38 @@ export interface SyncStats {
   endTime?: Date;
   duration?: number;
 }
+
+// ============================================================================
+// Import Analysis Types
+// ============================================================================
+
+/**
+ * Information about a single import statement
+ */
+export interface ImportInfo {
+  sourcePath: string;        // Absolute path of file doing the importing
+  targetPath: string;        // Absolute path of file being imported (resolved)
+  importedNames: string[];   // Names being imported (e.g., ['foo', 'bar'])
+  importType: 'named' | 'default' | 'namespace' | 'side-effect';
+  isTypeOnly: boolean;       // Type-only import?
+  rawImportPath: string;     // Original import string (e.g., './utils')
+}
+
+/**
+ * Result of parsing imports from a file
+ */
+export interface FileImports {
+  filePath: string;
+  imports: ImportInfo[];
+  errors: string[];          // Any resolution errors
+}
+
+/**
+ * Import edge for database storage
+ */
+export interface ImportEdge {
+  fromPath: string;          // Source file path
+  toPath: string;            // Target file path
+  importType: string;        // Type of import
+  importedNames: string[];   // What's imported
+}

@@ -812,6 +812,225 @@ export async function createRelationships(db: Surreal): Promise<void> {
 }
 
 // ============================================================================
+// IMPORTS Edges
+// ============================================================================
+
+/**
+ * Create IMPORTS edge between two files
+ *
+ * Links a source file to a target file it imports from.
+ *
+ * @param db - SurrealDB instance
+ * @param fromPath - Absolute path of file doing the importing
+ * @param toPath - Absolute path of file being imported
+ */
+export async function createImportsEdge(
+  db: Surreal,
+  fromPath: string,
+  toPath: string
+): Promise<void> {
+  // Find the module nodes by path and create edge
+  const [fromNodes] = await db.query(
+    `SELECT id FROM module_node WHERE path = $fromPath LIMIT 1`,
+    { fromPath }
+  );
+  const [toNodes] = await db.query(
+    `SELECT id FROM module_node WHERE path = $toPath LIMIT 1`,
+    { toPath }
+  );
+
+  if (!fromNodes || !Array.isArray(fromNodes) || fromNodes.length === 0) {
+    logger.warn('Source module not found for IMPORTS edge', { fromPath });
+    return;
+  }
+
+  if (!toNodes || !Array.isArray(toNodes) || toNodes.length === 0) {
+    logger.warn('Target module not found for IMPORTS edge', { toPath });
+    return;
+  }
+
+  const fromNodeId = fromNodes[0].id;
+  const toNodeId = toNodes[0].id;
+
+  await db.query(`RELATE ${fromNodeId}->IMPORTS->${toNodeId}`);
+
+  logger.debug('Created IMPORTS edge', { fromPath, toPath, fromNodeId, toNodeId });
+}
+
+/**
+ * Create multiple IMPORTS edges in a single batch query
+ *
+ * More efficient than creating edges one-by-one.
+ *
+ * @param db - SurrealDB instance
+ * @param edges - Array of import edges
+ */
+export async function createImportsEdgesBatch(
+  db: Surreal,
+  edges: Array<{ fromPath: string; toPath: string }>
+): Promise<void> {
+  if (edges.length === 0) return;
+
+  // Build batch query - first collect all unique paths
+  const allPaths = new Set<string>();
+  edges.forEach(edge => {
+    allPaths.add(edge.fromPath);
+    allPaths.add(edge.toPath);
+  });
+
+  // Query to get all module_node IDs for these paths
+  const pathArray = Array.from(allPaths);
+  const pathToNodeMap: Map<string, string> = new Map();
+
+  // Fetch all module nodes in one query
+  const [nodes] = await db.query(`
+    SELECT id, path FROM module_node WHERE path IN $paths
+  `, { paths: pathArray });
+
+  // Build map of path -> node ID
+  if (nodes && Array.isArray(nodes)) {
+    for (const node of nodes) {
+      if (node && node.path && node.id) {
+        pathToNodeMap.set(node.path, node.id);
+      }
+    }
+  }
+
+  // Build RELATE queries for edges where both nodes exist
+  const relateQueries: string[] = [];
+  for (const edge of edges) {
+    const fromNodeId = pathToNodeMap.get(edge.fromPath);
+    const toNodeId = pathToNodeMap.get(edge.toPath);
+
+    if (fromNodeId && toNodeId) {
+      relateQueries.push(`RELATE ${fromNodeId}->IMPORTS->${toNodeId}`);
+    } else {
+      logger.warn('Skipping IMPORTS edge - node not found', {
+        fromPath: edge.fromPath,
+        toPath: edge.toPath,
+        fromNodeId,
+        toNodeId,
+      });
+    }
+  }
+
+  if (relateQueries.length > 0) {
+    await db.query(relateQueries.join('; '));
+    logger.debug('Created IMPORTS edges batch', {
+      edgesCreated: relateQueries.length,
+      edgesSkipped: edges.length - relateQueries.length,
+    });
+  }
+}
+
+/**
+ * Delete all outgoing IMPORTS edges for a file
+ *
+ * Removes all edges where this file is the source.
+ * Call this before re-creating edges when a file's imports change.
+ *
+ * @param db - SurrealDB instance
+ * @param filePath - Absolute path of the file
+ */
+export async function deleteImportsEdgesForFile(
+  db: Surreal,
+  filePath: string
+): Promise<void> {
+  const [nodes] = await db.query(
+    `SELECT id FROM module_node WHERE path = $filePath LIMIT 1`,
+    { filePath }
+  );
+
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
+    logger.warn('Module not found for deleteImportsEdgesForFile', { filePath });
+    return;
+  }
+
+  const nodeId = nodes[0].id;
+  await db.query(`DELETE IMPORTS WHERE in = ${nodeId}`);
+
+  logger.debug('Deleted IMPORTS edges for file', { filePath, nodeId });
+}
+
+/**
+ * Get all files that a file imports
+ *
+ * @param db - SurrealDB instance
+ * @param filePath - Absolute path of the file
+ * @returns Array of imported file paths
+ */
+export async function getImportsForFile(
+  db: Surreal,
+  filePath: string
+): Promise<string[]> {
+  const [nodes] = await db.query(
+    `SELECT id FROM module_node WHERE path = $filePath LIMIT 1`,
+    { filePath }
+  );
+
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
+    logger.debug('Module not found for getImportsForFile', { filePath });
+    return [];
+  }
+
+  const nodeId = nodes[0].id;
+
+  // Get all module_nodes that this node imports
+  const [importedNodes] = await db.query(
+    `SELECT ->IMPORTS->module_node.path as paths FROM ${nodeId}`
+  );
+
+  const paths: string[] = [];
+  if (importedNodes && Array.isArray(importedNodes) && importedNodes.length > 0) {
+    const pathsData = importedNodes[0]?.paths;
+    if (pathsData && Array.isArray(pathsData)) {
+      paths.push(...pathsData);
+    }
+  }
+
+  return paths;
+}
+
+/**
+ * Get all files that import a file (reverse dependencies)
+ *
+ * @param db - SurrealDB instance
+ * @param filePath - Absolute path of the file
+ * @returns Array of file paths that import this file
+ */
+export async function getImportersOfFile(
+  db: Surreal,
+  filePath: string
+): Promise<string[]> {
+  const [nodes] = await db.query(
+    `SELECT id FROM module_node WHERE path = $filePath LIMIT 1`,
+    { filePath }
+  );
+
+  if (!nodes || !Array.isArray(nodes) || nodes.length === 0) {
+    logger.debug('Module not found for getImportersOfFile', { filePath });
+    return [];
+  }
+
+  const nodeId = nodes[0].id;
+
+  // Get all module_nodes that import this node
+  const [importerNodes] = await db.query(
+    `SELECT <-IMPORTS<-module_node.path as paths FROM ${nodeId}`
+  );
+
+  const paths: string[] = [];
+  if (importerNodes && Array.isArray(importerNodes) && importerNodes.length > 0) {
+    const pathsData = importerNodes[0]?.paths;
+    if (pathsData && Array.isArray(pathsData)) {
+      paths.push(...pathsData);
+    }
+  }
+
+  return paths;
+}
+
+// ============================================================================
 // Statistics & Validation
 // ============================================================================
 

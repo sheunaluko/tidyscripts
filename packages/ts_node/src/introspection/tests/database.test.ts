@@ -297,6 +297,175 @@ runner.run(async () => {
   });
 
   // ======================================================================
+  // TEST SUITE 3: IMPORTS Edges
+  // ======================================================================
+
+  runner.suite('Database - IMPORTS Edges');
+
+  // Create two module nodes for testing imports
+  const MODULE_A_ID = 5555;
+  const MODULE_B_ID = 6666;
+  const MODULE_A_PATH = 'packages/test/src/module-a.ts';
+  const MODULE_B_PATH = 'packages/test/src/module-b.ts';
+
+  const moduleA = {
+    nodeId: MODULE_A_ID,
+    name: 'module-a',
+    path: MODULE_A_PATH,
+    kind: NodeKind.Module,
+    nodeHash: 'hash-module-a',
+    embeddingHash: 'embed-hash-a',
+    docstring: 'Module A',
+    exports: ['foo'],
+    lastUpdated: new Date(),
+  };
+
+  const moduleB = {
+    nodeId: MODULE_B_ID,
+    name: 'module-b',
+    path: MODULE_B_PATH,
+    kind: NodeKind.Module,
+    nodeHash: 'hash-module-b',
+    embeddingHash: 'embed-hash-b',
+    docstring: 'Module B',
+    exports: ['bar'],
+    lastUpdated: new Date(),
+  };
+
+  // Insert module nodes
+  await db.query(`
+    CREATE module_node:${MODULE_A_ID} CONTENT {
+      nodeId: ${moduleA.nodeId},
+      name: "${moduleA.name}",
+      path: "${moduleA.path}",
+      kind: ${moduleA.kind},
+      nodeHash: "${moduleA.nodeHash}",
+      embeddingHash: "${moduleA.embeddingHash}",
+      docstring: "${moduleA.docstring}",
+      exports: ${JSON.stringify(moduleA.exports)},
+      lastUpdated: type::datetime("${moduleA.lastUpdated.toISOString()}")
+    }
+  `);
+
+  await db.query(`
+    CREATE module_node:${MODULE_B_ID} CONTENT {
+      nodeId: ${moduleB.nodeId},
+      name: "${moduleB.name}",
+      path: "${moduleB.path}",
+      kind: ${moduleB.kind},
+      nodeHash: "${moduleB.nodeHash}",
+      embeddingHash: "${moduleB.embeddingHash}",
+      docstring: "${moduleB.docstring}",
+      exports: ${JSON.stringify(moduleB.exports)},
+      lastUpdated: type::datetime("${moduleB.lastUpdated.toISOString()}")
+    }
+  `);
+
+  runner.test('module nodes for IMPORTS testing created', () => {
+    assert(true, 'Module A and B created');
+  });
+
+  // Test: Create IMPORTS edge
+  const { createImportsEdge } = await import('../database.js');
+  await createImportsEdge(db, MODULE_A_PATH, MODULE_B_PATH);
+
+  runner.test('createImportsEdge creates relationship', async () => {
+    const [edges] = await db.query(`
+      SELECT * FROM IMPORTS WHERE in = module_node:${MODULE_A_ID}
+    `);
+    const edgesArray = Array.isArray(edges) ? edges : [];
+    assert(edgesArray.length > 0, 'Should have IMPORTS edge');
+
+    // Verify edge points to correct target
+    const edge = edgesArray[0];
+    // edge.out is a RecordId object with properties tb and id
+    const outId = typeof edge.out === 'object' && edge.out.id ? edge.out.id : edge.out;
+    assertEqual(outId, MODULE_B_ID, 'Edge should point to module B');
+  });
+
+  // Test: Batch create IMPORTS edges
+  const { createImportsEdgesBatch, deleteImportsEdgesForFile: deleteForBatchTest } = await import('../database.js');
+
+  // Create a third module for batch testing
+  const MODULE_C_ID = 7777;
+  const MODULE_C_PATH = 'packages/test/src/module-c.ts';
+
+  await db.query(`
+    CREATE module_node:${MODULE_C_ID} CONTENT {
+      nodeId: ${MODULE_C_ID},
+      name: "module-c",
+      path: "${MODULE_C_PATH}",
+      kind: ${NodeKind.Module},
+      nodeHash: "hash-module-c",
+      embeddingHash: "embed-hash-c",
+      docstring: "Module C",
+      exports: ["baz"],
+      lastUpdated: type::datetime("${new Date().toISOString()}")
+    }
+  `);
+
+  // Clean up existing edges from module A before batch test
+  await deleteForBatchTest(db, MODULE_A_PATH);
+
+  // Create batch of edges: A->B, A->C, B->C
+  await createImportsEdgesBatch(db, [
+    { fromPath: MODULE_A_PATH, toPath: MODULE_B_PATH },
+    { fromPath: MODULE_A_PATH, toPath: MODULE_C_PATH },
+    { fromPath: MODULE_B_PATH, toPath: MODULE_C_PATH },
+  ]);
+
+  runner.test('createImportsEdgesBatch creates multiple edges', async () => {
+    // Check module A has 2 outgoing edges
+    const [edgesFromA] = await db.query(`
+      SELECT * FROM IMPORTS WHERE in = module_node:${MODULE_A_ID}
+    `);
+    const edgesArrayA = Array.isArray(edgesFromA) ? edgesFromA : [];
+    assertEqual(edgesArrayA.length, 2, 'Module A should have 2 outgoing IMPORTS edges');
+
+    // Check module B has 1 outgoing edge
+    const [edgesFromB] = await db.query(`
+      SELECT * FROM IMPORTS WHERE in = module_node:${MODULE_B_ID}
+    `);
+    const edgesArrayB = Array.isArray(edgesFromB) ? edgesFromB : [];
+    assertEqual(edgesArrayB.length, 1, 'Module B should have 1 outgoing IMPORTS edge');
+  });
+
+  // Test: Delete IMPORTS edges for a file
+  const { deleteImportsEdgesForFile } = await import('../database.js');
+  await deleteImportsEdgesForFile(db, MODULE_A_PATH);
+
+  runner.test('deleteImportsEdgesForFile removes outgoing edges', async () => {
+    const [edges] = await db.query(`
+      SELECT * FROM IMPORTS WHERE in = module_node:${MODULE_A_ID}
+    `);
+    const edgesArray = Array.isArray(edges) ? edges : [];
+    assertEqual(edgesArray.length, 0, 'Module A should have no outgoing edges after deletion');
+  });
+
+  // Test: Get imports for file
+  const { getImportsForFile } = await import('../database.js');
+
+  // Re-create edge B->C for testing
+  await createImportsEdge(db, MODULE_B_PATH, MODULE_C_PATH);
+
+  const importsForB = await getImportsForFile(db, MODULE_B_PATH);
+
+  runner.test('getImportsForFile returns imported files', () => {
+    assert(importsForB.length > 0, 'Should have imports');
+    assert(importsForB.includes(MODULE_C_PATH), 'Should include module C');
+  });
+
+  // Test: Get importers of file (reverse dependencies)
+  const { getImportersOfFile } = await import('../database.js');
+
+  const importersOfC = await getImportersOfFile(db, MODULE_C_PATH);
+
+  runner.test('getImportersOfFile returns files that import this file', () => {
+    assert(importersOfC.length > 0, 'Should have importers');
+    assert(importersOfC.includes(MODULE_B_PATH), 'Module B should import module C');
+  });
+
+  // ======================================================================
   // CLEANUP: Remove ALL tables and data
   // ======================================================================
 

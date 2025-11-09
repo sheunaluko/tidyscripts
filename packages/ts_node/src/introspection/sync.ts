@@ -6,7 +6,7 @@
  */
 
 import type Surreal from 'surrealdb';
-import { getJdocPath } from './config';
+import { getJdocPath, getProjectRoot } from './config';
 import { loadJdoc, extractAllNodes, groupNodesByFile } from './parser';
 import { hashFile } from './hasher';
 import { logger } from './logger';
@@ -23,6 +23,7 @@ import {
   createContainsEdgesForNode,
   deleteOutgoingEdges,
   getTableNameForKind,
+  createImportsEdgesBatch,
 } from './database';
 import { NodeKind } from './constants';
 import {
@@ -33,6 +34,8 @@ import {
   getReconcileStats,
 } from './reconciler';
 import type { JDocNode, SyncStats } from './types';
+import { parseImportsFromFiles } from './import-parser';
+import * as path from 'path';
 
 // ============================================================================
 // File-Level Synchronization
@@ -259,6 +262,58 @@ export async function syncAllFiles(db: Surreal, pathFilter?: string): Promise<Sy
       logger.logFileError('sync', filePath, error as Error);
       throw error;
     }
+  }
+
+  // Step 3.5: Parse imports and create IMPORTS edges
+  logger.info('Creating IMPORTS edges...');
+  logger.startTimer('create-imports-edges');
+
+  try {
+    const relativeFiles = Array.from(filesToProcess.keys());
+    const projectRoot = getProjectRoot();
+
+    // Convert relative paths to absolute paths
+    const sourceFiles = relativeFiles.map(f => path.join(projectRoot, f));
+
+    logger.debug('Parsing imports from source files', {
+      fileCount: sourceFiles.length,
+      projectRoot,
+      sampleFile: sourceFiles[0],
+    });
+
+    // Parse imports from all processed files
+    const fileImports = await parseImportsFromFiles(sourceFiles, projectRoot);
+
+    // Build edge list from parsed imports
+    // Convert absolute paths back to relative paths (to match module_node.path)
+    const importEdges: Array<{ fromPath: string; toPath: string }> = [];
+    for (const file of fileImports) {
+      for (const imp of file.imports) {
+        const relativeFrom = path.relative(projectRoot, imp.sourcePath);
+        const relativeTo = path.relative(projectRoot, imp.targetPath);
+        importEdges.push({
+          fromPath: relativeFrom,
+          toPath: relativeTo,
+        });
+      }
+    }
+
+    // Batch create all IMPORTS edges
+    if (importEdges.length > 0) {
+      await createImportsEdgesBatch(db, importEdges);
+      const importsDuration = logger.endTimer('create-imports-edges');
+      logger.info('IMPORTS edges created', {
+        edgeCount: importEdges.length,
+        filesWithImports: fileImports.filter(f => f.imports.length > 0).length,
+      });
+      logger.logTiming('IMPORTS edge creation', importsDuration);
+    } else {
+      logger.endTimer('create-imports-edges');
+      logger.info('No IMPORTS edges to create');
+    }
+  } catch (error) {
+    logger.error('Failed to create IMPORTS edges', error as Error);
+    // Don't throw - IMPORTS edges are supplementary, continue with sync
   }
 
   // Finalize stats
