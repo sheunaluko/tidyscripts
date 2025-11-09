@@ -1006,8 +1006,7 @@ If you encounter issues, the structured logging will give you a complete trace o
 ```bash
 export TS_INTROSPECTION_LOG_LEVEL=DEBUG
 ```
+STATUS / TODO: 
 
-
-    Todo:
-    -  first I will verify visually that I can explore the database in the surrealist explorer
-    - then I want to work on incorporating module IMPORTS into the graph (since the import tree is important as well - how should be think about this vs the contains? ) 
+-> The next step is to build the querying and AI/ RAG layer on top of the database, which makes use of (1) text search (2) embedding search (3) pre-specified graph queries  [ likely after 1-2 are done to get the necessary nodes for the graph queries ] In order to provide context for answering questions about the codebase (will be used to create tools for AI coding agent).
+-> dont forget to make use of doc strings of functions, the db schema files etc -- there is an querying roadmap plan in the directory as well 
