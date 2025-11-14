@@ -1025,6 +1025,8 @@ I want to focus on a minimal query.ts file and query test file implementation th
 Make sure each function has a test
 
 
-UPDATE/STATUS => implmented query.ts however the test file is broken. I can see that the vector similarity implementation is WRONG! basically i need to manually re-implment query.ts to support vector search, text search, and simple graph traversals. as well as context building from the results for RAG
+UPDATE/STATUS => implmented query.ts however the test file is broken. I can see that the vector similarity implementation is WRONG! basically i need to manually re-implment query.ts to support vector search, text search, and simple graph traversals. as well as context building from tphe results for RAG
 
-also working in bin/dev/surreal.ts to test the query implementations interacively 
+also working in bin/dev/surreal.ts to test the query implementations interacively
+
+-> ok see bin/dev/surreal.ts //todo for further details, need to think about the table schema and how to update the code to be a bit more robust for querying 

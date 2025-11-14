@@ -119,3 +119,6 @@ export { NodeKind, getKindName, shouldGenerateEmbedding } from './constants';
 export { logger, LogLevel, initializeLogger } from './logger';
 
 export * as query from "./query"
+
+
+export * as embeddings from "./embeddings" ; 

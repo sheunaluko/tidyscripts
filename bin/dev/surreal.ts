@@ -8,6 +8,14 @@ const url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_URL as string
 const surreal_https_url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_HTTPS_URL as string
 
 
+/*
+   TODO 
+     - x = await embedding_test() ; //works well  
+     - however -- need to think about the embedding schema and how embeddings are linked to and retrievable from the nodes and vice versa  
+
+
+*/
+
 
 export async function init(){
        log(`initialized`);
@@ -34,6 +42,43 @@ export async function get_db_2(){
     log(`Connected and got token: ${token}`)
 
     return {db,token} 
+}
+
+export async function embedding_test()  {
+    let db = await get_introspection_db()  ;
+    let e  = await get_embedding("openai") ;
+    let search_result = await vector_search(db,e,5) ;
+    return {
+	db,e,search_result
+    }
+}
+
+export async function vector_search(db : any , v  :any , limit : number) {
+    let query = `
+select id, contentHash, vector::distance::knn() as dist from embedding_cache where embedding  <|${limit},COSINE|> $e order by dist asc` ; 
+    
+    return await db.query(query, {e : v}) ; 
+
+}
+
+export async function get_nodes_with_hash(db : any, h : string) {
+    return await db.query("select * from function_node, module_node where embeddingHash = $ch", {ch : h} ) ; 
+}
+
+export async function get_embedding( txt : string) {
+    return await node.introspection.embeddings.generateEmbedding(txt)
+}
+
+
+export async function get_matching_nodes_with_vector_search(txt :string) {
+    let db = await get_introspection_db() ; 
+    let e = await get_embedding(txt) ;
+    let search_results = await vector_search(db, e, 5) ;
+    return {
+	db,
+	e,
+	search_results
+    }  ; 
 }
 
 export async function get_introspection_db(){
