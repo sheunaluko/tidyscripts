@@ -20,7 +20,8 @@ tsc --skipLibCheck --target ES2020 --module commonjs --outDir dist \
   embeddings.test.ts \
   reconciler.test.ts \
   sync.test.ts \
-  database.test.ts
+  database.test.ts \
+  query.test.ts
 
 echo ""
 echo "✅ All test files compiled to dist/"

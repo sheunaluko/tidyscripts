@@ -1009,4 +1009,22 @@ export TS_INTROSPECTION_LOG_LEVEL=DEBUG
 STATUS / TODO: 
 
 -> The next step is to build the querying and AI/ RAG layer on top of the database, which makes use of (1) text search (2) embedding search (3) pre-specified graph queries  [ likely after 1-2 are done to get the necessary nodes for the graph queries ] In order to provide context for answering questions about the codebase (will be used to create tools for AI coding agent).
--> dont forget to make use of doc strings of functions, the db schema files etc -- there is an querying roadmap plan in the directory as well 
+-> dont forget to make use of doc strings of functions, the db schema files etc
+-> surrealdb querying docs are available in .surreal_docs/docs.surrealdb.com/src/content/doc-surrealql/ and should be reviewed in order to understand the quering syntax
+
+
+I want to focus on a minimal query.ts file and query test file implementation that covers the following:
+
+1) use the existing functions for calculating embeddings to calculate the embedding of a user query, then search the database for nodes with similar embeddings and have optional parameters (number of nodes to return, similarity cut off)
+
+2) same as (1) but with case-insensitive regex matching
+
+3) what minimal graph queries do you think are necessary? right now the database has IMPORTS edges for modules and CONTAINS edges for functions/classes/etc 
+
+
+Make sure each function has a test
+
+
+UPDATE/STATUS => implmented query.ts however the test file is broken. I can see that the vector similarity implementation is WRONG! basically i need to manually re-implment query.ts to support vector search, text search, and simple graph traversals. as well as context building from the results for RAG
+
+also working in bin/dev/surreal.ts to test the query implementations interacively 

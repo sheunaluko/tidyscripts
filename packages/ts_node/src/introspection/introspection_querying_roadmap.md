@@ -24,7 +24,7 @@ This document outlines the implementation plan for **Part 2** of the RAG system:
 2. **Graph Traversal**: Follow relationships (CONTAINS, USES) to understand context
 3. **Hybrid Queries**: Combine semantic + graph for powerful lookups
 4. **Context Assembly**: Gather all relevant information for agent consumption
-5. **Agent Integration**: Auto-sync when code changes
+
 
 ---
 

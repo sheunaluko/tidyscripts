@@ -7,6 +7,8 @@ const log = common.logger.get_logger({id:'surreal_dev'});
 const url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_URL as string
 const surreal_https_url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_HTTPS_URL as string
 
+
+
 export async function init(){
        log(`initialized`);
 }
@@ -18,7 +20,7 @@ export async function get_db(){
     
     let token = await db.signin({namespace:"production", database :"main", access : 'user',  variables : {email : "foo@gmail.com", user_id :"1234"}}) ;
     
-    log(`Connected and got token: ${token}`)
+    log(`Connected as foo@gmail.com and got token: ${token}`)
 
     return {db,token} 
 }
@@ -32,6 +34,28 @@ export async function get_db_2(){
     log(`Connected and got token: ${token}`)
 
     return {db,token} 
+}
+
+export async function get_introspection_db(){
+    let db = new Surreal();
+
+    let tmp = node.introspection.loadConfig()
+    let cfg = tmp.surreal //the surreal config; 
+
+    log(`using cfg to connect to db`); log(cfg); 
+    
+    await db.connect(url, {
+	namespace: cfg.namespace,
+	database : cfg.database,
+	auth : {
+	    username : cfg.user,
+	    password : cfg.password 
+	}
+    }) ;
+    
+    log(`Connected to db`) 
+
+    return db 
 }
 
 
