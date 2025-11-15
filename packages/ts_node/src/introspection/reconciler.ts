@@ -128,7 +128,7 @@ export async function processCreates(nodes: ParsedNode[], db: Surreal): Promise<
       const embeddingHash = hashEmbeddingText(embeddingText);
 
       // Get or generate embedding with content-addressable caching
-      const embedding = await getOrGenerateEmbedding(embeddingHash, embeddingText, db);
+      const embedding_id = await getOrGenerateEmbedding(embeddingHash, embeddingText, db);
 
       // Create node data based on kind
       const nodeData = {
@@ -137,7 +137,8 @@ export async function processCreates(nodes: ParsedNode[], db: Surreal): Promise<
         filePath: node.filePath,
         kind: node.kind,
         nodeHash,
-        embeddingHash,
+          embeddingHash,
+	  embeddingId : embedding_id, 
         docstring: node.docstring,
         sources: node.sources,
         lastUpdated: new Date(),
@@ -245,7 +246,7 @@ export async function processUpdates(
       const embeddingText = buildEmbeddingText(node);
       const newEmbeddingHash = hashEmbeddingText(embeddingText);
 
-      let embedding: number[];
+      let embedding_id : any = null ; 
 
       // Two-hash strategy: check if embedding needs regeneration
       if (newEmbeddingHash === remote.embeddingHash) {
@@ -255,8 +256,8 @@ export async function processUpdates(
           nodeId: node.id,
           embeddingHash: newEmbeddingHash.slice(0, 8) + '...',
         });
-        // We don't actually need the embedding value for metadata-only updates
-        embedding = []; // Placeholder
+        // We don't actually need the embedding_id value for metadata-only updates
+	  // -- ?? maybe we do 
       } else {
         // Embedding content changed - need to regenerate
         logger.debug('Metadata AND embedding updated', {
@@ -265,7 +266,7 @@ export async function processUpdates(
           oldEmbeddingHash: remote.embeddingHash.slice(0, 8) + '...',
           newEmbeddingHash: newEmbeddingHash.slice(0, 8) + '...',
         });
-        embedding = await getOrGenerateEmbedding(newEmbeddingHash, embeddingText, db);
+        embedding_id = await getOrGenerateEmbedding(newEmbeddingHash, embeddingText, db);
       }
 
       // Create updated node data
@@ -275,7 +276,8 @@ export async function processUpdates(
         filePath: node.filePath,
         kind: node.kind,
         nodeHash: newNodeHash,
-        embeddingHash: newEmbeddingHash,
+          embeddingHash: newEmbeddingHash,
+	  embeddingId : embedding_id , 
         docstring: node.docstring,
         sources: node.sources,
         lastUpdated: new Date(),

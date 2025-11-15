@@ -70,14 +70,27 @@ export async function get_embedding( txt : string) {
 }
 
 
+export async function get_nodes_from_eids(db : any , eids : any[]) {
+    let r = db.query("select in.* from EMAP where out in $eids", {eids});
+    return r  
+}
+
 export async function get_matching_nodes_with_vector_search(txt :string) {
     let db = await get_introspection_db() ; 
     let e = await get_embedding(txt) ;
-    let search_results = await vector_search(db, e, 5) ;
+    let search_results = await vector_search(db, e, 5)  as any ; 
+    let eids = search_results[0].map( (o:any)  => o.id ) ;
+
+    //now we use those ids to get the original nodes
+    let nodes = await get_nodes_from_eids(db,eids) ; 
+
+    //and return everything 
     return {
 	db,
 	e,
-	search_results
+	search_results,
+	eids,
+	nodes 
     }  ; 
 }
 

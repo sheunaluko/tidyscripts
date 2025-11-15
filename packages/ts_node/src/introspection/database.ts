@@ -150,6 +150,8 @@ export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promi
   await db.query(
     `LET $tb = $table;
      LET $id = $nodeId;
+     LET $therecord = type::thing($tb, $id); 
+
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -161,7 +163,10 @@ export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promi
       signature: $signature,
       sources: $sources,
       lastUpdated: time::now()
-    }`,
+    };   
+    RELATE $therecord -> EMAP -> $embeddingId ; 
+
+`,
     {
       table: TABLE_NAMES.FUNCTION_NODE,
       nodeId: node.nodeId,
@@ -169,7 +174,8 @@ export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promi
       filePath: node.filePath,
       kind: node.kind,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+      embeddingId: node.embeddingId,	
       docstring: node.docstring,
       signature: node.signature,
       sources: node.sources,
@@ -178,7 +184,7 @@ export async function insertFunctionNode(db: Surreal, node: FunctionNode): Promi
 }
 
 /**
- * Update a function node
+ * Update a function node 
  *
  * @param db - SurrealDB instance
  * @param node - Function node with updated data
@@ -251,6 +257,7 @@ export async function insertClassNode(db: Surreal, node: ClassNode): Promise<voi
   await db.query(
     `LET $tb = $table;
      LET $id = $nodeId;
+     LET $therecord = type::thing($tb, $id); 
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -261,7 +268,9 @@ export async function insertClassNode(db: Surreal, node: ClassNode): Promise<voi
       docstring: $docstring,
       sources: $sources,
       lastUpdated: time::now()
-    }`,
+    }; 
+    RELATE $therecord -> EMAP -> $embeddingId ; 
+`,
     {
       table: TABLE_NAMES.CLASS_NODE,
       nodeId: node.nodeId,
@@ -269,7 +278,8 @@ export async function insertClassNode(db: Surreal, node: ClassNode): Promise<voi
       filePath: node.filePath,
       kind: node.kind,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+      embeddingId: node.embeddingId,	
       docstring: node.docstring,
       sources: node.sources,
     }
@@ -277,7 +287,7 @@ export async function insertClassNode(db: Surreal, node: ClassNode): Promise<voi
 }
 
 /**
- * Update a class node
+ * Update a class node   
  *
  * @param db - SurrealDB instance
  * @param node - Class node with updated data
@@ -329,6 +339,8 @@ export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<v
   await db.query(
     `LET $tb = $table;
      LET $id = $nodeId;
+     LET $therecord = type::thing($tb, $id); 
+
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -339,7 +351,9 @@ export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<v
       docstring: $docstring,
       exports: $exports,
       lastUpdated: time::now()
-    }`,
+    } ; 
+    RELATE $therecord -> EMAP -> $embeddingId ; 
+`,
     {
       table: TABLE_NAMES.MODULE_NODE,
       nodeId: node.nodeId,
@@ -347,7 +361,8 @@ export async function insertModuleNode(db: Surreal, node: ModuleNode): Promise<v
       path: node.path,
       kind: node.kind,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+	embeddingId : node.embeddingId, 
       docstring: node.docstring,
       exports: node.exports,
     }
@@ -407,6 +422,8 @@ export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Pro
   await db.query(
     `LET $tb = $table;
      LET $id = $nodeId;
+     LET $therecord = type::thing($tb, $id); 
+
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -417,7 +434,8 @@ export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Pro
       docstring: $docstring,
       sources: $sources,
       lastUpdated: time::now()
-    }`,
+    }; 
+    RELATE $therecord -> EMAP -> $embeddingId ; `,
     {
       table: TABLE_NAMES.INTERFACE_NODE,
       nodeId: node.nodeId,
@@ -425,7 +443,8 @@ export async function insertInterfaceNode(db: Surreal, node: InterfaceNode): Pro
       filePath: node.filePath,
       kind: node.kind,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+      embeddingId: node.embeddingId,	
       docstring: node.docstring,
       sources: node.sources,
     }
@@ -454,7 +473,8 @@ export async function updateInterfaceNode(db: Surreal, node: InterfaceNode): Pro
       name: node.name,
       filePath: node.filePath,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+      embeddingId: node.embeddingId,	
       docstring: node.docstring,
       sources: node.sources,
     }
@@ -485,6 +505,8 @@ export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Pro
   await db.query(
     `LET $tb = $table;
      LET $id = $nodeId;
+     LET $therecord = type::thing($tb, $id); 
+
      CREATE type::thing($tb, $id) CONTENT {
       nodeId: $nodeId,
       name: $name,
@@ -496,7 +518,8 @@ export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Pro
       type: $type,
       sources: $sources,
       lastUpdated: time::now()
-    }`,
+    }
+    RELATE $therecord -> EMAP -> $embeddingId ; `,
     {
       table: TABLE_NAMES.TYPE_ALIAS_NODE,
       nodeId: node.nodeId,
@@ -504,7 +527,8 @@ export async function insertTypeAliasNode(db: Surreal, node: TypeAliasNode): Pro
       filePath: node.filePath,
       kind: node.kind,
       nodeHash: node.nodeHash,
-      embeddingHash: node.embeddingHash,
+	embeddingHash: node.embeddingHash,
+      embeddingId: node.embeddingId,	
       docstring: node.docstring,
       type: node.type,
       sources: node.sources,

@@ -353,8 +353,8 @@ export async function getOrGenerateEmbedding(
   db: Surreal
 ): Promise<number[]> {
   // Check content-addressable cache
-  const cached = await db.query<[{ embedding: number[] }[]]>(
-    'SELECT embedding FROM embedding_cache WHERE contentHash = $hash',
+  const cached = await db.query<[{ embedding: number[] , id  : any }[]]>(
+    'SELECT embedding,id FROM embedding_cache WHERE contentHash = $hash',
     { hash: contentHash }
   );
 
@@ -369,7 +369,7 @@ export async function getOrGenerateEmbedding(
     logger.debug('Embedding cache HIT', {
       contentHash: contentHash.slice(0, 8) + '...',
     });
-    return cachedResult[0].embedding;
+    return cachedResult[0].id;
   }
 
   // Cache miss - generate new embedding
@@ -380,12 +380,14 @@ export async function getOrGenerateEmbedding(
   const embedding = await generateEmbeddingWithRetry(embeddingText);
 
   // Store in cache
-  await db.query(
+  let r = await db.query(
     `INSERT INTO embedding_cache (contentHash, embedding, usageCount) VALUES ($hash, $embedding, 1)`,
     { hash: contentHash, embedding }
-  );
+  ) as any ; 
 
-  return embedding;
+    let inserted_record = r[0][0]; 
+    
+  return inserted_record.id;
 }
 
 // ============================================================================

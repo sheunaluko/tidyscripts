@@ -128,7 +128,8 @@ export interface FunctionNode {
   filePath: string;
   kind: number;
   nodeHash: string;        // Hash of entire node (for change detection)
-  embeddingHash: string;   // Hash of embedding text only (for API cost savings)
+    embeddingHash: string;   // Hash of embedding text only (for API cost savings)
+  embeddingId: any;   
   docstring: string;
   signature: any;
   sources: SourceLocation[];
@@ -144,7 +145,8 @@ export interface ClassNode {
   filePath: string;
   kind: number;
   nodeHash: string;
-  embeddingHash: string;
+    embeddingHash: string;
+  embeddingId: any;       
   docstring: string;
   sources: SourceLocation[];
   lastUpdated: Date;
@@ -159,7 +161,8 @@ export interface ModuleNode {
   path: string;
   kind: number;
   nodeHash: string;
-  embeddingHash: string;
+    embeddingHash: string;
+  embeddingId: any;       
   docstring: string;
   exports: string[];
   lastUpdated: Date;
@@ -174,7 +177,8 @@ export interface InterfaceNode {
   filePath: string;
   kind: number;
   nodeHash: string;
-  embeddingHash: string;
+    embeddingHash: string;
+  embeddingId: any;       
   docstring: string;
   sources: SourceLocation[];
   lastUpdated: Date;
@@ -190,6 +194,7 @@ export interface TypeAliasNode {
   kind: number;
   nodeHash: string;
   embeddingHash: string;
+  embeddingId: any;       
   docstring: string;
   type: any;
   sources: SourceLocation[];
