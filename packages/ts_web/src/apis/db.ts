@@ -1,30 +1,30 @@
-/* 
-   @Copyright Sheun Aluko 
-   Mon Dec 21 22:03:25 CST 2020
-   Database wrapper around idb-keyval 
-*/ 
-
-
-"use client" ; 
-
-import * as idbkv from "./idbkv_mod" 
-import * as dbio from "./dbio"
-import * as common from "tidyscripts_common" 
-
 /**
- *  Main API DB api inspired by (https://github.com/jakearchibald/idb-keyval) 
- *  The main interface is 
- *  test_db = GET_DB("test")  
- *  let { 
- *    set_with_ttl, 
- *    get , 
- *    keys, 
- *  } = test_db 
- *  
- *  Note that any client which uses this api, MUST call START_CACHE_CHECK(interval) in order to get automatic TTL functionality 
- * 
- * @packageDocumentation 
+ * @module db
+ *
+ * Database wrapper around idb-keyval
+ *
+ * Main API DB api inspired by https://github.com/jakearchibald/idb-keyval
+ *
+ * @example
+ * ```ts
+ * const test_db = GET_DB("test")
+ * const { set_with_ttl, get, keys } = test_db
+ * ```
+ *
+ * @remarks
+ * Any client which uses this api MUST call START_CACHE_CHECK(interval)
+ * in order to get automatic TTL functionality
+ *
+ * @copyright Sheun Aluko
+ * @date Mon Dec 21 22:03:25 CST 2020
+ * @packageDocumentation
  */
+
+"use client" ;
+
+import * as idbkv from "./idbkv_mod"
+import * as dbio from "./dbio"
+import * as common from "tidyscripts_common"
 
 declare var window : any ; 
 

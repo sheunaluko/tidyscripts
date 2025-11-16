@@ -8,15 +8,6 @@ const url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_URL as string
 const surreal_https_url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_HTTPS_URL as string
 
 
-/*
-   TODO 
-     - x = await embedding_test() ; //works well  
-     - however -- need to think about the embedding schema and how embeddings are linked to and retrievable from the nodes and vice versa  
-
-
-*/
-
-
 export async function init(){
        log(`initialized`);
 }
@@ -57,7 +48,7 @@ export async function vector_search(db : any , v  :any , limit : number) {
     let query = `
 select id, contentHash, vector::distance::knn() as dist from embedding_cache where embedding  <|${limit},COSINE|> $e order by dist asc` ; 
     
-    return await db.query(query, {e : v}) ; 
+    return (await db.query(query, {e : v}))[0] ; 
 
 }
 
@@ -71,26 +62,154 @@ export async function get_embedding( txt : string) {
 
 
 export async function get_nodes_from_eids(db : any , eids : any[]) {
-    let r = db.query("select in.* from EMAP where out in $eids", {eids});
-    return r  
+    let r = await db.query("select in.* from EMAP where out in $eids", {eids}) as any ; 
+    return r[0].map( (y:any)=>y.in) ;   
 }
 
+/**
+ * Formats a single node for LLM context
+ * Preserves docstring, name, file path, function signature, and distance
+ */
+export function convert_node_for_context(result : any) {
+    const { dist, node: nodeData } = result;
+
+    if (!nodeData) return "No node data available";
+
+    const { kind, name, docstring, filePath, path, signature, exports, nodeId } = nodeData;
+    const NodeKind = node.introspection.NodeKind;
+
+    let output = [];
+
+    // Add similarity score
+    output.push(`Similarity: ${(1 - dist).toFixed(4)} (distance: ${dist.toFixed(4)})`);
+
+    // Determine node type using NodeKind mapping
+    let nodeType = 'Unknown';
+    for (const [kindName, kindValue] of Object.entries(NodeKind)) {
+        if (kindValue === kind) {
+            nodeType = kindName;
+            break;
+        }
+    }
+    output.push(`Type: ${nodeType}`);
+
+    // Add name
+    output.push(`Name: ${name}`);
+
+    // Add nodeId for reference
+    if (nodeId !== undefined) {
+        output.push(`NodeId: ${nodeId}`);
+    }
+
+    // Add file path (use filePath for functions, path for modules)
+    const location = filePath || path || 'Unknown';
+    output.push(`File: ${location}`);
+
+    // Add docstring if present
+    if (docstring) {
+        output.push(`Description: ${docstring}`);
+    } else if (signature?.comment?.summary) {
+        // Extract docstring from signature comment if available
+        const summaryText = signature.comment.summary
+            .map((s: any) => s.text || '')
+            .join('');
+        if (summaryText) {
+            output.push(`Description: ${summaryText}`);
+        }
+    }
+
+    // For functions, add signature information
+    if (kind === NodeKind.Function && signature?.parameters) {
+        const params = signature.parameters
+            .map((p: any) => {
+                const paramName = p.name;
+                const paramType = p.type?.name || 'unknown';
+                return `${paramName}: ${paramType}`;
+            })
+            .join(', ');
+        output.push(`Parameters: ${params || 'none'}`);
+
+        // Add return type if available
+        if (signature.type?.name) {
+            output.push(`Returns: ${signature.type.name}`);
+        }
+    }
+
+    // For modules, add exports
+    if (kind === NodeKind.Module && exports && exports.length > 0) {
+        output.push(`Exports: ${exports.join(', ')}`);
+    }
+
+    return output.join('\n');
+}
+
+/**
+ * Formats all search results for LLM context
+ * Takes the search_results array and formats each node with similarity scores
+ */
+export function convert_search_results_for_context(results: any[]) {
+    if (!results || results.length === 0) {
+        return 'No search results found.';
+    }
+
+    let output = [`Found ${results.length} matching code elements:\n`];
+
+    results.forEach((result, index) => {
+        output.push(`\n--- Result ${index + 1} ---`);
+        output.push(convert_node_for_context(result));
+    });
+
+    return output.join('\n');
+}
+
+/*
+	Todo
+
+Use these queries to get the ancestors of a node (to the top of the tree) 
+	-- select * from function_node:4547.{..+collect}<-?<-?
+	-- select * from function_node:4547.{..+path}(<-?<-?).{name,id}
+Then have functions
+1) get_node_ancestor_info()
+2) convert_ancestor_info_to_contex()
+3) add the ancestor context into the node context 
+
+
+*/
+
 export async function get_matching_nodes_with_vector_search(txt :string) {
-    let db = await get_introspection_db() ; 
+    let db = await get_introspection_db() ;
     let e = await get_embedding(txt) ;
-    let search_results = await vector_search(db, e, 5)  as any ; 
-    let eids = search_results[0].map( (o:any)  => o.id ) ;
+    log(`got e`)
+    let search_results = await vector_search(db, e, 5)  
+    log(`got sr`)    
+    let eids = search_results.map( (o:any)  => o.id ) ;
+    log(`got eids`)    
 
     //now we use those ids to get the original nodes
-    let nodes = await get_nodes_from_eids(db,eids) ; 
+    log(`getting nodes`)        
+    let nodes = await get_nodes_from_eids(db,eids) ;  
 
+    log(`matching nodes`)            
+    // combine the node with the proper embedding
+    for (var sr of search_results ) {
+	let {contentHash, dist} = sr;
+	let [node] = nodes.filter( (n:any)=> n.embeddingHash == contentHash) ;
+	if (node) {
+	    sr['node'] = node ; 
+	}
+    }
+
+    log(`Prepping context`) ; 
+    let context = convert_search_results_for_context(search_results) ; 
+    
     //and return everything 
     return {
 	db,
 	e,
 	search_results,
 	eids,
-	nodes 
+	nodes ,
+	context 
     }  ; 
 }
 
