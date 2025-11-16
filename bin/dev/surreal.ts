@@ -162,6 +162,17 @@ export function convert_search_results_for_context(results: any[]) {
     return output.join('\n');
 }
 
+export async function get_node_from_id(db:any, node_id: number) {
+    return await db.query(`select * from module_node,function_node where string::split(<string>id,":")[1] = $node_id`, {node_id : String(node_id) }) ; 
+}
+
+export async function get_node_ancestor_paths(db:any,node:any) {
+    return await db.query(`
+	select * from $node_id.{..+path}(<-?<-?).{name,id}`
+	,{node_id : node}) ; 
+	
+}
+
 /*
 	Todo
 
@@ -173,6 +184,8 @@ Then have functions
 2) convert_ancestor_info_to_contex()
 3) add the ancestor context into the node context 
 
+[ ] try call n = await get_node_from_id(db, 4588) 
+then let paths = await get_node_ancestor_paths(db,n) 
 
 */
 
