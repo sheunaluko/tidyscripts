@@ -133,6 +133,16 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
+
+	  <MLink href="/laboratory/note_wrangler">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Note Wrangler</Typography>
+		  <p>
+		      Convert healthcare notes between various formats using AI
+		  </p>
+	      </Card >
+	  </MLink>
+
 	  {/*
 
 	  <MLink href="/laboratory/ride">

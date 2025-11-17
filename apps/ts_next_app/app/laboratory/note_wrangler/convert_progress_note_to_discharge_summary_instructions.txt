@@ -1,0 +1,217 @@
+COMPREHENSIVE TRANSFORMATION SUMMARY: PROGRESS NOTES TO DISCHARGE SUMMARIES
+==================================================================================
+
+This document synthesizes the key transformation principles identified across multiple examples (e1-e4) for converting progress notes into discharge summaries. These principles should guide AI prompt development for automated transformation.
+
+CORE TRANSFORMATION DIMENSIONS
+==================================================================================
+
+1. TENSE
+   - Convert all present tense observations and future planning language to past tense
+   - Narrative should describe what WAS DONE during hospitalization, not what IS or WILL BE done
+   - Example transformations: "will continue" → "continued", "plan to" → "underwent"
+
+2. NARRATIVE_STYLE
+   - Transform from assessment/planning format to retrospective narrative
+   - Convert fragmented clinical documentation into cohesive storytelling
+   - May include daily updates that need to be collapsed into single narrative
+   - Focus on summarizing entire hospitalization rather than ongoing assessment
+
+3. TEMPORAL_FRAMING
+   - Change from ongoing assessment/monitoring to completed hospital stay
+   - Document final outcomes rather than current status
+   - Shift from "monitoring" to "outcomes achieved"
+
+4. SECTION_HEADERS
+   - Convert from "Assessment & Plan" subheadings to hashtag-prefixed problem list (#Problem Name)
+   - May consolidate related problems under single headers
+   - May remove minor/stable problems not requiring discharge documentation
+
+5. ABBREVIATION_USAGE
+   - Maintain clinical abbreviations while ensuring readability
+   - Expand critical information for clarity when needed
+   - Keep standard medical abbreviations (e.g., CT, MRI, s/p)
+
+6. LIST_FORMATTING & BULLET_POINT_REMOVAL
+   - Eliminate ALL bullet points, dashes, and list-based formatting
+   - Convert all lists into narrative prose paragraphs
+   - Remove indentation and hierarchical list structures
+   - Integrate all content into flowing paragraph format
+
+7. SENTENCE_INTEGRATION
+   - Combine fragmented clinical notes into complete, flowing sentences
+   - May need to combine daily updates into coherent narrative
+   - Integrate sub-bullets and nested information into prose
+
+8. ACTION_PLANNING_VS_RETROSPECTIVE
+   - Convert future-oriented plans to past tense actions taken
+   - Transform monitoring plans to outcomes achieved
+   - Change "will do, continue, monitor" to "was done, continued, monitored"
+   - Document what actually happened, not what was planned
+
+9. CHRONOLOGICAL_REORDERING
+   - Reorganize content to follow hospital course chronologically
+   - Present from admission → procedures/interventions → discharge
+   - Collapse serial daily notes into single chronological narrative
+   - Not as ongoing assessment snapshots
+
+10. OUTCOME_DOCUMENTATION
+    - Document what happened during stay and final outcomes
+    - Document resolution status rather than pending actions
+    - Describe completed procedures and their results
+    - Focus on endpoints, not ongoing processes
+
+11. PASSIVE_VS_ACTIVE_VOICE
+    - Shift to active voice describing patient's hospital course
+    - Use active constructions for clinical interventions
+    - "Patient underwent" rather than "was undergone"
+
+12. CLINICAL_REASONING_ELABORATION
+    - Expand abbreviated clinical reasoning into fuller explanatory sentences
+    - Add connecting phrases to link clinical events
+    - Maintain clinical detail while creating narrative flow
+    - Use transitional language to explain cause and effect
+
+13. FUTURE_PLANS_VS_DISCHARGE_INSTRUCTIONS
+    - Convert future monitoring plans to discharge instructions
+    - Transform pending plans to discharge medication regimen
+    - Specify follow-up recommendations and discharge condition
+    - Clearly state what patient should do after discharge
+
+14. PENDING_ITEMS_RESOLUTION
+    - Address all pending consultations, tests, and procedures
+    - Document completion status and results
+    - Resolve "will order", "plan for" statements with outcomes
+    - If not completed, use placeholder markers (see below)
+
+15. CONSULTATION_INTEGRATION
+    - Convert consultation orders/requests to completed consultations
+    - Document what consultants recommended and actions taken
+    - Transform "appreciate recs", "c/s" to "was consulted and recommended..."
+    - Remove internal team communication language
+
+16. PROCEDURAL_DETAIL_EXPANSION
+    - Expand procedural notes with dates, process, and outcomes
+    - Include placement, monitoring, and removal for devices/interventions
+    - Document completion of procedures like radiation, ERCP, thoracentesis, etc.
+    - Specify timeline of procedural events
+
+17. TREATMENT_CONTINUATION_SPECIFICATION
+    - Clearly document discharge medication regimen
+    - Replace "continue" with explicit medication on discharge
+    - Specify what was held vs. continued vs. changed
+    - Avoid vague "cont" or "ctm" statements
+
+18. FOLLOW_UP_DOCUMENTATION
+    - Specify follow-up plans rather than ongoing monitoring
+    - Document discharge disposition (home, SNF, hospice, etc.)
+    - State outpatient follow-up rather than inpatient serial monitoring
+    - Include discharge condition
+
+19. REMOVING_ASSESSMENT_PLAN_SUBHEADINGS
+    - Eliminate all "Assessment & Plan" repeated subheadings
+    - Remove these structural headers from under each problem
+    - Integrate content directly under problem headers
+
+20. CONDENSATION_OF_LAB_VALUES
+    - Present lab values in narrative form when relevant
+    - Integrate into clinical story rather than formatted tables
+    - Avoid detailed table formatting in discharge summary
+    - Include only values relevant to clinical narrative
+
+21. PRONOUN_USAGE
+    - Use consistent pronoun reference throughout (he/his or she/her)
+    - Maintain consistency within entire document
+    - Patient-specific but ensure uniformity
+
+22. PLACEHOLDER_HANDLING
+    - Insert *** markers where actual patient-specific data needs completion
+    - Use for pending results that should be filled in
+    - Mark incomplete information requiring real patient data
+    - Examples: "underwent procedure on ***", "follow up in *** weeks"
+
+23. TRANSITIONAL_PHRASING
+    - Add transitional phrases to connect clinical events
+    - Create narrative flow between sequential events
+    - Use connecting language: "After...", "Following...", "Subsequently..."
+    - Link cause and effect relationships
+
+24. REMOVING_INTERNAL_TEAM_COMMUNICATIONS
+    - Remove internal team notes and communications
+    - Eliminate phrases like:
+      - "appreciate oncology recs"
+      - "will tbw cardio-oncology Monday"
+      - "await serial CXRs and IP recs"
+      - "t/b with Med Onc"
+    - Convert to completed consultation summaries
+    - Document final actions taken, not internal coordination
+
+25. REMOVING_CMS_HCC_ANNOTATIONS
+    - Remove ALL administrative coding annotations
+    - Strip out: (CMS/HCC), (HCC), (initial encounter), etc.
+    - Keep only clean diagnosis names
+    - No billing/coding markers in discharge summary
+
+26. COMPLETENESS_OF_INFORMATION
+    - Use *** placeholders for information requiring patient-specific completion
+    - Mark areas where actual outcomes need to be inserted
+    - Ensure all pending items are addressed or marked
+    - Final document should be ready for data insertion
+
+27. PROBLEM_LIST_PRUNING (observed in later examples)
+    - Remove minor or stable problems not requiring specific discharge documentation
+    - Eliminate problems that had no active inpatient management
+    - Focus on problems relevant to hospitalization and discharge
+    - May consolidate related problems under single headers
+
+==================================================================================
+TRANSFORMATION WORKFLOW RECOMMENDATIONS
+==================================================================================
+
+For AI prompt development, consider this workflow:
+
+1. STRUCTURAL PASS
+   - Remove all "Assessment & Plan" subheadings
+   - Convert section headers to hashtag format
+   - Remove all bullets, dashes, lists
+   - Strip out coding annotations (HCC, etc.)
+
+2. TEMPORAL PASS
+   - Convert all tenses to past tense
+   - Change future planning to retrospective narrative
+   - Reorder content chronologically
+
+3. CONTENT INTEGRATION PASS
+   - Resolve pending items (consultations, procedures, tests)
+   - Document outcomes and completion status
+   - Expand procedural details with dates and results
+   - Insert *** placeholders where data is missing
+
+4. NARRATIVE POLISH PASS
+   - Integrate fragmented notes into flowing prose
+   - Add transitional phrases
+   - Combine sentences and paragraphs
+   - Remove internal team communications
+   - Ensure consistent pronouns
+
+5. DISCHARGE SPECIFICATION PASS
+   - Convert future plans to discharge instructions
+   - Specify discharge medications clearly
+   - Document discharge disposition
+   - State follow-up plans
+
+==================================================================================
+SPECIAL CONSIDERATIONS
+==================================================================================
+
+- Serial Daily Notes: Some progress notes contain dated entries (e.g., 12/6, 12/7, 12/8) tracking daily changes. These must be collapsed into a single chronological narrative.
+
+- Multiple Consultations: When multiple specialties are consulted, integrate their recommendations into the narrative with clear attribution.
+
+- Disposition Planning: Progress notes may have ongoing disposition discussions. Discharge summary should document final disposition clearly.
+
+- Incomplete Information: Use *** markers liberally for any information that requires patient-specific data that wasn't in the original note.
+
+==================================================================================
+END OF SUMMARY
+==================================================================================

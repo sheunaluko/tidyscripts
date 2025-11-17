@@ -123,6 +123,16 @@ const AllLinks = () => {
 
 
 
+
+	  <MLink href="/laboratory/voice_agent_test">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">Voice Agent Test</Typography>
+		  <p>
+		      Tests Openai Realtime VoiceAgent
+		  </p>
+	      </Card >
+	  </MLink>
+
 	  {/*
 
 	  <MLink href="/laboratory/ride">
