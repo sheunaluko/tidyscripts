@@ -166,6 +166,8 @@ IMPORTANT
 
 - DO NOT ADD PLAN ITEMS THAT ARE NOT EXPLICITLY DEFINED
 
+- if there are no plan items for a section you can simply put " - outpatient follow up " 
+
 
 ==================================================================================
 END OF SUMMARY
