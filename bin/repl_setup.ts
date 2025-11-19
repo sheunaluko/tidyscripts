@@ -7,6 +7,7 @@ declare var global : any ;
 const R = common.R ;
 const get_logger = common.logger.get_logger ; 
 const log = get_logger({id: 'repl'}) ; 
+const debug = common.util.debug
 
 let welcome_msg = ` 
 Welcome to the Tidyscripts REPL (Read Eval Print Loop)
@@ -21,6 +22,12 @@ async function init_repl() {
     if (!global.R     ) { global.R      = R      };
     if (!global.dev   ) { global.dev    = dev    };
 
+    const surreal = dev.surreal ;
+    
+    Object.assign(global, {
+	debug ,
+	surreal
+    })
 
     log(welcome_msg)
     

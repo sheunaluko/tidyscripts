@@ -1,0 +1,5 @@
+# Ignore all error report JSON files
+error_*.json
+
+# But keep this directory in git
+!.gitignore

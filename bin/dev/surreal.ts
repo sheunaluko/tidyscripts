@@ -4,9 +4,39 @@ import node   from "../../packages/ts_node/dist/index" ;
 import {Surreal} from "surrealdb"
 
 const log = common.logger.get_logger({id:'surreal_dev'});
+const debug = common.util.debug ; 
 const url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_URL as string
 const surreal_https_url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_HTTPS_URL as string
 
+/*
+   Todo
+
+   Debug the vector search -> context  
+   <--- Run that query over there
+
+   await dev.surreal.get_matching_nodes_with_vector_search(txt :string,limit:number) 
+
+
+   Consider function for summarizing file (with function names + doc strings) 
+     - this can be used for follow up agentic query 
+   
+   Consider ability to extract source code for node 
+
+*/
+
+export var INTROSPECTION_DB : any = null ; 
+
+export async function main_test(){
+    /*
+    let d = await get_introspection_db() ;
+    let n = await get_node_from_id(d,4495) ;
+    return {
+	d,
+	n
+    }
+    */
+    return await get_matching_nodes_with_vector_search("keys", 3) ; 
+}
 
 export async function init(){
        log(`initialized`);
@@ -70,7 +100,7 @@ export async function get_nodes_from_eids(db : any , eids : any[]) {
  * Formats a single node for LLM context
  * Preserves docstring, name, file path, function signature, and distance
  */
-export function convert_node_for_context(result : any) {
+export async function convert_node_for_context(result : any, db :any) {
     const { dist, node: nodeData } = result;
 
     if (!nodeData) return "No node data available";
@@ -140,6 +170,13 @@ export function convert_node_for_context(result : any) {
         output.push(`Exports: ${exports.join(', ')}`);
     }
 
+    // import paths
+    if (db) {
+	let import_info = await get_node_paths_for_context(db,nodeId)
+	output.push(`Imported by:: \n ${import_info}`)
+    }
+
+
     return output.join('\n');
 }
 
@@ -147,53 +184,92 @@ export function convert_node_for_context(result : any) {
  * Formats all search results for LLM context
  * Takes the search_results array and formats each node with similarity scores
  */
-export function convert_search_results_for_context(results: any[]) {
+export async function convert_search_results_for_context(results: any[],db :any) {
     if (!results || results.length === 0) {
         return 'No search results found.';
     }
 
     let output = [`Found ${results.length} matching code elements:\n`];
 
-    results.forEach((result, index) => {
-        output.push(`\n--- Result ${index + 1} ---`);
-        output.push(convert_node_for_context(result));
-    });
-
+    for ( var [index,result] of results.entries() ) {
+	output.push(`\n--- Result ${index + 1} ---`);
+        output.push(await convert_node_for_context(result,db));
+    }
+    
     return output.join('\n');
 }
 
 export async function get_node_from_id(db:any, node_id: number) {
-    return await db.query(`select * from module_node,function_node where string::split(<string>id,":")[1] = $node_id`, {node_id : String(node_id) }) ; 
+    try {
+	let tmp = await db.query(`select * from module_node,function_node where string::split(<string>id,":")[1] = $node_id`, {node_id : String(node_id) })
+	return tmp[0][0]
+    } catch (error: any ) {
+	log(`error:`);log(error);
+	return null 
+    }
 }
 
 export async function get_node_ancestor_paths(db:any,node:any) {
-    return await db.query(`
-	select * from $node_id.{..+path}(<-?<-?).{name,id}`
-	,{node_id : node}) ; 
+    log(`Processing paths for node: id=${node.id}`);
+    try {
+	let tmp = await db.query(`select * from $node_id.{..+path}(<-?<-?).{name,id}`, {node_id : node}) ;
+	debug.add("node_ancestor_query_result", tmp) ; 
+	return tmp[0]
 	
+    } catch (error : any) {
+	log("error"); log(error); 
+	return null 
+    }
 }
 
-/*
-	Todo
+export function convert_path_for_context(path : any, i : number) {
+    log(i);log(path);
+    let header = `Path ${i}:: `; 
 
-Use these queries to get the ancestors of a node (to the top of the tree) 
-	-- select * from function_node:4547.{..+collect}<-?<-?
-	-- select * from function_node:4547.{..+path}(<-?<-?).{name,id}
-Then have functions
-1) get_node_ancestor_info()
-2) convert_ancestor_info_to_contex()
-3) add the ancestor context into the node context 
+    return header + path.map( (p:any)=> {
+	console.log(p)
+	return `${p.name}|type=${p.id.tb}|id=${p.id.id}`
+	//will reverse it 
+    }).reverse().join(" -> ") 
+}
 
-[ ] try call n = await get_node_from_id(db, 4588) 
-then let paths = await get_node_ancestor_paths(db,n) 
+export function convert_paths_for_context(paths : any) {
+    return paths.map((path:any,i:number)=>convert_path_for_context(path,i)).join("\n")
+}
 
-*/
+export async function get_node_paths_for_context(db : any, _n : any)  {
+    let n = (typeof _n == "object") ? _n : (await get_node_from_id(db,_n)) ;
+    debug.add("n" , n) 
+    let paths = await get_node_ancestor_paths(db,n)
+    debug.add("paths" , paths)     
+    //for each path we prepend the queried node
+    for (var p of paths) {
+	p = ([n]).concat(p)
+    }
+    return await convert_paths_for_context(paths) 
+}
 
-export async function get_matching_nodes_with_vector_search(txt :string) {
+export async function path_test() {
+    let d = await get_introspection_db() ;
+    let n = await get_node_from_id(d,4550) ;
+    let paths = await get_node_ancestor_paths(d,n) ;
+    let ctx = await convert_paths_for_context(paths) ;
+    let r   = await get_node_paths_for_context(d,n)
+    return {
+	d,n, paths, ctx , r 
+    }
+}
+
+export async function get_node_info_for_query(txt:string,limit:number) {
+    let x = await get_matching_nodes_with_vector_search(txt,limit) ;
+    return x.context ; 
+}
+
+export async function get_matching_nodes_with_vector_search(txt :string,limit:number) {
     let db = await get_introspection_db() ;
     let e = await get_embedding(txt) ;
     log(`got e`)
-    let search_results = await vector_search(db, e, 5)  
+    let search_results = await vector_search(db, e, (limit ||  5) )  
     log(`got sr`)    
     let eids = search_results.map( (o:any)  => o.id ) ;
     log(`got eids`)    
@@ -213,7 +289,7 @@ export async function get_matching_nodes_with_vector_search(txt :string) {
     }
 
     log(`Prepping context`) ; 
-    let context = convert_search_results_for_context(search_results) ; 
+    let context = await convert_search_results_for_context(search_results,db) ; 
     
     //and return everything 
     return {
@@ -227,7 +303,13 @@ export async function get_matching_nodes_with_vector_search(txt :string) {
 }
 
 export async function get_introspection_db(){
+    if (INTROSPECTION_DB){
+	log("Got cached db");
+	return INTROSPECTION_DB
+    }
+    
     let db = new Surreal();
+
 
     let tmp = node.introspection.loadConfig()
     let cfg = tmp.surreal //the surreal config; 
@@ -243,8 +325,11 @@ export async function get_introspection_db(){
 	}
     }) ;
     
-    log(`Connected to db`) 
+    log(`Connected to db`)
 
+    debug.add("db", db) ; 
+
+    INTROSPECTION_DB = db ;     
     return db 
 }
 

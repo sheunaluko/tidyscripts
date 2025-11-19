@@ -11,7 +11,10 @@ import * as yts from "./yts"
 import * as tes from "./tes" 
 export * as playwright from "./playwright" 
 export * as tom from "./tom"
-export * as surreal from "./surreal"
+import * as surreal from "./surreal"
+
+declare var global : any ; 
+
 
 export {
     //firebase_admin ,
@@ -23,6 +26,8 @@ export {
     tex ,
     ytt ,
     yts ,
-    tes
+    tes ,
+    surreal 
 
 } 
+

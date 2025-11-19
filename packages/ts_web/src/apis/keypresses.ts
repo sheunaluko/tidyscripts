@@ -1,6 +1,5 @@
 import * as common from "tidyscripts_common" 
 import * as sounds from "../util/sounds" 
-import * as kp from "./keypresses" 
 
 let log = common.logger.get_logger({id:"key_presses"})
 let fp = common.fp 
