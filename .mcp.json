@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tidyscripts": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "tsx",
+        "./bin/dev/mcp.ts"
+      ],
+      "env": {}
+    }
+  }
+}
