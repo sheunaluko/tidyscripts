@@ -11,12 +11,6 @@ const surreal_https_url = process.env.SURREAL_TIDYSCRIPTS_BACKEND_HTTPS_URL as s
 /*
    Todo
 
-   Debug the vector search -> context  
-   <--- Run that query over there
-
-   await dev.surreal.get_matching_nodes_with_vector_search(txt :string,limit:number) 
-
-
    Consider function for summarizing file (with function names + doc strings) 
      - this can be used for follow up agentic query 
    
