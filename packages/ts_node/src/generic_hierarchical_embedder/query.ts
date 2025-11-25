@@ -176,7 +176,7 @@ export async function searchBySimilarity(
             contentHash,
             vector::distance::knn() as dist
         FROM embedding_store
-        WHERE vector <|${limit * 3},COSINE|> $queryEmbedding
+        WHERE vector <|${limit * 3},40|> $queryEmbedding
         ORDER BY dist ASC
     `;
 

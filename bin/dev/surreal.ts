@@ -70,7 +70,7 @@ export async function embedding_test()  {
 
 export async function vector_search(db : any , v  :any , limit : number) {
     let query = `
-select id, contentHash, vector::distance::knn() as dist from embedding_cache where embedding  <|${limit},COSINE|> $e order by dist asc` ; 
+select id, contentHash, vector::distance::knn() as dist from embedding_cache where embedding  <|${limit},40|> $e order by dist asc` ;  //fyi the 2nd param in the <|a,b|> structure MUST be a number to force using the HNSW index!
     
     return (await db.query(query, {e : v}))[0] ; 
 
