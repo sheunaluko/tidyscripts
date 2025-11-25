@@ -78,53 +78,91 @@ export async function get_client() {
 // 2.  UTILITIES (UUIDs, embeddings, existence checks)
 //-------------------------------------------------------------
 
-var embedding_fn : any = null ;
-var structured_prompt_fn : any = null ;  
+var _embedding_fn : any = null ;
+var _structured_prompt_fn : any = null ;
 
 /*
-   In future, will need to enable vercel caching strategy, but for now - will disable cahcing if running on vercel 
- */ 
+   In future, will need to enable vercel caching strategy, but for now - will disable caching if running on vercel
 
-if (process.env['VERCEL']) {
+   Lazy initialization pattern: only check environment and setup cache when functions are first called
+ */
 
-    
-    log(`Detected vercel environment - thus will NOT enable filesystem cache `) ;
-    embedding_fn = embedding1024 ;
-    structured_prompt_fn = structured_prompt ;  
-    
-} else {
+function get_embedding_fn() {
+    if (_embedding_fn) return _embedding_fn;
 
-    log(`Not running on vercel, thus will enable filesystem caching`) ; 
-
-    var parent_cache_dir = process.cwd()  ; 
-    if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
-	parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
-	log(`Found tidyscripts data dir for cache use`) 
+    if (process.env['VERCEL']) {
+        log(`Detected vercel environment - thus will NOT enable filesystem cache `) ;
+        _embedding_fn = embedding1024 ;
     } else {
-	log(`Unable to find tidyscripts data dir for cache use`) 
+        log(`Not running on vercel, thus will enable filesystem caching`) ;
+
+        var parent_cache_dir = process.cwd()  ;
+        if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
+            parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
+            log(`Found tidyscripts data dir for cache use`)
+        } else {
+            log(`Unable to find tidyscripts data dir for cache use`)
+        }
+
+        var cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
+        log(`Using cacheDir = ${cacheDir}`) ;
+
+        var fs_cache = new FileSystemCache<any>({
+            cacheDir,
+            onlyLogHitsMisses : true,
+            logPrefix: "surreal_cache" ,
+            namespace: "tom" ,
+        });
+
+        _embedding_fn = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
     }
 
-    var cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
-    log(`Using cacheDir = ${cacheDir}`) ; 
+    return _embedding_fn;
+}
 
-    var fs_cache = new FileSystemCache<any>({
-	    cacheDir,
-	    onlyLogHitsMisses : true,
-	    logPrefix: "surreal_cache" ,
-	    namespace: "tom" , 
-    }); 
+function get_structured_prompt_fn() {
+    if (_structured_prompt_fn) return _structured_prompt_fn;
 
-    embedding_fn = CacheUtils.memoize( embedding1024,  fs_cache  ) ;
-    structured_prompt_fn = CacheUtils.memoize( structured_prompt, fs_cache ) ; 
+    if (process.env['VERCEL']) {
+        log(`Detected vercel environment - thus will NOT enable filesystem cache `) ;
+        _structured_prompt_fn = structured_prompt ;
+    } else {
+        log(`Not running on vercel, thus will enable filesystem caching`) ;
+
+        var parent_cache_dir = process.cwd()  ;
+        if (process.env['TIDYSCRIPTS_DATA_DIR'] ) {
+            parent_cache_dir  = process.env['TIDYSCRIPTS_DATA_DIR']
+            log(`Found tidyscripts data dir for cache use`)
+        } else {
+            log(`Unable to find tidyscripts data dir for cache use`)
+        }
+
+        var cacheDir = path.join(  parent_cache_dir, '.cache/tom' ) ;
+        log(`Using cacheDir = ${cacheDir}`) ;
+
+        var fs_cache = new FileSystemCache<any>({
+            cacheDir,
+            onlyLogHitsMisses : true,
+            logPrefix: "surreal_cache" ,
+            namespace: "tom" ,
+        });
+
+        _structured_prompt_fn = CacheUtils.memoize( structured_prompt, fs_cache ) ;
+    }
+
+    return _structured_prompt_fn;
 }
 
 /*
-   Now the embedding_fn and structured_prompt_fn should be set  
+   Proxy getters that lazily initialize the functions on first access
 */
+
+const embedding_fn = (...args: any[]) => get_embedding_fn()(...args);
+const structured_prompt_fn = (...args: any[]) => get_structured_prompt_fn()(...args);
 
 export {
     embedding_fn,
-    structured_prompt_fn 
+    structured_prompt_fn
 }
 
 // --

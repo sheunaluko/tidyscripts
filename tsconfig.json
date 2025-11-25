@@ -1,21 +1,21 @@
 {
-  "compilerOptions": {                        
-    "target": "es2017",                               
-    "module": "ESNext",                           
-    "outDir": "./dist",                             
-    "rootDir": "./",                             
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "ESNext",
+    "outDir": "./dist",
+    "rootDir": "./",
     "strict": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true, 
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
     "declarationDir": "dist",
-    "jsx" : "react-jsx",   
+    "jsx" : "react-jsx",
     "skipLibCheck": true,
     "paths": {
 	"react": [ "./node_modules/@types/react" ]
-    }, 
+    },
   },
   "exclude":[
     "./node_modules"
