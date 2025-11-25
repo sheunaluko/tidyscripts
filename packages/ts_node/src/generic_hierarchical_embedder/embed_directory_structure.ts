@@ -4,7 +4,9 @@ import { ChunkedDirectoryNode, ChunkedHierarchicalNode, ChunkedFileNode } from "
 import { FileChunk, split_chunk } from "./file_chunker"
 import { FileSystemCache } from "../apis/node_cache"
 import { path } from "../io"
+// @ts-ignore - js-tiktoken uses modern exports field not supported by our module resolution
 import { Tiktoken } from "js-tiktoken/lite";
+// @ts-ignore - js-tiktoken uses modern exports field not supported by our module resolution
 import  cl100k_base  from "js-tiktoken/ranks/cl100k_base";
 
 const { CacheUtils } = common.apis.cache

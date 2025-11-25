@@ -15,20 +15,6 @@ import { execute_tes_call, CallData } from "./shared/executor" ;
 const log   = common.logger.get_logger({id: "tes"}) ; 
 
 
-/*
-
-   Want to upgrade this file to also expose an MCP server that claude can use
-   All MCP functionality should be tucked away and imported from mcp subfolder
-   Adding functions available to MCP should be easy and clear
-   First function to add will be a tes call
-   where path = [ dev, surreal, get_node_info_for_query ]
-   args = [ query , limit ] 
-   
-   
-   
- */
-
-
 /**
  * Services a TES function call (delegates to shared executor)
  */

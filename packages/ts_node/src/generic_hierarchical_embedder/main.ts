@@ -15,27 +15,14 @@ import { embedDirectoryStructure, EmbeddedDirectoryNode, EmbedOptions, EmbedStat
 
 export * as file_chunker from "./file_chunker"
 export * as directory_structure from "./directory_structure"
+export * as query from "./query"
+export { recreate_index } from "./database"
 
 let log = common.logger.get_logger({id: "generic_hierarchical_embedder"})
 let fp = common.fp
 let debug = common.util.debug
 
 
-/*
-	Status:
-	- have the db connection in database.ts
-	- implemented obtaining the batch embeddings and population chunked_directory (not tested)
-
-	Todo:
-	- need to parse the chunked_dir (with embeddings) and write the nodes to the db
-	  - along with graph relations
-	  - and links to embeddings
-	  - embeddings in their own separate table
-
-	- ensure to save by PROJECT_ID (so can filter by project - can be hash of the dir)
-	- ensure that actual relations are used for linking nodes to the emedding 
-
-*/
 
 /**
  * Recursively chunks all files in a directory tree.
@@ -306,6 +293,99 @@ export async function embed_directory(
         embeddedDirectory,
         chunkStats,
         embedStats
+    };
+}
+
+/**
+ * Result of embedding and storing a directory
+ */
+export interface EmbedAndStoreResult {
+    embeddedDirectory: EmbeddedDirectoryNode;
+    chunkStats: ChunkStats;
+    embedStats: EmbedStats;
+    storageStats: any; // StorageStats from database.ts
+}
+
+/**
+ * Embeds and stores an entire directory in SurrealDB.
+ *
+ * This is the complete end-to-end function that:
+ * 1. Chunks the directory structure
+ * 2. Generates embeddings using OpenAI's batch API
+ * 3. Stores everything in SurrealDB with graph relations
+ *
+ * @param filePath - Absolute path to the directory to embed and store
+ * @param options - Combined options for all stages
+ * @param options.costLimit - Maximum allowed cost in dollars (default: 1.0)
+ * @param options.fileExtensions - Only process files with these extensions (e.g., ['.mdx'])
+ * @param options.delimiter - Regex pattern to split files on (default: /\n{2,}/g)
+ * @param options.model - OpenAI model (default: 'text-embedding-3-small')
+ * @param options.dimensions - Output dimensions (default: 1536)
+ * @param options.deleteExisting - Delete existing project data (default: true)
+ * @returns Object containing embedded directory, stats, and storage stats
+ *
+ * @example
+ * // Embed and store MDX files only
+ * const result = await embed_and_store_directory('/path/to/docs', {
+ *   fileExtensions: ['.mdx'],
+ *   costLimit: 0.50,
+ *   model: 'text-embedding-3-small',
+ *   dimensions: 1536
+ * });
+ * console.log(`Project: ${result.storageStats.projectId}`);
+ * console.log(`Stored: ${result.storageStats.chunksCreated} chunks`);
+ * console.log(`Embeddings: ${result.storageStats.embeddingsCreated} new, ${result.storageStats.embeddingsReused} reused`);
+ *
+ * @example
+ * // Embed and store TypeScript files
+ * const result = await embed_and_store_directory('/path/to/src', {
+ *   fileExtensions: ['.ts', '.tsx'],
+ *   costLimit: 2.0,
+ *   delimiter: /\n{3,}/g,
+ *   deleteExisting: true
+ * });
+ */
+export async function embed_and_store_directory(
+    filePath: string,
+    options: DirectoryStructureOptions &
+             { delimiter?: RegExp } &
+             ChunkStatsOptions &
+             EmbedOptions &
+             { costLimit?: number, deleteExisting?: boolean } = {}
+): Promise<EmbedAndStoreResult> {
+    const { deleteExisting = true, ...embedOptions } = options;
+
+    log(`=== embed_and_store_directory started ===`)
+    log(`Directory: ${filePath}`)
+
+    // Step 1: Embed the directory
+    log(`Step 1: Embedding directory`)
+    const embedResult = await embed_directory(filePath, embedOptions);
+
+    // Step 2: Store in SurrealDB
+    log(`Step 2: Storing in SurrealDB`)
+    const { store_embedded_directory } = await import('./database');
+
+    const storageStats = await store_embedded_directory(
+        embedResult.embeddedDirectory,
+        filePath,
+        {
+            model: options.model,
+            dimensions: options.dimensions,
+            deleteExisting
+        }
+    );
+
+    log(`=== embed_and_store_directory complete ===`)
+    log(`Project ID: ${storageStats.projectId}`)
+    log(`Storage: ${storageStats.directoriesCreated} dirs, ${storageStats.filesCreated} files, ${storageStats.chunksCreated} chunks`)
+    log(`Embeddings: ${storageStats.embeddingsCreated} new, ${storageStats.embeddingsReused} reused`)
+
+    return {
+        embeddedDirectory: embedResult.embeddedDirectory,
+        chunkStats: embedResult.chunkStats,
+        embedStats: embedResult.embedStats,
+        storageStats
     };
 }
 

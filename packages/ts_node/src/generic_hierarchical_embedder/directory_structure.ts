@@ -135,7 +135,7 @@ function getDirectoryStructureHelper(
 }
 
 /**
- * Produces a set of all unique file extensions found in a directory structure
+ * Converts a DirectoryNode to a set of all unique file extensions
  *
  * @param directoryNode - The directory structure to analyze
  * @returns Set of file extensions (including the dot, e.g., '.ts', '.js')
@@ -143,10 +143,10 @@ function getDirectoryStructureHelper(
  *
  * @example
  * const structure = getDirectoryStructure('/path/to/project');
- * const fileTypes = produceFileTypeSet(structure);
+ * const fileTypes = convertDirectoryNodeToTypeSet(structure);
  * console.log(fileTypes); // Set { '.ts', '.js', '.json', '.md', 'none' }
  */
-export function produceFileTypeSet(directoryNode: DirectoryNode): Set<string> {
+export function convertDirectoryNodeToTypeSet(directoryNode: DirectoryNode): Set<string> {
     const fileTypes = new Set<string>();
 
     function traverse(node: HierarchicalNode): void {
@@ -161,4 +161,32 @@ export function produceFileTypeSet(directoryNode: DirectoryNode): Set<string> {
 
     traverse(directoryNode);
     return fileTypes;
+}
+
+/**
+ * Produces a set of all unique file extensions found in a directory
+ * This is a convenience function that combines getDirectoryStructure and convertDirectoryNodeToTypeSet
+ *
+ * @param dirPath - Absolute path to the directory to analyze
+ * @param options - Optional directory traversal options
+ * @returns Set of file extensions (including the dot, e.g., '.ts', '.js')
+ *          Files without extensions are represented as 'none'
+ *
+ * @example
+ * const fileTypes = produceFileTypeSet('/path/to/project');
+ * console.log(fileTypes); // Set { '.ts', '.js', '.json', '.md', 'none' }
+ *
+ * @example
+ * // With options
+ * const fileTypes = produceFileTypeSet('/path/to/project', {
+ *   includeHidden: false,
+ *   maxDepth: 5
+ * });
+ */
+export function produceFileTypeSet(
+    dirPath: string,
+    options?: DirectoryStructureOptions
+): Set<string> {
+    const directoryNode = getDirectoryStructure(dirPath, options);
+    return convertDirectoryNodeToTypeSet(directoryNode);
 }

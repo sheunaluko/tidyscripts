@@ -23,10 +23,14 @@ async function init_repl() {
     if (!global.dev   ) { global.dev    = dev    };
 
     const surreal = dev.surreal ;
+    const ghe     = node.generic_hierarchical_embedder ;
+    const tobi     = common.tobi ;     
     
     Object.assign(global, {
 	debug ,
-	surreal
+	surreal,
+	ghe,
+	tobi
     })
 
     log(welcome_msg)
