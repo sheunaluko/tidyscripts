@@ -16,7 +16,7 @@ import { embedDirectoryStructure, EmbeddedDirectoryNode, EmbedOptions, EmbedStat
 export * as file_chunker from "./file_chunker"
 export * as directory_structure from "./directory_structure"
 export * as query from "./query"
-export { recreate_index } from "./database"
+export { recreate_index, computeProjectId } from "./database"
 
 let log = common.logger.get_logger({id: "generic_hierarchical_embedder"})
 let fp = common.fp
@@ -387,6 +387,105 @@ export async function embed_and_store_directory(
         embedStats: embedResult.embedStats,
         storageStats
     };
+}
+
+/**
+ * Query a stored project by directory path and return results as Markdown
+ *
+ * This is a convenience function that:
+ * 1. Computes the project ID from the root directory path
+ * 2. Performs vector similarity search against that project
+ * 3. Returns formatted Markdown results
+ *
+ * The project must have been previously embedded and stored using embed_and_store_directory().
+ *
+ * @param query - Natural language query to search for
+ * @param rootDir - Root directory path of the project (used to compute project ID)
+ * @param options - Search options
+ * @param options.limit - Maximum number of results to return (default: 10)
+ * @param options.threshold - Minimum similarity score 0-1 (default: 0.3)
+ * @param options.fileExtensions - Filter results by file extensions (e.g., ['.ts', '.js'])
+ * @param options.model - Embedding model to use (default: 'text-embedding-3-small')
+ * @param options.dimensions - Embedding dimensions (default: 1536)
+ * @returns Markdown-formatted search results with relevance scores
+ *
+ * @example
+ * // Query a previously embedded project
+ * const markdown = await query_project(
+ *   "How does authentication work?",
+ *   "/path/to/project",
+ *   { limit: 5, threshold: 0.6 }
+ * );
+ * console.log(markdown);
+ *
+ * @example
+ * // Filter by file type
+ * const results = await query_project(
+ *   "database connection logic",
+ *   "/home/user/my-app",
+ *   {
+ *     limit: 3,
+ *     threshold: 0.5,
+ *     fileExtensions: ['.ts', '.js']
+ *   }
+ * );
+ *
+ * @example
+ * // Full workflow: embed, store, then query
+ * await embed_and_store_directory('/path/to/project', {
+ *   fileExtensions: ['.ts'],
+ *   costLimit: 1.0
+ * });
+ *
+ * const results = await query_project(
+ *   "error handling patterns",
+ *   "/path/to/project",
+ *   { limit: 10 }
+ * );
+ * console.log(results);
+ */
+export async function query_project(
+    query: string,
+    rootDir: string,
+    options: {
+        limit?: number,
+        threshold?: number,
+        fileExtensions?: string[],
+        model?: string,
+        dimensions?: number
+    } = {}
+): Promise<string> {
+    const { limit = 10, threshold, fileExtensions, model, dimensions } = options;
+
+
+    log(`=== query_project started ===`);
+    log(`Query: "${query}"`);
+    log(`Root directory: ${rootDir}`);
+    log(`Limit: ${limit}`);
+
+    // Import dependencies
+    const { computeProjectId } = await import('./database');
+    const { queryForMarkdown } = await import('./query');
+
+    // Step 1: Compute project ID from root directory
+    log(`Step 1: Computing project ID from root directory`);
+    const projectId = await computeProjectId(rootDir);
+    log(`Project ID: ${projectId}`);
+
+    // Step 2: Query for markdown results
+    log(`Step 2: Executing similarity search`);
+    const markdown = await queryForMarkdown(query, {
+        projectId,
+        limit,
+        threshold,
+        fileExtensions,
+        model,
+        dimensions
+    });
+
+    log(`=== query_project complete ===`);
+
+    return markdown;
 }
 
 

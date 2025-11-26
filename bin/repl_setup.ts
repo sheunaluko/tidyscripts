@@ -24,13 +24,21 @@ async function init_repl() {
 
     const surreal = dev.surreal ;
     const ghe     = node.generic_hierarchical_embedder ;
-    const tobi     = common.tobi ;     
+    const tobi     = common.tobi ;
+    const tools  = dev.mcp_tools.TOOLS
+
+    const test = async ()=> {
+	let t = tools[1] ;
+	return await t.handler({query : "how to recursive graph query"}) ; 
+    }
+    
     
     Object.assign(global, {
 	debug ,
 	surreal,
 	ghe,
-	tobi
+	tobi,
+	test 
     })
 
     log(welcome_msg)

@@ -13,6 +13,8 @@ export * as playwright from "./playwright"
 export * as tom from "./tom"
 import * as surreal from "./surreal"
 
+export * as mcp_tools from "./mcp/tools"
+
 declare var global : any ; 
 
 

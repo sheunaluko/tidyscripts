@@ -220,11 +220,15 @@ export async function searchBySimilarity(
 
     // Add project filter if specified
     if (projectId) {
-        chunkQuery += ` AND projectId = $projectId`;
+        chunkQuery += ` AND projectId = type::record($projectId)`;
         queryParams.projectId = projectId;
     }
 
     log(`Fetching matching chunks with file metadata...`);
+    log(`Using query:`);
+    log(chunkQuery) ;
+    log(`With parms`) ;
+    log(queryParams) ; 
     const chunkQueryStart = Date.now();
     const chunksResult = await db.query<[ChunkResult[]]>(chunkQuery, queryParams);
     const chunks = chunksResult?.[0] || [];

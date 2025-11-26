@@ -3,12 +3,15 @@
  */
 
 /**
- * Defines a TES tool that can be exposed via MCP
+ * MCP Tool Definition with Generic Handler
+ *
+ * Tools now use generic handler functions instead of TES paths,
+ * allowing for flexible argument transformation, validation, and custom logic.
  */
-export interface TesTool {
-  name: string; // MCP tool name (snake_case recommended)
+export interface McpTool {
+  name: string; // MCP tool name
   description: string; // Description for Claude to understand what it does
-  fn_path: string[]; // Path to the function in T object (e.g., ["dev", "surreal", "get_node_info_for_query"])
+  handler: (args: Record<string, any>) => Promise<any>; // Generic handler function
   input_schema: {
     // JSON Schema for the tool's input parameters
     type: "object";
