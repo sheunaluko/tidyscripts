@@ -130,7 +130,7 @@ const  Component: NextPage = (props : any) => {
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
 
-    const default_model = "gpt-4o"
+    const default_model = "gpt-5-mini"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    
@@ -152,22 +152,35 @@ const  Component: NextPage = (props : any) => {
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
     // State for Cortex agent, re-created when ai_model changes
-    var [COR, setCOR] = useState(() =>
-        cortex_agent.get_agent(ai_model)
-    );
-
+    var [COR, setCOR] = useState( null ) 
 
     var get_agent = function() {
 	return COR 
     }
 
     // Re-instantiate agent whenever model selection changes
-    useEffect(() => {
+    useEffect( () => {
+
+	async function get_agent() {
+            let agent =  await cortex_agent.get_agent_with_mcp(ai_model)
+	    setCOR(agent) ; 
+	}
+
+	get_agent() 
+
+	/* may have bug by disabling this */
+
+	/*
+
         const oldAgent = COR;
-        oldAgent.off('event', handle_event);
-        const nextAgent = cortex_agent.get_agent(ai_model);
-        setCOR(nextAgent);
+	if (oldAgent) {
+	    console.log(oldAgent) 
+            oldAgent.off('event', handle_event);
+	}
+	*/
+	
     }, [ai_model]);
+    
     const [text_input, set_text_input] = useState<string>('');
     const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
 
@@ -262,14 +275,18 @@ const  Component: NextPage = (props : any) => {
         let speak = async function(content : string) {
             await vi.speak_with_rate(content, playbackRate);
         }
-        COR.configure_user_output(speak)
+	if (COR) { 
+            COR.configure_user_output(speak)
+	}
     }, [playbackRate, COR])
 
 
     useEffect( ()=> {
-    	log(`Detected cor change`) 
-        COR.on('event', handle_event)
-        return () => { COR.off('event', handle_event) }
+    	log(`Detected cor change`)
+	if (COR) {
+            COR.on('event', handle_event)
+            return () => { COR.off('event', handle_event) }
+	}
     }, [COR])
 
 
@@ -442,7 +459,7 @@ const  Component: NextPage = (props : any) => {
 
 	 */
 
-	if (COR.is_running_function) {
+	if (COR && COR.is_running_function) {
 	    log(`tcb: Cortex running function, will forward`)
 	    await COR.handle_function_input(text)
 	    

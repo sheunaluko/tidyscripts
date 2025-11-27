@@ -1,18 +1,22 @@
 'use client' ;
 
 import * as c from "../src/cortex"  ;
-//import jdoc from "../../../../docs/jdoc.json" 
-import * as fbu from "../../../src/firebase_utils" 
-import * as fnu from "../src/fn_util" 
-import * as bashr from "../../../src/bashr/index" 
+//import jdoc from "../../../../docs/jdoc.json"
+import * as fbu from "../../../src/firebase_utils"
+import * as fnu from "../src/fn_util"
+import * as bashr from "../../../src/bashr/index"
 import * as tsw from "tidyscripts_web"
 import * as fb from "../../../src/firebase" ;
+import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
 
 
 const vi = tsw.util.voice_interface ;
-const {common} = tsw; 
-const {debug} =  common.util ; 
+const {common} = tsw;
+const {debug} =  common.util ;
 declare var window : any ;
+
+// MCP server configuration
+const MCP_SERVER_URL = "http://localhost:8003/mcp";
 
 /**
  * Defines the cortex agent used in the Cortex UI 
@@ -22,24 +26,75 @@ declare var window : any ;
 // can update and then reload conversationally.
 
 
-export function get_agent(modelName: string = "gpt-4o") {
+/**
+ * Loads MCP functions from the MCP server
+ * Returns empty array if server is not available
+ */
+export async function load_mcp_functions() {
+    try {
+        console.log("Loading MCP functions from server...");
+        const mcpFunctions = await create_cortex_functions_from_mcp_server(MCP_SERVER_URL);
+        console.log(`Loaded ${mcpFunctions.length} MCP functions`);
+        return mcpFunctions;
+    } catch (error) {
+        console.warn("Failed to load MCP functions (server may not be running):", error);
+        return [];
+    }
+}
+
+/**
+ * Creates a Cortex agent with standard functions only
+ */
+export function get_agent(modelName: string = "gpt-5-mini") {
+    // init cortex with chosen model
+    let model = modelName;
+    let name  = "coer" ;
+    let additional_system_msg = `
+    Tidyscripts is the general name for your software architecture.
+    `;
+
+let extra_msg = `
+    Tidyscripts Ontology of Medicine (TOM) is the name of a medical knowledge graph / database which you have access to.
+
+    When the user asks for information from TOM or from "the medical database", DO NOT PROVIDE information from anywhere else or from
+    your memory.
+`;
+
+    let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
+
+    let ops   = { model , name, functions : enabled_functions, additional_system_msg  }
+    let coer    = new c.Cortex( ops ) ;
+    //
+    return coer ;
+}
+
+/**
+ * Creates a Cortex agent with MCP functions included
+ * Asynchronously loads functions from the MCP server
+ */
+export async function get_agent_with_mcp(modelName: string = "gpt-5-mini") {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
     let additional_system_msg = `
     Tidyscripts is the general name for your software architecture.
 
-    Tidyscripts Ontology of Medicine (TOM) is the name of a medical knowledge graph / database which you have access to.
+    You have access to MCP (Model Context Protocol) tools from the Tidyscripts MCP server, including:
+    - Query Tidyscripts codebase
+    - Search SurrealQL documentation
+    `;
 
-    When the user asks for information from TOM or from "the medical database", DO NOT PROVIDE information from anywhere else or from
-    your memory.
+    // Load MCP functions
+    const mcpFunctions = await load_mcp_functions();
 
+    // Combine standard functions with MCP functions
+    let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
+    let all_functions = [...enabled_functions, ...mcpFunctions];
 
-`
-    let ops   = { model , name, functions, additional_system_msg  } 
+    let ops   = { model , name, functions : all_functions, additional_system_msg  }
     let coer    = new c.Cortex( ops ) ;
-    // 
-    return coer ; 
+    //
+    return coer ;
 }
 
 
@@ -102,22 +157,13 @@ var BASH_CLIENT : any = null ;
 
    Todo:
 
-   -- its interesting -- it can already quiz me on random question... if i could just capture the interaction somehow
-      -- and convert it to metadata 
-   
-   -- search for medical fact   (does vector search on text field in knowledge_update)
-   -- add access times to the 'retrieve random fact'
-   -- add a function 'quiz_user_on_random_fact'
-      - retrieves a fact -- if the fact has a question it asks it -- 
-   
-   -- create function for UPDATING the fact object with a question
-
    
  */
 
 const functions = [
 
     {
+	enabled : false, 
 	description : "Retrieve a random fact to test the user" ,
 	name        : "retrieve_random_medical_fact" ,
 	parameters  : null, 
@@ -130,6 +176,7 @@ const functions = [
     },
 
     {
+	enabled : false, 
 	description : "Search the TOM database for matching medical entities given a string" ,
 	name        : "search_tom_for_entities" ,
 	parameters  : { query : "string" }   ,
@@ -144,6 +191,7 @@ const functions = [
     },
 
     {
+	enabled : false , 
 	description : "Retrieve all defined relationships (information) for a specific entity in TOM. You must ensure that the query string provided is an exact match of the entity id from TOM, which you can find by using the search_tom_for_entities function" ,
 	name        : "get_information_for_entity" ,
 	parameters  : { query : "string" }   ,
@@ -160,6 +208,7 @@ const functions = [
     
     
     {
+	enabled : false, 
 	description : "Connect to the bash websocket server. The bash websocket server exposes an API for running bash commands on machine." ,
 	name        : "connect_to_bash_server" ,
 	parameters  : null  ,
@@ -171,6 +220,7 @@ const functions = [
     },
     
     {
+	enabled : false, 
 	description : "Runs a bash command using the bash server. Need to connect first. You can then provide any unix bash command to be executed, in order to accomplish the desired task. Please be careful and do not issue any dangerous commands that could harm the underlying system." ,
 	name        : "run_bash_command" ,
 	parameters  : { command : "string" }  ,
@@ -182,6 +232,7 @@ const functions = [
 
     
     {
+	enabled : true, 
 	description : "use the javascript interpreter" ,
 	name        : "evaluate_javascript" ,
 	parameters  : { input : "string" }  ,
@@ -194,6 +245,7 @@ const functions = [
     },
 
     {
+	enabled : true, 	
 	description : `
 Displays code to the user interface. Use this when the user requests to see code.
 The code parameter is the string representing the code, and the language parameter is the coding language 
@@ -229,6 +281,7 @@ swift
     
 
     {
+	enabled : true, 	
 	description : `
  Renders HTML to the user interface. Use this when the user requests to view rendered HTML. The parameter html is an html string that will be rendered. This must be an html string that contain the DOM content that should be rendered` , 
 	name        : "display_html" ,
@@ -244,6 +297,7 @@ swift
 
 
     {
+	enabled : false, 	
 	description : `Retrieves a practice question give the test number and question number. Must pass the question_num and test_num parameters` , 
 	name        : "get_practice_question" ,
 	parameters  : { test_num : "number", question_num : "number" }, 
@@ -259,6 +313,7 @@ swift
 
     
     {
+	enabled : true	, 
 	description : `
 The workspace is a toplevel nested object named workspace which exists within the javascript environment.
 You update the workspace by providing javascript code to this function.
@@ -278,7 +333,8 @@ After that, the user will automatically see the updated changes.
     },
 
     
-    { 
+    {
+	enabled : true	, 	
 	description : "Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation" , 
 	name        : "accumulate_text" ,
 	parameters  : {  user_instructions : "string" }  ,
@@ -314,7 +370,8 @@ After that, the user will automatically see the updated changes.
 	} ,
 	return_type : "any"
     },
-    { 
+    {
+	enabled : true	, 	
 	description : "logs data to the console" , 
 	name        : "console_log" ,
 	parameters  : {  data : "any" }  ,
@@ -325,7 +382,8 @@ After that, the user will automatically see the updated changes.
 	return_type : "string"
     },
 
-    { 
+    {
+	enabled : false, 
 	description : `
 Creates a new Tidyscripts log entry for the user. 
 
@@ -356,6 +414,7 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "string"
     },
     {
+	enabled : false	, 	
 	description : "Initializes a user log/collection. Takes the name of the log, in snake_case" ,
 	name : "initialize_user_log" ,
 	parameters : { name : "string"  } ,
@@ -373,7 +432,8 @@ Creates a new Tidyscripts log entry for the user.
 	
     }, 
 
-    { 
+    {
+	enabled : false, 
 	description : "Retrieves existing Tidyscripts database collections" , 
 	name        : "get_user_collections" ,
 	parameters  : null  ,
@@ -395,7 +455,8 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "any"
     },
 
-    { 
+    {
+	enabled : false, 
 	description : "Retrieves an entire log/collection. You should opt to search instead of retrieving the entire collection unless the user specifically has requested to retrieve the whole collection" , 
 	name        : "get_whole_user_collection" ,
 	parameters  : {  name : "string" } ,
