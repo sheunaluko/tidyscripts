@@ -31,7 +31,13 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText
 } from "@mui/material"
 
 
@@ -47,6 +53,10 @@ export async function get_question(qid : string) {
 */ 
 
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import MenuIcon from '@mui/icons-material/Menu';
+import MicIcon from '@mui/icons-material/Mic';
+import ChatIcon from '@mui/icons-material/Chat';
+import SendIcon from '@mui/icons-material/Send';
 import WidgetItem from "./WidgetItem" ;
 
 import * as cortex_utils from "./src/cortex_utils" 
@@ -102,8 +112,17 @@ const Item = styled(Paper)(({ theme }) => ({
 /* C O M P O N E N T _ D E F I N I T I O N  */ 
 const  Component: NextPage = (props : any) => {
 
-    const theme = useTheme() ; 
-    
+    const theme = useTheme() ;
+
+    // Mode state: 'voice' or 'chat'
+    const [mode, setMode] = useState<'voice' | 'chat'>('chat');
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // Chat mode state
+    const [chatInput, setChatInput] = useState('');
+    const [isAiTyping, setIsAiTyping] = useState(false);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+
     const [transcribe, setTranscribe] = useState(true)
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
 
@@ -516,6 +535,37 @@ const  Component: NextPage = (props : any) => {
 	setTranscribe(v);
     };
 
+    const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+        if (
+            event.type === 'keydown' &&
+            ((event as React.KeyboardEvent).key === 'Tab' ||
+                (event as React.KeyboardEvent).key === 'Shift')
+        ) {
+            return;
+        }
+        setDrawerOpen(open);
+    };
+
+    const handleModeChange = (newMode: 'voice' | 'chat') => {
+        log(`Switching mode to: ${newMode}`);
+        setMode(newMode);
+        setDrawerOpen(false);
+    };
+
+    const handleChatSend = () => {
+        if (chatInput.trim()) {
+            add_user_message(chatInput.trim());
+            setChatInput('');
+        }
+    };
+
+    const handleChatKeyPress = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleChatSend();
+        }
+    };
+
     /* define widgets */
 
 
@@ -698,12 +748,361 @@ const  Component: NextPage = (props : any) => {
 	</WidgetItem>
 
     )
-    
-    
-    
-    return (
 
-	<Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , width : '100%', padding : "5px" }} >
+    // Auto-scroll chat in chat mode
+    useEffect(() => {
+        if (mode === 'chat' && chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [chat_history, mode]);
+
+    // Track AI typing state
+    useEffect(() => {
+        if (chat_history.length > 0) {
+            const lastMessage = chat_history[chat_history.length - 1];
+            setIsAiTyping(lastMessage.role === 'user');
+        }
+    }, [chat_history]);
+
+    // Note: Chat Mode JSX is inlined directly in the return statement to avoid component recreation issues
+
+    return (
+        <>
+            {/* Sidebar Drawer */}
+            <Drawer
+                anchor="left"
+                open={drawerOpen}
+                onClose={toggleDrawer(false)}
+                sx={{
+                    '& .MuiDrawer-paper': {
+                        width: 280,
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.95)} 0%, ${alpha(theme.palette.secondary.main, 0.95)} 100%)`,
+                        backdropFilter: 'blur(10px)',
+                        borderRight: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+                    }
+                }}
+            >
+                <Box sx={{ p: 3 }}>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'white' }}>
+                        Cortex
+                    </Typography>
+                    <List>
+                        <ListItem disablePadding sx={{ mb: 1 }}>
+                            <ListItemButton
+                                selected={mode === 'voice'}
+                                onClick={() => handleModeChange('voice')}
+                                sx={{
+                                    borderRadius: '12px',
+                                    '&.Mui-selected': {
+                                        backgroundColor: alpha(theme.palette.common.white, 0.2),
+                                        '&:hover': {
+                                            backgroundColor: alpha(theme.palette.common.white, 0.3),
+                                        }
+                                    },
+                                    '&:hover': {
+                                        backgroundColor: alpha(theme.palette.common.white, 0.1),
+                                    }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <MicIcon sx={{ color: 'white' }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary="Voice Mode"
+                                    sx={{ color: 'white' }}
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                selected={mode === 'chat'}
+                                onClick={() => handleModeChange('chat')}
+                                sx={{
+                                    borderRadius: '12px',
+                                    '&.Mui-selected': {
+                                        backgroundColor: alpha(theme.palette.common.white, 0.2),
+                                        '&:hover': {
+                                            backgroundColor: alpha(theme.palette.common.white, 0.3),
+                                        }
+                                    },
+                                    '&:hover': {
+                                        backgroundColor: alpha(theme.palette.common.white, 0.1),
+                                    }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <ChatIcon sx={{ color: 'white' }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary="Chat Mode"
+                                    sx={{ color: 'white' }}
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    </List>
+                </Box>
+            </Drawer>
+
+            {/* Menu Button - Always visible */}
+            <IconButton
+                onClick={toggleDrawer(true)}
+                sx={{
+                    position: 'fixed',
+                    top: 16,
+                    left: 16,
+                    zIndex: 1300,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+
+                    '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.8),
+                        transform: 'scale(1.05)',
+                    },
+                    transition: 'all 0.3s ease',
+                }}
+            >
+                <MenuIcon />
+            </IconButton>
+
+            {/* Render Chat Mode or Voice Mode */}
+            {mode === 'chat' ? (
+                // Chat Mode - Inlined directly to avoid component recreation
+                <Box
+                    sx={{
+                        height: '90vh',
+			width : "100%", 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
+                        position: 'relative',
+                        overflow: 'hidden',
+                    }}
+                >
+            {/* Chat Header */}
+            <Box
+                sx={{
+                    p: 3,
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    backdropFilter: 'blur(10px)',
+                    background: alpha(theme.palette.primary.main, 0.05),
+		    paddingLeft : "75px" 				    
+                }}
+            >
+                <Typography variant="h4" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Cortex 
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Chat Mode
+                </Typography>
+            </Box>
+
+            {/* Messages Container */}
+            <Box
+                ref={chatContainerRef}
+                sx={{
+                    flex: 1,
+		    minWidth : "100%", 
+                    overflowY: 'auto',
+                    p: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    scrollbarWidth: 'thin',
+                    '&::-webkit-scrollbar': {
+                        width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        background: alpha(theme.palette.background.paper, 0.5),
+                        borderRadius: '4px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        background: alpha(theme.palette.primary.main, 0.5),
+                        borderRadius: '4px',
+                        '&:hover': {
+                            background: alpha(theme.palette.primary.main, 0.7),
+                        },
+                    },
+                }}
+            >
+                {chat_history.slice(1).map((message, index) => (
+                    <Box
+                        key={index}
+                        sx={{
+                            display: 'flex',
+                            justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                            animation: 'slideIn 0.3s ease-out',
+                            '@keyframes slideIn': {
+                                from: {
+                                    opacity: 0,
+                                    transform: 'translateY(20px)',
+                                },
+                                to: {
+                                    opacity: 1,
+                                    transform: 'translateY(0)',
+                                },
+                            },
+                        }}
+                    >
+                        <Paper
+                            elevation={3}
+                            sx={{
+                                maxWidth: '90%',
+                                p: 2,
+                                borderRadius: '16px',
+                                background: message.role === 'assistant'
+                                    ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.dark, 0.15)} 100%)`
+                                    : `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.15)} 0%, ${alpha(theme.palette.secondary.dark, 0.15)} 100%)`,
+                                backdropFilter: 'blur(10px)',
+                                border: `1px solid ${alpha(message.role === 'assistant' ? theme.palette.primary.main : theme.palette.secondary.main, 0.3)}`,
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: `0 8px 16px ${alpha(message.role === 'assistant' ? theme.palette.primary.main : theme.palette.secondary.main, 0.2)}`,
+                                },
+                            }}
+                        >
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    fontWeight: 'bold',
+                                    color: message.role === 'assistant' ? 'primary.main' : 'secondary.main',
+                                    mb: 1,
+                                    display: 'block',
+                                }}
+                            >
+                                {message.role === 'assistant' ? 'Cortex' : 'You'}
+                            </Typography>
+                            <Box sx={{ '& p': { margin: 0 } }}>
+                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                            </Box>
+                        </Paper>
+                    </Box>
+                ))}
+
+                {/* Typing Indicator */}
+                {isAiTyping && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                        <Paper
+                            elevation={3}
+                            sx={{
+                                p: 2,
+                                borderRadius: '16px',
+                                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.dark, 0.15)} 100%)`,
+                                backdropFilter: 'blur(10px)',
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                <Box
+                                    sx={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        backgroundColor: 'primary.main',
+                                        animation: 'bounce 1.4s infinite ease-in-out',
+                                        animationDelay: '0s',
+                                        '@keyframes bounce': {
+                                            '0%, 80%, 100%': { transform: 'scale(0)' },
+                                            '40%': { transform: 'scale(1)' },
+                                        },
+                                    }}
+                                />
+                                <Box
+                                    sx={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        backgroundColor: 'primary.main',
+                                        animation: 'bounce 1.4s infinite ease-in-out',
+                                        animationDelay: '0.2s',
+                                        '@keyframes bounce': {
+                                            '0%, 80%, 100%': { transform: 'scale(0)' },
+                                            '40%': { transform: 'scale(1)' },
+                                        },
+                                    }}
+                                />
+                                <Box
+                                    sx={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        backgroundColor: 'primary.main',
+                                        animation: 'bounce 1.4s infinite ease-in-out',
+                                        animationDelay: '0.4s',
+                                        '@keyframes bounce': {
+                                            '0%, 80%, 100%': { transform: 'scale(0)' },
+                                            '40%': { transform: 'scale(1)' },
+                                        },
+                                    }}
+                                />
+                            </Box>
+                        </Paper>
+                    </Box>
+                )}
+            </Box>
+
+            {/* Input Area */}
+            <Box
+                sx={{
+                    p: 3,
+                    borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    backdropFilter: 'blur(10px)',
+                    background: alpha(theme.palette.background.paper, 0.9),
+                }}
+            >
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+                    <TextField
+                        fullWidth
+                        multiline
+                        maxRows={4}
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyPress={handleChatKeyPress}
+                        placeholder=""
+                        variant="outlined"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px',
+                                backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                backdropFilter: 'blur(10px)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.7),
+                                },
+                                '&.Mui-focused': {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.9),
+                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
+                                },
+                            },
+                        }}
+                    />
+                    <IconButton
+                        onClick={handleChatSend}
+                        disabled={!chatInput.trim()}
+                        sx={{
+                            borderRadius: '50%',
+                            width: 56,
+                            height: 56,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                            color: 'white',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'translateY(-2px) scale(1.05)',
+                                boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
+                                background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                            },
+                            '&:disabled': {
+                                background: alpha(theme.palette.action.disabled, 0.3),
+                                color: alpha(theme.palette.action.disabled, 0.5),
+                            },
+                        }}
+                    >
+                        <SendIcon />
+                    </IconButton>
+                </Box>
+            </Box>
+        </Box>
+            ) : (
+                <Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , width : '100%', padding : "5px" }} >
 
 	<Box display='flex' flexDirection='row' alignItems='center' >
 	    <Box>
@@ -916,8 +1315,9 @@ const  Component: NextPage = (props : any) => {
 
 
 	</Box>
+            )}
 
-
+        </>
     )
 }
 
