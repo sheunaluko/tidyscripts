@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc ./src/index.ts --esModuleInterop --declaration  --target es2015 --module commonjs --outDir dist  --resolveJsonModule --strict",
+    "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1",
     "patch_package": "npm version patch;",
     "publish_package": "npm publish ; "
