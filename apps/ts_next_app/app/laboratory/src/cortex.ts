@@ -61,10 +61,9 @@ type UserInput = {
 
 /* CortexOutput */
 type CortexOutput = {
-    kind  : "text" | "functionCall" ,
     thoughts : string, 
-    text :  string | null ,
-    functionCall : FunctionCall | null ,
+    function_name :  string 
+    function_args : string[] 
 } 
 
 /*
@@ -77,13 +76,12 @@ const FunctionCallObject = z.object({
 })
 
 const zrf  = z.object({
-    kind : z.enum(['text', 'functionCall'])  , 
     thoughts : z.string() , 
-    text : z.union( [z.string() , z.null() ] ) , 
-    functionCall : z.union( [FunctionCallObject, z.null() ]) 
+    function_name : z.string() , 
+    function_args : z.array( z.string() )  , 
 })
 
-/* CortexOutputResponseFormat */
+/* CortexOutputResoponseFormat */
 export const CortexOutputResponseFormat = zodResponseFormat( zrf,  'CortexOutput'  ) ;
 
 
@@ -294,6 +292,21 @@ export class Cortex extends EventEmitter  {
 	
     }
 
+    /*
+       Converts [ name1, value, name2, value ]  into
+       { name1 : value, name2 : value } 
+     */
+    collect_args(arg_array : string[]) {
+	let args = {} 
+	for (var i=0; i< arg_array.length -1 ; i++ ) {
+	    if ( (i % 2 ) == 0 ) {
+		//its an even index and thus a param name
+		let elem = arg_array[i]
+		args[elem] = arg_array[i+1]
+	    }
+	}
+	return args 
+    }
 
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
@@ -311,14 +324,23 @@ export class Cortex extends EventEmitter  {
 	this.add_cortex_output(output)	
 
 	//at this point parsed is a CortexOutput object
-	if (output.kind == "text" ) {
+
+	//also everything is upgraded to always be a function!
+	let args = this.collect_args(output.function_args) ;  
+	this.log(`Processed args and got:`)
+	this.log(args) ; 
+	
+	if (output.function_name == "respond_to_user" ) {
+	    this.log(`Got respond_to_user function`) 	    
 	    this.emit_event({'type': 'thought', 'thought' : output.thoughts})
 	    //this.log(`thinking::> ${output.thoughts}`)	    
-	    this.log(`OUTPUT::> ${output.text}`)
-	    return output.text
+	    this.log(`OUTPUT::> ${args.response}`)
+	    return args.response
 	}
 
-	if (output.kind == "functionCall" ) {
+	if (output.function_name != "respond_to_user" ) {
+
+	    this.log(`Got some function`) 
 
 	    this.set_is_running_function(true) ; //function running indicator 
 
@@ -329,8 +351,12 @@ export class Cortex extends EventEmitter  {
 		if (loop < 1 ) {
 		    this.log(`Loop counter ran out!`)
 
-		    let {functionCall} = output ;
-		    let {name} = functionCall ; 
+		    let name = output.function_name ;
+		    let functionCall =  {
+			name ,
+			parameters : args 
+			
+		    }
 		    
 		    let function_result = {
 			name,
@@ -342,6 +368,14 @@ export class Cortex extends EventEmitter  {
 		    this.add_user_result_input(function_result) ;
 		    return await this.run_llm(1) ; // 
 
+		}
+
+
+		let name = output.function_name ;
+		let functionCall =  {
+		    name ,
+		    parameters : args 
+		    
 		}
 		
 
@@ -381,10 +415,9 @@ export class Cortex extends EventEmitter  {
 	this.log_event(msg) 
     } 
 
-    async handle_function_call(fMsg : CortexOutput) {
-	let { thoughts,  functionCall }  = fMsg ;
-	let { name, parameters }  = functionCall as FunctionCall  ;
-
+    async handle_function_call(fCall : functionCall ) {
+	let { name, parameters }  = fCall ;
+	
 	let F = this.function_dictionary[name] ;
 	var error : any  ; 
 	if (! F ) {

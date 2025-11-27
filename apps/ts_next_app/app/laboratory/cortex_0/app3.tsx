@@ -130,7 +130,7 @@ const  Component: NextPage = (props : any) => {
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
 
-    const default_model = "gpt-5-mini"
+    const default_model = "o4-mini"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    
