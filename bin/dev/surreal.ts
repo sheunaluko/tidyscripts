@@ -71,6 +71,10 @@ export async function embedding_test()  {
 export async function vector_search(db : any , v  :any , limit : number) {
     let query = `
 select id, contentHash, vector::distance::knn() as dist from embedding_cache where embedding  <|${limit},40|> $e order by dist asc` ;  //fyi the 2nd param in the <|a,b|> structure MUST be a number to force using the HNSW index!
+
+    log(`Doing vector search with query:`)
+    log(query)
+    debug.add("vector_query" , query) ;
     
     return (await db.query(query, {e : v}))[0] ; 
 
@@ -270,7 +274,12 @@ export async function get_matching_nodes_with_vector_search(txt :string,limit:nu
 
     //now we use those ids to get the original nodes
     log(`getting nodes`)        
-    let nodes = await get_nodes_from_eids(db,eids) ;  
+    let nodes = await get_nodes_from_eids(db,eids) ;
+
+
+    debug.add("tmp" , {
+	db,e,search_results,eids,nodes 
+    });
 
     log(`matching nodes`)            
     // combine the node with the proper embedding

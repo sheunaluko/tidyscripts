@@ -22,8 +22,12 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
  * Defines the cortex agent used in the Cortex UI 
  */
 
-// ability to update system message by talking to cortex -- via local storage object?
-// can update and then reload conversationally.
+/*
+   Todo :
+   MD5 of tool call results (store in dictionary inside cortex sandboxed enviroment)
+   Give ability to perform code execution on this
+
+ */
 
 
 /**
@@ -381,6 +385,34 @@ After that, the user will automatically see the updated changes.
 	} ,
 	return_type : "string"
     },
+
+
+    {
+	enabled : true	, 	
+	description : `
+	Universal gateway for accessing the database. This function lets you provide a SURREAL QL Query that will be run on the remote database.
+	There is a logs table that stores user logs (schemaless)
+	There is a cortex table that you can use for your own purposes (long term memory, other use cases)
+	`, 
+	name        : "Access Database" ,
+	parameters  : {  query : "string" }  ,
+	fn          : async (ops : any) => {
+		    let {log,query} = ops ;
+		    log(`Surreal QL: \n${query}`); 
+	    let response = await fbu.surreal_query({query}) ;
+	    log(`Got response`)
+	    log(response) 
+		    try {
+			return response?.data?.result
+			
+		    }	catch (error : any) {
+			
+			return `Received error: ${JSON.stringify(error)}`
+		    }
+	},
+	return_type : "string"
+    },
+
 
     {
 	enabled : false, 

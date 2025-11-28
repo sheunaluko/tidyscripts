@@ -19,6 +19,8 @@ import type {
   RemoteAsset,
 } from './types';
 
+import * as common from "tidyscripts_common" 
+
 // ============================================================================
 // Connection Management
 // ============================================================================
@@ -105,8 +107,12 @@ export async function initializeSchema(db: Surreal): Promise<void> {
     logger.success('Schema initialized successfully');
     logger.logTiming('Schema initialization', duration);
   } catch (error) {
-    const errorMessage = (error as Error).message || String(error);
+      const errorMessage = (error as Error).message || String(error);
 
+      logger.info('got error message');
+      logger.info(errorMessage) ; 
+     
+      
     // If schema already exists, treat as success
     if (errorMessage.includes('already exists')) {
       const duration = logger.endTimer('schema-init');
@@ -128,12 +134,35 @@ export async function initializeSchema(db: Surreal): Promise<void> {
  * @returns true if schema is initialized
  */
 export async function isSchemaInitialized(db: Surreal): Promise<boolean> {
-  try {
-    await db.query('SELECT * FROM function_node LIMIT 1');
-    return true;
-  } catch (error) {
-    return false;
-  }
+
+    let tables = [ 
+	'CONTAINS',
+	'EMAP', 
+	'IMPORTS',
+	'USES',
+	'class_node',
+	'embedding_cache',
+	'file_metadata',
+	'function_node',
+	'interface_node',
+	'module_node',
+	'type_alias_node'
+    ] ;
+
+    let retrieved_tables = common.fp.keys ( ( await db.query("info for db") as any )[0].tables  )
+
+    logger.info("retrieved tables from db: ")
+    logger.info(JSON.stringify(retrieved_tables)) ;
+
+    for (var t of tables ) {
+	let i = retrieved_tables.indexOf(t) 
+	if ( i < 0 ) {
+	    //not found
+	    return false 
+	}
+    }
+
+    return true 
 }
 
 // ============================================================================

@@ -3,6 +3,8 @@ import type { NextPage } from 'next'
 import {useEffect, useState, useRef } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
+import  "./app.css"
+
 import * as tsw from "tidyscripts_web"  ;
 //import { ChakraProvider } from '@chakra-ui/react' ;
 import { alpha } from '@mui/system';
@@ -320,7 +322,8 @@ const  Component: NextPage = (props : any) => {
 	    transcription_cb ,
 	    workspace : {} ,
 	    last_ai_message,
-	    last_ai_message_ref, 
+	    last_ai_message_ref,
+	    COR
 	}) ;
 
 	return ()=>{
@@ -988,8 +991,8 @@ const  Component: NextPage = (props : any) => {
                             >
                                 {message.role === 'assistant' ? 'Cortex' : 'You'}
                             </Typography>
-                            <Box sx={{ '& p': { margin: 0 } }}>
-                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                            <Box sx={{ '& p': { margin: 0, padding : '10px' } }}>
+                                <ReactMarkdown className='line-break'>{message.content}</ReactMarkdown>
                             </Box>
                         </Paper>
                     </Box>

@@ -226,7 +226,7 @@ DEFINE FIELD createdAt ON embedding_cache TYPE datetime
   DEFAULT time::now();
 
 -- Indexes for embedding_cache
-DEFINE INDEX idx_embedding_contentHash ON embedding_cache FIELDS contentHash UNIQUE;
+DEFINE INDEX idx ON embedding_cache FIELDS embedding HNSW DIMENSION 1536 ;
 
 -- ============================================================================
 -- File Metadata (for incremental updates)
@@ -256,29 +256,13 @@ DEFINE INDEX idx_file_path ON file_metadata FIELDS filePath UNIQUE;
 -- CONTAINS relationship: Module -> Function/Class/Interface
 DEFINE TABLE CONTAINS TYPE RELATION SCHEMAFULL;
 
-DEFINE FIELD in ON CONTAINS TYPE record
-  ASSERT $value != NONE;
-
-DEFINE FIELD out ON CONTAINS TYPE record
-  ASSERT $value != NONE;
-
 -- USES relationship: Function/Class -> Type
 DEFINE TABLE USES TYPE RELATION SCHEMAFULL;
-
-DEFINE FIELD in ON USES TYPE record
-  ASSERT $value != NONE;
-
-DEFINE FIELD out ON USES TYPE record
-  ASSERT $value != NONE;
 
 -- IMPORTS relationship: Module -> Module (for future use)
 DEFINE TABLE IMPORTS TYPE RELATION SCHEMAFULL;
 
-DEFINE FIELD in ON IMPORTS TYPE record
-  ASSERT $value != NONE;
 
-DEFINE FIELD out ON IMPORTS TYPE record
-  ASSERT $value != NONE;
 `;
 
 /**

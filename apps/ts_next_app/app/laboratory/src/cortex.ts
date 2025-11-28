@@ -379,7 +379,7 @@ export class Cortex extends EventEmitter  {
 		}
 		
 
-		let function_result = await this.handle_function_call(output) ;
+		let function_result = await this.handle_function_call(functionCall) ;
 		this.set_is_running_function(false) ;  //turn off function running indicator
 		this.add_user_result_input(function_result) ;
 		
