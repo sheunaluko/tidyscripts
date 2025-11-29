@@ -12,6 +12,7 @@ const {debug} = common.util ;
 const log = common.logger.get_logger({'id':'cortex_base'})
 import * as Channel from "./channel" 
 
+
 /*
    
    Todo:  
@@ -335,6 +336,7 @@ export class Cortex extends EventEmitter  {
 		return null  //this behavior may need to be updated @check 
 	    }
 	} else {
+	    this.log(`No CRAM ref found: passing var through`) 
 	    return v 
 	}
     }
@@ -470,7 +472,7 @@ export class Cortex extends EventEmitter  {
 
     async handle_function_call(fCall : functionCall ) {
 	let { name, parameters }  = fCall ;
-	
+
 	let F = this.function_dictionary[name] ;
 	var error : any  ; 
 	if (! F ) {
@@ -487,7 +489,7 @@ export class Cortex extends EventEmitter  {
 	this.log(fn_msg)
 	this.log_event(fn_msg)  
 
-	parameters = parameters || {} ; // -- 
+	var aux_parameters = {} ; 
 
 	//prepare the function_input
 	const get_user_data = (async function() {
@@ -498,8 +500,8 @@ export class Cortex extends EventEmitter  {
 	const fn_log = common.logger.get_logger({id : `fn:${name}`}); 
 
 	this.log(`Appending get_user_data to function parameters`)	
-	parameters.get_user_data = get_user_data ;
-	parameters.log = fn_log ; 	
+	aux_parameters.get_user_data = get_user_data ;
+	aux_parameters.log = fn_log ; 	
 
 	//also prepare the feedback object
 	let sounds = tsw.util.sounds ; 
@@ -511,22 +513,22 @@ export class Cortex extends EventEmitter  {
 	}
 
 	this.log(`Appending feedback object to function parameters`)	
-	parameters.feedback  = feedback  ;
+	aux_parameters.feedback  = feedback  ;
 
 	this.log(`Appending user_output to function parameters`)	
-	parameters.user_output  = this.user_output  ;
+	aux_parameters.user_output  = this.user_output  ;
 
 	this.log(`Appending event to function parameters`)	
-	parameters.event  = this.emit_event.bind(this)  ; 
+	aux_parameters.event  = this.emit_event.bind(this)  ; 
 	
 
 	this.log(`Including cortex get/set var`)	
-	parameters.get_var = (this.get_var.bind(this)) ; 
-	parameters.set_var = (this.set_var.bind(this)) ; 
+	aux_parameters.get_var = (this.get_var.bind(this)) ; 
+	aux_parameters.set_var = (this.set_var.bind(this)) ; 
 	
 	
 	try {
-	    let result = await F.fn(parameters)
+	    let result = await F.fn({params : parameters, util : aux_parameters})
 	    error = null ;
 	    this.log_event(`Ran ${name} function successfully`)
 	    this.log(`Ran ${name} function successfully and got result:`)

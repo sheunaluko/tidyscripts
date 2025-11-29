@@ -1,0 +1,70 @@
+SURREALDB HTTP RPC CHEATSHEET
+================================================================================
+
+OVERVIEW
+--------
+The RPC endpoint allows you to execute SurrealQL queries safely by passing 
+arguments as separate JSON objects. This prevents SQL injection and keeps 
+queries clean.
+
+ENDPOINT DETAILS
+----------------
+URL:    POST https://<your-host>/rpc
+Body:   JSON-RPC 2.0 format
+
+REQUIRED HEADERS
+----------------
+1. Content-Type:  application/json
+2. Authorization: Basic <base64(user:pass)>
+3. NS:            <namespace_name>
+4. DB:            <database_name>
+
+JSON BODY STRUCTURE
+-------------------
+The request body must be a JSON object with the following fields:
+
+{
+  "id": "unique_request_id",
+  "method": "query",
+  "params": [
+    "YOUR_SQL_QUERY_WITH_$VARIABLES",   <-- Param 1: SQL String
+    {                                   <-- Param 2: Object of variables
+      "variable_name": "value",
+      "age": 30
+    }
+  ]
+}
+
+EXAMPLE (cURL)
+--------------
+curl -k -X POST "https://localhost:8000/rpc" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Basic cm9vdDpyb290" \
+  -H "NS: test" \
+  -H "DB: test" \
+  -d '{
+    "id": "1",
+    "method": "query",
+    "params": [
+      "SELECT * FROM user WHERE age > $min_age AND status = $status;",
+      {
+        "min_age": 18,
+        "status": "active"
+      }
+    ]
+  }'
+
+RESPONSE FORMAT
+---------------
+SurrealDB returns a JSON-RPC response. The actual data is inside "result".
+
+{
+  "id": "1",
+  "result": [
+    {
+      "status": "OK",
+      "time": "145µs",
+      "result": [ ... query results ... ]
+    }
+  ]
+}

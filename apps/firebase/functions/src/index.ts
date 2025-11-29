@@ -53,41 +53,51 @@ interface HTTP_OPS  {
     url : string,
     namespace : string,
     database : string,
-    metadata : any 
+    metadata : any,
+    variables? : any
 }
 
 
 async function surreal_https_query(ops : HTTP_OPS) {
     let {
-	token,  query ,  url, namespace, database  , metadata 
+	token,  query ,  url, namespace, database  , metadata, variables
     } = ops ;
 
     logger.info("Received surreal http request:  " , ops) ;
-    logger.info("Query= " , ops.query) ;    
-	
+    logger.info("Query= " , ops.query) ;
+    logger.info("Variables= " , variables) ;
+
     try {
 
-	
+
 	if ( ! query)  {
-	    let error =  "Missing query parameter!" 
-	    logger.info(error) ;	    
+	    let error =  "Missing query parameter!"
+	    logger.info(error) ;
 	    return {
 		success : false,
-		error 
+		error
 	    }
 	}
 
 	if ( ! (token && url && namespace && database ) )  {
-	    let error =  "Missing one of these!: token,url,naespace,database" 
-	    logger.info(error) ;	    
+	    let error =  "Missing one of these!: token,url,naespace,database"
+	    logger.info(error) ;
 	    return {
 		success : false,
-		error 
+		error
 	    }
 	}
-	
+
+	// Prepare JSON-RPC 2.0 request body
+	const params = variables ? [query, variables] : [query];
+	const rpcBody = {
+	    id: "1",
+	    method: "query",
+	    params: params
+	};
+
 	let result =  await fetch(url, {
-	    
+
 	    method: "POST",
 	    headers: {
 		"Authorization": `Bearer ${token}`,
@@ -96,29 +106,29 @@ async function surreal_https_query(ops : HTTP_OPS) {
 		"Accept": "application/json",
 		"Content-Type": "application/json",
 	    },
-	    body: query // -- need to pass the query directly as the body!
-	    
+	    body: JSON.stringify(rpcBody)
+
 	}).then(r => r.json())
 
 	logger.info("Query result:" , result )
-	
+
 	return {
 	      success: true ,
 	    result ,
-	    metadata 
+	    metadata
 	}
-	  
+
       } catch (error : any) {
 
 	  return {
 	      success: false ,
 	      error  ,
-	      metadata 
+	      metadata
 	  }
-	  
+
       }
 
-    
+
 }
 
 
@@ -436,22 +446,24 @@ export const surrealQuery = onCall(
 
 
       // ------------------------------------------
-      // after getting the token, dont forget to make https query to sql endpoint 
+      // after getting the token, dont forget to make https query to rpc endpoint
       logger.info("Now running user query" )
-      
-      
+
+
       //run the query now on behalf of the user
       let query = request.data.query  ;
+      let variables = request.data.variables ; // optional
 
       let https_query_ops = {
 	  token : REQUEST_TOKEN ,
 	  query ,
-	  url : `${surreal_https_url}/sql` ,
+	  url : `${surreal_https_url}/rpc` ,
 	  namespace : "production" ,
 	  database: "main" ,
 	  metadata : {
 	      REQUEST_SUMMARY
-	  }
+	  },
+	  variables
       }
 
       return (await surreal_https_query(https_query_ops) ) ;  //handles the errors 

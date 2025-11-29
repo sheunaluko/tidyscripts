@@ -170,8 +170,8 @@ const functions = [
 	name        : "compute_embedding" ,
 	parameters  : { text : "string" }   ,
 	fn          : async (ops : any) => {
-	    let { get_var, set_var  } = ops ;
-	    let { text, log } = ops;
+	    let { get_var, set_var, log  } = ops.util ;
+	    let { text } = ops.params ;
 	    log(`Retrieved request to compute embedding of: ${text}`) ; 
 	    let embedding = await tsw.common.apis.ailand.get_cloud_embedding(text) ;
 	    log(`Got embedding result`)
@@ -191,8 +191,23 @@ const functions = [
 	name        : "array_nth_value" ,
 	parameters  : { a : "array"  , n : "number" }   ,
 	fn          : async (ops : any) => {
-	    let { a, n   } = ops ;
+	    let { a, n   } = ops.params ;
 	    return (a as any)[Number(n)]  ; 
+	} ,
+	return_type : "any"
+    },
+
+    {
+	enabled : true, 
+	description : `
+           Loads the system instructions. After loading them say: cool instructions bro
+	` ,
+	name        : "load_system_instructions" ,
+	parameters  : null ,
+	fn          : async (ops : any) => {
+	    let query = `select * from cortex where type = "system_instruction"`
+	    let response = await fbu.surreal_query({query }) ;
+	    return response?.data?.result?.result 
 	} ,
 	return_type : "any"
     },
@@ -218,7 +233,7 @@ const functions = [
 	name        : "search_tom_for_entities" ,
 	parameters  : { query : "string" }   ,
 	fn          : async (ops : any) => {
-	    let {query}  = ops; 
+	    let {query}  = ops.params; 
 	    let tmp = await common.tes.cloud.node.tom.entity_vector_search(query, 6) as any ;
 	    let result = tmp.result[0] ; 
 	    debug.add('evs_result' , result)  ; 
@@ -233,7 +248,7 @@ const functions = [
 	name        : "get_information_for_entity" ,
 	parameters  : { query : "string" }   ,
 	fn          : async (ops : any) => {
-	    let {query}  = ops; 
+	    let {query}  = ops.params; 
 	    let tmp = await common.tes.cloud.node.tom.all_relationships_for_entity(query) as any ;
 	    debug.add('er_result' , tmp)  ; 
 	    return tmp   
@@ -262,7 +277,7 @@ const functions = [
 	name        : "run_bash_command" ,
 	parameters  : { command : "string" }  ,
 	fn          : async (ops : any) => {
-	    return await BASH_CLIENT.runCommand(ops.command) 
+	    return await BASH_CLIENT.runCommand(ops.params.command) 
 	} ,
 	return_type : "string"
     },
@@ -274,7 +289,7 @@ const functions = [
 	name        : "evaluate_javascript" ,
 	parameters  : { input : "string" }  ,
 	fn          : async (ops : any) => {
-	    let {input} = ops
+	    let {input} = ops.params
 	    let result = eval(input)
 	    return result 
 	} ,
@@ -307,7 +322,9 @@ swift
 	parameters  : { code : "string" , language : "string" }  ,
 	fn : async ( ops :any) => {
 
-	    let {code, language, event } = ops
+	    let {code, language } = ops.params ; 
+	    let {event } = ops.util ;
+	    
 	    let code_params = {code, mode : language} 
 	    event({'type' : 'code_update' , code_params}); 
 	    return "done" 
@@ -324,7 +341,8 @@ swift
 	name        : "display_html" ,
 	parameters  : { html : "string" }, 
 	fn : async ( ops :any) => {
-	    let {html, event } = ops
+	    let {html } = ops.params ;
+	    let {event } = ops.util ; 
 	    event({'type' : 'html_update' , html }); 
 	    return "done" 
 	}  , 
@@ -339,7 +357,7 @@ swift
 	name        : "get_practice_question" ,
 	parameters  : { test_num : "number", question_num : "number" }, 
 	fn : async ( ops :any) => {
-	    return await get_practice_question(ops) 
+	    return await get_practice_question(ops.params) 
 	}  , 
 	return_type : "any"
     },
@@ -360,7 +378,7 @@ After that, the user will automatically see the updated changes.
 	name        : "update_workspace" ,
 	parameters  : { code : "string" }  ,
 	fn          : async (ops : any) => {
-	    let {code, event } = ops
+	    let {code } = ops ; let {event } = ops.util; 
 	    let result = window.eval(code)
 	    // update the workspace UI here
 	    event({'type' : 'workspace_update' })
@@ -378,9 +396,9 @@ After that, the user will automatically see the updated changes.
 	fn          : async (ops : any) => {
 
 	    
-	    let {get_user_data, feedback, user_output} = ops;
+	    let {get_user_data, feedback, user_output} = ops.util;
 	    feedback.activated()
-	    await user_output(ops.user_instructions) ; 
+	    await user_output(ops.params.user_instructions) ; 
 	    
 	    let text = [ ] ; 
 	    let chunk = await get_user_data() ;
@@ -413,7 +431,7 @@ After that, the user will automatically see the updated changes.
 	name        : "console_log" ,
 	parameters  : {  data : "any" }  ,
 	fn          : async (ops : any) => {
-	    console.log(ops.data)
+	    console.log(ops.params.data)
 	    return "console data logged" 
 	} ,
 	return_type : "string"
@@ -424,19 +442,35 @@ After that, the user will automatically see the updated changes.
 	enabled : true	, 	
 	description : `
 	Universal gateway for accessing the database. This function lets you provide a SURREAL QL Query that will be run on the remote database.
+
 	There is a logs table that stores user logs (schemaless)
 	There is a cortex table that you can use for your own purposes (long term memory, other use cases)
+
+        Note: The query parameter can optionally include variable references using the $ syntax ($varname).
+              If you use variables in the query, you must pass the variable values as  additional parameters in the function_args array !
+
+        For example, the following would be a valid function call output to store a message:
+        {
+           function_name: "access_database_with_surreal_ql" ,
+           function_args: ["query" , "sql query with var... $msg", "msg" , "the message here" ...] 
+        }
+        
+
 	`, 
-	name        : "Access Database" ,
-	parameters  : {  query : "string" }  ,
+	name        : "access_database_with_surreal_ql" ,
+	parameters  :  {
+	    query : "string" ,
+	}  ,
 	fn          : async (ops : any) => {
-	    let {log,query} = ops ;
+	    let {query} = ops.params ;
+	    let {log} = ops.util ;
+	    
 	    log(`Surreal QL: \n${query}`); 
-	    let response = await fbu.surreal_query({query}) ;
+	    let response = await fbu.surreal_query({query, variables : ops.params }) ; 
 	    log(`Got response`)
 	    log(response) 
 	    try {
-		return response?.data?.result
+		return response?.data?.result?.result
 		
 	    }	catch (error : any) {
 		
@@ -464,8 +498,8 @@ Creates a new Tidyscripts log entry for the user.
 	name        : "create_user_log_entry" ,
 	parameters  : {  text : "string" , user_initiation_string : "string" , log_path : "string" }  ,
 	fn          : async (ops : any) => {
-	    let { text , user_initiation_string ,log_path, log }  = ops ; 	    
-	    log(ops)
+	    let { text , user_initiation_string ,log_path }  = ops.params ; 	    
+	    ops.util.log(ops)
 	    let path = log_path.split("/").filter(Boolean) ;
 	    if ( path[0] != "tidyscripts" ) {
 		return "please make sure the path starts with tidyscripts and is separated by forward slashes" 
@@ -484,8 +518,8 @@ Creates a new Tidyscripts log entry for the user.
 	name : "initialize_user_log" ,
 	parameters : { name : "string"  } ,
 	fn : async ( ops : any ) =>  {
-	    let {name, log} = ops ;	    
-	    log(`Request to create log: ${ops.name}`)
+	    let {name} = ops ;	    let log = ops.util.log
+	    log(`Request to create log: ${name}`)
 	    let text = `creating the ${name} log` ;
 	    let path = ["logs" , name ]  ;
 	    let user_initiation_string = null ;
@@ -512,7 +546,7 @@ Creates a new Tidyscripts log entry for the user.
 	name        : "search_user_log" ,
 	parameters  : {  name : "string" , search_terms : "string" }  ,
 	fn          : async (ops : any) => {
-	    let {name, search_terms, log} = ops ;
+	    let {name, search_terms} = ops ; let {log} = ops.util ; 
 	    log('searching') 
 	    log(ops) 
 	    return fbu.search_user_collection("tidyscripts", ["logs", name ] , search_terms.split(",").map((y:string)=>y.trim()).filter(Boolean)) 
@@ -526,7 +560,7 @@ Creates a new Tidyscripts log entry for the user.
 	name        : "get_whole_user_collection" ,
 	parameters  : {  name : "string" } ,
 	fn          : async (ops : any) => {
-	    let {name} = ops ; 
+	    let {name} = ops.params ; 
 	    return fbu.get_user_collection({app_id : "tidyscripts", path : ["logs", name ]})
 	} ,
 	return_type : "any"
