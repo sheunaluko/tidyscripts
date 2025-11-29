@@ -163,6 +163,8 @@ export class Cortex extends EventEmitter  {
     prompt_history : any[];
 
     user_output : any ; 
+
+    variables : { [k:any] : any }   ; 
     
     constructor(ops : CortexOps) {
 
@@ -175,7 +177,8 @@ export class Cortex extends EventEmitter  {
 	this.messages = [ ] ;
 	this.is_running_function = false;
 	this.function_input_ch = new Channel.Channel({name}) ;
-	this.prompt_history = [ ]; 
+	this.prompt_history = [ ];
+	this.variables = {} 
 	
 	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
@@ -192,6 +195,17 @@ export class Cortex extends EventEmitter  {
 	let function_dictionary = get_function_dictionary(functions) ; this.function_dictionary = function_dictionary ; 
 	log("Done")
 
+    }
+
+    set_var(name : string , v : any  )  {
+	this.variables[name] = v;
+	this.log(`Wrote var ${name}`)
+	debug.add(name, v) 
+    }
+
+    get_var(name : string) {
+	this.log(`Returning var ${name}`)	
+	return this.variables[name] 
     }
 
     emit_event(evt : any) {
@@ -466,6 +480,10 @@ export class Cortex extends EventEmitter  {
 	this.log(`Appending event to function parameters`)	
 	parameters.event  = this.emit_event.bind(this)  ; 
 	
+
+	this.log(`Including cortex get/set var`)	
+	parameters.get_var = (this.get_var.bind(this)) ; 
+	parameters.set_var = (this.set_var.bind(this)) ; 
 	
 	
 	try {

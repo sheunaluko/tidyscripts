@@ -169,7 +169,11 @@ export async function convert_node_for_context(result : any, db :any) {
     }
 
     // import paths
-    if (db) {
+    /*
+       [ ] there is a recursive implmentation bug (i.e. because of import cycles [i think] this function hangs -- so I will disable it for now
+       until this is fixed (TODO - todo ) 
+     */
+    if (db && false ) {
 	let import_info = await get_node_paths_for_context(db,nodeId)
 	output.push(`Imported by:: \n ${import_info}`)
     }
