@@ -143,6 +143,16 @@ interface CortexOps {
     additional_system_msg : string, 
 } 
 
+
+export async function get_variable_hash_id(v : any ) {
+    let o =  {
+	data : v 
+    }
+    let r = await tsw.common.apis.cryptography.object_hash_short(o)
+    return r 
+}
+
+
 /**
  * Defines the Cortex class, which provides a clean interface to Agent<->User IO  
  * 
@@ -178,7 +188,7 @@ export class Cortex extends EventEmitter  {
 	this.is_running_function = false;
 	this.function_input_ch = new Channel.Channel({name}) ;
 	this.prompt_history = [ ];
-	this.variables = {} 
+	this.CortexRAM = {} 
 	
 	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
@@ -197,15 +207,18 @@ export class Cortex extends EventEmitter  {
 
     }
 
-    set_var(name : string , v : any  )  {
-	this.variables[name] = v;
-	this.log(`Wrote var ${name}`)
-	debug.add(name, v) 
+    async set_var(v : any )  {
+
+	let id = await get_variable_hash_id(v) ; 
+	this.CortexRAM[id] = v; 
+	this.log(`Wrote var with id hash=${id}`)
+	debug.add(id, v)
+	return id  ; 
     }
 
-    get_var(name : string) {
-	this.log(`Returning var ${name}`)	
-	return this.variables[name] 
+    get_var(id : string) {
+	this.log(`Returning var ${id}`)	
+	return this.CortexRAM[id] 
     }
 
     emit_event(evt : any) {
@@ -306,6 +319,26 @@ export class Cortex extends EventEmitter  {
 	
     }
 
+
+    resolve_cortex_ram_reference(v : string) {
+	//the reference starts with @
+	if (v[0] == "@" ) {
+	    this.log(`Detected CRAM reference ${v}`) ;
+	    //search
+	    let value = this.get_var( v.slice(1) ) ;
+	    if (value ) {
+		this.log(`Returning resolved value`)
+		debug.add('resolved_cram_ref' , value ) ; 
+		return value 
+	    } else {
+		this.log(`Reference is undefined!`) ;
+		return null  //this behavior may need to be updated @check 
+	    }
+	} else {
+	    return v 
+	}
+    }
+    
     /*
        Converts [ name1, value, name2, value ]  into
        { name1 : value, name2 : value } 
@@ -315,8 +348,14 @@ export class Cortex extends EventEmitter  {
 	for (var i=0; i< arg_array.length -1 ; i++ ) {
 	    if ( (i % 2 ) == 0 ) {
 		//its an even index and thus a param name
-		let elem = arg_array[i]
-		args[elem] = arg_array[i+1]
+		let k = arg_array[i] ;
+
+		/*
+		   For collecting the value - we check to see if it is a reference to CortexRAM and resolve it if so 
+		 */
+		
+		let v = this.resolve_cortex_ram_reference(arg_array[i+1]) ;
+		args[k] = v   ; 
 	    }
 	}
 	return args 

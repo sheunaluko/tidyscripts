@@ -1,9 +1,10 @@
 /**
- * AI API 
+ * AI API
  *
  */
 
 import {get_openai} from "./oai"
+import {serverless_query} from "../utils"
 
 
 const model_map : any =  {
@@ -48,9 +49,9 @@ export async function embedding1024(text : string) {
 export async function structured_prompt(text : string, output_format : any ,  tier : string ) {
     let client = get_openai()
     let model = (model_map[tier] || 'gpt-4o')
-    
+
     const response = await client.responses.parse({
-	model, 
+	model,
 	input: [
 	    { role: "system", content: "Provide the requested output." },
 	    {
@@ -59,10 +60,28 @@ export async function structured_prompt(text : string, output_format : any ,  ti
 	    },
   ],
 	text: {
-	    format: output_format , 
+	    format: output_format ,
 	},
     })
 
-    return response.output_parsed 
+    return response.output_parsed
 
+}
+
+
+/**
+ * Get text embedding from cloud serverless function
+ * Uses text-embedding-3-small model via the /api/openai_embedding endpoint
+ *
+ * @param text - Text to embed
+ * @param dimensions - Optional dimension size (defaults to model's default of 1536)
+ * @returns Embedding vector
+ */
+export async function get_cloud_embedding(text: string, dimensions?: number): Promise<number[]> {
+    const response = await serverless_query('openai_embedding', {
+        text,
+        ...(dimensions && { dimensions })
+    });
+
+    return response.embedding;
 }

@@ -29,15 +29,31 @@ export function buffer_to_hex(buffer: ArrayBuffer): string {
 
 
 /**
- * Deterministically Computes the sha256 hash of any object 
- * 
- * Uses deterministic json stringify to ensure consistency regardless of key order 
- * 
+ * Deterministically Computes the sha256 hash of any object
+ *
+ * Uses deterministic json stringify to ensure consistency regardless of key order
+ *
  * @param o - The object to hash
- * @returns The sha256 hash 
+ * @returns The sha256 hash
  */
 export async function object_sha256(o : any ): Promise<string> {
-    return await sha256( stringify(o) ) ; 
+    return await sha256( stringify(o) ) ;
+}
+
+
+/**
+ * Deterministically computes a short hash of any object for use as a reference name.
+ *
+ * Uses SHA-256 truncated to the specified length (default 12 characters).
+ * Deterministic json stringify ensures consistency regardless of key order.
+ *
+ * @param o - The object to hash
+ * @param length - The number of characters to return (default: 12)
+ * @returns A short hash suitable for reference names
+ */
+export async function object_hash_short(o: any, length: number = 12): Promise<string> {
+    const fullHash = await object_sha256(o);
+    return fullHash.slice(0, length);
 }
 
 

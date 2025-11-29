@@ -35,6 +35,7 @@ If you need to call a function, then return the function_name as a string along 
 
 [ 1st_parameter_name, 1st_parameter_value  , 2nd_parameter_name, 2nd_parameter_value .... ]
 
+If you want to reference a variable that is stored in CortexRAM, simply refer to it with @id where id is the returned id. You can pass it as a parameter to tools by simply refering to it like this in the parameter array. 
 
 If you are ready to respond to the user, then you call the function like this:
 

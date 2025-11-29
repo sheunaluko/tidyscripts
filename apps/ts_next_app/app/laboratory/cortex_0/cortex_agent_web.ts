@@ -57,12 +57,12 @@ export function get_agent(modelName: string = "gpt-5-mini") {
     Tidyscripts is the general name for your software architecture.
     `;
 
-let extra_msg = `
+    let extra_msg = `
     Tidyscripts Ontology of Medicine (TOM) is the name of a medical knowledge graph / database which you have access to.
 
     When the user asks for information from TOM or from "the medical database", DO NOT PROVIDE information from anywhere else or from
     your memory.
-`;
+    `;
 
     let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
 
@@ -157,14 +157,47 @@ export async function main_stream_log( ops : any ) {
 
 var BASH_CLIENT : any = null ;
 
-/*
-
-   Todo:
-
-   
- */
 
 const functions = [
+
+    {
+	enabled : true, 
+	description : `
+	Compute vector embedding for a text input.
+	This function takes an input named text and computes the vector embedding of it
+	The result is stored in CortexRAM with a unique id, which you can use to reference it for future function invocations 
+	` ,
+	name        : "compute_embedding" ,
+	parameters  : { text : "string" }   ,
+	fn          : async (ops : any) => {
+	    let { get_var, set_var  } = ops ;
+	    let { text, log } = ops;
+	    log(`Retrieved request to compute embedding of: ${text}`) ; 
+	    let embedding = await tsw.common.apis.ailand.get_cloud_embedding(text) ;
+	    log(`Got embedding result`)
+	    debug.add("embedding" , embedding) ;
+	    //now we ---
+	    let id = await set_var(embedding)  ;
+	    return `Computed the embedding and stored in CortexRAM as ${id}`  ; 
+	} ,
+	return_type : "string"
+    },
+
+    {
+	enabled : true, 
+	description : `
+           Return the nth value of an array 
+	` ,
+	name        : "array_nth_value" ,
+	parameters  : { a : "array"  , n : "number" }   ,
+	fn          : async (ops : any) => {
+	    let { a, n   } = ops ;
+	    return (a as any)[Number(n)]  ; 
+	} ,
+	return_type : "any"
+    },
+    
+
 
     {
 	enabled : false, 
@@ -397,18 +430,18 @@ After that, the user will automatically see the updated changes.
 	name        : "Access Database" ,
 	parameters  : {  query : "string" }  ,
 	fn          : async (ops : any) => {
-		    let {log,query} = ops ;
-		    log(`Surreal QL: \n${query}`); 
+	    let {log,query} = ops ;
+	    log(`Surreal QL: \n${query}`); 
 	    let response = await fbu.surreal_query({query}) ;
 	    log(`Got response`)
 	    log(response) 
-		    try {
-			return response?.data?.result
-			
-		    }	catch (error : any) {
-			
-			return `Received error: ${JSON.stringify(error)}`
-		    }
+	    try {
+		return response?.data?.result
+		
+	    }	catch (error : any) {
+		
+		return `Received error: ${JSON.stringify(error)}`
+	    }
 	},
 	return_type : "string"
     },
@@ -427,7 +460,7 @@ Creates a new Tidyscripts log entry for the user.
 6. You will need to first accumulate text from the user before passing that text to this function. 
 7. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log 
 8. Finally, you should provide the log_path which is a forward slash delimited string 
-` , 
+	` , 
 	name        : "create_user_log_entry" ,
 	parameters  : {  text : "string" , user_initiation_string : "string" , log_path : "string" }  ,
 	fn          : async (ops : any) => {
@@ -499,62 +532,62 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "any"
     }    
 
-    /* 
-    {
-	description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
-	name        : "set_listen_while_speaking" ,
-	parameters  : { value : "boolean" }   ,
-	fn          : async (ops : any) => {
-	    let val = ops.value ; 
-	    vi.set_listen_while_speaking(JSON.parse(val))
-	    return `Set listen_while_speaking to ${val}` ; 
-	} ,
-	return_type : "string"
-    },
+		/* 
+		   {
+		   description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
+		   name        : "set_listen_while_speaking" ,
+		   parameters  : { value : "boolean" }   ,
+		   fn          : async (ops : any) => {
+		   let val = ops.value ; 
+		   vi.set_listen_while_speaking(JSON.parse(val))
+		   return `Set listen_while_speaking to ${val}` ; 
+		   } ,
+		   return_type : "string"
+		   },
 
-    {
-	description : "Gets the Cortex interface listen_while_speaking setting" ,
-	name        : "get_listen_while_speaking" ,
-	parameters  : null  ,
-	fn          : async (ops : any) => {
-	    return vi.listen_while_speaking
-	} ,
-	return_type : "boolean"
-    },
+		   {
+		   description : "Gets the Cortex interface listen_while_speaking setting" ,
+		   name        : "get_listen_while_speaking" ,
+		   parameters  : null  ,
+		   fn          : async (ops : any) => {
+		   return vi.listen_while_speaking
+		   } ,
+		   return_type : "boolean"
+		   },
 
-    */
+		 */
 
-    /*
-    {
-	description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
-	name : "youtube_summary" ,
-	parameters : { url : "string"  , length_in_minutes : "string" } ,
-	fn : async (ops : any ) => {
-	    let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
-	    let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
+		/*
+		   {
+		   description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
+		   name : "youtube_summary" ,
+		   parameters : { url : "string"  , length_in_minutes : "string" } ,
+		   fn : async (ops : any ) => {
+		   let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
+		   let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
 
-	    let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
-	    ops.event({type:'log' , log : msg})	    
-	    return await tes(fn_path , fn_args )
-	} ,
-	return_type : "string" , 
-    },
-    */ 
-    
-    
+		   let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
+		   ops.event({type:'log' , log : msg})	    
+		   return await tes(fn_path , fn_args )
+		   } ,
+		   return_type : "string" , 
+		   },
+		 */ 
+		
+		
 ]
 
 
-const held_functions = [
-        { 
-	description : "Saves a diary/log entry for the user. May be referred to as Captain's log at times if the user is feeling spontaneous. You will need to first accumulate text from the user before passing that text to this function. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log" , 
-	name        : "generic_user_log" ,
-	parameters  : {  text : "string" , user_initiation_string : "string" }  ,
-	fn          : async (ops : any) => {
-	    await main_stream_log(ops)
-	    return "log saved" 
-	} ,
-	return_type : "string"
-    },
-    
-]
+		const held_functions = [
+		    { 
+			description : "Saves a diary/log entry for the user. May be referred to as Captain's log at times if the user is feeling spontaneous. You will need to first accumulate text from the user before passing that text to this function. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log" , 
+			name        : "generic_user_log" ,
+			parameters  : {  text : "string" , user_initiation_string : "string" }  ,
+			fn          : async (ops : any) => {
+			    await main_stream_log(ops)
+			    return "log saved" 
+			} ,
+			return_type : "string"
+		    },
+		    
+		]
