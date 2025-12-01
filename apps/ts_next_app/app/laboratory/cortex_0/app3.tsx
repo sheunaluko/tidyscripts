@@ -70,7 +70,7 @@ import HTML_Widget from "./HTMLWidget"
 /*
 
    Main Feature Release of Cortex
-   Currently working on integratinng Workspace Functionality  
+
 
  */
 

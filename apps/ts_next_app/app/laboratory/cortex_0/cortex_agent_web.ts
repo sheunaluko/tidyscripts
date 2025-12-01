@@ -164,8 +164,12 @@ const functions = [
 	enabled : true, 
 	description : `
 	Compute vector embedding for a text input.
+
 	This function takes an input named text and computes the vector embedding of it
-	The result is stored in CortexRAM with a unique id, which you can use to reference it for future function invocations 
+	The result is stored in CortexRAM with a unique id, which you can use to reference it for future function invocations
+
+        The return value is a reference to the embedding which is automatically resolved in future calls 
+
 	` ,
 	name        : "compute_embedding" ,
 	parameters  : { text : "string" }   ,
@@ -178,7 +182,7 @@ const functions = [
 	    debug.add("embedding" , embedding) ;
 	    //now we ---
 	    let id = await set_var(embedding)  ;
-	    return `Computed the embedding and stored in CortexRAM as ${id}`  ; 
+	    return `${id}`  ; 
 	} ,
 	return_type : "string"
     },
@@ -321,9 +325,13 @@ swift
 	name        : "display_code" ,
 	parameters  : { code : "string" , language : "string" }  ,
 	fn : async ( ops :any) => {
-
+	    
+	    let {event,log } = ops.util ;
+	    
+	    log(`got params:`) ; log(ops.params); 
+	    
 	    let {code, language } = ops.params ; 
-	    let {event } = ops.util ;
+	    
 	    
 	    let code_params = {code, mode : language} 
 	    event({'type' : 'code_update' , code_params}); 
@@ -378,7 +386,11 @@ After that, the user will automatically see the updated changes.
 	name        : "update_workspace" ,
 	parameters  : { code : "string" }  ,
 	fn          : async (ops : any) => {
-	    let {code } = ops ; let {event } = ops.util; 
+	    
+	    let {code } = ops.params ;
+	    let {event , log} = ops.util;
+	    
+	    log(`Running this code:`); log(code); 
 	    let result = window.eval(code)
 	    // update the workspace UI here
 	    event({'type' : 'workspace_update' })
