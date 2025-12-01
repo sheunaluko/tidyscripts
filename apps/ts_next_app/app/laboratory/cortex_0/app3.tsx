@@ -538,7 +538,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Calling llm`)
 	var ai_response_text : string ; 
 	try  {
-	    var ai_response_text = await COR.run_llm(5) ; 
+	    var ai_response_text = await COR.run_llm(1) ; 
 	} catch (e : any) { 
 	    throw new Error(`Error extracting ai message: ${e}`) 
 	}

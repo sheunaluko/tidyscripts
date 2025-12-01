@@ -350,13 +350,26 @@ export class Cortex extends EventEmitter  {
 	for (var i=0; i< arg_array.length -1 ; i++ ) {
 	    if ( (i % 2 ) == 0 ) {
 		//its an even index and thus a param name
-		let k = arg_array[i] ;
+		let k = arg_array[i] ; var v = null ; 
 
 		/*
-		   For collecting the value - we check to see if it is a reference to CortexRAM and resolve it if so 
+		   For collecting the value:
+		   1st try json parse it
+		   2nd check to see if it is a reference to CortexRAM and resolve it if so 
 		 */
 		
-		let v = this.resolve_cortex_ram_reference(arg_array[i+1]) ;
+		let tmp = arg_array[i+1]
+		
+		try {
+		    
+		    v = JSON.parse(tmp)
+		    
+		}   catch (error : any ) {
+		    
+		    v = this.resolve_cortex_ram_reference(tmp) ;
+		    
+		}
+		
 		args[k] = v   ; 
 	    }
 	}
@@ -522,11 +535,14 @@ export class Cortex extends EventEmitter  {
 	aux_parameters.event  = this.emit_event.bind(this)  ; 
 	
 
-	this.log(`Including cortex get/set var`)	
-	aux_parameters.get_var = (this.get_var.bind(this)) ; 
-	aux_parameters.set_var = (this.set_var.bind(this)) ; 
-	
-	
+	this.log(`Including cortex get/set var`)
+	aux_parameters.get_var = (this.get_var.bind(this)) ;
+	aux_parameters.set_var = (this.set_var.bind(this)) ;
+
+	this.log(`Including handle_function_call and collect_args`)
+	aux_parameters.handle_function_call = (this.handle_function_call.bind(this)) ;
+	aux_parameters.collect_args = (this.collect_args.bind(this)) ;
+
 	try {
 	    let result = await F.fn({params : parameters, util : aux_parameters})
 	    error = null ;

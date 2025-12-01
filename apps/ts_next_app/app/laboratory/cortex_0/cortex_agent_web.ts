@@ -182,7 +182,7 @@ const functions = [
 	    debug.add("embedding" , embedding) ;
 	    //now we ---
 	    let id = await set_var(embedding)  ;
-	    return `${id}`  ; 
+	    return `@${id}`  ; 
 	} ,
 	return_type : "string"
     },
@@ -410,7 +410,7 @@ After that, the user will automatically see the updated changes.
 	    
 	    let {get_user_data, feedback, user_output} = ops.util;
 	    feedback.activated()
-	    await user_output(ops.params.user_instructions) ; 
+	    await user_output(ops.params.user_instructions || "") ; 
 	    
 	    let text = [ ] ; 
 	    let chunk = await get_user_data() ;
@@ -567,18 +567,163 @@ Creates a new Tidyscripts log entry for the user.
     },
 
     {
-	enabled : false, 
-	description : "Retrieves an entire log/collection. You should opt to search instead of retrieving the entire collection unless the user specifically has requested to retrieve the whole collection" , 
+	enabled : false,
+	description : "Retrieves an entire log/collection. You should opt to search instead of retrieving the entire collection unless the user specifically has requested to retrieve the whole collection" ,
 	name        : "get_whole_user_collection" ,
 	parameters  : {  name : "string" } ,
 	fn          : async (ops : any) => {
-	    let {name} = ops.params ; 
+	    let {name} = ops.params ;
 	    return fbu.get_user_collection({app_id : "tidyscripts", path : ["logs", name ]})
 	} ,
 	return_type : "any"
-    }    
+    },
 
-		/* 
+    {
+	enabled : true,
+	description : `
+Execute multiple functions serially in a single step.
+Later functions can reference the results of earlier functions using $N syntax.
+
+Parameters:
+- calls: array of function call objects, each with:
+  - function_name: string (name of function to call)
+  - function_args: array of strings (same format as Cortex outputs)
+- return_indices: (optional) array of numbers specifying which results to return
+  - If omitted, returns all results
+  - Example: [0, 2] returns only results from 1st and 3rd functions
+
+Reference syntax in function_args:
+- Use "$0" to reference result from first function (index 0)
+- Use "$1" to reference result from second function (index 1)
+- Use "@hash_id" to reference CortexRAM variables (auto-resolved by collect_args)
+- etc.
+
+Example:
+calls: [
+  {
+    function_name: "compute_embedding",
+    function_args: ["text", "hello world"]
+  },
+  {
+    function_name: "array_nth_value",
+    function_args: ["a", "$0", "n", "5"]
+  }
+]
+
+The second call uses "$0" which will be replaced with the result from compute_embedding.
+
+Returns: Array of results (all or filtered by return_indices)
+Each result: { function_name, error, result, execution_time_ms }
+	`,
+	name        : "multicall",
+	parameters  : {
+	    calls: "array",             // Array of {function_name, function_args: string[]}
+	    return_indices: "array"     // Optional array of indices to return
+	},
+	fn          : async (ops : any) => {
+	    var { calls, return_indices } = ops.params;
+	    const { handle_function_call, collect_args, log } = ops.util;
+
+
+	    log(`Executing ${calls.length} functions serially`);
+
+	    const results: any[] = [];
+	    const startTime = Date.now();
+
+	    // Helper to resolve $N references in function_args
+	    const resolve_result_references = (args: any[]): any[] => {
+		return args.map(arg => {
+		    // Check if arg is a result reference like "$0", "$1", etc.
+		    if (typeof arg === 'string' && arg.match(/^\$\d+$/)) {
+			const index = parseInt(arg.substring(1));
+			if (index >= 0 && index < results.length) {
+			    log(`Resolving ${arg} to result at index ${index}`);
+			    //return result
+			    return results[index].result;
+			} else {
+			    log(`Warning: ${arg} references invalid index`);
+			    return arg;  // Return as-is if invalid
+			}
+		    }
+		    return arg;
+		});
+	    };
+
+	    // Execute functions serially
+	    for (let i = 0; i < calls.length; i++) {
+		const call = calls[i];
+		const callStartTime = Date.now();
+
+		log(`Executing function ${i + 1}/${calls.length}: ${call.function_name}`);
+
+		// Resolve any $N references in function_args
+		const resolved_args = resolve_result_references(call.function_args);
+
+		// Use collect_args to convert string array to parameters object
+		// This also handles @identifier CortexRAM references automatically
+		const parameters = collect_args(resolved_args);
+
+		// Call the function
+		const result = await handle_function_call({
+		    name: call.function_name,
+		    parameters: parameters
+		});
+
+		const functionResult = {
+		    function_name: call.function_name,
+		    error: result.error || false,
+		    result: result.result,
+		    execution_time_ms: Date.now() - callStartTime
+		};
+
+		results.push(functionResult);
+
+		// Fail fast on error
+		if (result.error) {
+		    const totalTime = Date.now() - startTime;
+		    log(`Stopping execution due to error in ${call.function_name}`);
+
+		    // Filter results if return_indices specified
+		    const filtered = filter_results(results, return_indices);
+
+		    return {
+			total_execution_time_ms: totalTime,
+			completed: i + 1,
+			total: calls.length,
+			error: `Failed at function ${i + 1} (${call.function_name}): ${result.error}`,
+			results: filtered
+		    };
+		}
+	    }
+
+	    const totalTime = Date.now() - startTime;
+	    log(`All functions completed successfully in ${totalTime}ms`);
+
+	    // Filter results if return_indices specified
+	    const filtered = filter_results(results, return_indices);
+
+	    return {
+		total_execution_time_ms: totalTime,
+		completed: calls.length,
+		total: calls.length,
+		error: false,
+		results: filtered
+	    };
+
+	    // Helper to filter results by indices
+	    function filter_results(results: any[], indices: number[] | null | undefined): any[] {
+		if (!indices || indices.length === 0) {
+		    return results;  // Return all
+		}
+		return indices
+		    .filter(idx => idx >= 0 && idx < results.length)
+		    .map(idx => results[idx]);
+	    }
+	},
+	return_type : "object"
+    }
+
+		/*
 		   {
 		   description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
 		   name        : "set_listen_while_speaking" ,
