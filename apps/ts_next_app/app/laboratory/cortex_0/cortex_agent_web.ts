@@ -8,7 +8,7 @@ import * as bashr from "../../../src/bashr/index"
 import * as tsw from "tidyscripts_web"
 import * as fb from "../../../src/firebase" ;
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
-
+import * as cu from "./src/cortex_utils" 
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
@@ -24,9 +24,45 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
 
 /*
    Todo :
-   MD5 of tool call results (store in dictionary inside cortex sandboxed enviroment)
-   Give ability to perform code execution on this
 
+   [ ] improve the error handling so when fn error messages are passed back to cortex it also says to pause and report the error to the user  
+
+   [ ]
+   Help cortex learn how to create stored procedures.
+   Have claude review the code on stored procedures -- then generate a new function that tells
+   cortex how to test a stored procedure (called test_stored_procedure) , it should take the procedure_name, the function_name, and
+   function args, as well as a test_procedure_args.
+
+   It will then run the test_procedure with the provided args and report the result back to cortex (including the error if it errored). If it runs successfuly the stored procedure is also saved to CortexRAM and the id is reported back to Cortex
+
+   Next - claude should make another function called save_stored_procedure, which will take the reference to a stored procedure (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=stored_procedure and with procedure=the_actual_procedure_object
+
+   [ ]
+   After the above is done: coach cortex (via chat) on developing a procedure called create_user_log which takes a category parameter and then uses accumulate text to get a log and then computes the embedding of the text and saves everything into the logs table with { category, text, embedding }
+
+
+   [ ]
+   Next: actually need to load the stored procedures at init time and make them available!
+   - [ ] 1st pass - just create an init function
+   - [ ] 2nd pass - dynamic SYSTEM_PROMPT management ? may be overkill 
+
+   [ ]
+   Next: ability to search surreal db with embeddings: -- consider coaching cortex using the MCP surreal tool and the query function, to make a stored_procedure that can do this 
+
+   
+
+   
+   
+   
+
+   UI updates -- top right (context usage bar green/red/ etc ) , last tool call (implement as small
+   widgets that can be placed)
+
+   Separate UI - show function call stack (including arugments)
+
+   Pattern -> Create a useObservability hook that collects all state and state updates into one place
+   Then build components which are view ontop of this! 
+   
  */
 
 
@@ -408,7 +444,7 @@ After that, the user will automatically see the updated changes.
 	fn          : async (ops : any) => {
 
 	    
-	    let {get_user_data, feedback, user_output} = ops.util;
+	    let {get_user_data, feedback, user_output, log} = ops.util;
 	    feedback.activated()
 	    await user_output(ops.params.user_instructions || "") ; 
 	    
@@ -577,6 +613,153 @@ Creates a new Tidyscripts log entry for the user.
 	} ,
 	return_type : "any"
     },
+
+    /*
+
+       A stored proc has the following structure:
+       {
+            name : string,
+            parameters : {
+               text : string 
+            },
+            function_name: string ,
+            function_args : string , 
+       }
+
+       Once it is called, it uses its parameters to build a "resolved" function_args object
+       Then, a simple handle_function_call is done with the function_name and the
+       Resolved args
+
+       A stored procedure uses a & sign to indicated a variable placeholder
+
+       For example :
+       {
+       
+       name : 'store_exercise_log' ,
+       parameters : { text : 'string' } ,
+       function_name : 'access_database_with_surreal_ql' ,
+       function_args :  [ "query" , "insert into logs { message : &text , type : 'exercise' } "  ] 
+       }
+
+     */
+
+    {
+	enabled : true,
+	description : `
+           Runs a stored_procedure by using its name and arguments 
+	` ,
+	name        : "run_stored_procedure" ,
+	parameters  : {
+		    procedure_name : "string" ,
+		    procedure_args : "array"  
+	} ,
+	
+	fn          : async (ops : any) => {
+	    let {procedure_name, procedure_args} = ops.params ;
+	    let {
+		log,
+		collect_args,
+		handle_function_call,
+		get_var, 
+	    } = ops.util ;
+
+	    log(`Request to run stored procedure:${procedure_name}, with args`) ; 
+	    log(procedure_args) ;
+
+	    //now we need to actually have the stored procedure object !
+	    log(`Attempting to get spo object: ${procedure_name}`)  ; 
+	    let {error,result}  = await handle_function_call({
+		name: "get_stored_procedure_object_test",
+		parameters: { name : procedure_name } 
+	    })
+
+	    if (error) { throw(error) }
+
+	    //if it ran well then result should contain the id of the spo (stored_proc_obj)
+	    log(`Retrieved spo id : ${result}`) ;
+	    //and we can get a ref to it like this:
+	    let spo = get_var(result) ; debug.add("spoo", spo) ;
+
+	    //destructure out
+	    let { name, function_args, function_name } = spo ; 
+
+	    //build the proecudre args dic 
+	    log(`Collecting args`) ; 
+	    let arg_dic = collect_args(procedure_args) ;
+
+	    //resolve the function_args
+	    let resolved_function_args = cu.resolve_function_args_array( function_args, arg_dic ) ;
+	    let collected_function_args = collect_args(resolved_function_args) ; 
+
+	    //run it
+	    debug.add('proc_run_info' , {
+		spo,
+		function_args,
+		resolved_function_args,
+		function_name,
+		collected_function_args ,
+		arg_dic
+	    })
+
+	    /*
+	    let proc_result =  await handle_function_call({
+		name : function_name,
+		parameters : collected_function_args 
+	    });
+	    */
+	    
+	    return false 
+	} ,
+	return_type : "any"
+    },
+    {
+	enabled : true ,
+	name : "get_stored_procedure_object" ,
+	description : "Retrieves a stored_procedure object from the database and stores it in CortexRam, returns its id" ,
+	parameters : {
+	    name : "string", 
+	},
+	fn : async (ops :any ) => {
+
+	    let {name} = ops.params;
+	    let {set_var} = ops.util ; 
+	    
+	    let query = `select * from cortex where type = "stored_procedure" and name = ${name}`
+	    var spo = {} ;
+	    
+	    var response = await fbu.surreal_query({query }) as any ;
+	    var spo_string = response.data.result.result[0] ;
+	    spo = JSON.parse(spo)
+
+	    debug.add("spo_info" , {response,spo_string,spo} )  ;
+
+	    let id = set_var(spo) ; 
+	    return id ; 
+
+	}
+    },
+
+    {
+	enabled : true ,
+	name : "get_stored_procedure_object_test" ,
+	description : "Retrieves a stored_procedure object from the database and stores it in CortexRam, returns its id" ,
+	parameters : {
+	    name : "string", 
+	},
+	fn : async (ops :any ) => {
+
+	    let {set_var} = ops.util; 
+
+	    let spo = cu.example_procedure ; 
+
+	    debug.add("spo_info" , {spo} )  ;
+
+	    let id = set_var(spo) ; 
+	    return id ; 
+
+	}
+    },
+    
 
     {
 	enabled : true,

@@ -277,10 +277,15 @@ const  Component: NextPage = (props : any) => {
         let speak = async function(content : string) {
             await vi.speak_with_rate(content, playbackRate);
         }
-	if (COR) { 
-            COR.configure_user_output(speak)
+	
+	if (COR) {
+	    if (mode == 'chat' ) {
+		COR.configure_user_output(speak)
+	    } else {
+		COR.configure_user_output(add_ai_message)		
+	    }
 	}
-    }, [playbackRate, COR])
+    }, [playbackRate, COR, mode])
 
 
     useEffect( ()=> {
@@ -323,7 +328,9 @@ const  Component: NextPage = (props : any) => {
 	    workspace : {} ,
 	    last_ai_message,
 	    last_ai_message_ref,
-	    COR
+	    COR,
+	    cu : cortex_utils, 
+	    
 	}) ;
 
 	return ()=>{
@@ -538,7 +545,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Calling llm`)
 	var ai_response_text : string ; 
 	try  {
-	    var ai_response_text = await COR.run_llm(1) ; 
+	    var ai_response_text = await COR.run_llm(4) ; 
 	} catch (e : any) { 
 	    throw new Error(`Error extracting ai message: ${e}`) 
 	}
@@ -574,7 +581,10 @@ const  Component: NextPage = (props : any) => {
 
     const handleChatSend = () => {
         if (chatInput.trim()) {
-            add_user_message(chatInput.trim());
+            //add_user_message(chatInput.trim());
+	    //instead of doing above line will call transcription_cb
+	    //this preserves routing to active functions
+	    transcription_cb(chatInput.trim()) ; 
             setChatInput('');
         }
     };
