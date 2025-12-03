@@ -556,10 +556,17 @@ export class Cortex extends EventEmitter  {
 	    }
 	} catch (e : any ) {
 	    error =  e.message ;
-	    this.log(error)
-	    this.log_event(`[ERROR] - Error with function: ${name}: ${error}`)	    
+	    let error_msg = `
+                [ERROR] - Error with function: ${name}: ${error}
+                DO NOT proceed any further
+                Instead think about what caused this error 
+                Immediately report this error and your thoughts regarding the reason to the user and await further instructions 
+	    `
+	    this.log(error_msg)
+	    this.log_event(error_msg)
+	    
 	    return {
-		error , 
+		error : error_msg , 
 		result : null ,
 		name 
 	    } 

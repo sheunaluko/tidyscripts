@@ -25,35 +25,34 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
 /*
    Todo :
 
-   [ ] improve the error handling so when fn error messages are passed back to cortex it also says to pause and report the error to the user  
+   [x] improve the error handling so when fn error messages are passed back to cortex it also says to pause and report the error to the user
+
+   [x]
+   Help cortex learn how to create function templates.
+   Have claude review the code on function templates -- then generate a new function that tells
+   cortex how to test a function template (called test_function_template) , it should take the template_name, template_args, the function_name, and
+   function args, as well as a test_template_args.
+
+   It will then run the test_template with the provided args and report the result back to cortex (including the error if it errored). If it runs successfully the function template is also saved to CortexRAM and the id is reported back to Cortex
 
    [ ]
-   Help cortex learn how to create stored procedures.
-   Have claude review the code on stored procedures -- then generate a new function that tells
-   cortex how to test a stored procedure (called test_stored_procedure) , it should take the procedure_name, the function_name, and
-   function args, as well as a test_procedure_args.
-
-   It will then run the test_procedure with the provided args and report the result back to cortex (including the error if it errored). If it runs successfuly the stored procedure is also saved to CortexRAM and the id is reported back to Cortex
-
-   Next - claude should make another function called save_stored_procedure, which will take the reference to a stored procedure (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=stored_procedure and with procedure=the_actual_procedure_object
+   Next - claude should make another function called save_function_template, which will take the reference to a function template (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=function_template and with template=the_actual_template_object
 
    [ ]
-   After the above is done: coach cortex (via chat) on developing a procedure called create_user_log which takes a category parameter and then uses accumulate text to get a log and then computes the embedding of the text and saves everything into the logs table with { category, text, embedding }
+   After the above is done: coach cortex (via chat) on developing a template called create_user_log which takes a category parameter and then uses accumulate text to get a log and then computes the embedding of the text and saves everything into the logs table with { category, text, embedding }
 
 
    [ ]
-   Next: actually need to load the stored procedures at init time and make them available!
+   Next: actually need to load the function templates at init time and make them available!
    - [ ] 1st pass - just create an init function
-   - [ ] 2nd pass - dynamic SYSTEM_PROMPT management ? may be overkill 
+   - [ ] 2nd pass - dynamic SYSTEM_PROMPT management ? may be overkill
 
    [ ]
-   Next: ability to search surreal db with embeddings: -- consider coaching cortex using the MCP surreal tool and the query function, to make a stored_procedure that can do this 
+   Next: ability to search surreal db with embeddings: -- consider coaching cortex using the MCP surreal tool and the query function, to make a function_template that can do this
 
-   
 
-   
-   
-   
+
+
 
    UI updates -- top right (context usage bar green/red/ etc ) , last tool call (implement as small
    widgets that can be placed)
@@ -61,8 +60,8 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
    Separate UI - show function call stack (including arugments)
 
    Pattern -> Create a useObservability hook that collects all state and state updates into one place
-   Then build components which are view ontop of this! 
-   
+   Then build components which are view ontop of this!
+
  */
 
 
@@ -438,7 +437,11 @@ After that, the user will automatically see the updated changes.
     
     {
 	enabled : true	, 	
-	description : "Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation" , 
+	description : `
+Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation.
+
+Please note: A subfunction runs to accumulate the users text until they say finished and only then is it routed back to you. Thus when you get any text back from the user that is the completed accumulated text and you can assume the user is done. 
+` , 
 	name        : "accumulate_text" ,
 	parameters  : {  user_instructions : "string" }  ,
 	fn          : async (ops : any) => {
@@ -616,29 +619,29 @@ Creates a new Tidyscripts log entry for the user.
 
     /*
 
-       A stored proc has the following structure:
+       A function template has the following structure:
        {
             name : string,
             parameters : {
-               text : string 
+               text : string
             },
             function_name: string ,
-            function_args : string , 
+            function_args : string ,
        }
 
        Once it is called, it uses its parameters to build a "resolved" function_args object
        Then, a simple handle_function_call is done with the function_name and the
        Resolved args
 
-       A stored procedure uses a & sign to indicated a variable placeholder
+       A function template uses a & sign to indicate a variable placeholder
 
        For example :
        {
-       
+
        name : 'store_exercise_log' ,
        parameters : { text : 'string' } ,
        function_name : 'access_database_with_surreal_ql' ,
-       function_args :  [ "query" , "insert into logs { message : &text , type : 'exercise' } "  ] 
+       function_args :  [ "query" , "insert into logs { message : &text , type : 'exercise' } "  ]
        }
 
      */
@@ -646,54 +649,54 @@ Creates a new Tidyscripts log entry for the user.
     {
 	enabled : true,
 	description : `
-           Runs a stored_procedure by using its name and arguments 
+           Runs a function_template by using its name and arguments
 	` ,
-	name        : "run_stored_procedure" ,
+	name        : "run_function_template" ,
 	parameters  : {
-		    procedure_name : "string" ,
-		    procedure_args : "array"  
+		    template_name : "string" ,
+		    template_args : "array"
 	} ,
-	
+
 	fn          : async (ops : any) => {
-	    let {procedure_name, procedure_args} = ops.params ;
+	    let {template_name, template_args} = ops.params ;
 	    let {
 		log,
 		collect_args,
 		handle_function_call,
-		get_var, 
+		get_var,
 	    } = ops.util ;
 
-	    log(`Request to run stored procedure:${procedure_name}, with args`) ; 
-	    log(procedure_args) ;
+	    log(`Request to run function template: ${template_name}, with args`) ;
+	    log(template_args) ;
 
-	    //now we need to actually have the stored procedure object !
-	    log(`Attempting to get spo object: ${procedure_name}`)  ; 
+	    //now we need to actually have the function template object !
+	    log(`Attempting to get template object: ${template_name}`)  ;
 	    let {error,result}  = await handle_function_call({
-		name: "get_stored_procedure_object_test",
-		parameters: { name : procedure_name } 
+		name: "get_function_template_object_test",
+		parameters: { name : template_name }
 	    })
 
 	    if (error) { throw(error) }
 
-	    //if it ran well then result should contain the id of the spo (stored_proc_obj)
-	    log(`Retrieved spo id : ${result}`) ;
+	    //if it ran well then result should contain the id of the template
+	    log(`Retrieved template id : ${result}`) ;
 	    //and we can get a ref to it like this:
-	    let spo = get_var(result) ; debug.add("spoo", spo) ;
+	    let template = get_var(result) ; debug.add("template", template) ;
 
 	    //destructure out
-	    let { name, function_args, function_name } = spo ; 
+	    let { name, function_args, function_name } = template ;
 
-	    //build the proecudre args dic 
-	    log(`Collecting args`) ; 
-	    let arg_dic = collect_args(procedure_args) ;
+	    //build the template args dic
+	    log(`Collecting args`) ;
+	    let arg_dic = collect_args(template_args) ;
 
 	    //resolve the function_args
 	    let resolved_function_args = cu.resolve_function_args_array( function_args, arg_dic ) ;
-	    let collected_function_args = collect_args(resolved_function_args) ; 
+	    let collected_function_args = collect_args(resolved_function_args) ;
 
 	    //run it
-	    debug.add('proc_run_info' , {
-		spo,
+	    debug.add('template_run_info' , {
+		template,
 		function_args,
 		resolved_function_args,
 		function_name,
@@ -702,64 +705,265 @@ Creates a new Tidyscripts log entry for the user.
 	    })
 
 	    /*
-	    let proc_result =  await handle_function_call({
+	    let template_result =  await handle_function_call({
 		name : function_name,
-		parameters : collected_function_args 
+		parameters : collected_function_args
 	    });
 	    */
-	    
-	    return false 
+
+	    return false
 	} ,
 	return_type : "any"
     },
     {
 	enabled : true ,
-	name : "get_stored_procedure_object" ,
-	description : "Retrieves a stored_procedure object from the database and stores it in CortexRam, returns its id" ,
+	name : "get_function_template_object" ,
+	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
 	parameters : {
-	    name : "string", 
+	    name : "string",
 	},
 	fn : async (ops :any ) => {
 
 	    let {name} = ops.params;
-	    let {set_var} = ops.util ; 
-	    
-	    let query = `select * from cortex where type = "stored_procedure" and name = ${name}`
-	    var spo = {} ;
-	    
+	    let {set_var} = ops.util ;
+
+	    let query = `select * from cortex where type = "function_template" and name = ${name}`
+	    var template = {} ;
+
 	    var response = await fbu.surreal_query({query }) as any ;
-	    var spo_string = response.data.result.result[0] ;
-	    spo = JSON.parse(spo)
+	    var template_string = response.data.result.result[0] ;
+	    template = JSON.parse(template)
 
-	    debug.add("spo_info" , {response,spo_string,spo} )  ;
+	    debug.add("template_info" , {response,template_string,template} )  ;
 
-	    let id = set_var(spo) ; 
-	    return id ; 
+	    let id = set_var(template) ;
+	    return id ;
 
 	}
     },
 
     {
 	enabled : true ,
-	name : "get_stored_procedure_object_test" ,
-	description : "Retrieves a stored_procedure object from the database and stores it in CortexRam, returns its id" ,
+	name : "get_function_template_object_test" ,
+	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
 	parameters : {
-	    name : "string", 
+	    name : "string",
 	},
 	fn : async (ops :any ) => {
 
-	    let {set_var} = ops.util; 
+	    let {set_var} = ops.util;
 
-	    let spo = cu.example_procedure ; 
+	    let template = cu.example_template ;
 
-	    debug.add("spo_info" , {spo} )  ;
+	    debug.add("template_info" , {template} )  ;
 
-	    let id = set_var(spo) ; 
-	    return id ; 
+	    let id = set_var(template) ;
+	    return id ;
 
 	}
     },
-    
+
+
+    {
+	enabled : true,
+	name: "test_function_template",
+	description: `
+Tests a function template before saving it to the database.
+
+WHAT IS A FUNCTION TEMPLATE?
+A function template is a reusable function wrapper that wraps another function with parameterized arguments.
+It allows you to create custom functions by combining existing functions with predefined argument templates.
+
+FUNCTION TEMPLATE STRUCTURE:
+{
+  name: string,              // Unique name for the procedure (use snake_case)
+  parameters: object,        // Schema defining expected parameters, e.g., {text: "string", count: "number"}
+  function_name: string,     // Name of the underlying function to call
+  function_args: array       // Template arguments with & placeholders for parameter substitution
+}
+
+THE & PLACEHOLDER SYNTAX:
+- In function_args, use &param_name to reference parameters
+- When the procedure runs, &param_name gets replaced with the actual value
+- Example: "insert into logs { message: &text }" → "insert into logs { message: \"hello world\" }"
+
+EXAMPLE FUNCTION TEMPLATE:
+{
+  name: "store_exercise_log",
+  parameters: { text: "string" },
+  function_name: "access_database_with_surreal_ql",
+  function_args: ["query", "insert into logs { message: &text, type: 'exercise' }"]
+}
+
+HOW THIS FUNCTION WORKS:
+1. You provide the complete function template definition (name, parameters, function_name, function_args)
+2. You provide test_args - the actual argument values to test with (same format as when calling run_function_template)
+3. This function will:
+   - Construct the function template object
+   - Resolve all & placeholders with your test values
+   - Execute the underlying function
+   - Report detailed results (success or error)
+   - If successful: save the template to CortexRAM and return its reference ID
+
+PARAMETERS:
+- template_name: string        // Name of the template (e.g., "store_exercise_log")
+- template_parameters: object  // Parameter schema (e.g., {text: "string"})
+- function_name: string        // Underlying function to call (e.g., "access_database_with_surreal_ql")
+- function_args: array         // Template args with & placeholders (e.g., ["query", "insert into logs { message: &text }"])
+- test_args: array             // Test values in key-value format (e.g., ["text", "I exercised today"])
+
+EXAMPLE USAGE:
+
+Example 1 - Simple database insert:
+test_function_template({
+  template_name: "store_exercise_log",
+  template_parameters: { text: "string" },
+  function_name: "access_database_with_surreal_ql",
+  function_args: ["query", "insert into logs { message: &text, type: 'exercise' }"],
+  test_args: ["text", "I did 20 pushups"]
+})
+
+Example 2 - Using multicall (IMPORTANT - note the key-value structure):
+test_function_template({
+  template_name: "embed_and_store",
+  template_parameters: { text: "string", category: "string" },
+  function_name: "multicall",
+  function_args: [
+    "calls",  // ← MUST include "calls" as the parameter name!
+    [
+      {function_name: "compute_embedding", function_args: ["text", "&text"]},
+      {function_name: "access_database_with_surreal_ql", function_args: ["query", "insert into logs { text: &text, category: &category, embedding: $0 }"]}
+    ],
+    "return_indices",  // ← Optional: which results to return
+    [1]
+  ],
+  test_args: ["text", "test message", "category", "info"]
+})
+
+CRITICAL FOR MULTICALL: function_args must use key-value pairs:
+["param_name", param_value, "param_name", param_value, ...]
+WRONG: [value, value, ...] without parameter names
+RIGHT: ["calls", [{...}], "return_indices", [1]]
+
+RETURN VALUE:
+If successful:
+{
+  success: true,
+  template_id: "@abc123",            // CortexRAM reference to the tested template
+  test_result: <actual result>,      // Result from executing the underlying function
+  resolved_args: {...},              // Shows what the final arguments looked like
+  message: "Function template tested successfully and saved to CortexRAM"
+}
+
+If error:
+{
+  success: false,
+  error: <error details>,
+  resolved_args: {...},              // Shows what the final arguments looked like (for debugging)
+  message: "Test failed: <error details>"
+}
+
+WORKFLOW FOR CREATING FUNCTION TEMPLATES:
+1. First, use test_function_template to validate your template works correctly
+2. If test succeeds, you get a template_id (e.g., "@abc123")
+3. Then use save_function_template (separate function) to persist it to the database
+4. The saved template can then be called using run_function_template
+
+IMPORTANT NOTES:
+- Test with realistic data that represents actual use cases
+- Verify the resolved_args in the response to ensure placeholders were replaced correctly
+- If testing fails, check that parameter names in test_args match the & placeholders in function_args
+- The template_id is only temporary (in CortexRAM) until you save it to the database
+`,
+	parameters: {
+	    template_name: "string",
+	    template_parameters: "object",
+	    function_name: "string",
+	    function_args: "array",
+	    test_args: "array"
+	},
+	fn: async (ops: any) => {
+	    const {
+		template_name,
+		template_parameters,
+		function_name,
+		function_args,
+		test_args
+	    } = ops.params;
+
+	    const { handle_function_call, collect_args, log, set_var } = ops.util;
+
+	    log(`Testing function template: ${template_name}`);
+
+	    // Construct the function template object
+	    const function_template = {
+		name: template_name,
+		parameters: template_parameters,
+		function_name: function_name,
+		function_args: function_args
+	    };
+
+	    log(`Function template definition:`);
+	    log(function_template);
+
+	    // Convert test_args to dictionary
+	    const arg_dic = collect_args(test_args);
+	    log(`Test arguments dictionary:`);
+	    log(arg_dic);
+
+	    // Resolve the function_args with test values
+	    let resolved_function_args;
+	    try {
+		resolved_function_args = cu.resolve_function_args_array(function_args, arg_dic);
+		log(`Resolved function_args:`);
+		log(resolved_function_args);
+	    } catch (resolve_error: any) {
+		return {
+		    success: false,
+		    error: resolve_error.message || resolve_error,
+		    message: `Failed to resolve placeholders: ${resolve_error.message || resolve_error}`
+		};
+	    }
+
+	    // Convert resolved args to parameters format
+	    const collected_function_args = collect_args(resolved_function_args);
+	    log(`Collected function arguments:`);
+	    log(collected_function_args);
+
+	    // Execute the underlying function
+	    log(`Executing function: ${function_name}`);
+	    const exec_result = await handle_function_call({
+		name: function_name,
+		parameters: collected_function_args
+	    });
+
+	    // Check for errors
+	    if (exec_result.error) {
+		log(`Test failed with error:`);
+		log(exec_result.error);
+		return {
+		    success: false,
+		    error: exec_result.error,
+		    resolved_args: collected_function_args,
+		    message: `Test failed: ${exec_result.error}`
+		};
+	    }
+
+	    // Success! Save to CortexRAM
+	    log(`Test successful! Saving template to CortexRAM`);
+	    const template_id = await set_var(function_template);
+	    log(`Saved with ID: ${template_id}`);
+
+	    return {
+		success: true,
+		template_id: `@${template_id}`,
+		test_result: exec_result.result,
+		resolved_args: collected_function_args,
+		message: `Function template '${template_name}' tested successfully and saved to CortexRAM with ID @${template_id}`
+	    };
+	},
+	return_type: "object"
+    },
 
     {
 	enabled : true,

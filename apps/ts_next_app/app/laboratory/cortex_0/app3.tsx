@@ -280,9 +280,9 @@ const  Component: NextPage = (props : any) => {
 	
 	if (COR) {
 	    if (mode == 'chat' ) {
-		COR.configure_user_output(speak)
+		COR.configure_user_output(add_ai_message)
 	    } else {
-		COR.configure_user_output(add_ai_message)		
+		COR.configure_user_output(speak)		
 	    }
 	}
     }, [playbackRate, COR, mode])
@@ -532,10 +532,14 @@ const  Component: NextPage = (props : any) => {
 
 	
 	//here we need to actually speak the response too!
-	log(`generating audio response...`)
-	log(`Using playbackRate to ${playbackRate}`)	
-	await vi.speak_with_rate(content, playbackRate) ;
-	log(`done`)
+	if (mode != "chat") { 
+	    log(`generating audio response...`)
+	    log(`Using playbackRate to ${playbackRate}`)	
+	    await vi.speak_with_rate(content, playbackRate) ;
+	    log(`done`)
+	} else {
+	    log(`Skipping speech!`) 
+	} 
 
 
     };
@@ -545,7 +549,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Calling llm`)
 	var ai_response_text : string ; 
 	try  {
-	    var ai_response_text = await COR.run_llm(4) ; 
+	    var ai_response_text = await COR.run_llm(1) ; 
 	} catch (e : any) { 
 	    throw new Error(`Error extracting ai message: ${e}`) 
 	}
