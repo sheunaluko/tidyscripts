@@ -15,11 +15,12 @@ import * as Channel from "./channel"
 
 /*
    
-   Todo:  
-   - support multiple function calls simultaneously 
-      - probably best way is to change CortexOutput to be text of functionCallS
-      - and to have functionCalls : FunctionCall[ ]  | null 
-      - and just natively support multiple function calls (or 1 or none) 
+   Todo:
+
+   Implementing multiple function calls
+
+   See run_cortex_output 
+   
 
  */
 
@@ -62,9 +63,9 @@ type UserInput = {
 
 /* CortexOutput */
 type CortexOutput = {
-    thoughts : string, 
-    function_name :  string 
-    function_args : string[] 
+    thoughts : string,
+    calls : FunctionCall[], //change output to array of function calls
+    return_indeces : number[] 
 } 
 
 /*
@@ -73,13 +74,13 @@ Had some issues trying to collect functionName and functionParameters together ,
 
 const FunctionCallObject = z.object({
     name : z.union( [z.string() , z.null() ]) , 
-    parameters : z.union( [z.record(z.string()) , z.null() ])    
+    parameters : z.union( [z.record(z.string()) , z.null() ])      //functions assume the args are strings -- means that (bugcheck) they can error if not (processing @id) 
 })
 
 const zrf  = z.object({
     thoughts : z.string() , 
-    function_name : z.string() , 
-    function_args : z.array( z.string() )  , 
+    calls : z.array( FunctionCallObject ),
+    return_indeces : z.array( z.number() )  
 })
 
 /* CortexOutputResoponseFormat */
@@ -106,7 +107,6 @@ type CortexMessage = {
 } 
 type IOMessage  = (UserMessage | CortexMessage )
 type IOMessages = IOMessage[] ; 
-
 
 
 
@@ -315,6 +315,8 @@ export class Cortex extends EventEmitter  {
 	    body : JSON.stringify(args)
 	})
 
+	this.log("run_llm_result"); this.log(result) 
+
 	return await this.handle_llm_response(result, loop )
 
 	
@@ -376,6 +378,59 @@ export class Cortex extends EventEmitter  {
 	return args 
     }
 
+    async run_cortex_output(output : CortexOutput ) {
+	/*
+
+	   The CortexOutput type is:
+
+	   type CortexOutput = {
+	      thoughts : string,
+	      calls : FunctionCall[], //change output to array of function calls
+	      return_indeces : number[] 
+	   }
+
+	   Basically need to execute the function chain and only return the desired indeces
+
+	   Need to implement this function (with inspo from the multicall function)
+
+	   Key things:
+	   - Previously the final output of run_llm() was a STRING (response to the user) which
+	   got delivered to UI. Now ui_response is a function. Below must return string to not break
+	   things, but I need to refactor this (what pattern makes sense?)
+
+	   - Consider fixing the debug logging and logging in general 
+	   
+	*/
+
+
+	this.set_is_running_function(true) ; //function running indicator
+	console.log(output) ;
+
+	/*
+
+	   MODEL OFF MULTICALL LOGIC 
+	try { 	
+	    
+		let function_result = await this.handle_function_call(functionCall) ;
+		this.set_is_running_function(false) ;  //turn off function running indicator
+		this.add_user_result_input(function_result) ;
+		
+	    } catch (e : any ) {
+		
+		//error with function call
+		this.log(`Uncaught error with function execution!`)
+		throw new Error(e)
+		
+	    }
+
+	 */
+	
+	this.set_is_running_function(false) ; // -- done 
+
+	return "Done"  //slight bug -- since this ??must be string ? 
+
+    }
+
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
 	let jsonData = await fetchResponse.json()
@@ -392,81 +447,23 @@ export class Cortex extends EventEmitter  {
 	this.add_cortex_output(output)	
 
 	//at this point parsed is a CortexOutput object
+	let {
+	    thoughts, calls , return_indeces 
+	} = output ;
 
-	//also everything is upgraded to always be a function!
-	let args = this.collect_args(output.function_args) ;  
-	this.log(`Processed args and got:`)
-	this.log(args) ; 
+	debug.add("ParsedCortexOutput", output) ;
+	console.log(output) 
+
+	//now first we emit the thought 
+	this.emit_event({'type': 'thought', 'thought' : output.thoughts})
+
+	//and now we process the CortexOutput
+	let result = await this.run_cortex_output(output) ;    //for now ignoring loop parameter
+
+	console.log(result) 
 	
-	if (output.function_name == "respond_to_user" ) {
-	    this.log(`Got respond_to_user function`) 	    
-	    this.emit_event({'type': 'thought', 'thought' : output.thoughts})
-	    //this.log(`thinking::> ${output.thoughts}`)	    
-	    this.log(`OUTPUT::> ${args.response}`)
-	    return args.response
-	}
-
-	if (output.function_name != "respond_to_user" ) {
-
-	    this.log(`Got some function`) 
-
-	    this.set_is_running_function(true) ; //function running indicator 
-
-	    try {
-		this.log(`Loop=${loop}`)
-		this.emit_event({'type': 'thought', 'thought' : output.thoughts}) 		
-		
-		if (loop < 1 ) {
-		    this.log(`Loop counter ran out!`)
-
-		    let name = output.function_name ;
-		    let functionCall =  {
-			name ,
-			parameters : args 
-			
-		    }
-		    
-		    let function_result = {
-			name,
-			error : "too many repeated function calls, please request user  permission to proceed", 
-			result : null , 
-		    }
-		    
-		    this.set_is_running_function(false) ;  //turn off function running indicator
-		    this.add_user_result_input(function_result) ;
-		    return await this.run_llm(1) ; // 
-
-		}
-
-
-		let name = output.function_name ;
-		let functionCall =  {
-		    name ,
-		    parameters : args 
-		    
-		}
-		
-
-		let function_result = await this.handle_function_call(functionCall) ;
-		this.set_is_running_function(false) ;  //turn off function running indicator
-		this.add_user_result_input(function_result) ;
-		
-	    } catch (e : any ) {
-		
-		//error with function call
-		this.log(`Uncaught error with function execution!`)
-		throw new Error(e)
-		
-	    }
-
-	    
-	    return await this.run_llm(loop-1)
-
-
-	    
-	}
-
-	return "LLM output kind unrecognized" 
+	
+	return result 
 
 
     }

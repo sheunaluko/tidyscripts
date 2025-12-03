@@ -27,13 +27,31 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
 
    [x] improve the error handling so when fn error messages are passed back to cortex it also says to pause and report the error to the user
 
-   [x]
+   [ FAIL (but close)  ]   
    Help cortex learn how to create function templates.
    Have claude review the code on function templates -- then generate a new function that tells
    cortex how to test a function template (called test_function_template) , it should take the template_name, template_args, the function_name, and
    function args, as well as a test_template_args.
 
    It will then run the test_template with the provided args and report the result back to cortex (including the error if it errored). If it runs successfully the function template is also saved to CortexRAM and the id is reported back to Cortex
+
+
+   [ ] given the accumulated technical debt with function parsing and badd [ arg1, ... ] structure -- new proposals:
+
+       	     1) CortexOutput = FunctionCall  (single call as object). Maybe this works without different message types 
+
+       	     2) 
+       	     -> upgrade core communication protocol to have CortexOutput = FunctionCall[] , and thus can respond to user with single call RespondToUser() or can call chain of multiple tools
+	     -> while doing this also preserve the ideas regarding get/set var and the @hash_id, as well as references $0, $1 etc and &var
+
+	     cons: cannot FORCE cortex to show you which functions will get executed
+	     benefits: ensure that every call is a proper function call 
+
+	     3) complex dynamic RESPONSE format changing
+	     Think about adding a function call validator 
+
+
+
 
    [ ]
    Next - claude should make another function called save_function_template, which will take the reference to a function template (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=function_template and with template=the_actual_template_object
@@ -195,6 +213,20 @@ var BASH_CLIENT : any = null ;
 
 const functions = [
 
+      {
+      enabled : true,
+      description : `Function for responding to the user` ,
+      name : "respond_to_user",
+      parameters : { response : "string" } ,
+	  fn : async (ops : any) => {
+	      let {user_output, log} = ops.util ;
+	      let {response} = ops.params ; 
+	      log(`user response: ${response}`) ;
+	      await user_output(response) ;
+	      return `Responded to user with: ${response}` ; 
+	  }
+      },
+    
     {
 	enabled : true, 
 	description : `
@@ -647,7 +679,7 @@ Creates a new Tidyscripts log entry for the user.
      */
 
     {
-	enabled : true,
+	enabled : false,
 	description : `
            Runs a function_template by using its name and arguments
 	` ,
@@ -716,7 +748,7 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "any"
     },
     {
-	enabled : true ,
+	enabled : false ,
 	name : "get_function_template_object" ,
 	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
 	parameters : {
@@ -743,7 +775,7 @@ Creates a new Tidyscripts log entry for the user.
     },
 
     {
-	enabled : true ,
+	enabled : false ,
 	name : "get_function_template_object_test" ,
 	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
 	parameters : {
@@ -765,7 +797,7 @@ Creates a new Tidyscripts log entry for the user.
 
 
     {
-	enabled : true,
+	enabled : false,
 	name: "test_function_template",
 	description: `
 Tests a function template before saving it to the database.
@@ -966,7 +998,7 @@ IMPORTANT NOTES:
     },
 
     {
-	enabled : true,
+	enabled : false,
 	description : `
 Execute multiple functions serially in a single step.
 Later functions can reference the results of earlier functions using $N syntax.
