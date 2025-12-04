@@ -9,8 +9,8 @@
  */
 
 import * as tsw from "tidyscripts_web";
-import { Client } from "@modelcontextprotocol/sdk/client/index";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
+import { Client } from "@modelcontextprotocol/sdk/client";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 const { common } = tsw;
 const logger = common.logger.get_logger({ id: "mcp_adapter" });
@@ -93,7 +93,7 @@ async function call_mcp_tool(
     const result = await client.callTool({
       name: toolName,
       arguments: args,
-    });
+    }) as any ;
 
     logger(`MCP tool call succeeded: ${toolName}`);
 
@@ -257,7 +257,7 @@ function convert_mcp_tool_to_cortex_function(
 
       // Call the MCP tool
       try {
-        const result = await call_mcp_tool(client, mcpTool.name, coercedArgs);
+        const result = await call_mcp_tool(client, mcpTool.name, coercedArgs) as any; 
         return result;
       } catch (error: any) {
         logger(`MCP tool execution error: ${mcpTool.name} - ${error.message}`);

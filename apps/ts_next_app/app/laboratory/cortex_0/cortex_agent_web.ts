@@ -245,7 +245,7 @@ const functions = [
 	parameters  : null ,
 	fn          : async (ops : any) => {
 	    let query = `select * from cortex where type = "system_instruction"`
-	    let response = await fbu.surreal_query({query }) ;
+	    let response = await fbu.surreal_query({query }) as any ;
 	    return response?.data?.result?.result 
 	} ,
 	return_type : "any"
@@ -517,7 +517,7 @@ Please note: A subfunction runs to accumulate the users text until they say fini
 	    let {log} = ops.util ;
 	    
 	    log(`Surreal QL: \n${query}`); 
-	    let response = await fbu.surreal_query({query, variables : ops.params }) ; 
+	    let response = await fbu.surreal_query({query, variables : ops.params }) as any; 
 	    log(`Got response`)
 	    log(response) 
 	    try {
@@ -592,7 +592,8 @@ Creates a new Tidyscripts log entry for the user.
 	} ,
 	return_type : "string"
     },
-    { 
+    {
+	enabled : true,  
 	description : "Searches a particular log/collection. Provide the search terms as a comma separated string like term1,term2,term3,etc. " , 
 	name        : "search_user_log" ,
 	parameters  : {  name : "string" , search_terms : "string" }  ,
@@ -714,255 +715,6 @@ Creates a new Tidyscripts log entry for the user.
 	    return false
 	} ,
 	return_type : "any"
-    },
-    {
-	enabled : true ,
-	name : "get_function_template_object" ,
-	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
-	parameters : {
-	    name : "string",
-	},
-	fn : async (ops :any ) => {
-
-	    let {name} = ops.params;
-	    let {set_var} = ops.util ;
-
-	    let query = `select * from cortex where type = "function_template" and name = ${name}`
-	    var template = {} ;
-
-	    var response = await fbu.surreal_query({query }) as any ;
-	    var template_string = response.data.result.result[0] ;
-	    template = JSON.parse(template)
-
-	    debug.add("template_info" , {response,template_string,template} )  ;
-
-	    let id = set_var(template) ;
-	    return id ;
-
-	}
-    },
-
-    {
-	enabled : true ,
-	name : "get_function_template_object_test" ,
-	description : "Retrieves a function_template object from the database and stores it in CortexRam, returns its id" ,
-	parameters : {
-	    name : "string",
-	},
-	fn : async (ops :any ) => {
-
-	    let {set_var} = ops.util;
-
-	    let template = cu.example_template ;
-
-	    debug.add("template_info" , {template} )  ;
-
-	    let id = set_var(template) ;
-	    return id ;
-
-	}
-    },
-
-
-    {
-	enabled : true,
-	name: "test_function_template",
-	description: `
-Tests a function template before saving it to the database.
-
-WHAT IS A FUNCTION TEMPLATE?
-A function template is a reusable function wrapper that wraps another function with parameterized arguments.
-It allows you to create custom functions by combining existing functions with predefined argument templates.
-
-FUNCTION TEMPLATE STRUCTURE:
-{
-  name: string,              // Unique name for the procedure (use snake_case)
-  parameters: object,        // Schema defining expected parameters, e.g., {text: "string", count: "number"}
-  function_name: string,     // Name of the underlying function to call
-  function_args: array       // Template arguments with & placeholders for parameter substitution
-}
-
-THE & PLACEHOLDER SYNTAX:
-- In function_args, use &param_name to reference parameters
-- When the procedure runs, &param_name gets replaced with the actual value
-- Example: "insert into logs { message: &text }" → "insert into logs { message: \"hello world\" }"
-
-EXAMPLE FUNCTION TEMPLATE:
-{
-  name: "store_exercise_log",
-  parameters: { text: "string" },
-  function_name: "access_database_with_surreal_ql",
-  function_args: ["query", "insert into logs { message: &text, type: 'exercise' }"]
-}
-
-HOW THIS FUNCTION WORKS:
-1. You provide the complete function template definition (name, parameters, function_name, function_args)
-2. You provide test_args - the actual argument values to test with (same format as when calling run_function_template)
-3. This function will:
-   - Construct the function template object
-   - Resolve all & placeholders with your test values
-   - Execute the underlying function
-   - Report detailed results (success or error)
-   - If successful: save the template to CortexRAM and return its reference ID
-
-PARAMETERS:
-- template_name: string        // Name of the template (e.g., "store_exercise_log")
-- template_parameters: object  // Parameter schema (e.g., {text: "string"})
-- function_name: string        // Underlying function to call (e.g., "access_database_with_surreal_ql")
-- function_args: array         // Template args with & placeholders (e.g., ["query", "insert into logs { message: &text }"])
-- test_args: array             // Test values in key-value format (e.g., ["text", "I exercised today"])
-
-EXAMPLE USAGE:
-
-Example 1 - Simple database insert:
-test_function_template({
-  template_name: "store_exercise_log",
-  template_parameters: { text: "string" },
-  function_name: "access_database_with_surreal_ql",
-  function_args: ["query", "insert into logs { message: &text, type: 'exercise' }"],
-  test_args: ["text", "I did 20 pushups"]
-})
-
-Example 2 - Using multicall (IMPORTANT - note the key-value structure):
-test_function_template({
-  template_name: "embed_and_store",
-  template_parameters: { text: "string", category: "string" },
-  function_name: "multicall",
-  function_args: [
-    "calls",  // ← MUST include "calls" as the parameter name!
-    [
-      {function_name: "compute_embedding", function_args: ["text", "&text"]},
-      {function_name: "access_database_with_surreal_ql", function_args: ["query", "insert into logs { text: &text, category: &category, embedding: $0 }"]}
-    ],
-    "return_indices",  // ← Optional: which results to return
-    [1]
-  ],
-  test_args: ["text", "test message", "category", "info"]
-})
-
-CRITICAL FOR MULTICALL: function_args must use key-value pairs:
-["param_name", param_value, "param_name", param_value, ...]
-WRONG: [value, value, ...] without parameter names
-RIGHT: ["calls", [{...}], "return_indices", [1]]
-
-RETURN VALUE:
-If successful:
-{
-  success: true,
-  template_id: "@abc123",            // CortexRAM reference to the tested template
-  test_result: <actual result>,      // Result from executing the underlying function
-  resolved_args: {...},              // Shows what the final arguments looked like
-  message: "Function template tested successfully and saved to CortexRAM"
-}
-
-If error:
-{
-  success: false,
-  error: <error details>,
-  resolved_args: {...},              // Shows what the final arguments looked like (for debugging)
-  message: "Test failed: <error details>"
-}
-
-WORKFLOW FOR CREATING FUNCTION TEMPLATES:
-1. First, use test_function_template to validate your template works correctly
-2. If test succeeds, you get a template_id (e.g., "@abc123")
-3. Then use save_function_template (separate function) to persist it to the database
-4. The saved template can then be called using run_function_template
-
-IMPORTANT NOTES:
-- Test with realistic data that represents actual use cases
-- Verify the resolved_args in the response to ensure placeholders were replaced correctly
-- If testing fails, check that parameter names in test_args match the & placeholders in function_args
-- The template_id is only temporary (in CortexRAM) until you save it to the database
-`,
-	parameters: {
-	    template_name: "string",
-	    template_parameters: "object",
-	    function_name: "string",
-	    function_args: "array",
-	    test_args: "array"
-	},
-	fn: async (ops: any) => {
-	    const {
-		template_name,
-		template_parameters,
-		function_name,
-		function_args,
-		test_args
-	    } = ops.params;
-
-	    const { handle_function_call, collect_args, log, set_var } = ops.util;
-
-	    log(`Testing function template: ${template_name}`);
-
-	    // Construct the function template object
-	    const function_template = {
-		name: template_name,
-		parameters: template_parameters,
-		function_name: function_name,
-		function_args: function_args
-	    };
-
-	    log(`Function template definition:`);
-	    log(function_template);
-
-	    // Convert test_args to dictionary
-	    const arg_dic = collect_args(test_args);
-	    log(`Test arguments dictionary:`);
-	    log(arg_dic);
-
-	    // Resolve the function_args with test values
-	    let resolved_function_args;
-	    try {
-		resolved_function_args = cu.resolve_function_args_array(function_args, arg_dic);
-		log(`Resolved function_args:`);
-		log(resolved_function_args);
-	    } catch (resolve_error: any) {
-		return {
-		    success: false,
-		    error: resolve_error.message || resolve_error,
-		    message: `Failed to resolve placeholders: ${resolve_error.message || resolve_error}`
-		};
-	    }
-
-	    // Convert resolved args to parameters format
-	    const collected_function_args = collect_args(resolved_function_args);
-	    log(`Collected function arguments:`);
-	    log(collected_function_args);
-
-	    // Execute the underlying function
-	    log(`Executing function: ${function_name}`);
-	    const exec_result = await handle_function_call({
-		name: function_name,
-		parameters: collected_function_args
-	    });
-
-	    // Check for errors
-	    if (exec_result.error) {
-		log(`Test failed with error:`);
-		log(exec_result.error);
-		return {
-		    success: false,
-		    error: exec_result.error,
-		    resolved_args: collected_function_args,
-		    message: `Test failed: ${exec_result.error}`
-		};
-	    }
-
-	    // Success! Save to CortexRAM
-	    log(`Test successful! Saving template to CortexRAM`);
-	    const template_id = await set_var(function_template);
-	    log(`Saved with ID: ${template_id}`);
-
-	    return {
-		success: true,
-		template_id: `@${template_id}`,
-		test_result: exec_result.result,
-		resolved_args: collected_function_args,
-		message: `Function template '${template_name}' tested successfully and saved to CortexRAM with ID @${template_id}`
-	    };
-	},
-	return_type: "object"
     },
 
     {
@@ -1109,63 +861,5 @@ Each result: { function_name, error, result, execution_time_ms }
 	},
 	return_type : "object"
     }
-
-		/*
-		   {
-		   description : "Sets the Cortex interface listen_while_speaking setting. Never run this function unless the user specifically requests that you run it." ,
-		   name        : "set_listen_while_speaking" ,
-		   parameters  : { value : "boolean" }   ,
-		   fn          : async (ops : any) => {
-		   let val = ops.value ; 
-		   vi.set_listen_while_speaking(JSON.parse(val))
-		   return `Set listen_while_speaking to ${val}` ; 
-		   } ,
-		   return_type : "string"
-		   },
-
-		   {
-		   description : "Gets the Cortex interface listen_while_speaking setting" ,
-		   name        : "get_listen_while_speaking" ,
-		   parameters  : null  ,
-		   fn          : async (ops : any) => {
-		   return vi.listen_while_speaking
-		   } ,
-		   return_type : "boolean"
-		   },
-
-		 */
-
-		/*
-		   {
-		   description : "Gets a summary of a youtube video from a url. The length_in_minutes parameter specifies how long it should take to read the summary" ,
-		   name : "youtube_summary" ,
-		   parameters : { url : "string"  , length_in_minutes : "string" } ,
-		   fn : async (ops : any ) => {
-		   let fn_path = ['dev' , 'yts' , 'get_summary' ] ;
-		   let fn_args = [ops.url , Number(ops.length_in_minutes) ] 
-
-		   let msg = `Running YouTube call via TES with args=${JSON.stringify({fn_path,fn_args})}`
-		   ops.event({type:'log' , log : msg})	    
-		   return await tes(fn_path , fn_args )
-		   } ,
-		   return_type : "string" , 
-		   },
-		 */ 
-		
-		
+    
 ]
-
-
-		const held_functions = [
-		    { 
-			description : "Saves a diary/log entry for the user. May be referred to as Captain's log at times if the user is feeling spontaneous. You will need to first accumulate text from the user before passing that text to this function. In addition, you should pass the user_initiation_string, which is the original text the user provided that led to the initiation of the log" , 
-			name        : "generic_user_log" ,
-			parameters  : {  text : "string" , user_initiation_string : "string" }  ,
-			fn          : async (ops : any) => {
-			    await main_stream_log(ops)
-			    return "log saved" 
-			} ,
-			return_type : "string"
-		    },
-		    
-		]

@@ -175,7 +175,7 @@ export class Cortex extends EventEmitter  {
 
     user_output : any ; 
 
-    variables : { [k:any] : any }   ; 
+    CortexRAM : { [k:string] : any } ; 
     
     constructor(ops : CortexOps) {
 
@@ -346,7 +346,7 @@ export class Cortex extends EventEmitter  {
        { name1 : value, name2 : value } 
      */
     collect_args(arg_array : string[]) {
-	let args = {} 
+	let args = {} as any ; 
 	for (var i=0; i< arg_array.length -1 ; i++ ) {
 	    if ( (i % 2 ) == 0 ) {
 		//its an even index and thus a param name
@@ -483,7 +483,7 @@ export class Cortex extends EventEmitter  {
 	this.log_event(msg) 
     } 
 
-    async handle_function_call(fCall : functionCall ) {
+    async handle_function_call(fCall : FunctionCall ) {
 	let { name, parameters }  = fCall ;
 
 	let F = this.function_dictionary[name] ;
@@ -502,7 +502,7 @@ export class Cortex extends EventEmitter  {
 	this.log(fn_msg)
 	this.log_event(fn_msg)  
 
-	var aux_parameters = {} ; 
+	var aux_parameters = {} as any; 
 
 	//prepare the function_input
 	const get_user_data = (async function() {

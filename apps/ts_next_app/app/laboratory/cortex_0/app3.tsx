@@ -154,7 +154,7 @@ const  Component: NextPage = (props : any) => {
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
     // State for Cortex agent, re-created when ai_model changes
-    var [COR, setCOR] = useState( null ) 
+    var [COR, setCOR] = useState( null as any ) 
 
     var get_agent = function() {
 	return COR 
@@ -549,7 +549,7 @@ const  Component: NextPage = (props : any) => {
 	log(`Calling llm`)
 	var ai_response_text : string ; 
 	try  {
-	    var ai_response_text = await COR.run_llm(1) ; 
+	    var ai_response_text = await COR.run_llm(1) as string ; 
 	} catch (e : any) { 
 	    throw new Error(`Error extracting ai message: ${e}`) 
 	}
