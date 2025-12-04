@@ -397,8 +397,11 @@ const  Component: NextPage = (props : any) => {
 	    get_ai_response().then( (resp : string) => {
 		if (resp == null) {
 		    log("IGNORING NULL RESPONSE")
-		} else { 
-		    add_ai_message(resp)
+		} else {
+		    //in the old architecturee the final response needed to be displayed 
+		    // add_ai_message(resp)
+
+		    //but now response display is handled by tool/function call
 		}
 	    })
 

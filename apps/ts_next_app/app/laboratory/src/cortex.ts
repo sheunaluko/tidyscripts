@@ -209,6 +209,14 @@ export class Cortex extends EventEmitter  {
 	return id  ; 
     }
 
+    async set_var_with_id(v : any , id : string )  {
+
+	this.CortexRAM[id] = v; 
+	this.log(`Wrote var with id=${id}`)
+	debug.add(id, v)
+	return id  ; 
+    }
+    
     get_var(id : string) {
 	this.log(`Returning var ${id}`)	
 	return this.CortexRAM[id] 
@@ -367,6 +375,39 @@ export class Cortex extends EventEmitter  {
 	return args 
     }
 
+    resolve_args(args : any) {
+	/*
+	   refactored to use arg dictionary instead of array of strings
+	   each key should be left the same , but the values should be recursively resolved 
+	 */
+	
+    }
+
+    async run_cortex_output(co : CortexOutput) {
+	/*
+	   implement this modeled after multicall
+	   use resolve_args above rather than collect args (args are a dictionary no longer string)
+
+	   Also -- we should handle the $0 and $1 syntax using CortexRAM as well (i.e. after the first call
+	   in the array is run its result is stored in CortexRAM with id "$0" , etc..  (use set_var_with_id)
+
+	   this should eliminate the helper resolve_result_references
+
+	   include index filtering for result
+
+	   include good but minimally necessary logging 
+
+	   return a FunctionResult (and run everything inside try/catch to return result error if needed) 
+	 */
+
+	return {
+	    error : false,
+	    result : "results by index in an object"  ,
+	    name : 'summary of execution' 
+	} as FunctionResult
+	
+    }
+
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
 	/*
@@ -395,13 +436,11 @@ export class Cortex extends EventEmitter  {
 
 	this.set_is_running_function(true) ; //function running indicator 	
 
-	//lets try just run the 1st function
-	let functionCall = output.calls[0]
-	let function_result = await this.handle_function_call(functionCall) ;
-	
+
+	let result = await this.run_cortex_output(output);
 	this.set_is_running_function(false) ;  //turn off function running indicator
-	this.add_user_result_input(function_result) ;
-		
+	this.add_user_result_input(result)
+
 	return "done" //function_result  (need to fix this error!) 
 
 
