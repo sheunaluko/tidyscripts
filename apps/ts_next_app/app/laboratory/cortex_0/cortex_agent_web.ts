@@ -194,6 +194,20 @@ var BASH_CLIENT : any = null ;
 
 
 const functions = [
+   {
+      enabled : true,
+      description : `Function for responding to the user` ,
+      name : "respond_to_user",
+      parameters : { response : "string" } ,
+	  fn : async (ops : any) => {
+	      let {user_output, log} = ops.util ;
+	      let {response} = ops.params ; 
+	      log(`user response: ${response}`) ;
+	      await user_output(response) ;
+	      return `Responded to user with: ${response}` ; 
+	  },
+       return_type : "string" , 
+   },
 
     {
 	enabled : true, 

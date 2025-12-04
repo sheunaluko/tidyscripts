@@ -16,11 +16,8 @@ import * as Channel from "./channel"
 /*
    
    Todo:  
-   - support multiple function calls simultaneously 
-      - probably best way is to change CortexOutput to be text of functionCallS
-      - and to have functionCalls : FunctionCall[ ]  | null 
-      - and just natively support multiple function calls (or 1 or none) 
-
+   Implementing core multicall
+   
  */
 
 
@@ -62,25 +59,22 @@ type UserInput = {
 
 /* CortexOutput */
 type CortexOutput = {
-    thoughts : string, 
-    function_name :  string 
-    function_args : string[] 
+    thoughts : string,
+    calls : FunctionCall[], //change output to array of function calls
+    return_indeces : number[]
 } 
 
-/*
-Had some issues trying to collect functionName and functionParameters together , but seems to be working now... :) 
- */
 
 const FunctionCallObject = z.object({
-    name : z.union( [z.string() , z.null() ]) , 
+    name : z.string() ,
     parameters : z.union( [z.record(z.string()) , z.null() ])    
 })
 
 const zrf  = z.object({
     thoughts : z.string() , 
-    function_name : z.string() , 
-    function_args : z.array( z.string() )  , 
-})
+    calls : z.array( FunctionCallObject ),
+    return_indeces : z.array( z.number() )  }
+)
 
 /* CortexOutputResoponseFormat */
 export const CortexOutputResponseFormat = zodResponseFormat( zrf,  'CortexOutput'  ) ;
@@ -106,8 +100,6 @@ type CortexMessage = {
 } 
 type IOMessage  = (UserMessage | CortexMessage )
 type IOMessages = IOMessage[] ; 
-
-
 
 
 /* create mapping of function name to the function object */ 
@@ -296,9 +288,8 @@ export class Cortex extends EventEmitter  {
      * If loop=N, after obtaining a function response another LLM call 
      * will be made automatically, until no more functions are called or until N calls have been made 
      */
-    async run_llm(loop : number = 2) : Promise<string> {
+    async run_llm(loop : number = 1) : Promise<string> {
 
-	
 	let messages = this.build_messages() ;
 	let model = this.model ; 
 	let response_format = CortexOutputResponseFormat ;
@@ -378,6 +369,10 @@ export class Cortex extends EventEmitter  {
 
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
+	/*
+	   Working here to implement native multicall 
+	*/
+
 	let jsonData = await fetchResponse.json()
 	debug.add('model_json_response', jsonData) ;
 	this.prompt_history.push(jsonData) ; 
@@ -387,86 +382,27 @@ export class Cortex extends EventEmitter  {
 	this.log_event(`Token Usage=${total_tokens}`) ;
 	
 	let output  = jsonData.choices[0].message.parsed ;
+	console.log(output) 
+	debug.add("output", output) ; 
 
 	//add the message 
 	this.add_cortex_output(output)	
 
 	//at this point parsed is a CortexOutput object
+	this.log(`Got respond_to_user function`) 	    
+	this.emit_event({'type': 'thought', 'thought' : output.thoughts})
 
-	//also everything is upgraded to always be a function!
-	let args = this.collect_args(output.function_args) ;  
-	this.log(`Processed args and got:`)
-	this.log(args) ; 
+
+	this.set_is_running_function(true) ; //function running indicator 	
+
+	//lets try just run the 1st function
+	let functionCall = output.calls[0]
+	let function_result = await this.handle_function_call(functionCall) ;
 	
-	if (output.function_name == "respond_to_user" ) {
-	    this.log(`Got respond_to_user function`) 	    
-	    this.emit_event({'type': 'thought', 'thought' : output.thoughts})
-	    //this.log(`thinking::> ${output.thoughts}`)	    
-	    this.log(`OUTPUT::> ${args.response}`)
-	    return args.response
-	}
-
-	if (output.function_name != "respond_to_user" ) {
-
-	    this.log(`Got some function`) 
-
-	    this.set_is_running_function(true) ; //function running indicator 
-
-	    try {
-		this.log(`Loop=${loop}`)
-		this.emit_event({'type': 'thought', 'thought' : output.thoughts}) 		
+	this.set_is_running_function(false) ;  //turn off function running indicator
+	this.add_user_result_input(function_result) ;
 		
-		if (loop < 1 ) {
-		    this.log(`Loop counter ran out!`)
-
-		    let name = output.function_name ;
-		    let functionCall =  {
-			name ,
-			parameters : args 
-			
-		    }
-		    
-		    let function_result = {
-			name,
-			error : "too many repeated function calls, please request user  permission to proceed", 
-			result : null , 
-		    }
-		    
-		    this.set_is_running_function(false) ;  //turn off function running indicator
-		    this.add_user_result_input(function_result) ;
-		    return await this.run_llm(1) ; // 
-
-		}
-
-
-		let name = output.function_name ;
-		let functionCall =  {
-		    name ,
-		    parameters : args 
-		    
-		}
-		
-
-		let function_result = await this.handle_function_call(functionCall) ;
-		this.set_is_running_function(false) ;  //turn off function running indicator
-		this.add_user_result_input(function_result) ;
-		
-	    } catch (e : any ) {
-		
-		//error with function call
-		this.log(`Uncaught error with function execution!`)
-		throw new Error(e)
-		
-	    }
-
-	    
-	    return await this.run_llm(loop-1)
-
-
-	    
-	}
-
-	return "LLM output kind unrecognized" 
+	return "done" //function_result  (need to fix this error!) 
 
 
     }
