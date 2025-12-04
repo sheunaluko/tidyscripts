@@ -375,37 +375,155 @@ export class Cortex extends EventEmitter  {
 	return args 
     }
 
-    resolve_args(args : any) {
-	/*
-	   refactored to use arg dictionary instead of array of strings
-	   each key should be left the same , but the values should be recursively resolved 
-	 */
-	
+    resolve_args(args : any): any {
+	// Handle null/undefined
+	if (args === null || args === undefined) {
+	    return args;
+	}
+
+	// Handle strings - most complex case
+	if (typeof args === 'string') {
+	    // Check for CortexRAM reference (@id)
+	    if (args[0] === '@') {
+		this.log(`Resolving CortexRAM reference: ${args}`);
+		return this.resolve_cortex_ram_reference(args);
+	    }
+
+	    // Check for result reference ($N)
+	    if (args.match(/^\$\d+$/)) {
+		this.log(`Resolving result reference: ${args}`);
+		const value = this.get_var(args);
+		if (value !== undefined) {
+		    return value;
+		} else {
+		    this.log(`Warning: ${args} not found in CortexRAM, returning as-is`);
+		    return args;
+		}
+	    }
+
+	    // Try to parse as JSON
+	    try {
+		const parsed = JSON.parse(args);
+		// Successfully parsed - recursively resolve in case it contains references
+		return this.resolve_args(parsed);
+	    } catch (e) {
+		// Not valid JSON - return as plain string
+		return args;
+	    }
+	}
+
+	// Handle arrays - recursively resolve each element
+	if (Array.isArray(args)) {
+	    return args.map(item => this.resolve_args(item));
+	}
+
+	// Handle objects - recursively resolve each value
+	if (typeof args === 'object') {
+	    const resolved: any = {};
+	    for (const key in args) {
+		if (args.hasOwnProperty(key)) {
+		    resolved[key] = this.resolve_args(args[key]);
+		}
+	    }
+	    return resolved;
+	}
+
+	// Handle primitives (number, boolean, etc.) - return as-is
+	return args;
     }
 
-    async run_cortex_output(co : CortexOutput) {
-	/*
-	   implement this modeled after multicall
-	   use resolve_args above rather than collect args (args are a dictionary no longer string)
+    async run_cortex_output(co : CortexOutput): Promise<FunctionResult> {
+	try {
+	    const { calls, return_indeces } = co;
 
-	   Also -- we should handle the $0 and $1 syntax using CortexRAM as well (i.e. after the first call
-	   in the array is run its result is stored in CortexRAM with id "$0" , etc..  (use set_var_with_id)
+	    if (!calls || calls.length === 0) {
+		this.log('No function calls to execute');
+		return {
+		    name: 'multicall_execution',
+		    error: false,
+		    result: {}
+		};
+	    }
 
-	   this should eliminate the helper resolve_result_references
+	    this.log(`Executing cortex output with ${calls.length} function calls`);
+	    const results: FunctionResult[] = [];
 
-	   include index filtering for result
+	    // Execute each call serially
+	    for (let i = 0; i < calls.length; i++) {
+		const call = calls[i];
+		this.log(`Executing call ${i + 1}/${calls.length}: ${call.name}`);
 
-	   include good but minimally necessary logging 
+		// Resolve parameters
+		const resolved_parameters = this.resolve_args(call.parameters);
 
-	   return a FunctionResult (and run everything inside try/catch to return result error if needed) 
-	 */
+		// Execute function
+		const result = await this.handle_function_call({
+		    name: call.name,
+		    parameters: resolved_parameters
+		});
 
-	return {
-	    error : false,
-	    result : "results by index in an object"  ,
-	    name : 'summary of execution' 
-	} as FunctionResult
-	
+		results.push(result);
+
+		// Store result for $N references
+		await this.set_var_with_id(result.result, `$${i}`);
+
+		// Fail fast on error
+		if (result.error) {
+		    const filtered = this.filter_results_by_indices(results, return_indeces);
+		    const errorMsg = `Execution failed at call ${i + 1}/${calls.length} (${call.name}): ${result.error}`;
+		    this.log(errorMsg);
+		    this.log_event(errorMsg);
+		    return {
+			name: 'multicall_execution',
+			error: errorMsg,
+			result: { results: filtered }
+		    };
+		}
+	    }
+
+	    // Success - filter and return
+	    const filtered = this.filter_results_by_indices(results, return_indeces);
+	    this.log(`All ${calls.length} calls completed successfully`);
+	    this.log_event(`Multicall execution completed: ${calls.length} functions`);
+
+	    return {
+		name: 'multicall_execution',
+		error: false,
+		result: { results: filtered }
+	    };
+
+	} catch (error: any) {
+	    const errorMsg = `Unexpected error in multicall execution: ${error.message}`;
+	    this.log(errorMsg);
+	    this.log_event(errorMsg);
+	    return {
+		name: 'multicall_execution',
+		error: errorMsg,
+		result: {}
+	    };
+	}
+    }
+
+    private filter_results_by_indices(results: FunctionResult[], indices: number[]): Record<number, FunctionResult> {
+	// Return all if no indices specified
+	if (!indices || indices.length === 0) {
+	    const all: Record<number, FunctionResult> = {};
+	    results.forEach((result, idx) => {
+		all[idx] = result;
+	    });
+	    return all;
+	}
+
+	// Filter by indices
+	const filtered: Record<number, FunctionResult> = {};
+	indices.forEach(idx => {
+	    if (idx >= 0 && idx < results.length) {
+		filtered[idx] = results[idx];
+	    } else {
+		this.log(`Warning: return_indeces contains invalid index ${idx}`);
+	    }
+	});
+	return filtered;
     }
 
     async handle_llm_response(fetchResponse : any , loop : number ) {
