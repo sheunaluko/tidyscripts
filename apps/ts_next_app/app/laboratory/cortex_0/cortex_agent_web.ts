@@ -874,6 +874,241 @@ Each result: { function_name, error, result, execution_time_ms }
 	    }
 	},
 	return_type : "object"
+    },
+
+    {
+	enabled: true,
+	description: `
+Saves a Call Chain Template to the database for reuse.
+
+A Call Chain Template is a reusable multi-step tool macro that executes a sequence of function calls.
+
+CRITICAL: When calling save_call_chain_template, it MUST be the ONLY function call in your calls array. Do not include any other function calls before or after it.
+
+Parameters (all are required):
+
+1. name (string): Unique identifier for the template
+   Example: "store_text_with_embedding"
+
+2. description (string): Clear description of what the template does
+   Example: "Computes an embedding for input text and stores both in the database"
+
+3. params_schema (object): A proper JSON object mapping parameter names to their types
+   CORRECT: {text: "string", category: "string"}
+   INCORRECT: ":{" or any string - this MUST be an actual object
+
+4. calls (array): Array of function call objects that will be executed when the template runs
+   Each call must have:
+   - name (string): The function name to call
+   - parameters (object): Parameters with & for template params and $ for call results
+
+   CORRECT format:
+   [
+     {name: "compute_embedding", parameters: {text: "&text"}},
+     {name: "access_database_with_surreal_ql", parameters: {query: "INSERT INTO logs {text: \"&text\", embedding: \"$0\"}"}}
+   ]
+
+5. return_indices (array): Array of integers specifying which call results to return
+   [0] = first result, [1] = second result, [0, 1] = both results
+
+PLACEHOLDER SYSTEM:
+- "&paramName" = template parameter (replaced before execution with actual value)
+- "$N" = call result reference ($0 = first call result, $1 = second, etc.)
+
+FULL EXAMPLE of saving a template:
+{
+  name: "embed_and_store",
+  description: "Computes embedding and stores text with embedding",
+  params_schema: {text: "string", category: "string"},
+  calls: [
+    {name: "compute_embedding", parameters: {text: "&text"}},
+    {name: "access_database_with_surreal_ql", parameters: {query: "INSERT INTO logs {text: \"&text\", category: \"&category\", embedding: \"$0\"}"}}
+  ],
+  return_indices: [1]
+}
+	`,
+	name: "save_call_chain_template",
+	parameters: {
+	    name: "string",
+	    description: "string",
+	    params_schema: "object",
+	    calls: "array",
+	    return_indices: "array"
+	},
+	fn: async (ops: any) => {
+	    const { name, description, params_schema, calls, return_indices } = ops.params;
+	    const { log } = ops.util;
+
+	    log(`Saving call chain template: ${name}`);
+
+	    const query = `
+            INSERT INTO cortex_call_chains {
+                name: $name,
+                description: $description,
+                params_schema: $params_schema,
+                calls: $calls,
+                return_indices: $return_indices,
+                type: "call_chain_template"
+            }
+        `;
+
+	    const response = await fbu.surreal_query({
+		query,
+		variables: { name, description, params_schema, calls, return_indices }
+	    }) as any;
+
+	    return response?.data?.result?.result || "Template saved successfully";
+	},
+	return_type: "any"
+    },
+
+    {
+	enabled: true,
+	description: `
+Retrieves a Call Chain Template by name from the database.
+
+Returns the template object with its calls array and parameter schema.
+	`,
+	name: "get_call_chain_template",
+	parameters: {
+	    name: "string"
+	},
+	fn: async (ops: any) => {
+	    const { name } = ops.params;
+	    const { log } = ops.util;
+
+	    log(`Fetching call chain template: ${name}`);
+
+	    const query = `
+            SELECT * FROM cortex_call_chains
+            WHERE name = $name AND type = "call_chain_template"
+            LIMIT 1
+        `;
+
+	    const response = await fbu.surreal_query({
+		query,
+		variables: { name }
+	    }) as any;
+
+	    const templates = response?.data?.result?.result;
+
+	    if (!templates || templates.length === 0) {
+		throw new Error(`Template "${name}" not found`);
+	    }
+
+	    return templates[0];
+	},
+	return_type: "object"
+    },
+
+    {
+	enabled: true,
+	description: `
+Lists all available Call Chain Templates from the database.
+
+Returns an array of template objects showing their names and descriptions.
+Useful for discovering which templates are available to run.
+	`,
+	name: "list_call_chain_templates",
+	parameters: null,
+	fn: async (ops: any) => {
+	    const { log } = ops.util;
+
+	    log(`Listing all call chain templates`);
+
+	    const query = `
+            SELECT name, description, params_schema
+            FROM cortex_call_chains
+            WHERE type = "call_chain_template"
+        `;
+
+	    const response = await fbu.surreal_query({ query }) as any;
+
+	    return response?.data?.result?.result || [];
+	},
+	return_type: "array"
+    },
+
+    {
+	enabled: true,
+	description: `
+Executes a Call Chain Template by name with the provided arguments.
+
+This is the core execution function that:
+1. Fetches the template by name
+2. Substitutes & placeholders with actual parameter values
+3. Executes the call chain via run_cortex_output
+4. Returns the filtered results
+
+Parameters:
+- template_name: string - Name of the template to run
+- template_args: object - Parameter values as an object
+  Example: {text: "Hello world", category: "greeting"}
+
+The template's calls will have & placeholders replaced with actual values,
+then executed as a normal CortexOutput call chain.
+	`,
+	name: "run_call_chain_template",
+	parameters: {
+	    template_name: "string",
+	    template_args: "object"
+	},
+	fn: async (ops: any) => {
+	    const { template_name, template_args } = ops.params;
+	    const {
+		log,
+		handle_function_call,
+		run_cortex_output
+	    } = ops.util;
+
+	    log(`Running call chain template: ${template_name}`);
+	    log(`Template args: ${JSON.stringify(template_args)}`);
+
+	    // Step 1: Fetch the template
+	    const template_result = await handle_function_call({
+		name: "get_call_chain_template",
+		parameters: { name: template_name }
+	    });
+
+	    if (template_result.error) {
+		throw new Error(`Failed to fetch template: ${template_result.error}`);
+	    }
+
+	    const template = template_result.result;
+	    log(`Retrieved template: ${template.name}`);
+
+	    // Step 2: Use template_args directly as arg_dic (already an object)
+	    const arg_dic = template_args;
+	    log(`Argument dictionary: ${JSON.stringify(arg_dic)}`);
+
+	    // Step 3: Resolve & placeholders in calls array
+	    const resolved_calls = cu.resolve_call_chain_template_args(
+		template.calls,
+		arg_dic
+	    );
+
+	    log(`Resolved calls: ${JSON.stringify(resolved_calls)}`);
+
+	    // Step 4: Build CortexOutput
+	    const cortex_output = {
+		thoughts: `Executing call chain template: ${template_name}`,
+		calls: resolved_calls,
+		return_indeces: template.return_indices || []
+	    };
+
+	    // Step 5: Execute via run_cortex_output
+	    const execution_result = await run_cortex_output(cortex_output);
+
+	    log(`Template execution completed`);
+
+	    // Step 6: Return the result
+	    if (execution_result.error) {
+		throw new Error(`Template execution failed: ${execution_result.error}`);
+	    }
+
+	    return execution_result.result;
+	},
+	return_type: "any"
     }
-    
+
 ]

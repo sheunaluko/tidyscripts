@@ -681,6 +681,11 @@ export class Cortex extends EventEmitter  {
 	aux_parameters.handle_function_call = (this.handle_function_call.bind(this)) ;
 	aux_parameters.collect_args = (this.collect_args.bind(this)) ;
 
+	this.log(`Including resolve_args and run_cortex_output`)	;
+
+	aux_parameters.resolve_args = (this.resolve_args.bind(this)) ;
+	aux_parameters.run_cortex_output = (this.run_cortex_output.bind(this)) ;	
+
 	try {
 	    let result = await F.fn({params : parameters, util : aux_parameters})
 	    error = null ;

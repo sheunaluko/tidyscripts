@@ -77,14 +77,39 @@ export function resolve_single_arg_with_dic(arg: any, arg_dic: any): any {
 
 export function resolve_function_args_array( function_args : any[] , arg_dic : any ) {
 
-    let new_arg_arr = [ ]  ; 
+    let new_arg_arr = [ ]  ;
     for (var i = 0; i < function_args.length ; i ++ ) {
 	let arg = function_args[i] ;
-	new_arg_arr.push( resolve_single_arg_with_dic(arg,arg_dic) ) ; 
+	new_arg_arr.push( resolve_single_arg_with_dic(arg,arg_dic) ) ;
     }
 
-    return new_arg_arr 
+    return new_arg_arr
 
+}
+
+/**
+ * Resolves & placeholders in call chain template calls
+ * Handles the modern object-based parameters format
+ *
+ * @param calls - Array of {name: string, parameters: object} with & placeholders
+ * @param arg_dic - Dictionary of template arguments {param_name: param_value}
+ * @returns Resolved calls array ready for run_cortex_output
+ */
+export function resolve_call_chain_template_args(calls: any[], arg_dic: any): any[] {
+    return calls.map(call => {
+        // Each call has {name: string, parameters: object | null}
+        if (!call.parameters) {
+            return call;  // No parameters to resolve
+        }
+
+        // Recursively resolve & placeholders in the parameters object
+        const resolved_parameters = resolve_single_arg_with_dic(call.parameters, arg_dic);
+
+        return {
+            name: call.name,
+            parameters: resolved_parameters
+        };
+    });
 }
 
 export async function run_function_template( template : any , template_args : any[], collect_fn : any) {
