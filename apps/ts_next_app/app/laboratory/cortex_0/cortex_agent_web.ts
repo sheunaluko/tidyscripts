@@ -607,7 +607,7 @@ Creates a new Tidyscripts log entry for the user.
 	return_type : "string"
     },
     {
-	enabled : true,  
+	enabled : false,  
 	description : "Searches a particular log/collection. Provide the search terms as a comma separated string like term1,term2,term3,etc. " , 
 	name        : "search_user_log" ,
 	parameters  : {  name : "string" , search_terms : "string" }  ,
@@ -662,7 +662,7 @@ Creates a new Tidyscripts log entry for the user.
      */
 
     {
-	enabled : true,
+	enabled : false,
 	description : `
            Runs a function_template by using its name and arguments
 	` ,
@@ -732,7 +732,7 @@ Creates a new Tidyscripts log entry for the user.
     },
 
     {
-	enabled : true,
+	enabled : false,
 	description : `
 Execute multiple functions serially in a single step.
 Later functions can reference the results of earlier functions using $N syntax.

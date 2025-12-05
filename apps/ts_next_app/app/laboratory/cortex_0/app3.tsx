@@ -132,7 +132,7 @@ const  Component: NextPage = (props : any) => {
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
 
-    const default_model = "o4-mini"
+    const default_model = "gpt-5.1"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    
@@ -279,10 +279,11 @@ const  Component: NextPage = (props : any) => {
         }
 	
 	if (COR) {
+	    //this is redundant but leaving for historical reasons
 	    if (mode == 'chat' ) {
-		COR.configure_user_output(add_ai_message)
+		COR.configure_user_output(add_ai_message) 
 	    } else {
-		COR.configure_user_output(speak)		
+		COR.configure_user_output(add_ai_message )		
 	    }
 	}
     }, [playbackRate, COR, mode])
@@ -394,20 +395,17 @@ const  Component: NextPage = (props : any) => {
 	if (role == 'user') {
 
 	    log(`Given user change, will send to ai`)
-	    get_ai_response().then( (resp : string) => {
-		if (resp == null) {
-		    log("IGNORING NULL RESPONSE")
-		} else {
-		    //in the old architecturee the final response needed to be displayed 
-		    // add_ai_message(resp)
+	    get_ai_response().then( (result : any) => {
+		// add_ai_message(resp)
+		//but now response display is handled by tool/function call
 
-		    //but now response display is handled by tool/function call
-		}
-	    })
+		
+	    }); 
 
 	    return 
-
+	    
 	}
+
 	if (role == 'system') {
 	    log(`System change ignored`) 
 	} else {
@@ -549,17 +547,15 @@ const  Component: NextPage = (props : any) => {
 
     //function for getting AI response from the chat history and the ai_model
     let get_ai_response = async function() {
+	
 	log(`Calling llm`)
-	var ai_response_text : string ; 
 	try  {
-	    var ai_response_text = await COR.run_llm(1) as string ; 
+	    var llm_result  = await COR.run_llm(1) as string ; 
 	} catch (e : any) { 
-	    throw new Error(`Error extracting ai message: ${e}`) 
+	    throw new Error(`Error running llm: ${e}`) 
 	}
 
-	debug.add('ai_response_text' , ai_response_text)
-	log(`Got response: ${ai_response_text}`) 
-	return ai_response_text 
+	return llm_result
 
     } 
 
@@ -1326,6 +1322,7 @@ const  Component: NextPage = (props : any) => {
               label="Model"
               onChange={e => set_ai_model(e.target.value as string)}
             >
+              <MenuItem value="gpt-5.1">gpt-4o</MenuItem>		
               <MenuItem value="gpt-4o">gpt-4o</MenuItem>
               <MenuItem value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</MenuItem>
               <MenuItem value="o4-mini">o4-mini</MenuItem>

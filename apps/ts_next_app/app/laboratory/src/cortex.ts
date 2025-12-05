@@ -5,19 +5,18 @@
 import { zodResponseFormat } from 'openai/helpers/zod' ;
 import { z } from "zod" ;
 import system_msg_template  from "./cortex_system_msg_template"
-import * as common from "tidyscripts_common"
 import * as tsw from "tidyscripts_web"
 import {EventEmitter} from 'events'  ;  
-const {debug} = common.util ;
-const log = common.logger.get_logger({'id':'cortex_base'})
+const {debug} = tsw.common.util ;
+const log = tsw.common.logger.get_logger({'id':'cortex_base'})
 import * as Channel from "./channel" 
 
 
 /*
    
    Todo:  
-   Implementing core multicall
-   
+   [ ] implemented multicall 
+
  */
 
 
@@ -47,13 +46,20 @@ type FunctionResult =  {
     name : string,
     error : boolean | string , 
     result  : FunctionReturnType
+}
+
+type CallChainResult =  {
+    name : string,
+    error : boolean | string , 
+    result  : FunctionReturnType
 } 
 
-/* FunctionResult */
+
+/* UserInput */
 type UserInput = {
-    kind  : "text" | "functionResult"  ,
+    kind  : "text" | "CallChainResult"  ,
     text : string | null , 
-    functionResult : FunctionResult | null , 
+    callChainResult : CallChainResult | null , 
 }
 
 
@@ -183,7 +189,7 @@ export class Cortex extends EventEmitter  {
 	this.prompt_history = [ ];
 	this.CortexRAM = {} 
 	
-	let log = common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
+	let log = tsw.common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
 	this.user_output = function(x : any) {
 	    log(`User output not yet configured: received output:`)
@@ -269,16 +275,16 @@ export class Cortex extends EventEmitter  {
 	let input : UserInput = {
 	    kind : "text" ,
 	    text  ,
-	    functionResult : null 
+	    callChainResult : null 
 	}
 	let user_message = this._user_msg(JSON.stringify(input)) ; 
 	this.add_user_message(user_message) 
     }
 
-    add_user_result_input(functionResult : FunctionResult)  {
+    add_user_result_input(callChainResult : CallChainResult)  {
 	let input : UserInput = {
-	    kind : 'functionResult' ,
-	    functionResult ,
+	    kind : 'CallChainResult' ,
+	    callChainResult ,
 	    text : null 
 	}
 	let user_message = this._user_msg(JSON.stringify(input))
@@ -394,7 +400,7 @@ export class Cortex extends EventEmitter  {
 		this.log(`Resolving result reference: ${args}`);
 		const value = this.get_var(args);
 		if (value !== undefined) {
-		    return value;
+		    return this.resolve_args(value);
 		} else {
 		    this.log(`Warning: ${args} not found in CortexRAM, returning as-is`);
 		    return args;
@@ -439,9 +445,9 @@ export class Cortex extends EventEmitter  {
 	    if (!calls || calls.length === 0) {
 		this.log('No function calls to execute');
 		return {
-		    name: 'multicall_execution',
+		    name: 'run_result',
 		    error: false,
-		    result: {}
+		    result: "There were no functions to execute" 
 		};
 	    }
 
@@ -453,13 +459,10 @@ export class Cortex extends EventEmitter  {
 		const call = calls[i];
 		this.log(`Executing call ${i + 1}/${calls.length}: ${call.name}`);
 
-		// Resolve parameters
-		const resolved_parameters = this.resolve_args(call.parameters);
-
-		// Execute function
+		// Execute function (handle_function_call will resolve parameters)
 		const result = await this.handle_function_call({
 		    name: call.name,
-		    parameters: resolved_parameters
+		    parameters: call.parameters
 		});
 
 		results.push(result);
@@ -474,7 +477,7 @@ export class Cortex extends EventEmitter  {
 		    this.log(errorMsg);
 		    this.log_event(errorMsg);
 		    return {
-			name: 'multicall_execution',
+			name: 'run_result',
 			error: errorMsg,
 			result: { results: filtered }
 		    };
@@ -484,22 +487,27 @@ export class Cortex extends EventEmitter  {
 	    // Success - filter and return
 	    const filtered = this.filter_results_by_indices(results, return_indeces);
 	    this.log(`All ${calls.length} calls completed successfully`);
-	    this.log_event(`Multicall execution completed: ${calls.length} functions`);
+	    this.log_event(`Run execution completed: ${calls.length} functions`);
+	    debug.add("results", results)
+	    this.log(results)	    
+	    debug.add("filtered", filtered)
+	    this.log(filtered) 
 
+	    
 	    return {
-		name: 'multicall_execution',
+		name: 'call_chain_results',
 		error: false,
 		result: { results: filtered }
 	    };
 
 	} catch (error: any) {
-	    const errorMsg = `Unexpected error in multicall execution: ${error.message}`;
+	    const errorMsg = `Unexpected error in run execution: ${error.message}`;
 	    this.log(errorMsg);
 	    this.log_event(errorMsg);
 	    return {
-		name: 'multicall_execution',
+		name: 'run_result',
 		error: errorMsg,
-		result: {}
+		result: null 
 	    };
 	}
     }
@@ -529,7 +537,7 @@ export class Cortex extends EventEmitter  {
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
 	/*
-	   Working here to implement native multicall 
+	   ---
 	*/
 
 	let jsonData = await fetchResponse.json()
@@ -559,7 +567,41 @@ export class Cortex extends EventEmitter  {
 	this.set_is_running_function(false) ;  //turn off function running indicator
 	this.add_user_result_input(result)
 
-	return "done" //function_result  (need to fix this error!) 
+	// Check if last function was respond_to_user AND execution succeeded
+	const executionFailed = result.error;
+	const lastCall = output.calls[output.calls.length - 1];
+	const plannedRespondToUser = lastCall && lastCall.name === "respond_to_user";
+
+	// Only consider it done if respond_to_user actually executed successfully
+	const isRespondToUser = !executionFailed && plannedRespondToUser;
+
+	if (isRespondToUser) {
+	    // User got response, conversation ends
+	    return "done";
+	}
+
+	// Last call wasn't respond_to_user, LLM needs to process results
+	if (loop > 0) {
+	    // Re-invoke LLM with decremented loop counter
+	    this.log(`Continuing LLM invocation::  [loops remaining: ${loop}] - Error=${result.error}`);
+	    return await this.run_llm(loop - 1);
+	} else if (loop === 0) {
+	    // Out of loops - add simulated message instructing LLM to respond
+	    this.log(`Loop limit reached without respond_to_user, adding instruction message`);
+	    const loopLimitMessage: CallChainResult = {
+		name: "system_message",
+		error: false,
+		result: "Loop limit reached. You must now call respond_to_user with the current status of the task."
+	    };
+	    this.add_user_result_input(loopLimitMessage);
+
+	    // Give LLM one final chance to respond (loop=-1 to prevent further loops)
+	    return await this.run_llm(-1);
+	} else {
+	    // loop < 0 (safety limit reached after instruction message)
+	    this.log(`Final loop limit reached without respond_to_user, forcing stop`);
+	    return "done";
+	} 
 
 
     }
@@ -578,6 +620,9 @@ export class Cortex extends EventEmitter  {
 
     async handle_function_call(fCall : FunctionCall ) {
 	let { name, parameters }  = fCall ;
+
+	// Resolve any references in parameters (idempotent - safe to call multiple times)
+	parameters = this.resolve_args(parameters);
 
 	let F = this.function_dictionary[name] ;
 	var error : any  ; 
@@ -603,7 +648,7 @@ export class Cortex extends EventEmitter  {
 	    return await this.function_input_ch.read() 
 	}).bind(this)
 
-	const fn_log = common.logger.get_logger({id : `fn:${name}`}); 
+	const fn_log = tsw.common.logger.get_logger({id : `fn:${name}`}); 
 
 	this.log(`Appending get_user_data to function parameters`)	
 	aux_parameters.get_user_data = get_user_data ;
