@@ -8,7 +8,8 @@ import * as bashr from "../../../src/bashr/index"
 import * as tsw from "tidyscripts_web"
 import * as fb from "../../../src/firebase" ;
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
-import * as cu from "./src/cortex_utils" 
+import * as cu from "./src/cortex_utils"
+import { z } from "zod" 
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
@@ -879,87 +880,161 @@ Each result: { function_name, error, result, execution_time_ms }
     {
 	enabled: true,
 	description: `
-Saves a Call Chain Template to the database for reuse.
+Creates a Call Chain Template by using a specialized LLM to design the template structure.
 
-A Call Chain Template is a reusable multi-step tool macro that executes a sequence of function calls.
+Simply describe what you want the template to do in natural language, and this function
+will generate a properly structured template with the correct calls, parameters, and references.
 
-CRITICAL: When calling save_call_chain_template, it MUST be the ONLY function call in your calls array. Do not include any other function calls before or after it.
+The template will be stored in CortexRAM and its id returned. You can then use save_call_chain_template
+to persist it to the database, or run_call_chain_template to test it.
 
-Parameters (all are required):
+Do not specify the template name or params_schema, this function will handle it on its own. Just use natural language. 
 
-1. name (string): Unique identifier for the template
-   Example: "store_text_with_embedding"
+Parameters:
+- description (string): Natural language description of what the template should do
+  Example: "Create a template that takes text input, computes its embedding, and stores both in the logs table"
+	`,
+	name: "create_call_chain_template",
+	parameters: {
+	    description: "string"
+	},
+	fn: async (ops: any) => {
+	    const { description } = ops.params
+	    const { log, set_var, run_structured_completion, build_system_message, cortex_functions } = ops.util
 
-2. description (string): Clear description of what the template does
-   Example: "Computes an embedding for input text and stores both in the database"
+	    log(`Creating call chain template from description: ${description}`)
 
-3. params_schema (object): A proper JSON object mapping parameter names to their types
-   CORRECT: {text: "string", category: "string"}
-   INCORRECT: ":{" or any string - this MUST be an actual object
+	    // Define the Zod schema for template structure
+	    // Using z.union([z.record(z.string()), z.null()]) pattern from cortex.ts FunctionCallObject
+	    const TemplateSchema = z.object({
+		name: z.string().describe("Unique identifier for the template, snake_case"),
+		description: z.string().describe("Clear description of what the template does"),
+		params_schema: z.union([z.record(z.string()), z.null()]).describe("Map of parameter names to types, or null if no params"),
+		calls: z.array(z.object({
+		    name: z.string(),
+		    parameters: z.union([z.record(z.string()), z.null()])
+		})),
+		return_indices: z.array(z.number())
+	    })
 
-4. calls (array): Array of function call objects that will be executed when the template runs
-   Each call must have:
-   - name (string): The function name to call
-   - parameters (object): Parameters with & for template params and $ for call results
-
-   CORRECT format:
-   [
-     {name: "compute_embedding", parameters: {text: "&text"}},
-     {name: "access_database_with_surreal_ql", parameters: {query: "INSERT INTO logs {text: \"&text\", embedding: \"$0\"}"}}
-   ]
-
-5. return_indices (array): Array of integers specifying which call results to return
-   [0] = first result, [1] = second result, [0, 1] = both results
-
-PLACEHOLDER SYSTEM:
-- "&paramName" = template parameter (replaced before execution with actual value)
-- "$N" = call result reference ($0 = first call result, $1 = second, etc.)
-
-FULL EXAMPLE of saving a template:
-{
-  name: "embed_and_store",
-  description: "Computes embedding and stores text with embedding",
-  params_schema: {text: "string", category: "string"},
-  calls: [
-    {name: "compute_embedding", parameters: {text: "&text"}},
-    {name: "access_database_with_surreal_ql", parameters: {query: "INSERT INTO logs {text: \"&text\", category: \"&category\", embedding: \"$0\"}"}}
-  ],
-  return_indices: [1]
+	    // Build output format documentation
+	    const outputFormatTypes = `
+type CallChainTemplate = {
+    name: string,              // Unique template name (snake_case)
+    description: string,       // What the template does
+    params_schema: Record<string, string>,  // Parameter names -> types
+    calls: FunctionCall[],     // Sequence of calls to execute
+    return_indices: number[]   // Which results to return
 }
+
+type FunctionCall = {
+    name: string,
+    parameters: Record<string, any> | null
+}
+`
+
+	    const outputFormatExamples = `
+[Example] Template to compute embedding and store in database:
+{
+    name: "embed_and_store",
+    description: "Computes embedding for text and stores both in logs table",
+    params_schema: { "text": "string", "category": "string" },
+    calls: [
+        { name: "compute_embedding", parameters: { text: "&text" } },
+        { name: "access_database_with_surreal_ql", parameters: { query: "INSERT INTO logs { text: '&text', category: '&category', embedding: $0 }" } }
+    ],
+    return_indices: [1]
+}
+`
+
+	    // Build system message with function awareness
+	    const system_msg = build_system_message({
+		sections: ['intro', 'templateCallChains', 'outputFormat', 'functions', 'responseGuidance'],
+		sectionArgs: {
+		    intro: ['TemplateBuilder'],
+		    outputFormat: [outputFormatTypes, outputFormatExamples],
+		    functions: [cortex_functions],
+		    responseGuidance: ['Create a valid call chain template based on the user description. Use only functions from the available list.']
+		}
+	    })
+
+	    // Run structured completion
+	    const template = await run_structured_completion({
+		schema: TemplateSchema,
+		schema_name: 'CallChainTemplate',
+		messages: [
+		    { role: 'system', content: system_msg },
+		    { role: 'user', content: description }
+		]
+	    })
+
+	    log(`Template created: ${template.name}`)
+
+	    // Store in CortexRAM
+	    const id = await set_var(template)
+	    log(`Template stored in CortexRAM with id: ${id}`)
+
+	    return `@${id}` 
+	},
+	return_type: "object"
+    },
+
+    {
+	enabled: true,
+	description: `
+Saves a Call Chain Template to the database.
+
+Accepts either:
+1. A CortexRAM reference (string starting with @) pointing to a template created by create_call_chain_template
+2. A full template object with: name, description, params_schema, calls, return_indices
+
+The template will be saved with an embedding computed from name + description for semantic search.
+
+Parameters:
+- template: Either a CortexRAM reference string (e.g., "@abc123") OR a template object
 	`,
 	name: "save_call_chain_template",
 	parameters: {
-	    name: "string",
-	    description: "string",
-	    params_schema: "object",
-	    calls: "array",
-	    return_indices: "array"
+	    template: "object"
 	},
 	fn: async (ops: any) => {
-	    const { name, description, params_schema, calls, return_indices } = ops.params;
-	    const { log } = ops.util;
+	    
+	    const { template } = ops.params;
+	    const { log, get_embedding } = ops.util;
+
+	    const { name, description, params_schema, calls, return_indices } = template;
 
 	    log(`Saving call chain template: ${name}`);
 
+	    // Compute embedding for semantic search
+	    const embeddingText = `${name} ${description}`;
+	    log(`Computing embedding for: ${embeddingText}`);
+	    const embedding = await get_embedding(embeddingText);
+
 	    const query = `
-            INSERT INTO cortex_call_chains {
+            INSERT INTO cortex_call_chain_templates {
                 name: $name,
                 description: $description,
                 params_schema: $params_schema,
                 calls: $calls,
                 return_indices: $return_indices,
-                type: "call_chain_template"
+                embedding: $embedding,
             }
         `;
 
 	    const response = await fbu.surreal_query({
 		query,
-		variables: { name, description, params_schema, calls, return_indices }
+		variables: { name, description, params_schema, calls, return_indices, embedding }
 	    }) as any;
 
-	    return response?.data?.result?.result || "Template saved successfully";
+	    log(`Template saved successfully`);
+	    return {
+		success: true,
+		name,
+		message: `Template "${name}" saved to database with embedding`
+	    };
 	},
-	return_type: "any"
+	return_type: "object"
     },
 
     {
@@ -980,8 +1055,8 @@ Returns the template object with its calls array and parameter schema.
 	    log(`Fetching call chain template: ${name}`);
 
 	    const query = `
-            SELECT * FROM cortex_call_chains
-            WHERE name = $name AND type = "call_chain_template"
+            SELECT * FROM cortex_call_chain_templates
+            WHERE name = $name
             LIMIT 1
         `;
 
@@ -996,7 +1071,7 @@ Returns the template object with its calls array and parameter schema.
 		throw new Error(`Template "${name}" not found`);
 	    }
 
-	    return templates[0];
+	    return templates[0].result;
 	},
 	return_type: "object"
     },
@@ -1018,8 +1093,7 @@ Useful for discovering which templates are available to run.
 
 	    const query = `
             SELECT name, description, params_schema
-            FROM cortex_call_chains
-            WHERE type = "call_chain_template"
+            FROM cortex_call_chain_templates
         `;
 
 	    const response = await fbu.surreal_query({ query }) as any;

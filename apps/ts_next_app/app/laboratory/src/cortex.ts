@@ -16,8 +16,29 @@ import * as Channel from "./channel"
 /*
    
    Todo:  
-   [ ] implemented multicall 
+   [x] implemented call chains 
 
+   [ ] status - implemented create_call_chain_template, store_call_chain_template, list_tempaltes 
+      TODO: need to fix RUN_CALL_CHAIN_TEMPLATE -- LLM is struggling 
+
+      TO format the arguments properly for that (since it is a single call with nested parameters) 
+      This is the same response format issue with create_call_chain_template 
+
+      Couple of options: 
+       1) similar solution, utilize another LLM call inside the function, and use the dynamic prompt building to maintain conversation history, but set the output format custom (this just generates the appropriate CALL shape , which then needs to be run ) 
+
+       2) flatten the call structure so its not nested 
+
+       3) ????
+
+
+
+
+
+
+   In the future: every object the model creates in the database should have model version / ts version 
+   
+   
  */
 
 
@@ -249,10 +270,61 @@ export class Cortex extends EventEmitter  {
     }
 
     emit_event(evt : any) {
-	this.log(`emitting event: ${JSON.stringify(evt)}`) ; 
-	this.emit('event' , evt) ; 
+	this.log(`emitting event: ${JSON.stringify(evt)}`) ;
+	this.emit('event' , evt) ;
     }
-    
+
+    /**
+     * Run a structured completion with a custom Zod schema
+     * Allows functions to invoke their own LLM completions with custom output formats
+     */
+    async run_structured_completion<T extends z.ZodType>(options: {
+	schema: T
+	schema_name: string
+	messages: { role: 'system' | 'user' | 'assistant', content: string }[]
+    }): Promise<z.infer<T>> {
+	const { schema, schema_name, messages } = options
+
+	this.log(`Running structured completion with schema: ${schema_name}`)
+	this.log(`Message count: ${messages.length}, Model: ${this.model}`)
+	this.log_event(`Structured completion started: ${schema_name}`)
+
+	const response_format = zodResponseFormat(schema, schema_name)
+
+	debug.add('structured_completion_request', { schema_name, messages, model: this.model })
+
+	const result = await fetch(`${window.location.origin}/api/openai_structured_completion`, {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/json' },
+	    body: JSON.stringify({
+		messages,
+		model: this.model,
+		response_format
+	    })
+	})
+
+	const jsonData = await result.json()
+
+	debug.add('structured_completion_response', jsonData)
+
+	if (jsonData.error) {
+	    this.log(`Structured completion error: ${JSON.stringify(jsonData.error)}`)
+	    this.log_event(`Structured completion failed: ${schema_name}`)
+	    throw new Error(`Structured completion failed: ${jsonData.error.message || jsonData.error}`)
+	}
+
+	const { prompt_tokens, completion_tokens, total_tokens } = jsonData.usage || {}
+	if (total_tokens) {
+	    this.log_event(`Structured completion tokens: ${total_tokens}`)
+	}
+
+	const parsed = jsonData.choices[0].message.parsed
+	this.log(`Structured completion result received for: ${schema_name}`)
+	debug.add('structured_completion_parsed', parsed)
+
+	return parsed
+    }
+
     configure_user_output(fn : any ) {
 	this.log("Linking user output") 
 	this.user_output  = fn 
@@ -691,7 +763,9 @@ export class Cortex extends EventEmitter  {
 
 	this.log(`Appending event to function parameters`)	
 	aux_parameters.event  = this.emit_event.bind(this)  ; 
-	
+
+	this.log(`Appending embedding fn to parameters`)		
+	aux_parameters.get_embedding =  tsw.common.apis.ailand.get_cloud_embedding ; 	
 
 	this.log(`Including cortex get/set var`)
 	aux_parameters.get_var = (this.get_var.bind(this)) ;
@@ -704,7 +778,12 @@ export class Cortex extends EventEmitter  {
 	this.log(`Including resolve_args and run_cortex_output`)	;
 
 	aux_parameters.resolve_args = (this.resolve_args.bind(this)) ;
-	aux_parameters.run_cortex_output = (this.run_cortex_output.bind(this)) ;	
+	aux_parameters.run_cortex_output = (this.run_cortex_output.bind(this)) ;
+
+	this.log(`Including run_structured_completion, build_system_message, and cortex_functions`)
+	aux_parameters.run_structured_completion = this.run_structured_completion.bind(this) ;
+	aux_parameters.build_system_message = buildPrompt ;
+	aux_parameters.cortex_functions = this.functions ;
 
 	try {
 	    let result = await F.fn({params : parameters, util : aux_parameters})
