@@ -4,7 +4,8 @@
  */
 import { zodResponseFormat } from 'openai/helpers/zod' ;
 import { z } from "zod" ;
-import system_msg_template  from "./cortex_system_msg_template"
+import { buildPrompt, cortexOutputFormat, DEFAULT_CORTEX_SECTIONS } from "./cortex_prompt_blocks"
+import type { SectionName } from "./cortex_prompt_blocks"
 import * as tsw from "tidyscripts_web"
 import {EventEmitter} from 'events'  ;  
 const {debug} = tsw.common.util ;
@@ -128,10 +129,29 @@ export function get_functions_string(functions : Function[]) {
 } 
 
 
-/* Generates the system message from an array of function objects */ 
-export function generate_system_msg(functions : Function[], additional_system_msg : string) {
-    let FUNCTIONS_STRING = get_functions_string(functions) 
-    return system_msg_template.replace("FUNCTIONS_STRING_HERE", FUNCTIONS_STRING).replace("ADDITIONAL_SYSTEM_MESSAGE_HERE", additional_system_msg)
+/* Generates the system message from an array of function objects */
+export function generate_system_msg(functions : Function[], additional_system_msg? : string) {
+    // Extract function info for the prompt
+    const functionInfos = functions.map(f => ({
+        description: f.description,
+        name: f.name,
+        parameters: f.parameters,
+        return_type: f.return_type
+    }))
+
+    // Build sections list, adding 'additional' only if provided
+    const sectionsList: SectionName[] = additional_system_msg
+        ? [...DEFAULT_CORTEX_SECTIONS, 'additional']
+        : [...DEFAULT_CORTEX_SECTIONS]
+
+    return buildPrompt({
+        sections: sectionsList,
+        sectionArgs: {
+            functions: [functionInfos],
+            outputFormat: [cortexOutputFormat.types, cortexOutputFormat.examples],
+            ...(additional_system_msg && { additional: [additional_system_msg] })
+        }
+    })
 } 
 
 
