@@ -195,6 +195,28 @@ var BASH_CLIENT : any = null ;
 
 
 const functions = [
+    {
+	enabled : true ,
+	description : `Formats a string based on the provided template and arguments. Returns the string.
+Uses {key} placeholders in the template which get replaced with values from args.
+Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
+	name : "format_string" ,
+	parameters : { string_template : 'string' , args : "object" } ,
+	fn  : async ( ops : any ) => {
+	    const { string_template, args } = ops.params
+	    const { log } = ops.util
+
+	    log(`Formatting string template with args: ${JSON.stringify(args)}`)
+
+	    let result = string_template
+	    for (const [key, value] of Object.entries(args || {})) {
+		result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value))
+	    }
+
+	    return result
+	},
+	return_type : "string"
+    }, 
    {
       enabled : true,
       description : `Function for responding to the user` ,
@@ -1071,7 +1093,7 @@ Returns the template object with its calls array and parameter schema.
 		throw new Error(`Template "${name}" not found`);
 	    }
 
-	    return templates[0].result;
+	    return templates[0].result[0];
 	},
 	return_type: "object"
     },

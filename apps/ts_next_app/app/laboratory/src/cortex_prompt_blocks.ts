@@ -42,6 +42,11 @@ export const syntax = {
 - Use "$0" to reference the result from the first call (index 0)
 - Use "$1" to reference the result from the second call (index 1)
 - And so on...
+
+Please note that references ("$0", "$1" , "$N" as well as "@id") must exist as standalone strings within arrays or objects and NOT nested within another string. 
+
+If you want to respond to the user with variable outputs please use the format string function first to construct the output.
+
 `,
     cortexRAMReferences: `
 - Use "@id" to reference a value stored in CortexRAM (e.g., "@dc5a7a9940da")
