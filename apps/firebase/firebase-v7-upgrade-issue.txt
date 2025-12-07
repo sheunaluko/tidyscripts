@@ -1,0 +1,54 @@
+Firebase Functions v7 Upgrade Issue
+====================================
+
+Date: 2025-12-06
+
+Problem:
+--------
+After upgrading firebase-functions from v6 to v7, the emulator fails to load functions with:
+
+  - Warning: "functions.config() has been removed in firebase-functions v7"
+  - Error: "Your function was killed because it raised an unhandled error"
+  - Error: "Failed to load function"
+
+This occurs even though the code does NOT use functions.config() and correctly uses:
+  - firebase-functions/v2/https (v2 API)
+  - process.env for environment variables
+
+Root Cause:
+-----------
+Firebase-functions v7 is a major breaking change. The emulator or internal module
+loading appears to trigger the v1 config module, which throws an error in v7.
+The warning/error is emitted during module initialization, not from user code.
+
+Affected Versions:
+------------------
+Broken:
+  - firebase-functions: ^7.0.1
+  - firebase-admin: ^13.6.0
+
+Working:
+  - firebase-functions: ^6.0.1
+  - firebase-admin: ^12.6.0
+
+Solution:
+---------
+Downgrade to v6 in functions/package.json:
+
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    ...
+  }
+
+Then run: npm install
+
+Future:
+-------
+Monitor firebase-functions v7 for fixes. The code is already v2-compliant,
+so upgrading should be possible once the emulator/loader issues are resolved.
+
+Related:
+--------
+- Migration guide: https://firebase.google.com/docs/functions/config-env#migrate-config
+- This is separate from the Node 25 / SlowBuffer issue documented in node25-firebase-error.txt

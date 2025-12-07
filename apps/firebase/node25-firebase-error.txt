@@ -1,0 +1,36 @@
+Node 25 / Firebase Emulator Error Summary
+==========================================
+
+Error:
+  TypeError: Cannot read properties of undefined (reading 'prototype')
+  at buffer-equal-constant-time/index.js:37:35
+
+Root Cause:
+  SlowBuffer was removed in Node.js 24+. The `buffer-equal-constant-time` package
+  (last updated 2013) tries to access SlowBuffer.prototype which no longer exists.
+
+Dependency Chain:
+  firebase-admin → jsonwebtoken → jws → jwa → buffer-equal-constant-time
+
+Affected Packages:
+  - firebase-admin
+  - firebase-tools
+  - jsonwebtoken
+  - google-auth-library
+  - Azure SDK
+  - VS Code extension tools (vsce)
+
+Related Issues:
+  - https://github.com/nodejs/node/issues/58203 (SlowBuffer removal in Node 24)
+  - https://github.com/auth0/node-jsonwebtoken/issues/992 (Node 24 compatibility)
+  - https://github.com/googleapis/node-gtoken/issues/451 (Stop using buffer-equal-constant-time)
+
+Workaround:
+  Use Node 22 LTS until upstream packages update their dependencies:
+
+    nvm use 22
+    ./dev
+
+Status (as of Dec 2025):
+  No upstream fix yet. The buffer-equal-constant-time package is abandoned,
+  so fixes need to come from jwa or jsonwebtoken dropping it as a dependency.

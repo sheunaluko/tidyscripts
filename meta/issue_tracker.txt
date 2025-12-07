@@ -1,0 +1,22 @@
+Tidyscripts Issue Tracker
+=========================
+
+This file tracks known issues and their documentation locations.
+
+
+[Firebase / Cloud Functions]
+----------------------------
+
+1. Node 25 SlowBuffer Removal
+   File: apps/firebase/node25-firebase-error.txt
+   Status: Unresolved (upstream dependency issue)
+   Summary: Node 25 removed SlowBuffer, breaking buffer-equal-constant-time package
+            used by firebase-admin -> jsonwebtoken -> jws -> jwa
+   Workaround: Use Node 22 LTS
+
+2. Firebase Functions v7 Upgrade Failure
+   File: apps/firebase/firebase-v7-upgrade-issue.txt
+   Status: Resolved (downgraded to v6)
+   Summary: Emulator fails to load functions after upgrading to firebase-functions v7,
+            even when code doesn't use functions.config()
+   Workaround: Stay on firebase-functions ^6.0.1 and firebase-admin ^12.6.0
