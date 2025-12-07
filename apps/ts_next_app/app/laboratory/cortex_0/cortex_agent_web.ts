@@ -1106,39 +1106,59 @@ Useful for discovering which templates are available to run.
     {
 	enabled: true,
 	description: `
-Executes a Call Chain Template by name with the provided arguments.
+Executes a Call Chain Template.
 
-This is the core execution function that:
-1. Fetches the template by name
-2. Substitutes & placeholders with actual parameter values
-3. Executes the call chain via run_cortex_output
-4. Returns the filtered results
+Simply describe in natural language which template you want to run and what arguments to use.
+The function will extract the structured parameters internally using the conversation context.
+
+For example, if the user says "run the embed_and_store template with text 'hello world' and category 'test'",
+just forward that request to this function via the description parameter.
 
 Parameters:
-- template_name: string - Name of the template to run
-- template_args: object - Parameter values as an object
-  Example: {text: "Hello world", category: "greeting"}
-
-The template's calls will have & placeholders replaced with actual values,
-then executed as a normal CortexOutput call chain.
+- description: string - Natural language description of which template to run and with what arguments
 	`,
 	name: "run_call_chain_template",
 	parameters: {
-	    template_name: "string",
-	    template_args: "object"
+	    description: "string"
 	},
 	fn: async (ops: any) => {
-	    const { template_name, template_args } = ops.params;
+	    const { description } = ops.params;
 	    const {
 		log,
 		handle_function_call,
-		run_cortex_output
+		run_cortex_output,
+		rerun_llm_with_output_format
 	    } = ops.util;
 
-	    log(`Running call chain template: ${template_name}`);
-	    log(`Template args: ${JSON.stringify(template_args)}`);
+	    log(`run_call_chain_template called with description: ${description}`);
 
-	    // Step 1: Fetch the template
+	    // Step 1: Define schema for extracting template_name and template_args
+	    const TemplateRunSchema = z.object({
+		template_name: z.string(),
+		template_args: z.union([z.record(z.string()), z.null()])
+	    });
+
+	    // Step 2: Use rerun_llm_with_output_format to extract structured parameters
+	    log(`Extracting structured parameters from conversation context`);
+	    const extracted = await rerun_llm_with_output_format({
+		schema: TemplateRunSchema,
+		schema_name: 'TemplateRunParams',
+		sectionOverrides: {
+		    functions: null,  // Exclude functions to prevent recursion
+		    responseGuidance: [`
+Extract the template name and arguments from the user's request.
+Return the template_name as a string and template_args as an object with the parameter values.
+For example, if the user wants to run "embed_and_store" with text="hello" and category="test",
+return: { template_name: "embed_and_store", template_args: { text: "hello", category: "test" } }
+`]
+		}
+	    });
+
+	    const { template_name, template_args } = extracted;
+	    log(`Extracted template_name: ${template_name}`);
+	    log(`Extracted template_args: ${JSON.stringify(template_args)}`);
+
+	    // Step 3: Fetch the template
 	    const template_result = await handle_function_call({
 		name: "get_call_chain_template",
 		parameters: { name: template_name }
@@ -1151,31 +1171,27 @@ then executed as a normal CortexOutput call chain.
 	    const template = template_result.result;
 	    log(`Retrieved template: ${template.name}`);
 
-	    // Step 2: Use template_args directly as arg_dic (already an object)
-	    const arg_dic = template_args;
-	    log(`Argument dictionary: ${JSON.stringify(arg_dic)}`);
-
-	    // Step 3: Resolve & placeholders in calls array
+	    // Step 4: Resolve & placeholders in calls array
 	    const resolved_calls = cu.resolve_call_chain_template_args(
 		template.calls,
-		arg_dic
+		template_args || {}
 	    );
 
 	    log(`Resolved calls: ${JSON.stringify(resolved_calls)}`);
 
-	    // Step 4: Build CortexOutput
+	    // Step 5: Build CortexOutput
 	    const cortex_output = {
 		thoughts: `Executing call chain template: ${template_name}`,
 		calls: resolved_calls,
 		return_indeces: template.return_indices || []
 	    };
 
-	    // Step 5: Execute via run_cortex_output
+	    // Step 6: Execute via run_cortex_output
 	    const execution_result = await run_cortex_output(cortex_output);
 
 	    log(`Template execution completed`);
 
-	    // Step 6: Return the result
+	    // Step 7: Return the result
 	    if (execution_result.error) {
 		throw new Error(`Template execution failed: ${execution_result.error}`);
 	    }

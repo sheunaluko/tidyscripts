@@ -25,7 +25,7 @@ export type SectionName =
     | 'outputFormat'
     | 'additional'
 
-type SectionArgs = {
+export type SectionArgs = {
     intro?: [string]
     functions?: [FunctionInfo[]]
     outputFormat?: [string, string?]

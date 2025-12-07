@@ -1,0 +1,45 @@
+================================================================================
+PROMPT ARCHITECTURE REFACTOR PLAN
+================================================================================
+
+OVERVIEW
+--------
+Refactor prompt management into a dedicated class that handles both construction
+and modification of system prompts, enabling programmatic generation of modified
+prompt variants while retaining original configuration.
+
+
+PHASE 1: PromptManager Class
+----------------------------
+Create a class that:
+- Stores the original sections and sectionArgs used to build a prompt
+- Builds the prompt string on demand
+- Generates modified copies with section overrides (replace or exclude)
+
+This replaces the current pattern of storing only the final string.
+
+
+PHASE 2: Integrate with rerun_llm_with_output_format
+----------------------------------------------------
+Update rerun_llm_with_output_format to use PromptManager:
+- Use sectionOverrides to replace/exclude specific sections
+- Preserve all original configuration by default
+- Only modify what's explicitly specified
+
+
+BENEFITS
+--------
+- Single source of truth for prompt construction
+- Original args preserved, not lost after build
+- Clean API for generating prompt variants
+- Testable in isolation
+- Reusable across different contexts (Cortex, standalone, etc.)
+
+
+MIGRATION PATH
+--------------
+1. Create PromptManager class
+2. Update Cortex constructor to use PromptManager instead of generate_system_msg
+3. Store PromptManager instance on Cortex (this.promptManager)
+4. Update rerun_llm_with_output_format to call this.promptManager.buildWith(overrides)
+5. Remove old generate_system_msg function (or keep as convenience wrapper)

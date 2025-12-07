@@ -6,6 +6,8 @@ import { zodResponseFormat } from 'openai/helpers/zod' ;
 import { z } from "zod" ;
 import { buildPrompt, cortexOutputFormat, DEFAULT_CORTEX_SECTIONS } from "./cortex_prompt_blocks"
 import type { SectionName } from "./cortex_prompt_blocks"
+import { PromptManager } from "./prompt_manager"
+import type { SectionOverrides } from "./prompt_manager"
 import * as tsw from "tidyscripts_web"
 import {EventEmitter} from 'events'  ;  
 const {debug} = tsw.common.util ;
@@ -29,7 +31,25 @@ import * as Channel from "./channel"
 
        2) flatten the call structure so its not nested 
 
-       3) ????
+       3) ????   --- make ccct appear as function
+
+
+
+=> Claude focuse here after reading todo above=>  OK so this is how I want to implement this
+     -> the run_call_chain_template is a function, and in its description it simply tells cortex to forward the users request to it by providing (in natural language)
+     	the call_chain_template name and arguments it would like to run. We tell cortex that the parameter shape will be appropriately constructed under the hood and the call chain template then
+	executed, and the result returned
+
+     -> we define a generic helper function called rerun_llm_with_output_format (exposed in ops.util) that takes a zod response format and response guidance (and any parameter specific to the output format)
+     -> it rebuilds the system prompt, then it re-uses the existing messages array and creates a structured completion call with the existing message history (IGNORING /dropping? the last cortex message that actually called the function )
+     -> basically its simulating as if the user gave the query and then instead of cortex answering with the call it actually did (with the 1st response format) -- we "go back in time" and now cortex will answer with a substituted response format and slightly different system message but same message history
+
+     - the result of this call gives the call_chain_template arguments (properly structured), which are then returned to run_call_chain_template
+     
+     - run_call_chain_template now runs, gets a result, and adds it back as a regular user response --> from Cortex point of view its just a regular function response  
+
+
+QUestion: what do you think of this solution? lets discuss pros and cons 
 
 
 
@@ -203,23 +223,25 @@ export class Cortex extends EventEmitter  {
     name  : string;
     log   : any;
     functions : Function[]  ;
-    system_msg : SystemMessage ; 
-    function_dictionary : FunctionDictionary ;  
-    messages  : IOMessages ;   //all messages (User and Cortex) that follow the system message 
+    system_msg : SystemMessage ;
+    function_dictionary : FunctionDictionary ;
+    messages  : IOMessages ;   //all messages (User and Cortex) that follow the system message
 
     is_running_function : boolean ; //tracks whether a function is currently being called
     function_input_ch  : Channel.Channel ;
 
     prompt_history : any[];
 
-    user_output : any ; 
+    user_output : any ;
 
-    CortexRAM : { [k:string] : any } ; 
-    
+    CortexRAM : { [k:string] : any } ;
+
+    promptManager : PromptManager ;
+
     constructor(ops : CortexOps) {
 
 	super() ;
-	
+
 	let { model, name, functions , additional_system_msg } = ops  ;
 	this.model = model ;
 	this.name  = name ;
@@ -228,21 +250,47 @@ export class Cortex extends EventEmitter  {
 	this.is_running_function = false;
 	this.function_input_ch = new Channel.Channel({name}) ;
 	this.prompt_history = [ ];
-	this.CortexRAM = {} 
-	
+	this.CortexRAM = {}
+
 	let log = tsw.common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
 	this.user_output = function(x : any) {
 	    log(`User output not yet configured: received output:`)
-	    log(x) ; 
-	} 
-	
+	    log(x) ;
+	}
+
 
 	log("Initializing")
-	log("Generating system message")  
-	let system_msg = {role :  'system' , content : generate_system_msg(functions,additional_system_msg) } as SystemMessage; this.system_msg = system_msg
+	log("Generating system message via PromptManager")
+
+	// Build function infos for prompt
+	const functionInfos = functions.map(f => ({
+	    description: f.description,
+	    name: f.name,
+	    parameters: f.parameters,
+	    return_type: f.return_type
+	}))
+
+	// Build sections list, adding 'additional' only if provided
+	const sectionsList: SectionName[] = additional_system_msg
+	    ? [...DEFAULT_CORTEX_SECTIONS, 'additional']
+	    : [...DEFAULT_CORTEX_SECTIONS]
+
+	// Create PromptManager with resolved args
+	this.promptManager = new PromptManager({
+	    sections: sectionsList,
+	    sectionArgs: {
+		functions: [functionInfos],
+		outputFormat: [cortexOutputFormat.types, cortexOutputFormat.examples],
+		...(additional_system_msg && { additional: [additional_system_msg] })
+	    }
+	})
+
+	let system_msg = { role: 'system', content: this.promptManager.build() } as SystemMessage
+	this.system_msg = system_msg
+
 	log("Building function dictionary")
-	let function_dictionary = get_function_dictionary(functions) ; this.function_dictionary = function_dictionary ; 
+	let function_dictionary = get_function_dictionary(functions) ; this.function_dictionary = function_dictionary ;
 	log("Done")
 
     }
@@ -325,9 +373,71 @@ export class Cortex extends EventEmitter  {
 	return parsed
     }
 
+    /**
+     * Re-run LLM with a different output format using existing conversation history
+     *
+     * This "time travels" by:
+     * 1. Taking the current message history (minus the last cortex message that triggered this call)
+     * 2. Rebuilding the system prompt with section overrides via PromptManager
+     * 3. Running a structured completion with the custom schema
+     *
+     * By default, preserves all original prompt sections. Use sectionOverrides to:
+     * - Replace section args: { responseGuidance: ['Custom guidance...'] }
+     * - Exclude a section entirely: { functions: null }
+     *
+     * Useful when a function needs the LLM to extract structured data from the conversation
+     * but the main CortexOutput format isn't granular enough.
+     */
+    async rerun_llm_with_output_format<T extends z.ZodType>(options: {
+	schema: T
+	schema_name: string
+	sectionOverrides?: SectionOverrides
+    }): Promise<z.infer<T>> {
+	const { schema, schema_name, sectionOverrides = {} } = options
+
+	this.log(`Rerunning LLM with custom output format: ${schema_name}`)
+
+	// Get messages and drop the last one (the cortex message that called the function)
+	const messages_without_last = this.messages.slice(0, -1)
+	this.log(`Using ${messages_without_last.length} messages (dropped last cortex message)`)
+
+	// Build custom output format documentation
+	const outputFormatTypes = `
+You must respond with a JSON object matching this schema: ${schema_name}
+The response will be validated against this structure.
+`
+
+	// Merge caller's overrides with outputFormat override
+	const finalOverrides = {
+	    outputFormat: [outputFormatTypes],
+	    ...sectionOverrides
+	}
+
+	// Use PromptManager to build modified prompt
+	const system_content = this.promptManager.buildWith(finalOverrides)
+
+	const new_system_msg = { role: 'system' as const, content: system_content }
+
+	// Build full message array with new system message
+	const full_messages = [new_system_msg, ...messages_without_last]
+
+	this.log(`Calling structured completion with ${full_messages.length} messages`)
+	debug.add('rerun_llm_messages', full_messages)
+
+	// Use existing run_structured_completion infrastructure
+	const result = await this.run_structured_completion({
+	    schema,
+	    schema_name,
+	    messages: full_messages
+	})
+
+	this.log(`Rerun completed successfully for: ${schema_name}`)
+	return result
+    }
+
     configure_user_output(fn : any ) {
-	this.log("Linking user output") 
-	this.user_output  = fn 
+	this.log("Linking user output")
+	this.user_output  = fn
     }
     
     /**
@@ -780,8 +890,9 @@ export class Cortex extends EventEmitter  {
 	aux_parameters.resolve_args = (this.resolve_args.bind(this)) ;
 	aux_parameters.run_cortex_output = (this.run_cortex_output.bind(this)) ;
 
-	this.log(`Including run_structured_completion, build_system_message, and cortex_functions`)
+	this.log(`Including run_structured_completion, rerun_llm_with_output_format, build_system_message, and cortex_functions`)
 	aux_parameters.run_structured_completion = this.run_structured_completion.bind(this) ;
+	aux_parameters.rerun_llm_with_output_format = this.rerun_llm_with_output_format.bind(this) ;
 	aux_parameters.build_system_message = buildPrompt ;
 	aux_parameters.cortex_functions = this.functions ;
 
