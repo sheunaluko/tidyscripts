@@ -203,8 +203,14 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 	name : "format_string" ,
 	parameters : { string_template : 'string' , args : "object" } ,
 	fn  : async ( ops : any ) => {
-	    const { string_template, args } = ops.params
-	    const { log } = ops.util
+	    let { string_template, args } = ops.params
+	    let { log } = ops.util
+
+	    log(`Formatting string`)
+	    if (typeof args == 'string') {
+	       log(`Received string arguments will parse`)
+	       args = JSON.parse(args) 
+	    }  
 
 	    log(`Formatting string template with args: ${JSON.stringify(args)}`)
 
@@ -225,7 +231,7 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 	  fn : async (ops : any) => {
 	      let {user_output, log} = ops.util ;
 	      let {response} = ops.params ; 
-	      log(`user response: ${response}`) ;
+	      log(`user response: ${String(response)}`) ;
 	      await user_output(response) ;
 	      return `Responded to user with: ${response}` ; 
 	  },

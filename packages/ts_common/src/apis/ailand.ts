@@ -85,3 +85,18 @@ export async function get_cloud_embedding(text: string, dimensions?: number): Pr
 
     return response.embedding;
 }
+
+
+export async function embedding1536(text : string) {
+    let client = get_openai() ;
+    
+    const embedding = await client.embeddings.create({
+	model : 'text-embedding-3-small' ,
+	input  : text ,
+	encoding_format : "float" , 
+    });
+
+    let vector = embedding.data[0].embedding ;
+
+    return vector 
+}

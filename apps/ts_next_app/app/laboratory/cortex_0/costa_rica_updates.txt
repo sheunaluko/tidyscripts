@@ -1,0 +1,46 @@
+1) Matrix
+2) Call Chain Observability Interface (COBI)
+
+Matrix spec:
+- Matrix is the world model for the agent, a knowledge graph, which allows persistent structured memory over time 
+
+The natural (via my own introspection) way intelligence appears to operate is that as the query is being formulated potentially relevant matches from the KG are already being "queued" up.
+
+Then when the query finishes, the query along with the KGC (knowledge graph context) are analyzed.
+
+A key optimization appears to be the ability to "stream" the context gathering, as well as the agent response, in other words as the query is built word by word, the KGC is assembled and the llm response is prepared.
+
+There is indeed a way to implement this (though technically non trivial)
+      - use speech interim results
+      - on each result compute embedding (can debounce appropriately) and gather entity matches
+      - stream to llm   (need to understand the stream api) 
+
+(a) H o w e v e v e r:
+  -> a better and quicker 1st pass is to understand the latency implications before optimization would be to
+     -> obtain full user query, then obtain KGC , then do llm query 
+
+There are several important architectural considerations. 
+- for 1st pass use plan (a)
+- need to decide when information should be stored to the knowledge graph, which seems like an auxiliary processs running with the agent that monitors the conversation and manages retrieving and storing knowledge graph contents
+- this brings up the idea of a multithreaded architecture , and ensemble of threads - each with the message history and with READ access to the KG, which have dedicated purposes, once a user query is detected all threads are run simultaneously to produce results, then all results are collected inot a final llm call to get the response
+- this multithreaded approach would require more energy resources and latency but is likely a closer approximation of human intelligence / neural function 
+-> plan: should simplify this for now NOT optimize early:
+
+   -(b) simplified architecture:
+   	       - (a) above
+	       - + add a function that is "remember_information_for_later" that manages KG updates
+	       	   -> (c) however this brings up whether information is stored as record or to KG 
+
+
+Regarding the simplified architecture noted, specifically (c): let's say the user says "Remember that my name is shay". In this case the KG should be updated to do    user -> has_name -> shay (only if it does not yet exist).
+
+On the other hand, if the user says, "Remember to include the parameters array when using the format_string function" , it is not as straighforward what the update should be.
+
+(d) This brings up the idea of procedural vs relational knowledge representation (which I will need to learn more about) .
+
+(e) => simple first pass would be to store procedural knowledge as text string with embedding into separate database (how to do things) and store relational knowledge --> actually should be in same database but just separate structure, so that "relevant entities" related to the procedural knowledge could also be included in the embedding struccture of the record 
+
+
+
+
+

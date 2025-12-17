@@ -20,3 +20,9 @@ This file tracks known issues and their documentation locations.
    Summary: Emulator fails to load functions after upgrading to firebase-functions v7,
             even when code doesn't use functions.config()
    Workaround: Stay on firebase-functions ^6.0.1 and firebase-admin ^12.6.0
+
+
+
+[ Agentic ]
+
+1. Need to fix tidyscripts mcp server integration into cortex  

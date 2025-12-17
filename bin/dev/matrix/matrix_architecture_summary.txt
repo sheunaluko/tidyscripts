@@ -1,0 +1,198 @@
+================================================================================
+MATRIX KNOWLEDGE GRAPH - ARCHITECTURE SUMMARY
+================================================================================
+
+Matrix is a knowledge graph built on SurrealDB with LLM-based entity/relation
+extraction and vector search capabilities.
+
+================================================================================
+FILE STRUCTURE
+================================================================================
+
+matrix.ts                       - Main Matrix class
+matrix_helpers.ts               - Utility functions
+matrix_prompt_templates.ts      - Zod schemas + LLM prompts
+matrix_surreal_query_templates.ts - SurrealDB query templates
+
+================================================================================
+DATABASE SCHEMA (SurrealDB)
+================================================================================
+
+TABLES:
+  Entity
+    - id: string (normalized name, unique)
+    - embedding: number[1536] (vector for similarity search)
+    - updateId: string (links to GraphUpdate)
+    - created: datetime
+
+  RelationMetadata (for vector search)
+    - id: string (source_relation_target format)
+    - name: string (relation type)
+    - source_id: string
+    - target_id: string
+    - embedding: number[1536]
+    - updateId: string
+    - created: datetime
+
+  EntityUpdate
+    - id: string (shared updateId)
+    - existed: string[] (entity IDs that already existed)
+    - added: string[] (entity IDs that were added)
+    - removed: string[]
+    - created: datetime
+
+  RelationUpdate
+    - id: string (shared updateId)
+    - existed: string[]
+    - added: string[]
+    - removed: string[]
+    - created: datetime
+
+  GraphUpdate
+    - id: string (hash of text+metadata)
+    - entityUpdateId: string
+    - relationUpdateId: string
+    - text: string (source text)
+    - embedding: number[1536] (text embedding)
+    - metadata: any
+    - created: datetime
+
+GRAPH RELATIONS (dynamic tables):
+  Entity -> [relation_name] -> Entity
+  Created via RELATE syntax with CONTENT for metadata
+
+INDEXES (HNSW for vector search):
+  entity_embedding_idx ON Entity.embedding (1536 dims, COSINE)
+  relation_embedding_idx ON RelationMetadata.embedding (1536 dims, COSINE)
+  graph_update_embedding_idx ON GraphUpdate.embedding (1536 dims, COSINE)
+
+================================================================================
+TYPES (TypeScript)
+================================================================================
+
+Entity {
+  id: string
+  embedding: number[]
+  created?: any
+  updateId: string
+}
+
+Relation {
+  name: string
+  id: string
+  embedding: number[]
+  source: Entity
+  target: Entity
+  created?: any
+  updateId: string
+}
+
+EntityUpdate { existed, added, removed, id }
+RelationUpdate { existed, added, removed, id }
+GraphUpdate { entityUpdate?, relationUpdate?, id, metadata?, text?, embedding? }
+
+ConnectionOps { url, namespace?, database?, username?, password? }
+MatrixOps { name, connectionOps, completionOps }
+
+================================================================================
+MATRIX CLASS API
+================================================================================
+
+INITIALIZATION:
+  constructor(ops: MatrixOps)
+  connect(): Promise<void>        - Connect to SurrealDB
+  setup(): Promise<void>          - Create HNSW indexes
+
+EXTRACTION (LLM-based):
+  extract_entities(text): Promise<Entity[]>
+  extract_relations(text, entities): Promise<Relation[]>
+
+DATABASE OPERATIONS:
+  add_entities(ea, updateId): Promise<EntityUpdate>
+  add_relations(ra, updateId): Promise<RelationUpdate>
+
+MAIN PIPELINE:
+  add_knowledge(text, metadata): Promise<GraphUpdate>
+    1. Generate shared updateId (hash of text+metadata)
+    2. Extract entities from text
+    3. Extract relations between entities
+    4. Add entities to DB
+    5. Add relations to DB (RELATE + metadata)
+    6. Store GraphUpdate record
+    7. Emit 'knowledge_added' event
+
+SEARCH:
+  search_for_knowledge(text, ops): Promise<{query, entities, relations, graph}>
+    Options:
+      - limit: number (default 5)
+      - effort: number (HNSW effort, default 40)
+      - graphDepth: number (expansion depth, default 1)
+
+================================================================================
+KEY PATTERNS
+================================================================================
+
+SHARED UPDATE ID:
+  All EntityUpdate.id, RelationUpdate.id, and GraphUpdate.id share the same
+  updateId (hash of text+metadata). This allows linking all changes from a
+  single add_knowledge() call.
+
+EMBEDDINGS:
+  Uses tsw.common.apis.ailand.get_cloud_embedding(text)
+  Returns 1536-dimensional vectors (OpenAI text-embedding-3-small)
+
+STRUCTURED COMPLETION:
+  Uses Zod schemas with zodResponseFormat()
+  POSTs to /api/openai_structured_completion
+  Model configurable via completionOps.model (default: gpt-4o)
+
+SURREALDB PATTERNS:
+  - Parameter binding: $param_name
+  - Type conversion: type::thing("Table", $id), type::table($name)
+  - Relations: RELATE $source->$table->$target CONTENT {...}
+  - Vector search: embedding <|$limit,$effort|> $vector
+  - Deduplication: INSERT IGNORE
+
+LOGGING:
+  this.log(message) - uses tsw.common.logger
+  debug.add('key', value) - for inspection
+
+================================================================================
+USAGE EXAMPLE
+================================================================================
+
+const matrix = new Matrix({
+  name: 'my_kg',
+  connectionOps: {
+    url: 'ws://localhost:8000/rpc',
+    namespace: 'test',
+    database: 'knowledge'
+  },
+  completionOps: {
+    model: 'gpt-4o'
+  }
+});
+
+await matrix.connect();
+await matrix.setup();
+
+// Add knowledge
+const update = await matrix.add_knowledge(
+  "Albert Einstein developed the theory of relativity.",
+  { source: 'wikipedia' }
+);
+
+// Search
+const results = await matrix.search_for_knowledge(
+  "Who developed relativity?",
+  { limit: 10, graphDepth: 2 }
+);
+
+================================================================================
+EVENTS
+================================================================================
+
+'knowledge_added' - Emitted after successful add_knowledge()
+  Payload: GraphUpdate object
+
+================================================================================

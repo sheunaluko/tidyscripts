@@ -20,7 +20,7 @@ import * as Channel from "./channel"
    Todo:  
    [x] implemented call chains 
 
-   [ ] status - implemented create_call_chain_template, store_call_chain_template, list_tempaltes 
+   [ think this is done ] status - implemented create_call_chain_template, store_call_chain_template, list_tempaltes 
       TODO: need to fix RUN_CALL_CHAIN_TEMPLATE -- LLM is struggling 
 
       TO format the arguments properly for that (since it is a single call with nested parameters) 
