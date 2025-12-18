@@ -180,3 +180,153 @@ export function deduplicate_relations<T extends { id: string }>(relations: T[]):
         return true;
     });
 }
+
+/**
+ * Strip SurrealDB record prefix from ID
+ * Handles both string IDs and SurrealDB record objects
+ * @example
+ * strip_record_prefix("Entity:shay") => "shay"
+ * strip_record_prefix({tb: "Entity", id: "shay"}) => "shay"
+ */
+export function strip_record_prefix(id: string | any): string {
+    // Handle SurrealDB record objects
+    if (typeof id === 'object' && id !== null) {
+        // SurrealDB returns {tb: 'table', id: 'id'}
+        if (id.id !== undefined) {
+            return String(id.id);
+        }
+        // Fallback: convert to string
+        id = String(id);
+    }
+
+    // Convert to string if not already
+    const idStr = String(id);
+
+    // Strip table prefix if present (e.g., "Entity:shay" -> "shay")
+    const colonIndex = idStr.indexOf(':');
+    return colonIndex >= 0 ? idStr.substring(colonIndex + 1) : idStr;
+}
+
+/**
+ * Format relation name for display (replace underscores with spaces)
+ * @example
+ * format_relation_name("is_a") => "is a"
+ * format_relation_name("located_in") => "located in"
+ */
+export function format_relation_name(name: string): string {
+    return name.replace(/_/g, ' ');
+}
+
+/**
+ * Extract table name from SurrealDB record ID
+ * For edges, this is the relation name
+ * @example
+ * extract_table_name("created:shay_created_tidyscripts") => "created"
+ * extract_table_name({tb: "created", id: "shay_created_tidyscripts"}) => "created"
+ */
+export function extract_table_name(id: string | any): string {
+    // Handle SurrealDB record objects
+    if (typeof id === 'object' && id !== null && id.tb !== undefined) {
+        return String(id.tb);
+    }
+
+    // Convert to string
+    const idStr = String(id);
+
+    // Extract table name (part before colon)
+    const colonIndex = idStr.indexOf(':');
+    return colonIndex >= 0 ? idStr.substring(0, colonIndex) : idStr;
+}
+
+/**
+ * Format search results as text context for LLM consumption
+ *
+ * Converts structured Matrix search results into human-readable text
+ * that can be used as context for LLM prompts.
+ *
+ * @param results - Search results from Matrix.search_for_knowledge()
+ * @returns Formatted text context string
+ *
+ * @example
+ * const results = await matrix.search_for_knowledge("shay", { limit: 5 });
+ * const context = matrix.helpers.format_search_results_as_context(results);
+ *
+ * // Use in LLM prompt:
+ * const prompt = `
+ * Based on this knowledge:
+ * ${context}
+ *
+ * Answer: Who created tidyscripts?
+ * `;
+ */
+export function format_search_results_as_context(results: {
+    query: string;
+    entities: any[];
+    relations: any[];
+    graph: any[];
+}): string {
+    const sections: string[] = [];
+
+    // Query section
+    sections.push(`Query: "${results.query}"`);
+    sections.push('');
+
+    // Entities section
+    if (results.entities && results.entities.length > 0) {
+        sections.push('Entities Found:');
+        results.entities.forEach(entity => {
+            const name = strip_record_prefix(entity.id);
+            const distance = entity.distance.toFixed(6);
+            sections.push(`- ${name} (distance: ${distance})`);
+        });
+        sections.push('');
+    }
+
+    // Relations section
+    if (results.relations && results.relations.length > 0) {
+        sections.push('Relations Found:');
+        results.relations.forEach(relation => {
+            const relationName = format_relation_name(relation.name);
+            const source = relation.source_id;
+            const target = relation.target_id;
+            sections.push(`- ${source} ${relationName} ${target}`);
+        });
+        sections.push('');
+    }
+
+    // Graph connections section
+    if (results.graph && results.graph.length > 0) {
+        sections.push('Graph Connections:');
+
+        results.graph.forEach(item => {
+            const entityName = strip_record_prefix(item.entity);
+            sections.push(`${entityName}:`);
+
+            if (item.connections && item.connections.length > 0) {
+                const conn = item.connections[0]; // Take first connection object
+
+                // Outgoing relations
+                if (conn.outgoing && conn.outgoing.length > 0) {
+                    conn.outgoing.forEach((edge: any) => {
+                        const relationName = format_relation_name(extract_table_name(edge.id));
+                        const target = strip_record_prefix(edge.out);
+                        sections.push(`  - ${relationName} ${target}`);
+                    });
+                }
+
+                // Incoming relations
+                if (conn.incoming && conn.incoming.length > 0) {
+                    conn.incoming.forEach((edge: any) => {
+                        const relationName = format_relation_name(extract_table_name(edge.id));
+                        const source = strip_record_prefix(edge.in);
+                        sections.push(`  - <- ${source} ${relationName}`);
+                    });
+                }
+            }
+
+            sections.push('');
+        });
+    }
+
+    return sections.join('\n');
+}

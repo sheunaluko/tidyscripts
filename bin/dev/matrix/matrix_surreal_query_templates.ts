@@ -193,13 +193,11 @@ SELECT * FROM $entity<-?<-? FETCH in
  * Returns outgoing and incoming relationships with connected entities
  */
 export const GET_ENTITY_ALL_RELATIONS = `
-LET $entity = type::thing("Entity", $id);
-
 SELECT
     id,
-    ->? AS outgoing,
-    <-? AS incoming
-FROM $entity
+    ->?.{id,in,out,created,updateId} AS outgoing,
+    <-?.{id,in,out,created,updateId} AS incoming
+FROM $id
 `;
 
 /**

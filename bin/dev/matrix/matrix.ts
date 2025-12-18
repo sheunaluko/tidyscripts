@@ -75,6 +75,7 @@ import * as templates from "./matrix_surreal_query_templates"
 import * as prompts from "./matrix_prompt_templates"
 
 import common from "../../../packages/ts_common/dist/index";
+export { templates } 
 
 const debug = common.util.debug ;
 
@@ -630,6 +631,7 @@ export class Matrix extends EventEmitter {
 	entities: any[];
 	relations: any[];
 	graph: any[];
+	context: string;
     }> {
 	if (!this.db) {
 	    throw new Error('Database not connected. Call connect() first.');
@@ -689,10 +691,13 @@ export class Matrix extends EventEmitter {
 	    graph: graphData
 	};
 
+	// Format as text context for LLM consumption
+	const context = helpers.format_search_results_as_context(result);
+
 	this.log(`Search complete`);
 	debug.add('search_result', result);
 
-	return result;
+	return { ...result, context };
     }
 
     

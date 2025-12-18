@@ -30,6 +30,29 @@
  *
  * // Search
  * const results = await kg.search_for_knowledge("Einstein", { limit: 5 });
+ * console.log(results.context); // Text context for LLMs
+ * ```
+ *
+ * @example Using Search Results with LLMs
+ * ```typescript
+ * import { matrix } from "tidyscripts/bin/dev";
+ *
+ * const kg = await matrix.initialize();
+ * const results = await kg.search_for_knowledge("shay", { limit: 5 });
+ *
+ * // Use text context in LLM prompts
+ * const prompt = `
+ * Answer this question based on the following knowledge:
+ *
+ * ${results.context}
+ *
+ * Question: Who created tidyscripts?
+ * `;
+ *
+ * // Or use structured data programmatically
+ * console.log(results.entities);
+ * console.log(results.relations);
+ * console.log(results.graph);
  * ```
  *
  * @example Using Helpers Directly
