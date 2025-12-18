@@ -1,4 +1,5 @@
 
 
 Implemented matrix
-Need to integrate matrix with cortex 
+Need to integrate matrix with cortex
+-> everytime you interact with cortex it keeps a running summary of the conversation stored into the database (run in background thread) as well as a summary of the graph updates 

@@ -77,4 +77,27 @@ export { Matrix } from "./matrix";
 export * as helpers from "./matrix_helpers";
 export * as prompts from "./matrix_prompt_templates";
 export * as templates from "./matrix_surreal_query_templates";
-export { initialize } from "./init";
+import { initialize } from "./init";
+export { initialize} 
+
+export var matrix : any = null ;
+
+export async function get_matrix() {
+       if (!matrix) {
+          matrix = await initialize()
+	  return matrix
+       } else {
+       return matrix
+       } 
+}      
+
+export async function _add_knowledge(text: string, metadata: any) {
+    let m = await get_matrix() ; 
+    return m.add_knowledge(text,metadata) ; 
+       
+}      
+
+export async function _search_for_knowledge(text: string, ops: any) {
+    let m = await get_matrix() ;
+    return (await m.search_for_knowledge(text,ops) as any).context ; 
+}      
