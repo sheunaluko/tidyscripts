@@ -56,12 +56,26 @@ export default async function handler(
     }
 
     log(`Got post request for struct chat completion `) ;
-    console.log(req.body) 
-    const response = await client.beta.chat.completions.parse(req.body) ;
-    //tsn.common.apis.oai.generic_completion_json_structured(req.body);
-    log(`Got response:`) ;
-    console.log(response) 
-    res.status(200).json(response) 
+    console.log(req.body)
+
+    try {
+        const response = await client.beta.chat.completions.parse(req.body) ;
+        log(`Got response:`) ;
+        console.log(response)
+        res.status(200).json(response)
+    } catch (error: any) {
+        log(`Parse error occurred: ${error.message}`);
+        // Try to get raw response for debugging
+        try {
+            const rawResponse = await client.chat.completions.create(req.body);
+            log(`Raw response for debugging:`);
+            console.log(JSON.stringify(rawResponse, null, 2));
+            console.log("Raw content:", rawResponse.choices[0]?.message?.content);
+        } catch (rawError: any) {
+            log(`Could not fetch raw response: ${rawError.message}`);
+        }
+        throw error;
+    } 
 
 
 

@@ -115,17 +115,29 @@ type CortexOutput = {
 
 const FunctionCallObject = z.object({
     name : z.string() ,
-    parameters : z.union( [z.record(z.string()) , z.null() ])    
+    parameters : z.union( [z.record(z.string()) , z.null() ])
 })
 
 const zrf  = z.object({
-    thoughts : z.string() , 
+    thoughts : z.string() ,
     calls : z.array( FunctionCallObject ),
     return_indeces : z.array( z.number() )  }
 )
 
-/* CortexOutputResoponseFormat */
+/* CortexOutputResoponseFormat - legacy, kept for reference */
 export const CortexOutputResponseFormat = zodResponseFormat( zrf,  'CortexOutput'  ) ;
+
+/* Extract raw JSON schema for new Responses API */
+export const CortexOutputSchema = CortexOutputResponseFormat.json_schema.schema;
+export const CortexOutputSchemaName = 'CortexOutput';
+
+/* Helper to extract raw JSON schema from zodResponseFormat result */
+export function extractJsonSchema(zodFormat: ReturnType<typeof zodResponseFormat>) {
+    return {
+        schema: zodFormat.json_schema.schema,
+        schema_name: zodFormat.json_schema.name
+    };
+}
 
 
 /* FunctionDictionary */ 
@@ -337,17 +349,20 @@ export class Cortex extends EventEmitter  {
 	this.log(`Message count: ${messages.length}, Model: ${this.model}`)
 	this.log_event(`Structured completion started: ${schema_name}`)
 
-	const response_format = zodResponseFormat(schema, schema_name)
+	// Extract raw JSON schema from Zod schema for new Responses API
+	const zodFormat = zodResponseFormat(schema, schema_name)
+	const { schema: jsonSchema, schema_name: schemaName } = extractJsonSchema(zodFormat)
 
 	debug.add('structured_completion_request', { schema_name, messages, model: this.model })
 
-	const result = await fetch(`${window.location.origin}/api/openai_structured_completion`, {
+	const result = await fetch(`${window.location.origin}/api/openai_structured_response`, {
 	    method: 'POST',
 	    headers: { 'Content-Type': 'application/json' },
 	    body: JSON.stringify({
-		messages,
 		model: this.model,
-		response_format
+		input: messages,
+		schema: jsonSchema,
+		schema_name: schemaName
 	    })
 	})
 
@@ -366,7 +381,17 @@ export class Cortex extends EventEmitter  {
 	    this.log_event(`Structured completion tokens: ${total_tokens}`)
 	}
 
-	const parsed = jsonData.choices[0].message.parsed
+	// New Responses API returns output_text
+	let parsed: z.infer<T>
+	if (jsonData.output_text) {
+	    parsed = JSON.parse(jsonData.output_text)
+	} else if (jsonData.choices?.[0]?.message?.parsed) {
+	    // Fallback for old API format
+	    parsed = jsonData.choices[0].message.parsed
+	} else {
+	    throw new Error('Unexpected response format: no output_text or parsed content')
+	}
+
 	this.log(`Structured completion result received for: ${schema_name}`)
 	debug.add('structured_completion_parsed', parsed)
 
@@ -507,16 +532,17 @@ The response will be validated against this structure.
     async run_llm(loop : number = 1) : Promise<string> {
 
 	let messages = this.build_messages() ;
-	let model = this.model ; 
-	let response_format = CortexOutputResponseFormat ;
+	let model = this.model ;
 
-	/* put these args together and call the API to get the response, and parse it into a CortexMessage */
-	let args =  {
-	    messages, model, response_format 
-	} ;
+	/* Use new Responses API format */
+	let args = {
+	    model,
+	    input: messages,
+	    schema: CortexOutputSchema,
+	    schema_name: CortexOutputSchemaName
+	};
 
-
-	let result = await fetch(`${window.location.origin}/api/openai_structured_completion`, {
+	let result = await fetch(`${window.location.origin}/api/openai_structured_response`, {
 	    method : 'POST',
 	    headers : {'Content-Type' : 'application/json' } ,
 	    body : JSON.stringify(args)
@@ -524,7 +550,7 @@ The response will be validated against this structure.
 
 	return await this.handle_llm_response(result, loop )
 
-	
+
     }
 
 
@@ -744,14 +770,31 @@ The response will be validated against this structure.
 
 	let jsonData = await fetchResponse.json()
 	debug.add('model_json_response', jsonData) ;
-	this.prompt_history.push(jsonData) ; 
+	this.prompt_history.push(jsonData) ;
 
-	//debugger;
-	let {prompt_tokens, completion_tokens, total_tokens} = jsonData.usage ;
-	this.log_event(`Token Usage=${total_tokens}`) ;
-	
-	let output  = jsonData.choices[0].message.parsed ;
-	console.log(output) 
+	// Handle error responses
+	if (jsonData.error) {
+	    this.log(`API Error: ${jsonData.error}`);
+	    throw new Error(jsonData.error);
+	}
+
+	let {prompt_tokens, completion_tokens, total_tokens} = jsonData.usage || {};
+	if (total_tokens) {
+	    this.log_event(`Token Usage=${total_tokens}`) ;
+	}
+
+	// New Responses API returns output_text instead of choices[0].message.parsed
+	let output: CortexOutput;
+	if (jsonData.output_text) {
+	    output = JSON.parse(jsonData.output_text);
+	} else if (jsonData.choices?.[0]?.message?.parsed) {
+	    // Fallback for old API format
+	    output = jsonData.choices[0].message.parsed;
+	} else {
+	    throw new Error('Unexpected response format: no output_text or parsed content');
+	}
+
+	console.log(output)
 	debug.add("output", output) ; 
 
 	//add the message 

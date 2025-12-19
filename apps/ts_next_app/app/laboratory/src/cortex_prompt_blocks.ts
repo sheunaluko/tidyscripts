@@ -82,6 +82,8 @@ You can pass CortexRAM references as parameters to any function.
     callChains: `${header('CALL CHAINS')}
 You can execute multiple function calls in series, which is referred to as running a call chain.
 
+IMPORTANT: All calls must be included in a single CortexOutput object's "calls" array. Never output multiple JSON objects. Use the $N syntax to reference results within the same calls array.
+
 ${syntax.resultReferences}
 ${syntax.cortexRAMReferences}
 `,

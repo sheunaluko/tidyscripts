@@ -2,4 +2,5 @@
 
 Implemented matrix
 Need to integrate matrix with cortex
--> everytime you interact with cortex it keeps a running summary of the conversation stored into the database (run in background thread) as well as a summary of the graph updates 
+-> everytime you interact with cortex it keeps a running summary of the conversation stored into the database (run in background thread) as well as a summary of the graph updates
+-> completed the integration, and upgraded the responses api. however I am getting formatting errors (trying $0 within the string). I want to explore methods to remove this (by using official openai tool call for structure, vs first trying gemini or claude models) 
