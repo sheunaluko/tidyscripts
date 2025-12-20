@@ -444,6 +444,36 @@ Please note: A subfunction runs to accumulate the users text until they say fini
     {
 	enabled : true	, 	
 	description : `
+           Retrieves initialization instructions from the database 
+           Call this function to initialize your session with the user     
+           Perform next steps based on what is returned 
+	`, 
+	name        : "initialize" ,
+	parameters  :  null, 
+	fn          : async (ops : any) => {
+	    let {log} = ops.util ;
+
+	    let query = "select * from cortex where type = 'init'" ; 
+	    log(`Surreal QL: \n${query}`); 
+	    let response = await fbu.surreal_query({query }) as any; 
+	    log(`Got response`)
+	    log(response) 
+	    try {
+		return response?.data?.result?.result
+		
+	    }	catch (error : any) {
+		
+		return `Received error: ${JSON.stringify(error)}`
+	    }
+	},
+	return_type : "any"
+    },
+
+
+    
+    {
+	enabled : true	, 	
+	description : `
 	Universal gateway for accessing the database. This function lets you provide a SURREAL QL Query that will be run on the remote database.
 
 	There is a logs table that stores user logs (schemaless)

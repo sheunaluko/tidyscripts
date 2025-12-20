@@ -14,15 +14,16 @@
         "test:coverage": "jest --coverage"
     },
     "dependencies": {
+        "@anthropic-ai/sdk": "^0.71.2",
         "@chakra-ui/icons": "^2.2.4",
         "@chakra-ui/react": "^2.10.6",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.0",
         "@fontsource/roboto": "^5.0.13",
+        "@modelcontextprotocol/sdk": "^1.22.0",
         "@mui/icons-material": "^6.4.7",
         "@mui/material": "^6.4.7",
         "@mui/system": "^6.4.7",
-        "@modelcontextprotocol/sdk": "^1.22.0",
         "@openai/agents": "^0.2.1",
         "@react-sigma/core": "^5.0.4",
         "@react-sigma/layout-forceatlas2": "^5.0.4",

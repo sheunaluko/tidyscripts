@@ -132,7 +132,9 @@ const  Component: NextPage = (props : any) => {
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
 
-    const default_model = "gpt-5.1"
+    //const default_model = "gpt-5.1"
+    //const default_model = "claude-sonnet-4-5-20250929"
+    const default_model = "gemini-3-pro-preview"
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    
@@ -550,7 +552,7 @@ const  Component: NextPage = (props : any) => {
 	
 	log(`Calling llm`)
 	try  {
-	    var llm_result  = await COR.run_llm(1) as string ; 
+	    var llm_result  = await COR.run_llm(4) as string ; 
 	} catch (e : any) { 
 	    throw new Error(`Error running llm: ${e}`) 
 	}
@@ -1004,7 +1006,7 @@ const  Component: NextPage = (props : any) => {
                             >
                                 {message.role === 'assistant' ? 'Cortex' : 'You'}
                             </Typography>
-                            <Box sx={{ '& p': { margin: 0, padding : '10px' } }}>
+                            <Box sx={{ padding: '10px' }}>
                                 <ReactMarkdown className='line-break'>{message.content}</ReactMarkdown>
                             </Box>
                         </Paper>

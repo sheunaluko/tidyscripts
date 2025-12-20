@@ -62,6 +62,23 @@ QUestion: what do you think of this solution? lets discuss pros and cons
  */
 
 
+/* Provider types and helpers */
+type Provider = 'openai' | 'anthropic' | 'gemini';
+
+function getProviderFromModel(model: string): Provider {
+    if (model.startsWith('claude-')) return 'anthropic';
+    if (model.startsWith('gemini-')) return 'gemini';
+    return 'openai';
+}
+
+function getEndpointForProvider(provider: Provider): string {
+    switch (provider) {
+        case 'anthropic': return '/api/claude_structured_response';
+        case 'gemini': return '/api/gemini_structured_response';
+        default: return '/api/openai_structured_response';
+    }
+}
+
 /* Define types */
 
 /* FunctionParameters */
@@ -212,7 +229,8 @@ interface CortexOps {
     model : string ,
     name  : string ,
     functions : Function[] ,
-    additional_system_msg : string, 
+    additional_system_msg : string,
+    provider? : Provider  // optional, auto-detected from model if not provided
 } 
 
 
@@ -233,6 +251,7 @@ export class Cortex extends EventEmitter  {
 
     model : string;
     name  : string;
+    provider : Provider;
     log   : any;
     functions : Function[]  ;
     system_msg : SystemMessage ;
@@ -254,9 +273,10 @@ export class Cortex extends EventEmitter  {
 
 	super() ;
 
-	let { model, name, functions , additional_system_msg } = ops  ;
+	let { model, name, functions , additional_system_msg, provider } = ops  ;
 	this.model = model ;
 	this.name  = name ;
+	this.provider = provider ?? getProviderFromModel(model) ;
 	this.functions = functions ;
 	this.messages = [ ] ;
 	this.is_running_function = false;
@@ -303,6 +323,7 @@ export class Cortex extends EventEmitter  {
 
 	log("Building function dictionary")
 	let function_dictionary = get_function_dictionary(functions) ; this.function_dictionary = function_dictionary ;
+	log(`Initialized: model=${model}, provider=${this.provider}`)
 	log("Done")
 
     }
@@ -345,17 +366,20 @@ export class Cortex extends EventEmitter  {
     }): Promise<z.infer<T>> {
 	const { schema, schema_name, messages } = options
 
-	this.log(`Running structured completion with schema: ${schema_name}`)
-	this.log(`Message count: ${messages.length}, Model: ${this.model}`)
-	this.log_event(`Structured completion started: ${schema_name}`)
+	this.log(`[Structured Completion] schema=${schema_name}, model=${this.model}, provider=${this.provider}`)
+	this.log(`Message count: ${messages.length}`)
+	this.log_event(`Structured completion: ${schema_name} | Provider: ${this.provider}`)
 
 	// Extract raw JSON schema from Zod schema for new Responses API
 	const zodFormat = zodResponseFormat(schema, schema_name)
 	const { schema: jsonSchema, schema_name: schemaName } = extractJsonSchema(zodFormat)
 
-	debug.add('structured_completion_request', { schema_name, messages, model: this.model })
+	// Use provider-based endpoint
+	const endpoint = getEndpointForProvider(this.provider);
 
-	const result = await fetch(`${window.location.origin}/api/openai_structured_response`, {
+	debug.add('structured_completion_request', { schema_name, messages, model: this.model, provider: this.provider })
+
+	const result = await fetch(`${window.location.origin}${endpoint}`, {
 	    method: 'POST',
 	    headers: { 'Content-Type': 'application/json' },
 	    body: JSON.stringify({
@@ -529,12 +553,13 @@ The response will be validated against this structure.
      * If loop=N, after obtaining a function response another LLM call 
      * will be made automatically, until no more functions are called or until N calls have been made 
      */
-    async run_llm(loop : number = 1) : Promise<string> {
+    async run_llm(loop : number = 6) : Promise<string> {
 
 	let messages = this.build_messages() ;
 	let model = this.model ;
 
-	/* Use new Responses API format */
+	/* Use provider-based endpoint */
+	const endpoint = getEndpointForProvider(this.provider);
 	let args = {
 	    model,
 	    input: messages,
@@ -542,7 +567,10 @@ The response will be validated against this structure.
 	    schema_name: CortexOutputSchemaName
 	};
 
-	let result = await fetch(`${window.location.origin}/api/openai_structured_response`, {
+	this.log(`[LLM Call] model=${this.model}, provider=${this.provider}, endpoint=${endpoint}`);
+	this.log_event(`Provider: ${this.provider} | Model: ${this.model}`);
+
+	let result = await fetch(`${window.location.origin}${endpoint}`, {
 	    method : 'POST',
 	    headers : {'Content-Type' : 'application/json' } ,
 	    body : JSON.stringify(args)
