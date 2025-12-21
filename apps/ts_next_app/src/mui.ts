@@ -19,6 +19,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import AppShortcutIcon from '@mui/icons-material/AppShortcut';
 import ScienceIcon from '@mui/icons-material/Science';
 import PageviewIcon from '@mui/icons-material/Pageview';
+import ArticleIcon from '@mui/icons-material/Article';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 
@@ -199,6 +200,7 @@ export  {
     AppShortcutIcon,
     ScienceIcon,
     PageviewIcon,
+    ArticleIcon,
     GitHubIcon,
     
 

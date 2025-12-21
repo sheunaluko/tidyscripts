@@ -19,4 +19,4 @@ Possible upgrades
 -> initializing the system in a non blocking way -- or with all blocking calls in parallel
 -> potentially exploring changing calling methodology for run_call_chain_template (different model?)
 
--> [ ] try with gemini flash model 
+-> [x] try with gemini flash model -> wow works incredibly well 

@@ -176,7 +176,10 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 
 	    let result = string_template
 	    for (const [key, value] of Object.entries(args || {})) {
-		result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value))
+		const strValue = (typeof value === 'object' && value !== null)
+		    ? JSON.stringify(value)
+		    : String(value)
+		result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), strValue)
 	    }
 
 	    return result

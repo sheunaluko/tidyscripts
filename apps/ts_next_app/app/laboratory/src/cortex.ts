@@ -19,45 +19,6 @@ import * as Channel from "./channel"
    
    Todo:  
    [x] implemented call chains 
-
-   [ think this is done ] status - implemented create_call_chain_template, store_call_chain_template, list_tempaltes 
-      TODO: need to fix RUN_CALL_CHAIN_TEMPLATE -- LLM is struggling 
-
-      TO format the arguments properly for that (since it is a single call with nested parameters) 
-      This is the same response format issue with create_call_chain_template 
-
-      Couple of options: 
-       1) similar solution, utilize another LLM call inside the function, and use the dynamic prompt building to maintain conversation history, but set the output format custom (this just generates the appropriate CALL shape , which then needs to be run ) 
-
-       2) flatten the call structure so its not nested 
-
-       3) ????   --- make ccct appear as function
-
-
-
-=> Claude focuse here after reading todo above=>  OK so this is how I want to implement this
-     -> the run_call_chain_template is a function, and in its description it simply tells cortex to forward the users request to it by providing (in natural language)
-     	the call_chain_template name and arguments it would like to run. We tell cortex that the parameter shape will be appropriately constructed under the hood and the call chain template then
-	executed, and the result returned
-
-     -> we define a generic helper function called rerun_llm_with_output_format (exposed in ops.util) that takes a zod response format and response guidance (and any parameter specific to the output format)
-     -> it rebuilds the system prompt, then it re-uses the existing messages array and creates a structured completion call with the existing message history (IGNORING /dropping? the last cortex message that actually called the function )
-     -> basically its simulating as if the user gave the query and then instead of cortex answering with the call it actually did (with the 1st response format) -- we "go back in time" and now cortex will answer with a substituted response format and slightly different system message but same message history
-
-     - the result of this call gives the call_chain_template arguments (properly structured), which are then returned to run_call_chain_template
-     
-     - run_call_chain_template now runs, gets a result, and adds it back as a regular user response --> from Cortex point of view its just a regular function response  
-
-
-QUestion: what do you think of this solution? lets discuss pros and cons 
-
-
-
-
-
-
-   In the future: every object the model creates in the database should have model version / ts version 
-   
    
  */
 

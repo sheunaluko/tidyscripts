@@ -134,7 +134,9 @@ const  Component: NextPage = (props : any) => {
 
     //const default_model = "gpt-5.1"
     //const default_model = "claude-sonnet-4-5-20250929"
-    const default_model = "gemini-3-pro-preview"
+    //const default_model = "gemini-3-pro-preview" 
+    const default_model = "gemini-3-flash-preview"    
+    
     /* const default_model = "gpt-4o-mini-2024-07-18" */ 
 
     const [started, set_started] = useState(false);    

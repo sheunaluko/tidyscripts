@@ -21,15 +21,17 @@ declare var window : any ;
 
 import {
     Box,
+    Grid,
     Typography ,
     Card ,
     Button,
     AppShortcutIcon,
     ScienceIcon ,
     PageviewIcon,
+    ArticleIcon,
     GitHubIcon,
     InfoIcon
-    
+
 } from "../src/mui" 
 
 const log = tsw.common.logger.get_logger({id:"app/index"}) ; 
@@ -67,18 +69,27 @@ const Home: NextPage = (props : any) => {
     let R = "17px"
 
     
-    const MLink = ({ ...props }) => {
-	// @ts-ignore
-	return <Link {...props} style={{textDecoration: 'none' }} />;
+    const MLink = ({ style, ...props }: any) => {
+	return <Link {...props} style={{ textDecoration: 'none', display: 'block', ...style }} />;
     };
 
 
     const card_style : any  = {
-	padding : "10px" ,
-	marginBottom : "30px" ,
+	padding : "16px" ,
 	cursor : 'pointer' ,
-	width : "100%" 
-    } 
+	height: "100%",
+	width: "100%"
+    }
+
+    const links = [
+    
+	{ href: "/apps", title: "App Library", description: "Mature Applications", icon: <AppShortcutIcon color='primary' /> },
+	{ href: "/laboratory", title: "Laboratory", description: "Prototypes and Experiments", icon: <ScienceIcon color='primary' /> },
+	{ href: "/docs/index.html", title: "Documentation", description: "Explore the Docs", icon: <PageviewIcon color='primary' /> },
+	{ href: "/blog", title: "Blog", description: "The Tidyscripts Blog", icon: <ArticleIcon color='primary' /> },
+	{ href: "https://github.com/sheunaluko/tidyscripts", title: "Github", description: "See the Source Code", icon: <GitHubIcon color='primary' /> },
+	{ href: "/about", title: "About", description: "The Origin", icon: <InfoIcon color='primary' /> },
+    ]; 
 
 
 
@@ -96,89 +107,33 @@ const Home: NextPage = (props : any) => {
 		<Typography variant="h2" color='primary.main'>
 		    Tidyscripts
 		</Typography>
-	    </Box> 
+	    </Box>
 
-	    <Box className={styles.description}> 
-		<Typography variant="h4" > 
+	    <Box className={styles.description}>
+		<Typography variant="h4" >
 		    Powerful tools for serious builders and users
 		</Typography>
 	    </Box>
 
-
-	    <Box  >
-
-		<MLink href="/apps">
-		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">App Library</Typography>
-			<Box display='flex' flexDirection='row' justifyContent='space-between'>
-			<p>
-			    Mature Applications 
-			</p>
-			<AppShortcutIcon color='primary'  />
-			</Box> 
-			
-		    </Card >
-		</MLink>
-		
-
-		<MLink href="/laboratory">
-		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">Laboratory</Typography>
-			<Box display='flex' flexDirection='row' justifyContent='space-between'>
-
-			<p>
-			    Prototypes and Experiments
-			</p>
-			<ScienceIcon color='primary' style={{marginLeft : "12px" }}  />
-			</Box>
-		    </Card >
-		</MLink>
-
-		<MLink href="/docs/index.html">
-		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">Documentation</Typography>
-			<Box display='flex' flexDirection='row' justifyContent='space-between'>
-			    
-			<p>
-			    Explore the Docs
-			</p>
-			<PageviewIcon color='primary' />
-			</Box>			
-		    </Card >
-		</MLink>
-
-		<MLink href="https://github.com/sheunaluko/tidyscripts">
-		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">Github</Typography>
-			<Box display='flex' flexDirection='row' justifyContent='space-between'>
-			
-			<p>
-			    See the Source Code
-			</p>
-			<GitHubIcon color='primary'/>			
-			</Box>
-		    </Card >
-		</MLink>
-
-		
-		<MLink href="/about">
-		    <Card style={card_style}>
-			<Typography variant="h5" color="primary">About</Typography>
-			<Box display='flex' flexDirection='row' justifyContent='space-between'>
-
-			<p>
-			    The Origin
-			</p>
-			<InfoIcon color='primary' />						
-			</Box>
-		    </Card >
-		</MLink>
-		
-		
-
-
-		
-	    </Box>
+	    <Grid container spacing={6} sx={{
+	    maxWidth: 1200,
+	    mt: 2 ,
+	    paddingLeft : "30px",
+	    paddingRight : "30px"  }}>
+		{links.map((link) => (
+		    <Grid item xs={12} sm={6} lg={6} key={link.href} sx={{ display: 'flex', justifyContent: 'center' }}>
+			<MLink href={link.href} style={{ width: '100%' }}>
+			    <Card style={card_style}>
+				<Typography variant="h5" color="primary">{link.title}</Typography>
+				<Box display='flex' flexDirection='row' justifyContent='space-between' alignItems='center' mt={1}>
+				    <p style={{ margin: 0 }}>{link.description}</p>
+				    {link.icon}
+				</Box>
+			    </Card>
+			</MLink>
+		    </Grid>
+		))}
+	    </Grid>
 	</Box>
     )
 }
