@@ -1,0 +1,127 @@
+A joyous production journey begins...
+
+You are in the directory rai, which will create an app for REI (reproductive endocrinology and infertility) note efficiency.
+
+Here is the workflow:
+
+1) The user navigates to tidyscripts.com/laboratory/rai
+
+2) They see the template_picker (a Grid of note templates to select from, where each card consists of):
+   - template title
+   - template description
+   
+3) They also see a menu icon on the upper left which allows toggling between the
+   - template_picker (this is first view mentioned)
+   - information_input
+   - note generator
+   - settings
+
+4) When the user selects a template the information_input view is activated automatically. 
+
+5) The information_input works as follows:
+   - it displays the selected template at the top left
+   - there is an indicator for voice or text mode  (configured in settings) 
+   - if voice mode:
+        if settings.autostart_agent is true then it autostarts
+	   - if not there is a button labeled "Start"
+   - there should also be a way for the user to reset the information (if navigating back here later)
+     - it should ask for confirmation
+     - can use button "Reset"
+
+5a) Voice Mode
+   - upon start an AI voice agent is activated
+   - this agent is modeled after the workflow in ../voice_agent_test, and will:
+     - be aware of the template
+     - greet the user and say, "ready for input, say finished when done"
+     - respond "noted" when new information is given, and add the information to UI
+     - when user says finished,the ai prompts for any remaining / missing parameters
+       	   - this can simply be told to the agent and assume it will do it correctly based on
+	     conversation history and its knowledge of the template, i can optimize this later
+	     if it doesnt work
+     - then all information is collected as text and saved
+
+5b) Text Mode
+   - the user provides the information as text directly, and can click finished	
+   - to proceed
+
+6) After the user has finished, the app progresses to note_generator view
+   - this view will use a structured_output llm call with the template and
+     the additional information to generate a full note
+   - the prompt_template should be stored in its own file
+   - the structured output call should be modeled after ../src/cortex.ts
+     structured_output, which allows detection of model provider/name and then
+     appropriately routes to {gemini,claude,openai}_structured_response vercel api
+     functions
+   - the UI has a model indicator which shows the selected model (selected in settings) 
+   - if settings.autostart_generation is true then:
+     - upon the view loading it will launch the call and populate the final note
+     - otherwise there is a button that says "Generate", after which the final note is displayed
+     - there is a "Copy to Clipboard" button 
+
+
+
+Design parameters:
+
+=========
+VIEWS
+=========
+
+The different views selectable by the menu should be able to share state
+Use Zustand for state management 
+
+=========
+TEMPLATES
+=========
+- create a templates subdirectory that stores the templates in json
+- fields within the template that need to be filled have the format {{VARIABLE_NAME}}
+
+====
+MENU
+====
+
+The menu on the left should use ICONS only when not expanded, then expand to include icon + title
+items are arranged vertically from the top
+At the very bottom there is a settings icon 
+
+This is a persistent sidebar that expands/collapses 
+
+====
+Settings
+====
+
+The settings view allows configuration of: 
+- Voice vs Text mode  (default voice) 
+- AI model selector (for structured output)    (default gemini-3-flash-preview) 
+     - supports: "gemini-3-pro-preview", "gemini-3-flash-preview", "gpt-5.2", "gpt-5-mini", "gpt-5-nano" , "claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4-5"
+     - note that these are indeed REAL MODEL names
+
+- there is a setting for "Autostart Agent" (check box) (default false)
+- there is a setting for "Autostart Generation" (check box) (default false)
+
+
+- the settings are saved to local storage
+
+
+==========
+Modularity
+==========
+
+The key principle is modularity, separation of concerns, readability, extensibility. Please create subfiles or subfolders in order to keep everything tidy. 
+
+==============
+User Inferface
+==============
+
+Use material UI, however do not go for the generic look.
+The app should be professional and sleek and impressive, support built in dark mode
+The interface should be animated lightly to provide professional and appealing interactivity
+It should make use of skeletons and loading indicators
+It should be coded in a way that allows the appearance to be adjusted by modifying parameters in a single file (and which could support a UI layer later that lets the user do this) 
+Think carefully about the layout of the various views, they should be optimized for usability, efficiency, clarity and understandability 
+
+===========
+Note Output
+===========
+The note output should be formatted markdown
+
+

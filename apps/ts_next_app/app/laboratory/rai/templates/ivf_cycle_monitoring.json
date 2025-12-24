@@ -1,0 +1,7 @@
+{
+  "id": "ivf_cycle_monitoring",
+  "title": "IVF Cycle Monitoring Visit",
+  "description": "Progress note for IVF stimulation cycle monitoring",
+  "template": "# IVF Cycle Monitoring\n\n**Date:** {{VISIT_DATE}}\n**Patient:** {{PATIENT_NAME}}\n**Cycle Day:** {{CYCLE_DAY}}\n**Stimulation Day:** {{STIM_DAY}}\n\n## Current Medications\n{{MEDICATIONS}}\n\n## Ultrasound Findings\n- Endometrial thickness: {{ENDOMETRIAL_THICKNESS}} mm\n- Right ovary:\n  - Follicles: {{RIGHT_FOLLICLES}}\n  - Largest follicle: {{RIGHT_LARGEST}} mm\n- Left ovary:\n  - Follicles: {{LEFT_FOLLICLES}}\n  - Largest follicle: {{LEFT_LARGEST}} mm\n\n## Laboratory Results\n- Estradiol: {{ESTRADIOL}} pg/mL\n- LH: {{LH}} mIU/mL\n- Progesterone: {{PROGESTERONE}} ng/mL\n\n## Assessment\n{{ASSESSMENT}}\n\n## Plan\n{{PLAN}}\n\n## Next Appointment\n{{NEXT_VISIT}}\n\n---\n*Note by {{PROVIDER_NAME}}*",
+  "variables": []
+}

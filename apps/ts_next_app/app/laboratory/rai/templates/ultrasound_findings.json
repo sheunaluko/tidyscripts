@@ -1,0 +1,7 @@
+{
+  "id": "ultrasound_findings",
+  "title": "Transvaginal Ultrasound",
+  "description": "Detailed ultrasound findings documentation",
+  "template": "# Transvaginal Ultrasound Report\n\n**Date:** {{EXAM_DATE}}\n**Patient:** {{PATIENT_NAME}}\n**Indication:** {{INDICATION}}\n\n## Uterus\n- Position: {{UTERUS_POSITION}}\n- Size: {{UTERUS_SIZE}}\n- Endometrium: {{ENDOMETRIUM}}\n- Myometrium: {{MYOMETRIUM}}\n\n## Right Ovary\n- Size: {{RIGHT_OVARY_SIZE}}\n- Follicles: {{RIGHT_FOLLICLES}}\n- Masses/Cysts: {{RIGHT_MASSES}}\n\n## Right Adnexa\n{{RIGHT_ADNEXA}}\n\n## Left Ovary\n- Size: {{LEFT_OVARY_SIZE}}\n- Follicles: {{LEFT_FOLLICLES}}\n- Masses/Cysts: {{LEFT_MASSES}}\n\n## Left Adnexa\n{{LEFT_ADNEXA}}\n\n## Cul-de-sac\n{{CUL_DE_SAC}}\n\n## Impression\n{{IMPRESSION}}\n\n---\n*Interpreted by {{PROVIDER_NAME}}*",
+  "variables": []
+}

@@ -12,7 +12,7 @@ export default function ResponsiveComponent() {
     return (
 	<Show above='md'> 
 	  <Typography color='primary.main'> 		    
-	      Copyright © 2025 Sheun Aluko, MD		
+	      Copyright © 2026 Sheun Aluko MD		
 	  </Typography>
 	</Show> 
   )

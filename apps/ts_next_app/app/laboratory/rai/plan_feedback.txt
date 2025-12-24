@@ -1,0 +1,21 @@
+I will review your plan!
+
+
+
+Regarding RaiState:
+- information collection section
+-> I wasnt envisioning the voice agent having to extract the structured parameters individually, but instead just collect the user input as is (natural language structure)
+   -> then only later in the structured response call would it take the free text collected and the template to actually generate the final note (the LLM in structured response would handle that)
+   -> lets discuss the pros/cons of your proposal vs my initial conception
+   -> to be honest part of me is concerned that the added complexity of your approach might impact feasibility for the initial prototype, but in the future that feature would actually be nice
+
+   -> perhaps a hybrid approach would work? so that the structured response receiveds 	    both the structured extraction and the free text and uses both? 
+
+
+Regarding note_wrangler:
+- im curious to learn why you looked there and what you plan to use from that app since I do not specifically recall mentioning that
+
+
+
+In general I want you to make use of the tidyscripts log pattern and debug pattern to log to console and to store intermediate values for later inspection later  - especially regarding state transitions, UI updates, and critical intermediate and final data structures
+

@@ -1,0 +1,7 @@
+{
+  "id": "initial_consultation",
+  "title": "Initial REI Consultation",
+  "description": "First visit assessment for new reproductive endocrinology patient",
+  "template": "# Initial Consultation - Reproductive Endocrinology\n\n**Date:** {{VISIT_DATE}}\n**Patient:** {{PATIENT_NAME}}\n**Age:** {{PATIENT_AGE}}\n**MRN:** {{MEDICAL_RECORD_NUMBER}}\n\n## Chief Complaint\n{{CHIEF_COMPLAINT}}\n\n## History of Present Illness\n{{HISTORY_PRESENT_ILLNESS}}\n\n## Gynecologic History\n- Menarche: {{MENARCHE_AGE}}\n- Menstrual cycle: {{MENSTRUAL_CYCLE}}\n- Previous pregnancies: {{PREGNANCY_HISTORY}}\n- Previous fertility treatments: {{PRIOR_TREATMENTS}}\n\n## Partner Information\n{{PARTNER_INFO}}\n\n## Physical Examination\n{{PHYSICAL_EXAM}}\n\n## Laboratory/Imaging Results\n{{LAB_RESULTS}}\n\n## Assessment\n{{ASSESSMENT}}\n\n## Plan\n{{PLAN}}\n\n## Discussion\n{{DISCUSSION}}\n\n---\n*Electronically signed by {{PROVIDER_NAME}}*",
+  "variables": []
+}

@@ -1,0 +1,58 @@
+# Layout Problem Summary
+
+## Issue Description
+
+On initial page load, there is a visual jump/shift in the layout:
+
+1. **Initial State (Skeletons Loading)**:
+   - Template picker skeletons render
+   - Content appears as if sidebar is EXPANDED (240px push)
+   - Layout has large left margin/indentation
+
+2. **After Templates Load**:
+   - Skeletons are replaced with actual template cards
+   - Content suddenly shifts LEFT to fill more space
+   - Layout changes to sidebar COLLAPSED state (60px)
+   - This creates jarring visual jump
+
+## Expected Behavior
+
+- Skeletons should render with SAME layout as final content
+- Both should show sidebar in COLLAPSED state (60px) on initial load
+- No visual jump or layout shift when templates finish loading
+- Smooth, consistent layout from first render
+
+## Root Cause
+
+Mismatch between:
+- Sidebar initial state: `sidebarOpen = false` (60px collapsed)
+- Content margin during skeleton render: Rendering as if sidebar is 240px
+- Final content margin: Correctly shows 60px
+
+The skeleton layout doesn't match the final layout, causing content to slide/jump when templates load.
+
+## Desired End State
+
+1. Sidebar starts COLLAPSED (60px icon bar) on page load
+2. Content has 60px left margin from FIRST render (including skeletons)
+3. When sidebar expands (user clicks): smooth transition to 240px
+4. When sidebar collapses: smooth transition back to 60px
+5. NO layout jumps during template loading
+
+## Current State
+
+- MainLayout.tsx: `sidebarOpen = false` (correct)
+- MainLayout.tsx margin:
+  - When closed: 60px
+  - When open: 240px
+- Sidebar.tsx:
+  - Permanent variant
+  - Width transitions: 60px ↔ 240px
+- Problem: During initial skeleton render, layout behaves as if sidebar is 240px despite state being false
+
+## Files Involved
+
+- `/app/laboratory/rai/components/Layout/MainLayout.tsx`
+- `/app/laboratory/rai/components/Layout/Sidebar.tsx`
+- `/app/laboratory/rai/components/TemplatePicker/TemplatePicker.tsx` (skeletons)
+- `/app/laboratory/rai/constants.ts` (THEME_CONFIG)
