@@ -115,7 +115,7 @@ export function useVoiceAgent() {
 
       // Automatically send "start" message to trigger agent greeting
       try {
-        session.transport.sendMessage('start');
+        session.transport.sendMessage('start', {});
         log('Sent automatic start message to agent');
         addTranscriptEntry({
           speaker: 'user',

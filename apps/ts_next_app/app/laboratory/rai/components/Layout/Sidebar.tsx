@@ -21,6 +21,7 @@ import {
   AutoAwesome,
   EditNote,
   Settings,
+  Science,
   ChevronLeft,
   ChevronRight,
 } from '@mui/icons-material';
@@ -41,13 +42,14 @@ const ICON_MAP = {
   Input,
   AutoAwesome,
   EditNote,
+  Science,
   Settings,
 } as const;
 
 type IconName = keyof typeof ICON_MAP;
 
 export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
-  const { currentView, setCurrentView } = useRaiStore();
+  const { currentView, setCurrentView, settings } = useRaiStore();
   const [focusedIndex, setFocusedIndex] = React.useState<number | null>(null);
   const [mounted, setMounted] = React.useState(false);
   const theme = useTheme();
@@ -82,6 +84,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
 
   const bottomMenuItems: Array<{ id: ViewType; label: string; icon: IconName }> = [
     { id: 'template_editor', label: 'Template Editor', icon: 'EditNote' },
+    // Conditionally add Test Interface if advanced features enabled
+    ...(settings.advancedFeaturesEnabled
+      ? [{ id: 'test_interface' as ViewType, label: 'Test Interface', icon: 'Science' as IconName }]
+      : []
+    ),
     { id: 'settings', label: 'Settings', icon: 'Settings' },
   ];
 

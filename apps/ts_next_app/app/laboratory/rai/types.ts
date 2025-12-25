@@ -1,8 +1,22 @@
 // RAI App TypeScript Type Definitions
 
-export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'template_editor' | 'settings';
+export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'template_editor' | 'settings' | 'test_interface';
 
 export type Provider = 'anthropic' | 'gemini' | 'openai';
+
+// Route types for hash-based routing
+export interface Route {
+  view: ViewType;
+  params?: Record<string, string>;
+}
+
+export interface ParsedRoute {
+  view: ViewType;
+  params: Record<string, string>;
+  mode?: 'list' | 'create' | 'edit';
+  isValid: boolean;
+  error?: string;
+}
 
 // App Settings
 export interface AppSettings {
@@ -11,6 +25,7 @@ export interface AppSettings {
   autostartAgent: boolean;
   autostartGeneration: boolean;
   showDefaultTemplates: boolean;
+  advancedFeaturesEnabled: boolean;
 }
 
 // Note Template
@@ -38,11 +53,46 @@ export interface TranscriptEntry {
   text: string;
 }
 
+// Test Interface - Model Test Result
+export interface ModelTestResult {
+  model: string;
+  status: 'pending' | 'running' | 'success' | 'error';
+  note: string | null;
+  error: string | null;
+  startTime: Date | null;
+  endTime: Date | null;
+  duration: number | null; // milliseconds
+}
+
+// Test Interface - Complete Test Run
+export interface TestRun {
+  id: string; // UUID
+  hash: string; // SHA-256 of template + input
+  templateId: string;
+  templateTitle: string;
+  templateContent: string;
+  inputText: string;
+  models: string[]; // Models selected for this run
+  results: ModelTestResult[];
+  createdAt: Date;
+  analysis: {
+    modelUsed: string;
+    content: string;
+    timestamp: Date;
+  } | null;
+}
+
 // Zustand Store State
 export interface RaiState {
   // Navigation
   currentView: ViewType;
   setCurrentView: (view: ViewType) => void;
+
+  // Routing
+  isRoutingEnabled: boolean;
+  setRoutingEnabled: (enabled: boolean) => void;
+  applyRoute: (hash: string) => void;
+  syncRouteFromState: () => void;
 
   // Templates
   templates: NoteTemplate[];
@@ -89,4 +139,24 @@ export interface RaiState {
   updateSettings: (settings: Partial<AppSettings>) => void;
   loadSettings: () => void;
   saveSettings: () => void;
+
+  // Test Interface
+  selectedTemplateForTest: NoteTemplate | null;
+  testInputText: string;
+  selectedModels: string[];
+  currentTestRun: TestRun | null;
+  isRunningTest: boolean;
+  testHistory: TestRun[];
+  analysisModel: string;
+  isAnalyzing: boolean;
+  setSelectedTemplateForTest: (template: NoteTemplate | null) => void;
+  setTestInputText: (text: string) => void;
+  setSelectedModels: (models: string[]) => void;
+  setAnalysisModel: (model: string) => void;
+  startTest: () => Promise<void>;
+  analyzeResults: (testRunId: string) => Promise<void>;
+  loadTestHistory: () => void;
+  saveTestHistory: () => void;
+  loadTestRun: (testRunId: string) => void;
+  deleteTestRun: (testRunId: string) => void;
 }

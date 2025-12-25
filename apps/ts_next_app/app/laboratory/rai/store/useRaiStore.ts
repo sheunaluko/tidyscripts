@@ -2,14 +2,19 @@
 
 import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
-import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, AppSettings } from '../types';
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../constants';
+import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, AppSettings, TestRun, ModelTestResult } from '../types';
+import { DEFAULT_SETTINGS, STORAGE_KEYS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
 import {
   loadTemplates as loadTemplatesFromFiles,
   loadCustomTemplatesFromStorage,
   extractVariables,
   generateCustomTemplateId,
 } from '../lib/templateParser';
+import { generateTestHash, findCachedResults, mergeWithCache, runParallelTest } from '../lib/testRunner';
+import { buildAnalysisPrompt } from '../prompts/result_analysis_prompt';
+import { NOTE_GENERATION_SYSTEM_PROMPT } from '../prompts/note_generation_prompt';
+import { generateNote } from '../lib/noteGenerator';
+import { parseHash, generateHash, updateHash } from '../lib/router';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 const debug = tsw.common.util.debug;
@@ -20,6 +25,126 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   setCurrentView: (view: ViewType) => {
     debug.add('view_changed', { from: get().currentView, to: view });
     set({ currentView: view });
+
+    // Sync route after state update
+    setTimeout(() => get().syncRouteFromState(), 0);
+  },
+
+  // Routing
+  isRoutingEnabled: false,
+
+  setRoutingEnabled: (enabled: boolean) => {
+    set({ isRoutingEnabled: enabled });
+    debug.add('routing_enabled_changed', { enabled });
+  },
+
+  applyRoute: (hash: string) => {
+    const { isRoutingEnabled, isRunningTest } = get();
+
+    // Don't navigate if test is running
+    if (isRunningTest) {
+      log('Cannot navigate during active test run');
+      console.warn('[RAI Router] Navigation blocked during active test run');
+      return;
+    }
+
+    if (!isRoutingEnabled) return;
+
+    log(`Applying route from hash: "${hash}"`);
+
+    const parsed = parseHash(hash);
+
+    // Handle invalid routes
+    if (!parsed.isValid) {
+      log(`Invalid route: ${parsed.error}`);
+      console.warn(`[RAI Router] Invalid route: ${parsed.error}, redirecting to templates`);
+
+      // Redirect to safe view
+      set({ currentView: 'template_picker' });
+      updateHash('templates');
+      return;
+    }
+
+    // Apply view
+    const currentView = get().currentView;
+    if (currentView !== parsed.view) {
+      set({ currentView: parsed.view });
+    }
+
+    // Apply view-specific state
+    switch (parsed.view) {
+      case 'template_editor':
+        if (parsed.mode) {
+          set({ templateEditorMode: parsed.mode });
+
+          // Load template for edit mode
+          if (parsed.mode === 'edit' && parsed.params.templateId) {
+            const template = get().templates.find(
+              t => t.id === parsed.params.templateId
+            );
+
+            if (template) {
+              set({ editingTemplate: template });
+            } else {
+              log(`Template not found: ${parsed.params.templateId}, redirecting to list`);
+              set({
+                templateEditorMode: 'list',
+                editingTemplate: null
+              });
+              updateHash('templates/edit');
+            }
+          } else if (parsed.mode === 'create') {
+            set({ editingTemplate: null });
+          }
+        }
+        break;
+
+      case 'test_interface':
+        // Load test run if runId specified
+        if (parsed.params.runId) {
+          const testRun = get().testHistory.find(
+            run => run.id === parsed.params.runId
+          );
+
+          if (testRun) {
+            get().loadTestRun(parsed.params.runId);
+          } else {
+            log(`Test run not found: ${parsed.params.runId}, redirecting to test base`);
+            set({ currentTestRun: null });
+            updateHash('test');
+          }
+        } else {
+          // Clear current test run if going to base test view
+          // (unless actively running a test)
+          if (!get().isRunningTest) {
+            set({ currentTestRun: null });
+          }
+        }
+        break;
+    }
+
+    debug.add('route_applied', { view: parsed.view, params: parsed.params });
+  },
+
+  syncRouteFromState: () => {
+    const { isRoutingEnabled } = get();
+    if (!isRoutingEnabled) return;
+
+    const {
+      currentView,
+      templateEditorMode,
+      editingTemplate,
+      currentTestRun,
+    } = get();
+
+    const hash = generateHash(currentView, {
+      templateEditorMode,
+      templateId: editingTemplate?.id,
+      testRunId: currentTestRun?.id,
+    });
+
+    updateHash(hash);
+    debug.add('route_synced', { view: currentView, hash });
   },
 
   // Templates
@@ -250,10 +375,302 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   setTemplateEditorMode: (mode) => {
     set({ templateEditorMode: mode });
     debug.add('template_editor_mode_changed', { mode });
+
+    // Sync route after state update
+    setTimeout(() => get().syncRouteFromState(), 0);
   },
 
   setEditingTemplate: (template) => {
     set({ editingTemplate: template });
     debug.add('editing_template_set', { templateId: template?.id });
+
+    // Sync route after state update
+    setTimeout(() => get().syncRouteFromState(), 0);
+  },
+
+  // Test Interface
+  selectedTemplateForTest: null,
+  testInputText: '',
+  selectedModels: [...SUPPORTED_MODELS], // Default: all models selected
+  currentTestRun: null,
+  isRunningTest: false,
+  testHistory: [],
+  analysisModel: DEFAULT_SETTINGS.aiModel,
+  isAnalyzing: false,
+
+  setSelectedTemplateForTest: (template) => {
+    set({ selectedTemplateForTest: template });
+    debug.add('test_template_selected', { templateId: template?.id });
+  },
+
+  setTestInputText: (text) => {
+    set({ testInputText: text });
+  },
+
+  setSelectedModels: (models) => {
+    set({ selectedModels: models });
+    debug.add('test_models_selected', { count: models.length });
+  },
+
+  setAnalysisModel: (model) => {
+    set({ analysisModel: model });
+    debug.add('analysis_model_selected', { model });
+  },
+
+  startTest: async () => {
+    const {
+      selectedTemplateForTest,
+      testInputText,
+      selectedModels,
+      testHistory,
+    } = get();
+
+    if (!selectedTemplateForTest || !testInputText.trim() || selectedModels.length === 0) {
+      log('Cannot start test: missing template, input, or models');
+      return;
+    }
+
+    set({ isRunningTest: true });
+    debug.add('test_started', {
+      templateId: selectedTemplateForTest.id,
+      inputLength: testInputText.length,
+      models: selectedModels.length,
+    });
+
+    try {
+      // Generate hash
+      const hash = await generateTestHash(
+        selectedTemplateForTest.template,
+        testInputText
+      );
+
+      log({ msg: 'Test hash generated', hash: hash.substring(0, 16) + '...' });
+
+      // Check cache
+      const cached = findCachedResults(hash, testHistory);
+      const { toRun, cached: cachedResults } = mergeWithCache(selectedModels, cached);
+
+      log({
+        msg: 'Cache check complete',
+        cached: cachedResults.length,
+        toRun: toRun.length,
+      });
+
+      // Create test run
+      const testRun: TestRun = {
+        id: crypto.randomUUID(),
+        hash,
+        templateId: selectedTemplateForTest.id,
+        templateTitle: selectedTemplateForTest.title,
+        templateContent: selectedTemplateForTest.template,
+        inputText: testInputText,
+        models: selectedModels,
+        results: [...cachedResults],
+        createdAt: new Date(),
+        analysis: null,
+      };
+
+      set({ currentTestRun: testRun });
+
+      // Run tests for non-cached models
+      if (toRun.length > 0) {
+        await runParallelTest(
+          selectedTemplateForTest.template,
+          testInputText,
+          toRun,
+          NOTE_GENERATION_SYSTEM_PROMPT,
+          (result: ModelTestResult) => {
+            // Update progress in real-time
+            const current = get().currentTestRun;
+            if (current) {
+              const updatedResults = [...current.results];
+              const idx = updatedResults.findIndex(r => r.model === result.model);
+              if (idx >= 0) {
+                updatedResults[idx] = result;
+              } else {
+                updatedResults.push(result);
+              }
+
+              set({
+                currentTestRun: { ...current, results: updatedResults },
+              });
+            }
+          }
+        );
+      }
+
+      // Save to history
+      const finalTestRun = get().currentTestRun;
+      if (finalTestRun) {
+        const updatedHistory = [finalTestRun, ...get().testHistory].slice(0, 50); // Keep last 50
+        set({ testHistory: updatedHistory });
+        get().saveTestHistory();
+
+        debug.add('test_completed', {
+          testId: finalTestRun.id,
+          success: finalTestRun.results.filter(r => r.status === 'success').length,
+          error: finalTestRun.results.filter(r => r.status === 'error').length,
+        });
+      }
+    } catch (error) {
+      log({ msg: 'Test execution error', error });
+    } finally {
+      set({ isRunningTest: false });
+    }
+  },
+
+  analyzeResults: async (testRunId: string) => {
+    const { testHistory, analysisModel } = get();
+    const testRun = testRunId === get().currentTestRun?.id
+      ? get().currentTestRun
+      : testHistory.find(run => run.id === testRunId);
+
+    if (!testRun || testRun.results.length === 0) {
+      log('Cannot analyze: no test run or results');
+      return;
+    }
+
+    set({ isAnalyzing: true });
+    debug.add('analysis_started', { testRunId, analysisModel });
+
+    try {
+      // Build analysis prompt with all context
+      const { system, user } = buildAnalysisPrompt(
+        TEMPLATE_SYNTAX,
+        NOTE_GENERATION_SYSTEM_PROMPT,
+        testRun.templateContent,
+        testRun.inputText,
+        testRun.results
+      );
+
+      log({ msg: 'Analysis prompt built', systemLength: system.length, userLength: user.length });
+
+      // Call LLM for analysis
+      // Use generateNote with analysis prompt as template and user prompt as input
+      const analysisContent = await generateNote(
+        analysisModel,
+        system, // Use system prompt as template
+        [user], // User prompt as input
+        '', // Empty system prompt since we're using it as template
+        3 // retries
+      );
+
+      // Update test run with analysis
+      const analysisResult = {
+        modelUsed: analysisModel,
+        content: analysisContent,
+        timestamp: new Date(),
+      };
+
+      // Update current test run if it matches
+      if (get().currentTestRun?.id === testRunId) {
+        set({
+          currentTestRun: {
+            ...get().currentTestRun!,
+            analysis: analysisResult,
+          },
+        });
+      }
+
+      // Update in history
+      const updatedHistory = get().testHistory.map(run =>
+        run.id === testRunId
+          ? { ...run, analysis: analysisResult }
+          : run
+      );
+      set({ testHistory: updatedHistory });
+      get().saveTestHistory();
+
+      debug.add('analysis_completed', { testRunId });
+      log({ msg: 'Analysis completed', length: analysisContent.length });
+    } catch (error) {
+      log({ msg: 'Analysis error', error });
+    } finally {
+      set({ isAnalyzing: false });
+    }
+  },
+
+  loadTestHistory: () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.testRuns);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const history: TestRun[] = parsed.map((run: any) => ({
+          ...run,
+          createdAt: new Date(run.createdAt),
+          results: run.results.map((r: any) => ({
+            ...r,
+            startTime: r.startTime ? new Date(r.startTime) : null,
+            endTime: r.endTime ? new Date(r.endTime) : null,
+          })),
+          analysis: run.analysis ? {
+            ...run.analysis,
+            timestamp: new Date(run.analysis.timestamp),
+          } : null,
+        }));
+        set({ testHistory: history });
+        log({ msg: 'Test history loaded', count: history.length });
+      }
+    } catch (error) {
+      log({ msg: 'Error loading test history', error });
+    }
+  },
+
+  saveTestHistory: () => {
+    try {
+      const { testHistory } = get();
+      const serialized = testHistory.map(run => ({
+        ...run,
+        createdAt: run.createdAt.toISOString(),
+        results: run.results.map(r => ({
+          ...r,
+          startTime: r.startTime?.toISOString() || null,
+          endTime: r.endTime?.toISOString() || null,
+        })),
+        analysis: run.analysis ? {
+          ...run.analysis,
+          timestamp: run.analysis.timestamp.toISOString(),
+        } : null,
+      }));
+      localStorage.setItem(STORAGE_KEYS.testRuns, JSON.stringify(serialized));
+      log({ msg: 'Test history saved', count: serialized.length });
+    } catch (error) {
+      log({ msg: 'Error saving test history', error });
+    }
+  },
+
+  loadTestRun: (testRunId: string) => {
+    const { testHistory } = get();
+    const testRun = testHistory.find(run => run.id === testRunId);
+
+    if (testRun) {
+      // Load test run data into form
+      const template = get().templates.find(t => t.id === testRun.templateId);
+      set({
+        selectedTemplateForTest: template || null,
+        testInputText: testRun.inputText,
+        selectedModels: testRun.models,
+        currentTestRun: testRun,
+      });
+      debug.add('test_run_loaded', { testRunId });
+      log({ msg: 'Test run loaded', testRunId });
+
+      // Sync route after state update
+      setTimeout(() => get().syncRouteFromState(), 0);
+    }
+  },
+
+  deleteTestRun: (testRunId: string) => {
+    const updatedHistory = get().testHistory.filter(run => run.id !== testRunId);
+    set({ testHistory: updatedHistory });
+    get().saveTestHistory();
+
+    // Clear current test run if it was deleted
+    if (get().currentTestRun?.id === testRunId) {
+      set({ currentTestRun: null });
+    }
+
+    debug.add('test_run_deleted', { testRunId });
+    log({ msg: 'Test run deleted', testRunId });
   },
 }));

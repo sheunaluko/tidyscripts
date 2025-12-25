@@ -192,7 +192,7 @@ export const TemplateList: React.FC = () => {
               No custom templates yet
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Click "Create New Template" to get started
+              Click &quot;Create New Template&quot; to get started
             </Typography>
           </Box>
         ) : (
@@ -212,7 +212,7 @@ export const TemplateList: React.FC = () => {
         <DialogTitle>Delete Template?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete "{deleteDialog.template?.title}"? This action cannot be
+            Are you sure you want to delete &quot;{deleteDialog.template?.title}&quot;? This action cannot be
             undone.
           </DialogContentText>
         </DialogContent>

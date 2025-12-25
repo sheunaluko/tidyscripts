@@ -11,15 +11,20 @@ import { InformationInput } from './components/InformationInput/InformationInput
 import { NoteGenerator } from './components/NoteGenerator/NoteGenerator';
 import { TemplateEditor } from './components/TemplateEditor/TemplateEditor';
 import { Settings } from './components/Settings/Settings';
+import { TestInterface } from './components/TestInterface';
 import { useRaiStore } from './store/useRaiStore';
+import { useHashRouter } from './hooks/useHashRouter';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 
 declare var window: any;
 
 const RAI: React.FC = () => {
-  const { currentView, loadTemplates, loadSettings } = useRaiStore();
+  const { currentView, loadTemplates, loadSettings, loadTestHistory } = useRaiStore();
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Initialize hash router
+  useHashRouter();
 
   useEffect(() => {
     // Initialize the app
@@ -31,13 +36,16 @@ const RAI: React.FC = () => {
     // Load templates
     loadTemplates();
 
+    // Load test history (needed for route validation)
+    loadTestHistory();
+
     // Expose utilities to window for debugging
     Object.assign(window, {
       tsw,
     });
 
     log('RAI app initialized');
-  }, [loadSettings, loadTemplates]);
+  }, [loadSettings, loadTemplates, loadTestHistory]);
 
   // Log computed styles of container
   useEffect(() => {
@@ -60,6 +68,9 @@ const RAI: React.FC = () => {
 
       case 'template_editor':
         return <TemplateEditor />;
+
+      case 'test_interface':
+        return <TestInterface />;
 
       case 'settings':
         return <Settings />;

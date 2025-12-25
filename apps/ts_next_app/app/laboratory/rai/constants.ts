@@ -53,12 +53,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostartAgent: false,
   autostartGeneration: false,
   showDefaultTemplates: true,
+  advancedFeaturesEnabled: false,
 };
+
+// Advanced Features Password Hash (SHA-256)
+export const ADVANCED_FEATURES_PASSWORD_HASH =
+  '79e040d13c4ce2d6b75db910c64e927d23d06ef5863faaefe4cfa8dcc226b8b0';
 
 // LocalStorage Keys
 export const STORAGE_KEYS = {
   settings: 'rai_settings',
   customTemplates: 'rai_custom_templates',
+  testRuns: 'rai_test_runs',
 };
 
 // Default Template IDs (file-based templates)

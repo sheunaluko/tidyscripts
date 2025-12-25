@@ -100,7 +100,7 @@ export function loadCustomTemplatesFromStorage(): NoteTemplate[] {
     debug.add('custom_templates_loaded', { count: templates.length });
     return templates;
   } catch (error) {
-    log('Error loading custom templates from storage:', error);
+    log({ msg: 'Error loading custom templates from storage', error });
     return [];
   }
 }

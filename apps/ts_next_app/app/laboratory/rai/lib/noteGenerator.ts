@@ -1,6 +1,7 @@
 // Note Generator - Provider-agnostic structured LLM calls
 
 import { z } from 'zod';
+import { zodResponseFormat } from 'openai/helpers/zod';
 import * as tsw from 'tidyscripts_web';
 import { Provider } from '../types';
 import { TEMPLATE_SYNTAX } from '../constants';
@@ -14,6 +15,17 @@ const NoteOutputSchema = z.object({
 });
 
 type NoteOutput = z.infer<typeof NoteOutputSchema>;
+
+/**
+ * Helper to extract raw JSON schema from zodResponseFormat result
+ * Follows cortex_0 convention
+ */
+function extractJsonSchema(zodFormat: ReturnType<typeof zodResponseFormat>) {
+  return {
+    schema: zodFormat.json_schema.schema,
+    schema_name: zodFormat.json_schema.name
+  };
+}
 
 /**
  * Detect AI provider from model name
@@ -110,23 +122,6 @@ Output only the completed note with all substitutions made.`;
   };
 }
 
-/**
- * Convert Zod schema to JSON Schema format for API
- */
-function zodToJsonSchema(schema: z.ZodType): any {
-  // Simple conversion for our use case
-  // For production, use zod-to-json-schema library
-  return {
-    type: 'object',
-    properties: {
-      note: {
-        type: 'string',
-        description: 'Formatted markdown note with all template variables filled',
-      },
-    },
-    required: ['note'],
-  };
-}
 
 /**
  * Generate note using structured LLM API
@@ -152,6 +147,10 @@ export async function generateNote(
 
   debug.add('note_generation_prompt', { system, user });
 
+  // Extract JSON schema using cortex_0 convention
+  const zodFormat = zodResponseFormat(NoteOutputSchema, 'NoteOutput');
+  const { schema: jsonSchema, schema_name: schemaName } = extractJsonSchema(zodFormat);
+
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       log(`Generating note with ${model} (attempt ${attempt + 1}/${retries})...`);
@@ -165,8 +164,8 @@ export async function generateNote(
             { role: 'system', content: system },
             { role: 'user', content: user },
           ],
-          schema: zodToJsonSchema(NoteOutputSchema),
-          schema_name: 'NoteOutput',
+          schema: jsonSchema,
+          schema_name: schemaName,
         }),
       });
 
@@ -178,13 +177,19 @@ export async function generateNote(
       const data = await response.json();
       debug.add('note_generation_raw_response', data);
 
-      // Parse the response based on API format
+      // Parse the response based on API format (following cortex_0 pattern)
       let parsedOutput: any;
-      if (data.output) {
-        // New format from structured response APIs
+      if (data.output_text) {
+        // New Responses API format (cortex_0 convention)
+        parsedOutput = JSON.parse(data.output_text);
+      } else if (data.output) {
+        // Alternative format
         parsedOutput = typeof data.output === 'string' ? JSON.parse(data.output) : data.output;
+      } else if (data.choices && data.choices[0]?.message?.parsed) {
+        // Fallback for old API format (cortex_0 convention)
+        parsedOutput = data.choices[0].message.parsed;
       } else if (data.choices && data.choices[0]?.message?.content) {
-        // Fallback format
+        // Additional fallback
         const content = data.choices[0].message.content;
         parsedOutput = typeof content === 'string' ? JSON.parse(content) : content;
       } else {

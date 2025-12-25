@@ -107,7 +107,7 @@ export const TemplatePicker: React.FC = () => {
             <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 4 }}>
               No templates available.
               {!settings.showDefaultTemplates && (
-                <> Enable "Show Default Templates" in Settings or create a custom template.</>
+                <> Enable &quot;Show Default Templates&quot; in Settings or create a custom template.</>
               )}
             </Typography>
           </Grid>
