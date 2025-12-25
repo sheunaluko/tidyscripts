@@ -69,8 +69,30 @@ const RAI: React.FC = () => {
     <MainLayout>
       <Container ref={containerRef} maxWidth="lg" sx={{ minWidth: 0, width: '100%' }}>
         <Box sx={{ py: 4 }}>
-          <Typography variant="h3" gutterBottom>
-            R.AI 
+          <Typography
+            variant="h3"
+            gutterBottom
+            sx={{
+              background: 'linear-gradient(90deg, #2196F3, #00BCD4, #9C27B0, #2196F3, #00BCD4, #9C27B0)',
+              backgroundSize: '300% 100%',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              animation: 'gradientShift 100s ease infinite',
+              '@keyframes gradientShift': {
+                '0%': {
+                  backgroundPosition: '0% 50%',
+                },
+                '50%': {
+                  backgroundPosition: '100% 50%',
+                },
+                '100%': {
+                  backgroundPosition: '0% 50%',
+                },
+              },
+            }}
+          >
+            R.AI
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             Professional AI medical note generation for Reproductive Endocrinology and Infertility

@@ -18,13 +18,21 @@ export const InformationDisplay: React.FC = () => {
   }
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+    <Paper sx={{
+      p: 2,
+      border: '1px solid transparent',
+      borderRadius: 1,
+      background: (theme) => `
+        linear-gradient(${theme.palette.background.paper}, ${theme.palette.background.paper}) padding-box,
+        linear-gradient(to right, #2196F3, #00BCD4, #9C27B0, #EA4335) border-box
+      `,
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, position: 'relative', zIndex: 1 }}>
         <Typography variant="h6">Collected Information</Typography>
         <Chip label={`${collectedInformation.length} entries`} size="small" sx={{ ml: 2 }} color="primary" />
       </Box>
 
-      <List>
+      <List sx={{ position: 'relative', zIndex: 1 }}>
         {collectedInformation.map((entry, index) => (
           <ListItem
             key={index}

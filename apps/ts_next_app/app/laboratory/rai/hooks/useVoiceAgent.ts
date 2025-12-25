@@ -1,6 +1,6 @@
 // useVoiceAgent Hook - Voice agent management
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { RealtimeSession } from '@openai/agents/realtime';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
@@ -8,6 +8,8 @@ import { createRealtimeAgent, getEphemeralKey } from '../lib/voiceAgent';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 const debug = tsw.common.util.debug;
+
+declare var window: any;
 
 export function useVoiceAgent() {
   const {
@@ -23,10 +25,34 @@ export function useVoiceAgent() {
   const sessionRef = useRef<RealtimeSession | null>(null);
   const agentRef = useRef<any>(null);
 
+  // Expose WebRTC objects to global scope for debugging
+  useEffect(() => {
+    window.voiceAgentDebug = {
+      session: sessionRef.current,
+      get pc() {
+        return (sessionRef.current as any)?.pc || null;
+      },
+      get dc() {
+        return (sessionRef.current as any)?.dc || null;
+      },
+      get stream() {
+        return (sessionRef.current as any)?.stream || null;
+      },
+      stopAgent,
+    };
+  });
+
   const startAgent = useCallback(async () => {
     try {
       log('Starting voice agent...');
       debug.add('voice_agent_start_requested', { template: selectedTemplate?.id });
+
+      // Add immediate feedback
+      addTranscriptEntry({
+        speaker: 'system',
+        text: 'Retrieving authentication token...',
+        timestamp: new Date(),
+      });
 
       // Get ephemeral key
       const apiKey = await getEphemeralKey();
@@ -36,6 +62,16 @@ export function useVoiceAgent() {
         addInformationText,
         setInformationComplete,
         setCurrentView,
+        closeSession: async () => {
+          // Close session without UI updates (navigating to note generator)
+          if (sessionRef.current) {
+            await sessionRef.current.close();
+            log('Session closed via information_complete tool');
+          }
+          sessionRef.current = null;
+          agentRef.current = null;
+          setVoiceAgentConnected(false);
+        },
       });
       agentRef.current = agent;
 
@@ -77,6 +113,20 @@ export function useVoiceAgent() {
         timestamp: new Date(),
       });
 
+      // Automatically send "start" message to trigger agent greeting
+      try {
+        session.transport.sendMessage('start');
+        log('Sent automatic start message to agent');
+        addTranscriptEntry({
+          speaker: 'user',
+          text: 'start',
+          timestamp: new Date(),
+        });
+      } catch (sendError) {
+        log('Error sending start message:');
+        log(sendError);
+      }
+
     } catch (error) {
       log('Error starting voice agent:');
       log(error);
@@ -102,10 +152,10 @@ export function useVoiceAgent() {
       log('Stopping voice agent...');
       debug.add('voice_agent_stop_requested', { timestamp: new Date() });
 
-      // Properly disconnect session
+      // Properly close the session
       if (sessionRef.current) {
-        await sessionRef.current.disconnect();
-        log('Session disconnected');
+        await sessionRef.current.close();
+        log('Session closed');
       }
 
       // Clear refs
@@ -125,6 +175,11 @@ export function useVoiceAgent() {
       log('Error stopping voice agent:');
       log(error);
       debug.add('voice_agent_stop_error', error);
+
+      // Force cleanup even on error
+      sessionRef.current = null;
+      agentRef.current = null;
+      setVoiceAgentConnected(false);
     }
   }, [setVoiceAgentConnected, addTranscriptEntry]);
 

@@ -31,11 +31,45 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
         },
       }}
     >
-      <Paper sx={{ p: 3, position: 'relative' }}>
+      <Paper sx={{
+        p: 3,
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: '-100%',
+          left: '-100%',
+          right: '-100%',
+          bottom: '-100%',
+          background: 'conic-gradient(from 0deg, #2196F3, #00BCD4, #9C27B0, #2196F3, #00BCD4, #9C27B0, #2196F3)',
+          animation: 'gradientRotate 100s linear infinite',
+          zIndex: 0,
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '1px',
+          left: '1px',
+          right: '1px',
+          bottom: '1px',
+          bgcolor: 'background.paper',
+          borderRadius: 'inherit',
+          zIndex: 0,
+        },
+        '@keyframes gradientRotate': {
+          '0%': {
+            transform: 'rotate(0deg)',
+          },
+          '100%': {
+            transform: 'rotate(360deg)',
+          },
+        },
+      }}>
         <Tooltip title="Copy to clipboard">
           <IconButton
             onClick={handleCopy}
-            sx={{ position: 'absolute', top: 16, right: 16 }}
+            sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
             color="primary"
           >
             <ContentCopy />
@@ -44,6 +78,8 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
         <Box
           sx={{
+            position: 'relative',
+            zIndex: 1,
             '& h1': { fontSize: '1.75rem', fontWeight: 600, mt: 2, mb: 1 },
             '& h2': { fontSize: '1.5rem', fontWeight: 600, mt: 2, mb: 1 },
             '& h3': { fontSize: '1.25rem', fontWeight: 600, mt: 1.5, mb: 0.5 },

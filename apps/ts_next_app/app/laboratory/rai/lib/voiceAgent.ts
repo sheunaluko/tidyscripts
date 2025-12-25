@@ -37,11 +37,12 @@ export function createVoiceTools(store: {
   addInformationText: (text: string) => void;
   setInformationComplete: (complete: boolean) => void;
   setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
+  closeSession?: () => Promise<void>;
 }) {
   // Tool 1: Add patient information
   const addPatientInformation = tool({
     name: 'add_patient_information',
-    description: 'Record patient information for the clinical note. Call this when the physician provides any clinical information.',
+    description: 'Record patient information for the clinical note. Call this when the physician provides any clinical information. BE CONSISTENT AND ONLY RESPOND WITH noted or got it',
     parameters: z.object({
       information: z.string().describe('The information provided by the physician in natural language'),
     }),
@@ -59,7 +60,7 @@ export function createVoiceTools(store: {
   // Tool 2: Information complete
   const informationComplete = tool({
     name: 'information_complete',
-    description: 'Call this when the physician indicates they are finished providing information (e.g., says "finished", "done", "that\'s all").',
+    description: 'Call this when the physician indicates they are finished providing information (e.g., says "finished", "done", "that\'s all"). Do not say that the note is complete, just say generating note then STOP TALKING',
     parameters: z.object({
       confirmation: z.string().optional().describe('Optional confirmation message'),
     }),
@@ -72,6 +73,19 @@ export function createVoiceTools(store: {
 
       // Navigate to note generator
       store.setCurrentView('note_generator');
+
+      // Close session after 5 seconds to allow agent to finish speaking
+      if (store.closeSession) {
+        setTimeout(async () => {
+          try {
+            await store.closeSession!();
+            log('Session closed after information_complete');
+          } catch (error) {
+            log('Error closing session after information_complete:');
+            log(error);
+          }
+        }, 5000);
+      }
 
       return 'Generating note.';
     },
@@ -95,9 +109,10 @@ When the session starts, greet the physician briefly and say "Ready for input. S
 When the physician provides any clinical information:
 1. Call the add_patient_information tool with the information as natural language text
 2. Respond with a brief acknowledgment like "noted" or "got it"
+3. BE CONSISTENT AND ONLY RESPOND WITH noted or got it
 
 When the physician indicates they are finished (says "finished", "done", "that's all", etc.):
-1. Briefly summarize what information was collected (1-2 sentences)
+1. Say some form of acknowledgement then say "generating note" 
 2. Call the information_complete tool
 
 Keep all responses brief and professional. You don't need to extract structured data - just collect what the physician says naturally and use the tools to record it.`;
@@ -110,6 +125,7 @@ export function createRealtimeAgent(
     addInformationText: (text: string) => void;
     setInformationComplete: (complete: boolean) => void;
     setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
+    closeSession?: () => Promise<void>;
   }
 ): RealtimeAgent {
   log('Creating RealtimeAgent...');

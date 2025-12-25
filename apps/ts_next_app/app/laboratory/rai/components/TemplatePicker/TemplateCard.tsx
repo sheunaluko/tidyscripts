@@ -17,6 +17,8 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onSelect }
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
         transition: 'transform 0.2s, box-shadow 0.2s',
         animation: 'fadeIn 0.5s ease-in',
         '@keyframes fadeIn': {
@@ -27,10 +29,40 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onSelect }
           transform: 'translateY(-4px)',
           boxShadow: 4,
         },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: '-100%',
+          left: '-100%',
+          right: '-100%',
+          bottom: '-100%',
+          background: 'conic-gradient(from 0deg, #2196F3, #00BCD4, #9C27B0, #2196F3, #00BCD4, #9C27B0, #2196F3)',
+          animation: 'gradientRotate 100s linear infinite',
+          zIndex: 0,
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: '1px',
+          left: '1px',
+          right: '1px',
+          bottom: '1px',
+          bgcolor: 'background.paper',
+          borderRadius: 'inherit',
+          zIndex: 0,
+        },
+        '@keyframes gradientRotate': {
+          '0%': {
+            transform: 'rotate(0deg)',
+          },
+          '100%': {
+            transform: 'rotate(360deg)',
+          },
+        },
       }}
     >
-      <CardActionArea onClick={() => onSelect(template)} sx={{ height: '100%' }}>
-        <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardActionArea onClick={() => onSelect(template)} sx={{ height: '100%', position: 'relative', zIndex: 1 }}>
+        <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Description color="primary" sx={{ mr: 1 }} />
             <Typography variant="h6" component="div">

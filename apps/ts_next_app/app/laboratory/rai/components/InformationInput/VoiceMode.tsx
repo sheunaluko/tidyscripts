@@ -121,7 +121,13 @@ export const VoiceMode: React.FC = () => {
           minHeight: 400,
           maxHeight: 500,
           overflowY: 'auto',
-          bgcolor: 'background.default',
+          overflowX: 'hidden',
+          border: '1px solid transparent',
+          borderRadius: 1,
+          background: (theme) => `
+            linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,
+            linear-gradient(to right, #2196F3, #00BCD4, #9C27B0, #EA4335) border-box
+          `,
         }}
       >
         {voiceAgentTranscript.length === 0 ? (
