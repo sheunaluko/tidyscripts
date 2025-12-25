@@ -1,7 +1,7 @@
 // Template Picker Component
 
 import React from 'react';
-import { Box, Grid, Typography, Card, CardContent, Skeleton } from '@mui/material';
+import { Box, Grid, Typography, Card, CardContent, Skeleton, Button } from '@mui/material';
 import * as tsw from 'tidyscripts_web';
 import { TemplateCard } from './TemplateCard';
 import { useTemplates } from '../../hooks/useTemplates';
@@ -12,7 +12,7 @@ const log = tsw.common.logger.get_logger({ id: 'TemplatePicker' });
 
 export const TemplatePicker: React.FC = () => {
   const { templates, setSelectedTemplate } = useTemplates();
-  const { setCurrentView, resetInformation, clearTranscript } = useRaiStore();
+  const { setCurrentView, resetInformation, clearTranscript, setTemplateEditorMode, setEditingTemplate, settings } = useRaiStore();
 
   log(`Render: templatesCount=${templates.length}, showingSkeletons=${templates.length === 0}`);
 
@@ -28,14 +28,55 @@ export const TemplatePicker: React.FC = () => {
     setCurrentView('information_input');
   };
 
+  const handleEditTemplate = (template: NoteTemplate) => {
+    setEditingTemplate(template);
+    setTemplateEditorMode('edit');
+    setCurrentView('template_editor');
+  };
+
+  const handleCreateTemplate = () => {
+    setTemplateEditorMode('create');
+    setCurrentView('template_editor');
+  };
+
+  // Filter templates based on settings
+  const filteredTemplates = templates.filter((template) => {
+    // If showDefaultTemplates is false, exclude default templates
+    if (!settings.showDefaultTemplates && template.isDefault) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
         Select a Template
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Choose a note template to begin documenting
-      </Typography>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+        <Typography variant="body1" color="text.secondary" component="span">
+          Choose a note template to begin documenting, or
+        </Typography>
+        <Button
+          size="small"
+          variant="text"
+          onClick={handleCreateTemplate}
+          sx={{ textTransform: 'none', minWidth: 'auto', px: 1 }}
+        >
+          Create One.
+        </Button>
+        <Typography variant="body1" color="text.secondary" component="span">
+          Toggle default templates in
+        </Typography>
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => setCurrentView('settings')}
+          sx={{ textTransform: 'none', minWidth: 'auto', px: 1 }}
+        >
+          Settings
+        </Button>
+      </Box>
 
       <Grid container spacing={3} sx={{ minWidth: 0 }}>
         {templates.length === 0 ? (
@@ -60,11 +101,25 @@ export const TemplatePicker: React.FC = () => {
               </Card>
             </Grid>
           ))
+        ) : filteredTemplates.length === 0 ? (
+          // Empty state when all templates are filtered out
+          <Grid item xs={12}>
+            <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 4 }}>
+              No templates available.
+              {!settings.showDefaultTemplates && (
+                <> Enable "Show Default Templates" in Settings or create a custom template.</>
+              )}
+            </Typography>
+          </Grid>
         ) : (
           // Actual template cards
-          templates.map((template) => (
+          filteredTemplates.map((template) => (
             <Grid item xs={12} sm={6} md={4} key={template.id}>
-              <TemplateCard template={template} onSelect={handleSelectTemplate} />
+              <TemplateCard
+                template={template}
+                onSelect={handleSelectTemplate}
+                onEdit={handleEditTemplate}
+              />
             </Grid>
           ))
         )}

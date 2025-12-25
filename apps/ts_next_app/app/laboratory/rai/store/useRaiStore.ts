@@ -4,7 +4,12 @@ import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
 import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, AppSettings } from '../types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../constants';
-import { loadTemplates as loadTemplatesFromFiles } from '../lib/templateParser';
+import {
+  loadTemplates as loadTemplatesFromFiles,
+  loadCustomTemplatesFromStorage,
+  extractVariables,
+  generateCustomTemplateId,
+} from '../lib/templateParser';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 const debug = tsw.common.util.debug;
@@ -27,15 +32,33 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   loadTemplates: async () => {
     try {
       log('Loading templates...');
-      const templates = loadTemplatesFromFiles();
-      log(`Templates loaded: ${templates.length}`);
-      set({ templates });
+
+      // Load default templates from files
+      const defaultTemplates = loadTemplatesFromFiles();
+      defaultTemplates.forEach(t => t.isDefault = true);
+
+      // Load custom templates from localStorage
+      const customTemplates = loadCustomTemplatesFromStorage();
+
+      // Merge: default templates first, then custom
+      const allTemplates = [...defaultTemplates, ...customTemplates];
+
+      log(`Templates loaded: ${defaultTemplates.length} default, ${customTemplates.length} custom`);
+      set({
+        templates: allTemplates,
+        customTemplates: customTemplates,
+      });
       log('Templates set in state');
     } catch (error) {
       log('Error in loadTemplates:');
       log(String(error));
     }
   },
+
+  // Template Editor
+  customTemplates: [],
+  templateEditorMode: 'list' as 'list' | 'create' | 'edit',
+  editingTemplate: null,
 
   // Information Collection (free text approach)
   collectedInformation: [],
@@ -136,5 +159,101 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       log('Error saving settings:');
       log(error);
     }
+  },
+
+  // Template Editor CRUD Operations
+  createCustomTemplate: (templateData) => {
+    const newTemplate: NoteTemplate = {
+      ...templateData,
+      id: generateCustomTemplateId(),
+      variables: extractVariables(templateData.template),
+      isDefault: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const customTemplates = [...get().customTemplates, newTemplate];
+    set({ customTemplates });
+    get().saveCustomTemplates();
+    get().loadTemplates(); // Refresh merged list
+
+    debug.add('custom_template_created', { id: newTemplate.id, title: newTemplate.title });
+    log(`Created custom template: ${newTemplate.title}`);
+  },
+
+  updateCustomTemplate: (id, updates) => {
+    const customTemplates = get().customTemplates.map(t =>
+      t.id === id
+        ? {
+            ...t,
+            ...updates,
+            variables: updates.template ? extractVariables(updates.template) : t.variables,
+            updatedAt: new Date(),
+          }
+        : t
+    );
+
+    set({ customTemplates });
+    get().saveCustomTemplates();
+    get().loadTemplates(); // Refresh merged list
+
+    debug.add('custom_template_updated', { id, updates });
+    log(`Updated custom template: ${id}`);
+  },
+
+  deleteCustomTemplate: (id) => {
+    const customTemplates = get().customTemplates.filter(t => t.id !== id);
+    set({ customTemplates });
+    get().saveCustomTemplates();
+    get().loadTemplates(); // Refresh merged list
+
+    // If deleting currently selected template, clear selection
+    if (get().selectedTemplate?.id === id) {
+      set({ selectedTemplate: null });
+    }
+
+    debug.add('custom_template_deleted', { id });
+    log(`Deleted custom template: ${id}`);
+  },
+
+  loadCustomTemplates: () => {
+    try {
+      const customTemplates = loadCustomTemplatesFromStorage();
+      set({ customTemplates });
+      debug.add('custom_templates_loaded', { count: customTemplates.length });
+    } catch (error) {
+      log('Error loading custom templates:');
+      log(error);
+      set({ customTemplates: [] });
+    }
+  },
+
+  saveCustomTemplates: () => {
+    try {
+      const templates = get().customTemplates.map(t => ({
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        template: t.template,
+        createdAt: t.createdAt?.toISOString(),
+        updatedAt: t.updatedAt?.toISOString(),
+      }));
+      localStorage.setItem(STORAGE_KEYS.customTemplates, JSON.stringify(templates));
+      debug.add('custom_templates_saved', { count: templates.length });
+      log(`Saved ${templates.length} custom templates to localStorage`);
+    } catch (error) {
+      log('Error saving custom templates:');
+      log(error);
+    }
+  },
+
+  setTemplateEditorMode: (mode) => {
+    set({ templateEditorMode: mode });
+    debug.add('template_editor_mode_changed', { mode });
+  },
+
+  setEditingTemplate: (template) => {
+    set({ editingTemplate: template });
+    debug.add('editing_template_set', { templateId: template?.id });
   },
 }));

@@ -1,6 +1,6 @@
 // RAI App TypeScript Type Definitions
 
-export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'settings';
+export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'template_editor' | 'settings';
 
 export type Provider = 'anthropic' | 'gemini' | 'openai';
 
@@ -10,6 +10,7 @@ export interface AppSettings {
   aiModel: string;
   autostartAgent: boolean;
   autostartGeneration: boolean;
+  showDefaultTemplates: boolean;
 }
 
 // Note Template
@@ -19,6 +20,9 @@ export interface NoteTemplate {
   description: string;
   template: string; // Full template text with {{VARIABLE_NAME}} placeholders
   variables: string[]; // Extracted variable names from template
+  isDefault?: boolean; // Mark default (file-based) templates
+  createdAt?: Date; // Timestamp for custom templates
+  updatedAt?: Date; // Last update timestamp for custom templates
 }
 
 // Information Entry (free text approach)
@@ -45,6 +49,18 @@ export interface RaiState {
   selectedTemplate: NoteTemplate | null;
   setSelectedTemplate: (template: NoteTemplate) => void;
   loadTemplates: () => Promise<void>;
+
+  // Template Editor
+  customTemplates: NoteTemplate[];
+  templateEditorMode: 'list' | 'create' | 'edit';
+  editingTemplate: NoteTemplate | null;
+  createCustomTemplate: (data: Omit<NoteTemplate, 'id' | 'variables' | 'isDefault' | 'createdAt' | 'updatedAt'>) => void;
+  updateCustomTemplate: (id: string, updates: Partial<NoteTemplate>) => void;
+  deleteCustomTemplate: (id: string) => void;
+  loadCustomTemplates: () => void;
+  saveCustomTemplates: () => void;
+  setTemplateEditorMode: (mode: 'list' | 'create' | 'edit') => void;
+  setEditingTemplate: (template: NoteTemplate | null) => void;
 
   // Information Collection (free text approach)
   collectedInformation: InformationEntry[];

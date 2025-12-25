@@ -19,6 +19,7 @@ import {
   Description,
   Input,
   AutoAwesome,
+  EditNote,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -39,6 +40,7 @@ const ICON_MAP = {
   Description,
   Input,
   AutoAwesome,
+  EditNote,
   Settings,
 } as const;
 
@@ -73,12 +75,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
   });
 
   const menuItems: Array<{ id: ViewType; label: string; icon: IconName }> = [
-    { id: 'template_picker', label: 'Templates', icon: 'Description' },
-    { id: 'information_input', label: 'Input', icon: 'Input' },
-    { id: 'note_generator', label: 'Generate', icon: 'AutoAwesome' },
+    { id: 'template_picker', label: 'Select Template', icon: 'Description' },
+    { id: 'information_input', label: 'Input Information', icon: 'Input' },
+    { id: 'note_generator', label: 'Generate Note', icon: 'AutoAwesome' },
   ];
 
-  const allMenuItems = [...menuItems, { id: 'settings' as ViewType, label: 'Settings', icon: 'Settings' as IconName }];
+  const bottomMenuItems: Array<{ id: ViewType; label: string; icon: IconName }> = [
+    { id: 'template_editor', label: 'Template Editor', icon: 'EditNote' },
+    { id: 'settings', label: 'Settings', icon: 'Settings' },
+  ];
+
+  const allMenuItems = [...menuItems, ...bottomMenuItems];
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -189,45 +196,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
         {menuItems.map((item, index) => renderMenuItem(item, index))}
       </List>
 
-      {/* Settings at Bottom */}
+      {/* Bottom Items (Template Editor, Settings) */}
       <Box sx={{ mt: 'auto' }}>
         <Divider />
         <List>
-          <ListItem disablePadding>
-            <Tooltip title={!open ? 'Settings' : ''} placement="right">
-              <ListItemButton
-                selected={currentView === 'settings'}
-                onClick={() => handleNavigation('settings')}
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 2.5,
-                  outline: focusedIndex === 3 ? '2px solid' : 'none',
-                  outlineColor: 'primary.main',
-                  outlineOffset: '-2px',
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: 'none',
-                  }}
-                >
-                  <Settings color={currentView === 'settings' ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Settings"
-                  sx={{
-                    opacity: open ? 1 : 0,
-                    transition: open ? 'opacity 3s ease' : 'opacity 0s',
-                    whiteSpace: 'nowrap',
-                  }}
-                />
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
+          {bottomMenuItems.map((item, index) => renderMenuItem(item, menuItems.length + index))}
         </List>
       </Box>
     </Drawer>

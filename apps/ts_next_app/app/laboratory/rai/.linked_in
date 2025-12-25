@@ -1,0 +1,44 @@
+This Christmas I am offering to create you a free AI application! 
+
+I recently was speaking with an infertility specialist about pain points
+in her clinical documentation workflow
+
+I offered to create a custom AI powered web application (for free) to solve her problem and
+within 48 hours I had the solution pushed to production at tidyscripts.com/apps/rai,
+ready for her use.
+
+The application utilizes the cutting-edge OpenAI Realtime Voice API to collect information via voice interaction directly in the browser.
+This is then passed to a gemini 3 backend for documentation generation. See the design [here]. 
+
+Through this experience I reinforced my passion and ability to:
+1) Understand the pain points of intelligent skilled workers
+2) Deliver innovative software solutions rapidly
+
+I am now offering FREE design and implementation of custom AI applications. Yes, I said FREE. 
+
+What is the biggest pain point in your worflow that AI can solve?
+
+Just comment below or DM me with your idea, and if it is feasibile and interesting, I will build and deploy it FOR FREE!
+Fully open source, no strings attached, and guaranteed free until AI token costs exceed $500 at which time you can take the code and deploy yourself (I will even help you with that!)  or we can discuss pricing. 
+
+Don't have an idea? Please tag someone you know who might, or like a comment so I can gauge which one to deliver.
+
+My next post will have a link to the final product, so stay tuned! 
+
+Sincerely,
+Shay 
+
+
+
+
+
+
+
+
+
+
+-----
+
+Before AI agents, code refactoring to improve architecture and remove technical debt was tedious. Now with AI coding tools its as easy as sending a text.
+
+If you are not taking time to refactor and address technical debt you are doing it wrong. 

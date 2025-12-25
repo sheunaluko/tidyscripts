@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import * as tsw from 'tidyscripts_web';
 import { Provider } from '../types';
+import { TEMPLATE_SYNTAX } from '../constants';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 const debug = tsw.common.util.debug;
@@ -36,6 +37,41 @@ export function getEndpointForProvider(provider: Provider): string {
 }
 
 /**
+ * Format TEMPLATE_SYNTAX constant into prompt-friendly text
+ */
+function formatTemplateSyntaxForPrompt(): string {
+  const labels = ['A', 'B'];
+  let syntaxText = '';
+
+  TEMPLATE_SYNTAX.patterns.forEach((pattern, index) => {
+    const label = labels[index];
+    syntaxText += `\n   ${label}. ${pattern.name.toUpperCase()}:\n`;
+    syntaxText += `      ${pattern.syntax}\n`;
+    if (pattern.syntax.includes('prefix') || pattern.notes.includes('prefix')) {
+      syntaxText += `      {{ prefix @variable postfix | fallback }}\n`;
+    }
+    syntaxText += '\n';
+
+    pattern.rules.forEach(rule => {
+      syntaxText += `      - ${rule}\n`;
+    });
+
+    if (pattern.examples.length > 0) {
+      syntaxText += '\n      Examples:\n';
+      pattern.examples.forEach(example => {
+        syntaxText += `      - ${example}\n`;
+      });
+    }
+
+    if (index < TEMPLATE_SYNTAX.patterns.length - 1) {
+      syntaxText += '\n';
+    }
+  });
+
+  return syntaxText;
+}
+
+/**
  * Build the prompt for note generation
  */
 export function buildNotePrompt(
@@ -44,6 +80,7 @@ export function buildNotePrompt(
   collectedText: string[]
 ): { system: string; user: string } {
   const freeTextEntries = collectedText.map((text, i) => `${i + 1}. ${text}`).join('\n');
+  const syntaxInstructions = formatTemplateSyntaxForPrompt();
 
   const userPrompt = `Template:
 ${template}
@@ -52,12 +89,20 @@ Collected Information (free text from physician):
 ${freeTextEntries}
 
 Task:
-1. Extract relevant information from the collected text
-2. Use it to fill in the {{VARIABLE_NAME}} placeholders in the template
-3. Format as clean, professional markdown for medical documentation
-4. If information for a variable is not available, use "***" as placeholder
+1. Extract relevant information from the collected text to fill template variables
+2. The template uses TWO types of conditional syntax:
+${syntaxInstructions}
 
-Output only the completed note with all variables filled.`;
+3. For each {{ ... }} block:
+   - Check if it has one | (presence/absence) or two | (boolean with ?)
+   - Extract the relevant information from collected text
+   - Apply the appropriate conditional logic
+   - Substitute with the correct text
+
+4. Format as clean, professional markdown for medical documentation
+5. Preserve the natural flow of the note
+
+Output only the completed note with all substitutions made.`;
 
   return {
     system: systemPrompt,

@@ -86,7 +86,7 @@ export const Settings: React.FC = () => {
           </Typography>
         </Box>
 
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -98,6 +98,21 @@ export const Settings: React.FC = () => {
           />
           <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
             Automatically generate the note when information collection is complete
+          </Typography>
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={settings.showDefaultTemplates}
+                onChange={(e) => updateSettings({ showDefaultTemplates: e.target.checked })}
+              />
+            }
+            label="Show Default Templates"
+          />
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
+            Display built-in default templates in the template selector alongside your custom templates
           </Typography>
         </Box>
 

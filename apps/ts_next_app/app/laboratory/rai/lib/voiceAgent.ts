@@ -96,9 +96,17 @@ export function createVoiceTools(store: {
 
 // Generate instructions for the agent based on selected template
 export function generateInstructions(template: NoteTemplate | null): string {
-  const templateInfo = template
-    ? `Template type: ${template.title}\n${template.description}`
-    : 'No template selected';
+  let templateInfo = 'No template selected';
+
+  if (template) {
+    templateInfo = `Template: ${template.title}
+${template.description}
+
+Template structure:
+\`\`\`
+${template.template}
+\`\`\``;
+  }
 
   return `You are a medical assistant helping a physician collect information for a clinical note.
 
@@ -110,9 +118,10 @@ When the physician provides any clinical information:
 1. Call the add_patient_information tool with the information as natural language text
 2. Respond with a brief acknowledgment like "noted" or "got it"
 3. BE CONSISTENT AND ONLY RESPOND WITH noted or got it
+4. You can see the template structure above - listen for information related to those fields, but accept any clinical information the physician provides
 
 When the physician indicates they are finished (says "finished", "done", "that's all", etc.):
-1. Say some form of acknowledgement then say "generating note" 
+1. Say some form of acknowledgement then say "generating note"
 2. Call the information_complete tool
 
 Keep all responses brief and professional. You don't need to extract structured data - just collect what the physician says naturally and use the tools to record it.`;

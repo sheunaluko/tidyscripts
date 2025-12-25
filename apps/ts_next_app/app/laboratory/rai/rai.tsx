@@ -9,6 +9,7 @@ import { MainLayout } from './components/Layout/MainLayout';
 import { TemplatePicker } from './components/TemplatePicker/TemplatePicker';
 import { InformationInput } from './components/InformationInput/InformationInput';
 import { NoteGenerator } from './components/NoteGenerator/NoteGenerator';
+import { TemplateEditor } from './components/TemplateEditor/TemplateEditor';
 import { Settings } from './components/Settings/Settings';
 import { useRaiStore } from './store/useRaiStore';
 
@@ -56,6 +57,9 @@ const RAI: React.FC = () => {
 
       case 'note_generator':
         return <NoteGenerator />;
+
+      case 'template_editor':
+        return <TemplateEditor />;
 
       case 'settings':
         return <Settings />;

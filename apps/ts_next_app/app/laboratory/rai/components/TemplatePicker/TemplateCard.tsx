@@ -1,16 +1,17 @@
 // Template Card Component
 
 import React from 'react';
-import { Card, CardContent, CardActionArea, Typography, Chip, Box } from '@mui/material';
-import { Description } from '@mui/icons-material';
+import { Card, CardContent, CardActionArea, Typography, Chip, Box, IconButton } from '@mui/material';
+import { Description, Edit } from '@mui/icons-material';
 import { NoteTemplate } from '../../types';
 
 interface TemplateCardProps {
   template: NoteTemplate;
   onSelect: (template: NoteTemplate) => void;
+  onEdit: (template: NoteTemplate) => void;
 }
 
-export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onSelect }) => {
+export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onSelect, onEdit }) => {
   return (
     <Card
       sx={{
@@ -61,6 +62,29 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onSelect }
         },
       }}
     >
+      {/* Edit Button in Bottom Right */}
+      <IconButton
+        size="small"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(template);
+        }}
+        sx={{
+          position: 'absolute',
+          bottom: 8,
+          right: 8,
+          zIndex: 2,
+          bgcolor: 'background.paper',
+          '&:hover': {
+            bgcolor: 'action.hover',
+          },
+          boxShadow: 1,
+          padding: '4px',
+        }}
+        aria-label="Edit template"
+      >
+        <Edit sx={{ fontSize: 16 }} />
+      </IconButton>
       <CardActionArea onClick={() => onSelect(template)} sx={{ height: '100%', position: 'relative', zIndex: 1 }}>
         <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
