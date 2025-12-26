@@ -54,6 +54,15 @@ const AllLinks = () => {
 	      </Card >
 	  </MLink>
 
+	  <MLink href="/laboratory/rai">
+	      <Card style={card_style}>
+		  <Typography variant="h5" color="primary">RAI - Realtime AI Notes</Typography>
+		  <p>
+		      Voice-powered clinical note generation with AI templates
+		  </p>
+	      </Card >
+	  </MLink>
+
 	  <MLink href="/laboratory/knowledge_graph_viz">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Graph Visualization </Typography>

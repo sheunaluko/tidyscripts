@@ -6,6 +6,7 @@ import { Refresh, Visibility, VisibilityOff } from '@mui/icons-material';
 import { TextMode } from './TextMode';
 import { VoiceMode } from './VoiceMode';
 import { InformationDisplay } from './InformationDisplay';
+import { DevTools } from './DevTools';
 import { useRaiStore } from '../../store/useRaiStore';
 
 export const InformationInput: React.FC = () => {
@@ -88,6 +89,9 @@ export const InformationInput: React.FC = () => {
           )}
         </Paper>
       </Box>
+
+      {/* Dev Tools Widget (only shown when advanced features are enabled) */}
+      {settings.advancedFeaturesEnabled && <DevTools />}
 
       {/* Collected Information Display */}
       <InformationDisplay />

@@ -26,6 +26,8 @@ export interface AppSettings {
   autostartGeneration: boolean;
   showDefaultTemplates: boolean;
   advancedFeaturesEnabled: boolean;
+  vadThreshold: number;
+  vadSilenceDurationMs: number;
 }
 
 // Note Template
@@ -42,6 +44,7 @@ export interface NoteTemplate {
 
 // Information Entry (free text approach)
 export interface InformationEntry {
+  id: string;
   text: string;
   timestamp: Date;
 }
@@ -51,6 +54,14 @@ export interface TranscriptEntry {
   timestamp: Date;
   speaker: 'user' | 'agent' | 'system';
   text: string;
+}
+
+// Tool Call Thoughts (for dev tools)
+export interface ToolCallThought {
+  timestamp: Date;
+  toolName: string;
+  thoughts: string;
+  parameters?: Record<string, any>;
 }
 
 // Test Interface - Model Test Result
@@ -115,6 +126,8 @@ export interface RaiState {
   // Information Collection (free text approach)
   collectedInformation: InformationEntry[];
   addInformationText: (text: string) => void;
+  updateInformationText: (id: string, newText: string) => void;
+  deleteInformationEntry: (id: string) => void;
   resetInformation: () => void;
   informationComplete: boolean;
   setInformationComplete: (complete: boolean) => void;
@@ -122,9 +135,12 @@ export interface RaiState {
   // Voice Agent State
   voiceAgentConnected: boolean;
   voiceAgentTranscript: TranscriptEntry[];
+  toolCallThoughts: ToolCallThought[];
   setVoiceAgentConnected: (connected: boolean) => void;
   addTranscriptEntry: (entry: TranscriptEntry) => void;
   clearTranscript: () => void;
+  addToolCallThought: (thought: ToolCallThought) => void;
+  clearToolCallThoughts: () => void;
 
   // Note Generation
   generatedNote: string | null;

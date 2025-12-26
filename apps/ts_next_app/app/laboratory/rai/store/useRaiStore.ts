@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
-import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, AppSettings, TestRun, ModelTestResult } from '../types';
+import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult } from '../types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
 import {
   loadTemplates as loadTemplatesFromFiles,
@@ -189,12 +189,27 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   collectedInformation: [],
   addInformationText: (text: string) => {
     const entry: InformationEntry = {
+      id: crypto.randomUUID(),
       text,
       timestamp: new Date(),
     };
     debug.add('information_entry_added', entry);
     set((state) => ({
       collectedInformation: [...state.collectedInformation, entry],
+    }));
+  },
+  updateInformationText: (id: string, newText: string) => {
+    debug.add('information_entry_updated', { id, newText });
+    set((state) => ({
+      collectedInformation: state.collectedInformation.map((entry) =>
+        entry.id === id ? { ...entry, text: newText } : entry
+      ),
+    }));
+  },
+  deleteInformationEntry: (id: string) => {
+    debug.add('information_entry_deleted', { id });
+    set((state) => ({
+      collectedInformation: state.collectedInformation.filter((entry) => entry.id !== id),
     }));
   },
   resetInformation: () => {
@@ -213,6 +228,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   // Voice Agent State
   voiceAgentConnected: false,
   voiceAgentTranscript: [],
+  toolCallThoughts: [],
   setVoiceAgentConnected: (connected: boolean) => {
     debug.add('voice_agent_connected', { connected });
     set({ voiceAgentConnected: connected });
@@ -226,6 +242,16 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   clearTranscript: () => {
     debug.add('transcript_cleared', {});
     set({ voiceAgentTranscript: [] });
+  },
+  addToolCallThought: (thought: ToolCallThought) => {
+    debug.add('tool_call_thought_added', thought);
+    set((state) => ({
+      toolCallThoughts: [...state.toolCallThoughts, thought],
+    }));
+  },
+  clearToolCallThoughts: () => {
+    debug.add('tool_call_thoughts_cleared', {});
+    set({ toolCallThoughts: [] });
   },
 
   // Note Generation

@@ -1,0 +1,14 @@
+Hello.
+
+I want to upgrade the voice agent to:
+- include a thoughts parameter with every tool call
+- during inforation input, if advanced features are active then:
+  - there is a "Dev tools " widget that appears between the template display and the collected information display
+
+This widget should:
+     1) enable sending messages to the realtime agent (using same method that initializes the conversation with user saying Initialize)
+     2) Display the agents THOUGHTs with each call
+
+
+
+

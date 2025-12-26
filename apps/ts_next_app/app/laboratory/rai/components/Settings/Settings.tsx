@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Slider,
 } from '@mui/material';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../../store/useRaiStore';
@@ -75,7 +76,7 @@ export const Settings: React.FC = () => {
         Configure your preferences for the RAI app
       </Typography>
 
-      <Paper sx={{ p: 3, maxWidth: 600 }}>
+      <Paper sx={{ p: 3, width : "90%" , padding : "20px"  }}>
         {/* Input Mode */}
         <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
           <FormLabel component="legend">Input Mode</FormLabel>
@@ -170,6 +171,69 @@ export const Settings: React.FC = () => {
             Enable advanced features and testing interfaces (requires password)
           </Typography>
         </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Voice Agent Audio Controls */}
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Voice Agent Audio Controls
+        </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 3 }}>
+              Note: Changes require restarting the voice agent to take effect
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <FormLabel component="legend" sx={{ mb: 1 }}>
+                Sensitivity: {settings.vadThreshold.toFixed(2)}
+              </FormLabel>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                Lower values reduce false detections from background noise
+              </Typography>
+	      
+              <Slider
+                  value={settings.vadThreshold}
+		  sx={{margin: "5px"}}
+                onChange={(_, value) => updateSettings({ vadThreshold: value as number })}
+                min={0.1}
+                max={0.5}
+                step={0.05}
+                marks={[
+                  { value: 0.1, label: '0.1' },
+                  { value: 0.2, label: '0.2' },		  		  
+                  { value: 0.3, label: '0.3' },
+                  { value: 0.4, label: '0.4' },		  		  
+                  { value: 0.5, label: '0.5' },
+                ]}
+                valueLabelDisplay="auto"
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <FormLabel component="legend" sx={{ mb: 1 }}>
+                Silence Duration: {settings.vadSilenceDurationMs}ms
+              </FormLabel>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                How long to wait for silence before processing speech. Increase to allow for longer pauses while speaking.
+              </Typography>
+
+	      
+              <Slider
+                value={settings.vadSilenceDurationMs}
+                onChange={(_, value) => updateSettings({ vadSilenceDurationMs: value as number })}
+                  min={200}
+		  sx={{margin:"5px"}}
+                max={2000}
+                step={50}
+                marks={[
+                  { value: 200, label: '200ms' },
+                  { value: 500, label: '500ms' },
+                  { value: 750, label: '750ms (Default)' },
+                  { value: 1000, label: '1s' },
+                  { value: 2000, label: '2s' },
+                ]}
+                valueLabelDisplay="auto"
+              />
+            </Box>
 
         <Divider sx={{ my: 3 }} />
 

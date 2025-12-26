@@ -54,6 +54,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
+  vadThreshold: 0.1,
+  vadSilenceDurationMs: 750,
 };
 
 // Advanced Features Password Hash (SHA-256)

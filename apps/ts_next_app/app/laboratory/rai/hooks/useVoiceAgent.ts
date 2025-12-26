@@ -15,11 +15,16 @@ export function useVoiceAgent() {
   const {
     selectedTemplate,
     addInformationText,
+    updateInformationText,
+    deleteInformationEntry,
+    collectedInformation,
     setInformationComplete,
     setCurrentView,
     voiceAgentConnected,
     setVoiceAgentConnected,
     addTranscriptEntry,
+    addToolCallThought,
+    settings,
   } = useRaiStore();
 
   const sessionRef = useRef<RealtimeSession | null>(null);
@@ -60,8 +65,12 @@ export function useVoiceAgent() {
       // Create agent with store bindings
       const agent = createRealtimeAgent(selectedTemplate, {
         addInformationText,
+        updateInformationText,
+        deleteInformationEntry,
+        collectedInformation,
         setInformationComplete,
         setCurrentView,
+        addToolCallThought,
         closeSession: async () => {
           // Close session without UI updates (navigating to note generator)
           if (sessionRef.current) {
@@ -76,22 +85,35 @@ export function useVoiceAgent() {
       agentRef.current = agent;
 
       // Create session with agent and configuration
-      const session = new RealtimeSession(agent, {
+      const sessionConfig = {
         model: 'gpt-realtime',
         config: {
           inputAudioFormat: 'pcm16',
           outputAudioFormat: 'pcm16',
           inputAudioTranscription: {
             model: 'whisper-1',
+            prompt: '[silence] Only transcribe clear, actual speech. If there is background noise, silence, or unclear audio, return empty. Do not guess or generate text.',
           },
           turnDetection: {
             type: 'server_vad',
-            threshold: 0.5,
+            threshold: settings.vadThreshold,
             prefixPaddingMs: 300,
-            silenceDurationMs: 500,
+            silenceDurationMs: settings.vadSilenceDurationMs,
           },
         },
+      };
+
+      // Debug: Log audio initialization parameters
+      debug.add('voice_agent_audio_config', {
+        vadThreshold: settings.vadThreshold,
+        vadSilenceDurationMs: settings.vadSilenceDurationMs,
+        whisperPrompt: sessionConfig.config.inputAudioTranscription.prompt,
+        inputAudioFormat: sessionConfig.config.inputAudioFormat,
+        outputAudioFormat: sessionConfig.config.outputAudioFormat,
+        timestamp: new Date().toISOString(),
       });
+
+      const session = new RealtimeSession(agent, sessionConfig);
       sessionRef.current = session;
 
       // Add connection status message
@@ -119,7 +141,7 @@ export function useVoiceAgent() {
         log('Sent automatic start message to agent');
         addTranscriptEntry({
           speaker: 'user',
-          text: 'start',
+          text: 'Initialize',
           timestamp: new Date(),
         });
       } catch (sendError) {
@@ -141,10 +163,15 @@ export function useVoiceAgent() {
   }, [
     selectedTemplate,
     addInformationText,
+    updateInformationText,
+    deleteInformationEntry,
+    collectedInformation,
     setInformationComplete,
     setCurrentView,
     setVoiceAgentConnected,
     addTranscriptEntry,
+    addToolCallThought,
+    settings,
   ]);
 
   const stopAgent = useCallback(async () => {

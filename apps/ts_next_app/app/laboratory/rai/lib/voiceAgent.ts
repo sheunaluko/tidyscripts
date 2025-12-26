@@ -35,23 +35,38 @@ export async function getEphemeralKey(): Promise<string> {
 // Create voice agent tools with store access
 export function createVoiceTools(store: {
   addInformationText: (text: string) => void;
+  updateInformationText: (id: string, newText: string) => void;
+  deleteInformationEntry: (id: string) => void;
+  collectedInformation: Array<{ id: string; text: string; timestamp: Date }>;
   setInformationComplete: (complete: boolean) => void;
   setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
+  addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;
   closeSession?: () => Promise<void>;
 }) {
+
+
   // Tool 1: Add patient information
   const addPatientInformation = tool({
     name: 'add_patient_information',
     description: 'Record patient information for the clinical note. Call this when the physician provides any clinical information. BE CONSISTENT AND ONLY RESPOND WITH noted or got it',
     parameters: z.object({
       information: z.string().describe('The information provided by the physician in natural language'),
+      thoughts: z.string().describe('Your internal reasoning about this information, what you understand, and how it relates to the clinical note structure'),
     }),
-    async execute({ information }) {
+    async execute({ information, thoughts }) {
       log('Tool called: add_patient_information');
-      debug.add('voice_tool_add_info', { information });
+      debug.add('voice_tool_add_info', { information, thoughts });
 
       // Add to store
       store.addInformationText(information);
+
+      // Record thoughts for dev tools
+      store.addToolCallThought({
+        timestamp: new Date(),
+        toolName: 'add_patient_information',
+        thoughts,
+        parameters: { information },
+      });
 
       return 'Noted.';
     },
@@ -63,10 +78,19 @@ export function createVoiceTools(store: {
     description: 'Call this when the physician indicates they are finished providing information (e.g., says "finished", "done", "that\'s all"). Do not say that the note is complete, just say generating note then STOP TALKING',
     parameters: z.object({
       confirmation: z.string().optional().describe('Optional confirmation message'),
+      thoughts: z.string().describe('Your assessment of the information collection process and readiness to generate the note'),
     }),
-    async execute({ confirmation }) {
+    async execute({ confirmation, thoughts }) {
       log('Tool called: information_complete');
-      debug.add('voice_tool_complete', { confirmation });
+      debug.add('voice_tool_complete', { confirmation, thoughts });
+
+      // Record thoughts for dev tools
+      store.addToolCallThought({
+        timestamp: new Date(),
+        toolName: 'information_complete',
+        thoughts,
+        parameters: { confirmation },
+      });
 
       // Mark information as complete
       store.setInformationComplete(true);
@@ -91,7 +115,86 @@ export function createVoiceTools(store: {
     },
   });
 
-  return [addPatientInformation, informationComplete];
+  // Tool 3: Update patient information
+  const updatePatientInformation = tool({
+    name: 'update_information',
+    description: 'Update a previously recorded information entry. Use this to correct or modify information that was recorded incorrectly.',
+    parameters: z.object({
+      item_number: z.number().describe('The item number to update (1-based, as displayed to the physician)'),
+      new_information: z.string().describe('The updated/corrected information'),
+      thoughts: z.string().describe('Your reasoning for updating this information'),
+    }),
+    async execute({ item_number, new_information, thoughts }) {
+      log('Tool called: update_information');
+      debug.add('voice_tool_update_info', { item_number, new_information, thoughts });
+
+      // Convert 1-based item number to 0-based index
+      const index = item_number - 1;
+
+      // Validate index
+      if (index < 0 || index >= store.collectedInformation.length) {
+        log(`Invalid item number: ${item_number}`);
+        return `Error: Item ${item_number} does not exist. There are ${store.collectedInformation.length} items.`;
+      }
+
+      // Get the entry ID
+      const entry = store.collectedInformation[index];
+
+      // Update the entry
+      store.updateInformationText(entry.id, new_information);
+
+      // Record thoughts for dev tools
+      store.addToolCallThought({
+        timestamp: new Date(),
+        toolName: 'update_information',
+        thoughts,
+        parameters: { item_number, new_information },
+      });
+
+      return `Updated item ${item_number}.`;
+    },
+  });
+
+  // Tool 4: Delete patient information
+  const deletePatientInformation = tool({
+    name: 'delete_information',
+    description: 'Delete a previously recorded information entry. Use this when information was recorded incorrectly or is not needed.',
+    parameters: z.object({
+      item_number: z.number().describe('The item number to delete (1-based, as displayed to the physician)'),
+      thoughts: z.string().describe('Your reasoning for deleting this information'),
+    }),
+    async execute({ item_number, thoughts }) {
+      log('Tool called: delete_information');
+      debug.add('voice_tool_delete_info', { item_number, thoughts });
+
+      // Convert 1-based item number to 0-based index
+      const index = item_number - 1;
+
+      // Validate index
+      if (index < 0 || index >= store.collectedInformation.length) {
+        log(`Invalid item number: ${item_number}`);
+        return `Error: Item ${item_number} does not exist. There are ${store.collectedInformation.length} items.`;
+      }
+
+      // Get the entry ID
+      const entry = store.collectedInformation[index];
+
+      // Delete the entry
+      store.deleteInformationEntry(entry.id);
+
+      // Record thoughts for dev tools
+      store.addToolCallThought({
+        timestamp: new Date(),
+        toolName: 'delete_information',
+        thoughts,
+        parameters: { item_number },
+      });
+
+      return `Deleted item ${item_number}.`;
+    },
+  });
+
+  return [addPatientInformation, updatePatientInformation, deletePatientInformation, informationComplete];
 }
 
 // Generate instructions for the agent based on selected template
@@ -114,6 +217,12 @@ ${templateInfo}
 
 When the session starts, greet the physician briefly and say "Ready for input. Say 'finished' when done."
 
+Information Management:
+- Each piece of information you record is numbered (starting from 1)
+- You can update previously recorded information using update_information with the item number
+- You can delete information using delete_information with the item number
+- If the physician asks to correct, change, or remove information, use these tools
+
 When the physician provides any clinical information:
 1. Call the add_patient_information tool with the information as natural language text
 2. Respond with a brief acknowledgment like "noted" or "got it"
@@ -132,8 +241,12 @@ export function createRealtimeAgent(
   template: NoteTemplate | null,
   store: {
     addInformationText: (text: string) => void;
+    updateInformationText: (id: string, newText: string) => void;
+    deleteInformationEntry: (id: string) => void;
+    collectedInformation: Array<{ id: string; text: string; timestamp: Date }>;
     setInformationComplete: (complete: boolean) => void;
     setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
+    addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;
     closeSession?: () => Promise<void>;
   }
 ): RealtimeAgent {
