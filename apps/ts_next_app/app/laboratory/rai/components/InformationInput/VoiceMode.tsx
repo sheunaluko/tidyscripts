@@ -22,7 +22,12 @@ export const VoiceMode: React.FC = () => {
 
   // Auto-scroll to bottom when new transcript entries arrive
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use scrollIntoView with options to prevent focus stealing
+    transcriptEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',    // Don't force vertical alignment (prevents page jump)
+      inline: 'nearest',   // Don't force horizontal alignment
+    });
   }, [voiceAgentTranscript]);
 
   // Auto-start agent if enabled in settings

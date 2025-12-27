@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
-  vadThreshold: 0.1,
+  vadThreshold: 0.05,
   vadSilenceDurationMs: 750,
 };
 

@@ -30,7 +30,15 @@ export const DevTools: React.FC = () => {
   const { toolCallThoughts, clearToolCallThoughts, voiceAgentConnected } = useRaiStore();
   const [message, setMessage] = useState('');
   const [expanded, setExpanded] = useState(true);
+  const [expandedThought, setExpandedThought] = useState<number | null>(null);
   const thoughtsEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-expand the latest thought when new thoughts arrive
+  useEffect(() => {
+    if (toolCallThoughts.length > 0) {
+      setExpandedThought(toolCallThoughts.length - 1);
+    }
+  }, [toolCallThoughts.length]);
 
   // Auto-scroll to bottom when new thoughts arrive
   useEffect(() => {
@@ -38,6 +46,10 @@ export const DevTools: React.FC = () => {
       thoughtsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [toolCallThoughts, expanded]);
+
+  const handleAccordionChange = (index: number) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedThought(isExpanded ? index : null);
+  };
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -187,11 +199,12 @@ export const DevTools: React.FC = () => {
                   {toolCallThoughts.map((thought, index) => (
                     <Accordion
                       key={index}
+                      expanded={expandedThought === index}
+                      onChange={handleAccordionChange(index)}
                       sx={{
                         bgcolor: 'background.paper',
                         '&:before': { display: 'none' },
                       }}
-                      defaultExpanded={index === toolCallThoughts.length - 1}
                     >
                       <AccordionSummary expandIcon={<ExpandMore />}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>

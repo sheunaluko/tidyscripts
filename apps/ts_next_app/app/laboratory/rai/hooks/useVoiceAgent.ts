@@ -4,7 +4,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import { RealtimeSession } from '@openai/agents/realtime';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
-import { createRealtimeAgent, getEphemeralKey } from '../lib/voiceAgent';
+import { createRealtimeAgent, getEphemeralKey, generateInstructions } from '../lib/voiceAgent';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 const debug = tsw.common.util.debug;
@@ -29,11 +29,13 @@ export function useVoiceAgent() {
 
   const sessionRef = useRef<RealtimeSession | null>(null);
   const agentRef = useRef<any>(null);
+  const processedItemIds = useRef<Set<string>>(new Set());
 
   // Expose WebRTC objects to global scope for debugging
   useEffect(() => {
     window.voiceAgentDebug = {
       session: sessionRef.current,
+      agent: agentRef.current,
       get pc() {
         return (sessionRef.current as any)?.pc || null;
       },
@@ -44,8 +46,12 @@ export function useVoiceAgent() {
         return (sessionRef.current as any)?.stream || null;
       },
       stopAgent,
+      startAgent,
     };
   });
+
+  // Note: Agent instructions are now static - no dynamic updates based on collectedInformation
+  // The agent learns about items through conversation messages (tool responses and user messages)
 
   const startAgent = useCallback(async () => {
     try {
@@ -128,6 +134,118 @@ export function useVoiceAgent() {
       log('Voice agent session connected');
       debug.add('voice_agent_connected', { timestamp: new Date() });
 
+      // Listen for transport events (includes session.updated confirmation)
+      session.on('transport_event', (event: any) => {
+        // Session update confirmation
+        if (event.type === 'session.updated') {
+          log('✅ Session update confirmed by server!');
+          log(`New instructions length: ${event.session?.instructions?.length || 0} chars`);
+
+          debug.add('session_updated_confirmed', {
+            timestamp: new Date().toISOString(),
+            instructionsLength: event.session?.instructions?.length || 0,
+            hasInstructions: !!event.session?.instructions,
+            fullEvent: event,
+          });
+        }
+
+        // Error handling
+        if (event.type === 'error') {
+          log('❌ Transport error:', event.error?.message);
+          debug.add('transport_error', {
+            timestamp: new Date().toISOString(),
+            error: event.error,
+          });
+        }
+      });
+
+      // Listen to all transport events (raw Realtime API events)
+      session.transport.on('*', (event: any) => {
+        // Handle user text input (when text is sent directly)
+        if (event.type === 'conversation.item.added') {
+          const item = event.item;
+
+          // Handle user text messages (not audio)
+          if (item.role === 'user' && item.type === 'message') {
+            const content = item.content?.[0];
+
+            // Only handle input_text here (audio transcripts come later)
+            if (content?.type === 'input_text' && content.text) {
+              const itemKey = `user_text_${item.id}`;
+              if (!processedItemIds.current.has(itemKey)) {
+                processedItemIds.current.add(itemKey);
+                addTranscriptEntry({
+                  speaker: 'user',
+                  text: content.text,
+                  timestamp: new Date(),
+                });
+                log('✅ User text:', content.text);
+              }
+            }
+          }
+        }
+
+        // Handle user audio transcription completion
+        if (event.type === 'conversation.item.input_audio_transcription.completed') {
+          const transcript = event.transcript;
+          if (transcript && transcript.trim()) {
+            const itemKey = `user_audio_${event.item_id}`;
+            if (!processedItemIds.current.has(itemKey)) {
+              processedItemIds.current.add(itemKey);
+              addTranscriptEntry({
+                speaker: 'user',
+                text: transcript,
+                timestamp: new Date(),
+              });
+              log('✅ User audio transcript:', transcript);
+            }
+          }
+        }
+
+        // Handle assistant audio transcription completion
+        if (event.type === 'response.output_audio_transcript.done') {
+          const transcript = event.transcript;
+          if (transcript && transcript.trim()) {
+            const itemKey = `assistant_audio_${event.item_id}_${event.content_index}`;
+            if (!processedItemIds.current.has(itemKey)) {
+              processedItemIds.current.add(itemKey);
+              addTranscriptEntry({
+                speaker: 'agent',
+                text: transcript,
+                timestamp: new Date(),
+              });
+              log('✅ Assistant audio transcript:', transcript);
+            }
+          }
+        }
+
+        // Handle function calls (from response.done)
+        if (event.type === 'response.done') {
+          debug.add('response_done', {
+            timestamp: new Date().toISOString(),
+            response: event.response,
+          });
+
+          // Check for function calls in output
+          const outputs = event.response.output || [];
+          outputs.forEach((item: any) => {
+            if (item.type === 'function_call') {
+              const itemKey = `function_${item.id}`;
+              if (!processedItemIds.current.has(itemKey)) {
+                processedItemIds.current.add(itemKey);
+                const functionName = item.name;
+                addTranscriptEntry({
+                  speaker: 'system',
+                  text: `Calling function: ${functionName}`,
+                  timestamp: new Date(),
+                });
+                log('✅ Function call:', functionName);
+              }
+            }
+          });
+        }
+      });
+
       setVoiceAgentConnected(true);
       addTranscriptEntry({
         speaker: 'system',
@@ -135,13 +253,14 @@ export function useVoiceAgent() {
         timestamp: new Date(),
       });
 
-      // Automatically send "start" message to trigger agent greeting
+	// Automatically send "start" message to trigger agent greeting
+	const init_msg = "Initialize"  ; 
       try {
-        session.transport.sendMessage('start', {});
+        session.transport.sendMessage(init_msg, {});
         log('Sent automatic start message to agent');
         addTranscriptEntry({
           speaker: 'user',
-          text: 'Initialize',
+          text: init_msg,
           timestamp: new Date(),
         });
       } catch (sendError) {
@@ -188,6 +307,7 @@ export function useVoiceAgent() {
       // Clear refs
       sessionRef.current = null;
       agentRef.current = null;
+      processedItemIds.current.clear();
 
       setVoiceAgentConnected(false);
 
@@ -206,6 +326,7 @@ export function useVoiceAgent() {
       // Force cleanup even on error
       sessionRef.current = null;
       agentRef.current = null;
+      processedItemIds.current.clear();
       setVoiceAgentConnected(false);
     }
   }, [setVoiceAgentConnected, addTranscriptEntry]);

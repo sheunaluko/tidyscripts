@@ -194,7 +194,7 @@ export const Settings: React.FC = () => {
                   value={settings.vadThreshold}
 		  sx={{margin: "5px"}}
                 onChange={(_, value) => updateSettings({ vadThreshold: value as number })}
-                min={0.1}
+                min={0.0}
                 max={0.5}
                 step={0.05}
                 marks={[

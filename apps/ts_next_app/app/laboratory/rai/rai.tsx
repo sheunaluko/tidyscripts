@@ -30,6 +30,11 @@ const RAI: React.FC = () => {
     // Initialize the app
     log('RAI app initializing...');
 
+    // Suppress verbose logs
+    tsw.common.logger.suppress('MainLayout', 'Too verbose for RAI app');
+    tsw.common.logger.suppress('Sidebar', 'Too verbose for RAI app');
+    tsw.common.logger.suppress('router', 'Too verbose for RAI app');
+
     // Load settings from localStorage
     loadSettings();
 
@@ -42,6 +47,8 @@ const RAI: React.FC = () => {
     // Expose utilities to window for debugging
     Object.assign(window, {
       tsw,
+      raiStore: useRaiStore,
+      getRaiState: () => useRaiStore.getState(),
     });
 
     log('RAI app initialized');

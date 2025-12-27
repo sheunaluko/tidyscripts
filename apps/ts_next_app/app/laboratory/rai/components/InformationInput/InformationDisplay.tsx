@@ -34,7 +34,32 @@ export const InformationDisplay: React.FC = () => {
 
   const handleEditSave = () => {
     if (editingId && editingText.trim()) {
-      updateInformationText(editingId, editingText.trim());
+      // Find the index before update
+      const index = collectedInformation.findIndex((e) => e.id === editingId);
+      const itemNumber = index + 1;
+      const newText = editingText.trim();
+
+      // Update in store
+      updateInformationText(editingId, newText);
+
+      // Generate renumbered list (after update)
+      const renumberedList = collectedInformation
+        .map((e, idx) => {
+          const text = e.id === editingId ? newText : e.text;
+          return `${idx + 1}. "${text}"`;
+        })
+        .join('\n');
+
+      // Inject user message via session
+      const session = (window as any).voiceAgentDebug?.session;
+      if (session) {
+        try {
+          session.sendMessage(`I updated item ${itemNumber} to "${newText}". The RENUMBERED current list is NOW:\n${renumberedList}\n\nDo not respond to this message or call any functions based on it.`);
+        } catch (error) {
+          console.error('Failed to send update message to agent:', error);
+        }
+      }
+
       setEditingId(null);
       setEditingText('');
     }
@@ -51,7 +76,29 @@ export const InformationDisplay: React.FC = () => {
 
   const handleDeleteConfirm = () => {
     if (deletingId) {
+      // Find the index before deletion
+      const index = collectedInformation.findIndex((e) => e.id === deletingId);
+      const itemNumber = index + 1;
+
+      // Delete from store
       deleteInformationEntry(deletingId);
+
+      // Generate renumbered list (after deletion)
+      const renumberedList = collectedInformation
+        .filter((e) => e.id !== deletingId)
+        .map((e, idx) => `${idx + 1}. "${e.text}"`)
+        .join('\n');
+
+      // Inject user message via session
+      const session = (window as any).voiceAgentDebug?.session;
+      if (session) {
+        try {
+          session.sendMessage(`I deleted item ${itemNumber}. The RENUMBERED current list is NOW:\n${renumberedList}\n\nDo not respond to this message or call any functions based on it.`);
+        } catch (error) {
+          console.error('Failed to send delete message to agent:', error);
+        }
+      }
+
       setDeletingId(null);
     }
   };
