@@ -223,3 +223,47 @@ export function validateTemplate(
     warnings,
   };
 }
+
+/**
+ * Normalize dot phrase title for matching
+ * Converts spaces to dashes and makes uppercase
+ * @param title - Raw title from user input
+ * @returns Normalized title (e.g., "HPI Differential" -> "HPI-DIFFERENTIAL")
+ */
+export function normalizeDotPhraseTitle(title: string): string {
+  return title.trim().replace(/\s+/g, '-').toUpperCase();
+}
+
+/**
+ * Generate a unique ID for dot phrases
+ * @returns Unique dot phrase ID with 'dotphrase_' prefix
+ */
+export function generateDotPhraseId(): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  return `dotphrase_${timestamp}_${random}`;
+}
+
+/**
+ * Load dot phrases from localStorage
+ * @returns Array of dot phrases with parsed dates
+ */
+export function loadDotPhrasesFromStorage(): any[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.dotPhrases);
+    if (!stored) return [];
+
+    const parsed = JSON.parse(stored);
+    const dotPhrases = parsed.map((dp: any) => ({
+      ...dp,
+      createdAt: new Date(dp.createdAt),
+      updatedAt: new Date(dp.updatedAt),
+    }));
+
+    debug.add('dot_phrases_loaded', { count: dotPhrases.length });
+    return dotPhrases;
+  } catch (error) {
+    log({ msg: 'Error loading dot phrases from storage', error });
+    return [];
+  }
+}

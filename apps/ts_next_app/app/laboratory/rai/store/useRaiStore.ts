@@ -2,13 +2,16 @@
 
 import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
-import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult } from '../types';
+import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult, DotPhrase } from '../types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
 import {
   loadTemplates as loadTemplatesFromFiles,
   loadCustomTemplatesFromStorage,
   extractVariables,
   generateCustomTemplateId,
+  normalizeDotPhraseTitle,
+  generateDotPhraseId,
+  loadDotPhrasesFromStorage,
 } from '../lib/templateParser';
 import { generateTestHash, findCachedResults, mergeWithCache, runParallelTest } from '../lib/testRunner';
 import { buildAnalysisPrompt } from '../prompts/result_analysis_prompt';
@@ -184,6 +187,9 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   customTemplates: [],
   templateEditorMode: 'list' as 'list' | 'create' | 'edit',
   editingTemplate: null,
+
+  // Dot Phrases
+  dotPhrases: [],
 
   // Information Collection (free text approach)
   collectedInformation: [],
@@ -395,6 +401,83 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       log(`Saved ${templates.length} custom templates to localStorage`);
     } catch (error) {
       log('Error saving custom templates:');
+      log(error);
+    }
+  },
+
+  // Dot Phrase CRUD operations
+  createDotPhrase: (title: string, phrase: string) => {
+    const titleNormalized = normalizeDotPhraseTitle(title);
+    const newDotPhrase: DotPhrase = {
+      id: generateDotPhraseId(),
+      title,
+      titleNormalized,
+      phrase,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    set({ dotPhrases: [...get().dotPhrases, newDotPhrase] });
+    get().saveDotPhrases();
+    debug.add('dot_phrase_created', { title: titleNormalized });
+    log(`Created dot phrase: .${titleNormalized}`);
+  },
+
+  updateDotPhrase: (id: string, updates: Partial<DotPhrase>) => {
+    const dotPhrases = get().dotPhrases.map(dp =>
+      dp.id === id
+        ? {
+            ...dp,
+            ...updates,
+            titleNormalized: updates.title
+              ? normalizeDotPhraseTitle(updates.title)
+              : dp.titleNormalized,
+            updatedAt: new Date(),
+          }
+        : dp
+    );
+
+    set({ dotPhrases });
+    get().saveDotPhrases();
+    debug.add('dot_phrase_updated', { id });
+    log(`Updated dot phrase: ${id}`);
+  },
+
+  deleteDotPhrase: (id: string) => {
+    set({ dotPhrases: get().dotPhrases.filter(dp => dp.id !== id) });
+    get().saveDotPhrases();
+    debug.add('dot_phrase_deleted', { id });
+    log(`Deleted dot phrase: ${id}`);
+  },
+
+  loadDotPhrases: () => {
+    try {
+      const dotPhrases = loadDotPhrasesFromStorage();
+      set({ dotPhrases });
+      debug.add('dot_phrases_loaded', { count: dotPhrases.length });
+      log(`Loaded ${dotPhrases.length} dot phrases from localStorage`);
+    } catch (error) {
+      log('Error loading dot phrases:');
+      log(error);
+      set({ dotPhrases: [] });
+    }
+  },
+
+  saveDotPhrases: () => {
+    try {
+      const dotPhrases = get().dotPhrases.map(dp => ({
+        id: dp.id,
+        title: dp.title,
+        titleNormalized: dp.titleNormalized,
+        phrase: dp.phrase,
+        createdAt: dp.createdAt.toISOString(),
+        updatedAt: dp.updatedAt.toISOString(),
+      }));
+      localStorage.setItem(STORAGE_KEYS.dotPhrases, JSON.stringify(dotPhrases));
+      debug.add('dot_phrases_saved', { count: dotPhrases.length });
+      log(`Saved ${dotPhrases.length} dot phrases to localStorage`);
+    } catch (error) {
+      log('Error saving dot phrases:');
       log(error);
     }
   },

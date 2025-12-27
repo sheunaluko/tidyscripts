@@ -68,6 +68,7 @@ export const STORAGE_KEYS = {
   settings: 'rai_settings',
   customTemplates: 'rai_custom_templates',
   testRuns: 'rai_test_runs',
+  dotPhrases: 'rai_dot_phrases',
 };
 
 // Default Template IDs (file-based templates)

@@ -1,0 +1,13 @@
+
+
+Just below the generate note button I want Microphone icon button next to a text area, with a default text that says generate text to include in your note
+It has a copy to clipboard function
+
+This is its own component (the mic and text box)
+
+When the user clicks the mic -- it uses its own custom agent  that is a  transcription agent , that is only designed to relay the user text as a tool
+that adds the text to the text area
+
+When the user clicks COPY then the mic is paused, otherwise there are pasue and stop buttons as well.
+
+Any questions? 

@@ -33,16 +33,19 @@ export async function getEphemeralKey(): Promise<string> {
 }
 
 // Create voice agent tools with store access
-export function createVoiceTools(store: {
-  addInformationText: (text: string, suggestedVariable?: string | null) => void;
-  updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => void;
-  deleteInformationEntry: (id: string) => void;
-  collectedInformation: Array<{ id: string; text: string; timestamp: Date; suggestedVariable?: string | null }>;
-  setInformationComplete: (complete: boolean) => void;
-  setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
-  addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;
-  closeSession?: () => Promise<void>;
-}) {
+export function createVoiceTools(
+  template: NoteTemplate | null,
+  store: {
+    addInformationText: (text: string, suggestedVariable?: string | null) => void;
+    updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => void;
+    deleteInformationEntry: (id: string) => void;
+    collectedInformation: Array<{ id: string; text: string; timestamp: Date; suggestedVariable?: string | null }>;
+    setInformationComplete: (complete: boolean) => void;
+    setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
+    addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;
+    closeSession?: () => Promise<void>;
+  }
+) {
 
 
   // Tool 1: Add patient information
@@ -78,7 +81,66 @@ export function createVoiceTools(store: {
     },
   });
 
-  // Tool 2: Information complete
+  // Tool 2: Review template
+  const reviewTemplate = tool({
+    name: 'review_template',
+    description: 'Call this when the physician says they are finished, BEFORE calling information_complete. Reviews the template for special instructions or required fields that must be completed.',
+    parameters: z.object({
+      thoughts: z.string().describe('Your assessment of what you are about to review'),
+    }),
+    async execute({ thoughts }) {
+      log('Tool called: review_template');
+      debug.add('voice_tool_review', { thoughts });
+
+      // Record thoughts for dev tools
+      store.addToolCallThought({
+        timestamp: new Date(),
+        toolName: 'review_template',
+        thoughts,
+        parameters: {},
+      });
+
+      // Generate collected information list
+      const collectedList = store.collectedInformation
+        .map((e, idx) => `${idx + 1}. "${e.text}"${e.suggestedVariable ? ` (→ ${e.suggestedVariable})` : ''}`)
+        .join('\n');
+
+      // Generate template text or indicate no template
+      const templateText = template
+        ? `${template.title}\n\n${template.template}`
+        : 'No template selected';
+
+      // Return structured review instructions
+      return `TEMPLATE REVIEW INSTRUCTIONS:
+
+1. CAREFULLY read the entire template text below, paying special attention to any instructions at the END of the template.
+
+2. Look for:
+   - Required variables or fields that MUST be completed (often marked as "REQUIRED:", "MUST INCLUDE:", etc.)
+   - Special instructions about what information is mandatory
+   - Specific requirements for note completion
+   - Any conditional logic or required sections
+
+3. Compare the template requirements against the information you have collected from the physician.
+
+4. If ANY required information is missing:
+   - Clearly notify the physician what specific information is still needed
+   - Reference the template requirement directly
+   - Ask if they want to provide it now or proceed without it
+
+5. If ALL requirements are satisfied OR no special requirements exist:
+   - Acknowledge that the information is complete
+   - Proceed to call the information_complete tool
+
+TEMPLATE TO REVIEW:
+${templateText}
+
+COLLECTED INFORMATION:
+${collectedList || 'No information collected yet'}`;
+    },
+  });
+
+  // Tool 3: Information complete
   const informationComplete = tool({
     name: 'information_complete',
     description: 'Call this when the physician indicates they are finished providing information (e.g., says "finished", "done", "that\'s all"). Do not say that the note is complete, just say generating note then STOP TALKING',
@@ -121,7 +183,7 @@ export function createVoiceTools(store: {
     },
   });
 
-  return [addPatientInformation, informationComplete];
+  return [addPatientInformation, reviewTemplate, informationComplete];
 }
 
 // Generate instructions for the agent based on selected template and current information
@@ -158,8 +220,12 @@ When the physician provides any clinical information:
 4. You can see the template structure above - listen for information related to those fields, but accept any clinical information the physician provides
 
 When the physician indicates they are finished (says "finished", "done", "that's all", etc.):
-1. Say some form of acknowledgement then say "generating note"
-2. Call the information_complete tool
+1. FIRST call the review_template tool to check for any required information
+2. The review_template tool will return instructions and the template text for you to analyze
+3. Follow the review instructions carefully to determine if all required information is present
+4. If any required information is missing, notify the physician and ask if they want to provide it
+5. If all requirements are satisfied, acknowledge and call the information_complete tool
+6. Only after calling information_complete, say "generating note"
 
 Keep all responses brief and professional. You don't need to extract structured data - just collect what the physician says naturally and use the tools to record it.`;
 }
@@ -180,7 +246,7 @@ export function createRealtimeAgent(
 ): RealtimeAgent {
   log('Creating RealtimeAgent...');
 
-  const tools = createVoiceTools(store);
+  const tools = createVoiceTools(template, store);
 
   // Initial instructions (will be updated automatically by useEffect in useVoiceAgent)
   const initialInstructions = generateInstructions(template, store.collectedInformation);

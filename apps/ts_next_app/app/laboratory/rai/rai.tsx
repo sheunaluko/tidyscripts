@@ -20,7 +20,7 @@ const log = tsw.common.logger.get_logger({ id: 'rai' });
 declare var window: any;
 
 const RAI: React.FC = () => {
-  const { currentView, loadTemplates, loadSettings, loadTestHistory } = useRaiStore();
+  const { currentView, loadTemplates, loadSettings, loadTestHistory, loadDotPhrases } = useRaiStore();
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Initialize hash router
@@ -44,6 +44,9 @@ const RAI: React.FC = () => {
     // Load test history (needed for route validation)
     loadTestHistory();
 
+    // Load dot phrases
+    loadDotPhrases();
+
     // Expose utilities to window for debugging
     Object.assign(window, {
       tsw,
@@ -52,7 +55,7 @@ const RAI: React.FC = () => {
     });
 
     log('RAI app initialized');
-  }, [loadSettings, loadTemplates, loadTestHistory]);
+  }, [loadSettings, loadTemplates, loadTestHistory, loadDotPhrases]);
 
   // Log computed styles of container
   useEffect(() => {

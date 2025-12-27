@@ -1,0 +1,5 @@
+
+
+include a review tool that must be called before the finished tool is called. This exists primarily to review the prompt for special instructions or variables that the user wants completed prior to finalizing the note. Give the agent this context and ask it to review before letting the user progress, and note what needs to be completed before progressing
+
+any questions? 

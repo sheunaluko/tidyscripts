@@ -3,12 +3,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Paper, IconButton, Tooltip, Snackbar, TextField } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
+import { useRaiStore } from '../../store/useRaiStore';
+import { DotPhrase } from '../../types';
 
 interface NoteDisplayProps {
   note: string;
 }
 
 export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
+  const { dotPhrases } = useRaiStore();
   const [copySuccess, setCopySuccess] = useState(false);
   const [editedNote, setEditedNote] = useState(note);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -20,9 +23,26 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
   }, [note]);
 
   // Validation/transformation logic
-  const validateAndTransform = useCallback((text: string): string => {
-    // Replace ".test " (with space) with " MAGIC "
-    return text.replace(/\.test /g, ' MAGIC ');
+  const validateAndTransform = useCallback((text: string, dotPhrases: DotPhrase[]): string => {
+    let result = text;
+
+    // Sort by length descending to avoid partial matches
+    // (e.g., .HPI-DIFFERENTIAL before .HPI)
+    const sortedPhrases = [...dotPhrases].sort(
+      (a, b) => b.titleNormalized.length - a.titleNormalized.length
+    );
+
+    // Apply dot phrase replacements
+    sortedPhrases.forEach(phrase => {
+      // Match: period + normalized title + space (case-sensitive)
+      const pattern = new RegExp(`\\.${phrase.titleNormalized} `, 'g');
+      result = result.replace(pattern, phrase.phrase + ' ');
+    });
+
+    // Legacy test transformation (can be removed later)
+    result = result.replace(/\.test /g, ' MAGIC ');
+
+    return result;
   }, []);
 
   // Debounced version (500ms delay)
@@ -42,7 +62,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
     // Run validation after 500ms of no typing
     debouncedValidateRef.current = setTimeout(() => {
-      const transformed = validateAndTransform(newValue);
+      const transformed = validateAndTransform(newValue, dotPhrases);
       if (transformed !== newValue) {
         // Calculate adjusted cursor position based on text length change
         const diff = transformed.length - newValue.length;

@@ -95,6 +95,16 @@ export interface TestRun {
   } | null;
 }
 
+// Dot Phrase
+export interface DotPhrase {
+  id: string;
+  title: string;              // Display title (e.g., "HPI Differential")
+  titleNormalized: string;    // Normalized for matching (e.g., "HPI-DIFFERENTIAL")
+  phrase: string;             // The replacement text
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Zustand Store State
 export interface RaiState {
   // Navigation
@@ -177,4 +187,12 @@ export interface RaiState {
   saveTestHistory: () => void;
   loadTestRun: (testRunId: string) => void;
   deleteTestRun: (testRunId: string) => void;
+
+  // Dot Phrases
+  dotPhrases: DotPhrase[];
+  createDotPhrase: (title: string, phrase: string) => void;
+  updateDotPhrase: (id: string, updates: Partial<DotPhrase>) => void;
+  deleteDotPhrase: (id: string) => void;
+  loadDotPhrases: () => void;
+  saveDotPhrases: () => void;
 }
