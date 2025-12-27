@@ -1,20 +1,84 @@
-// Note Display Component - Renders generated markdown note
+// Note Display Component - Editable note with validation
 
-import React from 'react';
-import { Box, Paper, IconButton, Tooltip, Snackbar } from '@mui/material';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Paper, IconButton, Tooltip, Snackbar, TextField } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
-import ReactMarkdown from 'react-markdown';
 
 interface NoteDisplayProps {
   note: string;
 }
 
 export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
-  const [copySuccess, setCopySuccess] = React.useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [editedNote, setEditedNote] = useState(note);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const cursorStateRef = useRef<{ start: number; end: number } | null>(null);
 
+  // Sync editedNote when note prop changes (e.g., regeneration)
+  useEffect(() => {
+    setEditedNote(note);
+  }, [note]);
+
+  // Validation/transformation logic
+  const validateAndTransform = useCallback((text: string): string => {
+    // Replace ".test " (with space) with " MAGIC "
+    return text.replace(/\.test /g, ' MAGIC ');
+  }, []);
+
+  // Debounced version (500ms delay)
+  const debouncedValidateRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleNoteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+
+    // Update immediately for responsive UI
+    setEditedNote(newValue);
+
+    // Clear previous timeout
+    if (debouncedValidateRef.current) {
+      clearTimeout(debouncedValidateRef.current);
+    }
+
+    // Run validation after 500ms of no typing
+    debouncedValidateRef.current = setTimeout(() => {
+      const transformed = validateAndTransform(newValue);
+      if (transformed !== newValue) {
+        // Calculate adjusted cursor position based on text length change
+        const diff = transformed.length - newValue.length;
+        const newCursorPos = Math.max(0, Math.min(cursorPos + diff, transformed.length));
+
+        // Save for restoration
+        cursorStateRef.current = { start: newCursorPos, end: newCursorPos };
+
+        setEditedNote(transformed);
+      }
+    }, 500);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedValidateRef.current) {
+        clearTimeout(debouncedValidateRef.current);
+      }
+    };
+  }, []);
+
+  // Restore cursor position after transformation
+  useEffect(() => {
+    if (cursorStateRef.current && inputRef.current) {
+      const { start, end } = cursorStateRef.current;
+      inputRef.current.setSelectionRange(start, end);
+      inputRef.current.focus();
+      cursorStateRef.current = null;
+    }
+  }, [editedNote]);
+
+  // Copy edited content
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(note);
+      await navigator.clipboard.writeText(editedNote);
       setCopySuccess(true);
     } catch (error) {
       console.error('Failed to copy:', error);
@@ -31,41 +95,16 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
         },
       }}
     >
-      <Paper sx={{
-        p: 3,
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: '-100%',
-          left: '-100%',
-          right: '-100%',
-          bottom: '-100%',
-          background: 'conic-gradient(from 0deg, #2196F3, #00BCD4, #9C27B0, #2196F3, #00BCD4, #9C27B0, #2196F3)',
-          animation: 'gradientRotate 100s linear infinite',
-          zIndex: 0,
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: '1px',
-          left: '1px',
-          right: '1px',
-          bottom: '1px',
-          bgcolor: 'background.paper',
-          borderRadius: 'inherit',
-          zIndex: 0,
-        },
-        '@keyframes gradientRotate': {
-          '0%': {
-            transform: 'rotate(0deg)',
-          },
-          '100%': {
-            transform: 'rotate(360deg)',
-          },
-        },
-      }}>
+      <Paper
+        sx={{
+          p: 3,
+          border: '1px solid',
+          borderColor: 'primary.main',
+          borderRadius: 1,
+          position: 'relative',
+        }}
+      >
+        {/* Copy button - keep in top-right */}
         <Tooltip title="Copy to clipboard">
           <IconButton
             onClick={handleCopy}
@@ -76,26 +115,27 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
           </IconButton>
         </Tooltip>
 
-        <Box
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            '& h1': { fontSize: '1.75rem', fontWeight: 600, mt: 2, mb: 1 },
-            '& h2': { fontSize: '1.5rem', fontWeight: 600, mt: 2, mb: 1 },
-            '& h3': { fontSize: '1.25rem', fontWeight: 600, mt: 1.5, mb: 0.5 },
-            '& p': { mb: 1 },
-            '& ul, & ol': { pl: 3, mb: 1 },
-            '& strong': { fontWeight: 600 },
-            '& hr': { my: 2 },
-            fontFamily: 'monospace',
-            fontSize: '0.9rem',
-            lineHeight: 1.6,
+        {/* Editable textarea */}
+        <TextField
+          fullWidth
+          multiline
+          rows={20}
+          value={editedNote}
+          onChange={handleNoteChange}
+          variant="outlined"
+          inputRef={inputRef}
+          InputProps={{
+            sx: {
+              fontFamily: 'monospace',
+              fontSize: '0.9rem',
+              lineHeight: 1.6,
+            },
           }}
-        >
-          <ReactMarkdown>{note}</ReactMarkdown>
-        </Box>
+          sx={{ mt: 1 }}
+        />
       </Paper>
 
+      {/* Success notification */}
       <Snackbar
         open={copySuccess}
         autoHideDuration={3000}

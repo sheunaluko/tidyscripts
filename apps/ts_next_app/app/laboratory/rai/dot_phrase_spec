@@ -1,0 +1,11 @@
+Add a Dot Phrase section to template editor , and a Create Dot Phrase button , which laucnhes a Dot Phrase Editor window
+
+A dot phrase is simply a .DOT_PHRASE_TITLE  that when present in the nnote generatation area will be replaced by specified text
+
+Thus the editor should have title (spaces transformed to dash)  and phrase fields.
+
+These get saved locally as well
+
+The validate and transform function on the note generator will detect these when the title occurs (case sensitive) between a period and a space , and replace it with the specified phrase
+
+

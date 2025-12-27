@@ -1,6 +1,6 @@
 // VoiceMode Component - Voice agent interface
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,24 +10,25 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
-import { Mic, MicOff, Circle } from '@mui/icons-material';
+import { Mic, MicOff, Circle, Pause, PlayArrow } from '@mui/icons-material';
 import { useVoiceAgent } from '../../hooks/useVoiceAgent';
 import { useRaiStore } from '../../store/useRaiStore';
+
+declare var window: any;
 
 export const VoiceMode: React.FC = () => {
   const { startAgent, stopAgent, connected } = useVoiceAgent();
   const { voiceAgentTranscript, settings } = useRaiStore();
-  const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Auto-scroll to bottom when new transcript entries arrive
   useEffect(() => {
-    // Use scrollIntoView with options to prevent focus stealing
-    transcriptEndRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',    // Don't force vertical alignment (prevents page jump)
-      inline: 'nearest',   // Don't force horizontal alignment
-    });
+    // Scroll only within the transcript container, not the whole page
+    if (transcriptContainerRef.current) {
+      transcriptContainerRef.current.scrollTop = transcriptContainerRef.current.scrollHeight;
+    }
   }, [voiceAgentTranscript]);
 
   // Auto-start agent if enabled in settings
@@ -41,8 +42,26 @@ export const VoiceMode: React.FC = () => {
   const handleToggle = () => {
     if (connected) {
       stopAgent();
+      setIsPaused(false); // Reset pause state when stopping
     } else {
       startAgent();
+    }
+  };
+
+  const handlePause = () => {
+    try {
+      const session = window.voiceAgentDebug?.session;
+      if (!session) {
+        console.error('No active voice agent session found');
+        return;
+      }
+
+      const newPausedState = !isPaused;
+      session.transport.mute(newPausedState);
+      setIsPaused(newPausedState);
+      console.log(`Voice agent ${newPausedState ? 'muted' : 'unmuted'}`);
+    } catch (error) {
+      console.error('Error toggling mute:', error);
     }
   };
 
@@ -75,10 +94,10 @@ export const VoiceMode: React.FC = () => {
   return (
     <Box>
       {/* Header with connection status */}
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3, marginTop : '10px' }}>
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1, marginTop : '10px' }}>
         <Typography variant="h6" >Voice Mode</Typography>
 
-        {connected && (
+        {connected && !isPaused && (
           <Chip
             icon={<Circle sx={{ fontSize: 12 }} />}
             label="Connected"
@@ -96,6 +115,15 @@ export const VoiceMode: React.FC = () => {
           />
         )}
 
+        {connected && isPaused && (
+          <Chip
+            icon={<Circle sx={{ fontSize: 12 }} />}
+            label="Paused"
+            color="warning"
+            size="small"
+          />
+        )}
+
         {!connected && hasStartedRef.current && (
           <Chip
             label="Disconnected"
@@ -105,8 +133,24 @@ export const VoiceMode: React.FC = () => {
         )}
       </Stack>
 
+      {/* Instructions */}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Speak naturally about the patient information. Say &ldquo;finished&rdquo; when done.
+      </Typography>
+
       {/* Control buttons */}
-      <Box sx={{ mb: 3 }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+        {connected && (
+          <Button
+            variant="outlined"
+            color="warning"
+            startIcon={isPaused ? <PlayArrow /> : <Pause />}
+            onClick={handlePause}
+            size="large"
+          >
+            {isPaused ? 'RESUME' : 'PAUSE'}
+          </Button>
+        )}
         <Button
           variant={connected ? 'outlined' : 'contained'}
           color={connected ? 'error' : 'primary'}
@@ -116,10 +160,11 @@ export const VoiceMode: React.FC = () => {
         >
           {connected ? 'STOP' : 'START'}
         </Button>
-      </Box>
+      </Stack>
 
       {/* Transcript display */}
       <Paper
+        ref={transcriptContainerRef}
         elevation={2}
         sx={{
           p: 2,
@@ -203,19 +248,9 @@ export const VoiceMode: React.FC = () => {
                 </Typography>
               </Box>
             ))}
-            <div ref={transcriptEndRef} />
           </Stack>
         )}
       </Paper>
-
-      {/* Instructions */}
-      {connected && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Speak naturally about the patient information. Say &ldquo;finished&rdquo; when done.
-          </Typography>
-        </Box>
-      )}
     </Box>
   );
 };

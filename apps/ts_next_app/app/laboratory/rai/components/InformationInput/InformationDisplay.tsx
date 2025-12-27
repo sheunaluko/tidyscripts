@@ -54,7 +54,7 @@ export const InformationDisplay: React.FC = () => {
       const session = (window as any).voiceAgentDebug?.session;
       if (session) {
         try {
-          session.sendMessage(`I updated item ${itemNumber} to "${newText}". The RENUMBERED current list is NOW:\n${renumberedList}\n\nDo not respond to this message or call any functions based on it.`);
+          session.sendMessage(`I intentionally updated item ${itemNumber} to "${newText}". The RENUMBERED current list is NOW:\n${renumberedList}\n\n This was intentional so simply acknowledge and do nothing else`);
         } catch (error) {
           console.error('Failed to send update message to agent:', error);
         }
@@ -93,7 +93,7 @@ export const InformationDisplay: React.FC = () => {
       const session = (window as any).voiceAgentDebug?.session;
       if (session) {
         try {
-          session.sendMessage(`I deleted item ${itemNumber}. The RENUMBERED current list is NOW:\n${renumberedList}\n\nDo not respond to this message or call any functions based on it.`);
+          session.sendMessage(`I intentionally deleted item ${itemNumber}. The RENUMBERED current list is NOW:\n${renumberedList}\n\n This was intentional so simply acknowledge and do nothing else`);
         } catch (error) {
           console.error('Failed to send delete message to agent:', error);
         }
@@ -126,6 +126,8 @@ export const InformationDisplay: React.FC = () => {
       <Paper
         sx={{
           p: 2,
+          maxHeight: 500,
+          overflowY: 'auto',
           border: '1px solid transparent',
           borderRadius: 1,
           background: (theme) => `

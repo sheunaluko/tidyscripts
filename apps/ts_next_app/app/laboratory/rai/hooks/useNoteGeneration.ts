@@ -36,8 +36,13 @@ export function useNoteGeneration() {
     setNoteGenerationError(null);
 
     try {
-      // Extract text from information entries
-      const collectedText = collectedInformation.map((entry) => entry.text);
+      // Extract text from information entries, including suggestedVariable if present
+      const collectedText = collectedInformation.map((entry) => {
+        if (entry.suggestedVariable) {
+          return `[${entry.suggestedVariable}] ${entry.text}`;
+        }
+        return entry.text;
+      });
 
       // Generate note
       const note = await generateNote(

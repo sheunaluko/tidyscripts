@@ -31,7 +31,7 @@ export const DevTools: React.FC = () => {
   const [message, setMessage] = useState('');
   const [expanded, setExpanded] = useState(true);
   const [expandedThought, setExpandedThought] = useState<number | null>(null);
-  const thoughtsEndRef = useRef<HTMLDivElement>(null);
+  const thoughtsContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-expand the latest thought when new thoughts arrive
   useEffect(() => {
@@ -42,8 +42,8 @@ export const DevTools: React.FC = () => {
 
   // Auto-scroll to bottom when new thoughts arrive
   useEffect(() => {
-    if (expanded) {
-      thoughtsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (expanded && thoughtsContainerRef.current) {
+      thoughtsContainerRef.current.scrollTop = thoughtsContainerRef.current.scrollHeight;
     }
   }, [toolCallThoughts, expanded]);
 
@@ -177,6 +177,7 @@ export const DevTools: React.FC = () => {
             </Box>
 
             <Paper
+              ref={thoughtsContainerRef}
               variant="outlined"
               sx={{
                 maxHeight: 300,
@@ -262,7 +263,6 @@ export const DevTools: React.FC = () => {
                       </AccordionDetails>
                     </Accordion>
                   ))}
-                  <div ref={thoughtsEndRef} />
                 </Stack>
               )}
             </Paper>

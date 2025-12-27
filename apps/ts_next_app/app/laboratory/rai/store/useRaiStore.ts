@@ -187,22 +187,23 @@ export const useRaiStore = create<RaiState>((set, get) => ({
 
   // Information Collection (free text approach)
   collectedInformation: [],
-  addInformationText: (text: string) => {
+  addInformationText: (text: string, suggestedVariable?: string | null) => {
     const entry: InformationEntry = {
       id: crypto.randomUUID(),
       text,
       timestamp: new Date(),
+      suggestedVariable,
     };
     debug.add('information_entry_added', entry);
     set((state) => ({
       collectedInformation: [...state.collectedInformation, entry],
     }));
   },
-  updateInformationText: (id: string, newText: string) => {
-    debug.add('information_entry_updated', { id, newText });
+  updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => {
+    debug.add('information_entry_updated', { id, newText, suggestedVariable });
     set((state) => ({
       collectedInformation: state.collectedInformation.map((entry) =>
-        entry.id === id ? { ...entry, text: newText } : entry
+        entry.id === id ? { ...entry, text: newText, suggestedVariable } : entry
       ),
     }));
   },

@@ -237,6 +237,30 @@ export const Settings: React.FC = () => {
 
         <Divider sx={{ my: 3 }} />
 
+        {/* Testing Flags Section */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Testing & Debug
+          </Typography>
+
+          <Box sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={settings.showBlankNoteForTesting}
+                  onChange={(e) => updateSettings({ showBlankNoteForTesting: e.target.checked })}
+                />
+              }
+              label="Show blank note editor on init (for testing)"
+            />
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
+              Display an empty note editor when navigating to Note Generator without generating a note first
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
         {/* Reset Button */}
         <Button variant="outlined" onClick={handleReset} fullWidth>
           Reset to Defaults

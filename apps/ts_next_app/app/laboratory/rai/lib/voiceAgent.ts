@@ -34,10 +34,10 @@ export async function getEphemeralKey(): Promise<string> {
 
 // Create voice agent tools with store access
 export function createVoiceTools(store: {
-  addInformationText: (text: string) => void;
-  updateInformationText: (id: string, newText: string) => void;
+  addInformationText: (text: string, suggestedVariable?: string | null) => void;
+  updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => void;
   deleteInformationEntry: (id: string) => void;
-  collectedInformation: Array<{ id: string; text: string; timestamp: Date }>;
+  collectedInformation: Array<{ id: string; text: string; timestamp: Date; suggestedVariable?: string | null }>;
   setInformationComplete: (complete: boolean) => void;
   setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
   addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;
@@ -48,24 +48,25 @@ export function createVoiceTools(store: {
   // Tool 1: Add patient information
   const addPatientInformation = tool({
     name: 'add_patient_information',
-    description: 'Record patient information for the clinical note. Call this when the physician provides any clinical information. BE CONSISTENT AND ONLY RESPOND WITH noted or got it',
+    description: 'Record patient information for the clinical note. Call this when the physician provides any clinical information. If the information maps to a specific template field/variable, provide it in suggestedVariable (otherwise null). BE CONSISTENT AND ONLY RESPOND WITH noted or got it',
     parameters: z.object({
       information: z.string().describe('The information provided by the physician in natural language'),
       thoughts: z.string().describe('Your internal reasoning about this information, what you understand, and how it relates to the clinical note structure'),
+      suggestedVariable: z.string().nullable().optional().describe('The template variable/field name this information corresponds to (e.g., "chief_complaint", "history_of_present_illness"), or null if no clear match'),
     }),
-    async execute({ information, thoughts }) {
+    async execute({ information, thoughts, suggestedVariable }) {
       log('Tool called: add_patient_information');
-      debug.add('voice_tool_add_info', { information, thoughts });
+      debug.add('voice_tool_add_info', { information, thoughts, suggestedVariable });
 
-      // Add to store
-      store.addInformationText(information);
+      // Add to store with suggestedVariable
+      store.addInformationText(information, suggestedVariable);
 
       // Record thoughts for dev tools
       store.addToolCallThought({
         timestamp: new Date(),
         toolName: 'add_patient_information',
         thoughts,
-        parameters: { information },
+        parameters: { information, suggestedVariable },
       });
 
       // Generate renumbered list
@@ -73,7 +74,7 @@ export function createVoiceTools(store: {
         .map((e, idx) => `${idx + 1}. "${e.text}"`)
         .join('\n');
 
-      return `Noted. The RENUMBERED current list is NOW:\n${renumberedList}`;
+      return `The RENUMBERED current list is NOW:\n${renumberedList}\n\nSimply say added, and NOTHING else`;
     },
   });
 
@@ -167,10 +168,10 @@ Keep all responses brief and professional. You don't need to extract structured 
 export function createRealtimeAgent(
   template: NoteTemplate | null,
   store: {
-    addInformationText: (text: string) => void;
-    updateInformationText: (id: string, newText: string) => void;
+    addInformationText: (text: string, suggestedVariable?: string | null) => void;
+    updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => void;
     deleteInformationEntry: (id: string) => void;
-    collectedInformation: Array<{ id: string; text: string; timestamp: Date }>;
+    collectedInformation: Array<{ id: string; text: string; timestamp: Date; suggestedVariable?: string | null }>;
     setInformationComplete: (complete: boolean) => void;
     setCurrentView: (view: 'template_picker' | 'information_input' | 'note_generator' | 'settings') => void;
     addToolCallThought: (thought: { timestamp: Date; toolName: string; thoughts: string; parameters?: Record<string, any> }) => void;

@@ -96,21 +96,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if user is typing in an input field
+      const target = e.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' ||
+                       target.tagName === 'TEXTAREA' ||
+                       target.isContentEditable;
+
       if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setFocusedIndex((prev) => {
-          if (prev === null) return 0;
-          return (prev + 1) % allMenuItems.length;
-        });
+        if (!isTyping) {  // Only prevent if NOT in input field
+          e.preventDefault();
+          setFocusedIndex((prev) => {
+            if (prev === null) return 0;
+            return (prev + 1) % allMenuItems.length;
+          });
+        }
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setFocusedIndex((prev) => {
-          if (prev === null) return allMenuItems.length - 1;
-          return prev === 0 ? allMenuItems.length - 1 : prev - 1;
-        });
+        if (!isTyping) {  // Only prevent if NOT in input field
+          e.preventDefault();
+          setFocusedIndex((prev) => {
+            if (prev === null) return allMenuItems.length - 1;
+            return prev === 0 ? allMenuItems.length - 1 : prev - 1;
+          });
+        }
       } else if (e.key === 'Enter' && focusedIndex !== null) {
-        const target = e.target as HTMLElement;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+        if (!isTyping) {
           e.preventDefault();
           setCurrentView(allMenuItems[focusedIndex].id);
         }

@@ -11,6 +11,10 @@ export const NoteGenerator: React.FC = () => {
   const { generate, generatedNote, loading, error } = useNoteGeneration();
   const { settings, selectedTemplate, collectedInformation } = useRaiStore();
 
+  // Determine what note to display
+  const noteToDisplay = generatedNote ||
+    (settings.showBlankNoteForTesting ? '' : null);
+
   useEffect(() => {
     // Autostart generation if enabled and no note generated yet
     if (settings.autostartGeneration && !generatedNote && !loading && collectedInformation.length > 0) {
@@ -18,7 +22,7 @@ export const NoteGenerator: React.FC = () => {
     }
   }, [settings.autostartGeneration, generatedNote, loading, collectedInformation.length, generate]);
 
-  if (!selectedTemplate) {
+  if (!selectedTemplate && !settings.showBlankNoteForTesting) {
     return (
       <Box>
         <Typography variant="h5" color="text.secondary">
@@ -28,7 +32,8 @@ export const NoteGenerator: React.FC = () => {
     );
   }
 
-  if (collectedInformation.length === 0) {
+  // Only show "no information" message if NOT in testing mode
+  if (collectedInformation.length === 0 && !settings.showBlankNoteForTesting) {
     return (
       <Box>
         <Typography variant="h4" gutterBottom>
@@ -72,7 +77,7 @@ export const NoteGenerator: React.FC = () => {
       )}
 
       {/* Generate Button */}
-      {!generatedNote && !loading && (
+      {!noteToDisplay && !loading && (
         <Button
           variant="contained"
           size="large"
@@ -107,22 +112,24 @@ export const NoteGenerator: React.FC = () => {
         </Paper>
       )}
 
-      {/* Generated Note */}
-      {generatedNote && !loading && (
+      {/* Generated Note OR Blank Note for Testing */}
+      {noteToDisplay !== null && !loading && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Generated Note</Typography>
+            <Typography variant="h6">
+              {generatedNote ? 'Generated Note' : 'Note Editor (Testing)'}
+            </Typography>
             <Button
               variant="outlined"
               startIcon={<Refresh />}
               onClick={generate}
               size="small"
             >
-              Regenerate
+              {generatedNote ? 'Regenerate' : 'Generate'}
             </Button>
           </Box>
 
-          <NoteDisplay note={generatedNote} />
+          <NoteDisplay note={noteToDisplay} />
         </Box>
       )}
     </Box>

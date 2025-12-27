@@ -28,6 +28,7 @@ export interface AppSettings {
   advancedFeaturesEnabled: boolean;
   vadThreshold: number;
   vadSilenceDurationMs: number;
+  showBlankNoteForTesting: boolean;
 }
 
 // Note Template
@@ -47,6 +48,7 @@ export interface InformationEntry {
   id: string;
   text: string;
   timestamp: Date;
+  suggestedVariable?: string | null; // Template variable this information maps to (optional)
 }
 
 // Voice Agent Transcript
@@ -125,8 +127,8 @@ export interface RaiState {
 
   // Information Collection (free text approach)
   collectedInformation: InformationEntry[];
-  addInformationText: (text: string) => void;
-  updateInformationText: (id: string, newText: string) => void;
+  addInformationText: (text: string, suggestedVariable?: string | null) => void;
+  updateInformationText: (id: string, newText: string, suggestedVariable?: string | null) => void;
   deleteInformationEntry: (id: string) => void;
   resetInformation: () => void;
   informationComplete: boolean;
