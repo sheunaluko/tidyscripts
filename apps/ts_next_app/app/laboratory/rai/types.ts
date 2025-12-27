@@ -104,6 +104,16 @@ export interface DotPhrase {
   updatedAt: Date;
 }
 
+// Note Checkpoint - tracks editing history
+export interface NoteCheckpoint {
+  id: string;
+  content: string;
+  timestamp: Date;
+  type: 'user_edit' | 'transformation' | 'checkpoint_navigation';
+  // Navigation-specific metadata (only for checkpoint_navigation type)
+  targetCheckpointId?: string; // Reference to accepted checkpoint
+}
+
 // Zustand Store State
 export interface RaiState {
   // Navigation
@@ -160,6 +170,19 @@ export interface RaiState {
   setGeneratedNote: (note: string) => void;
   setNoteGenerationLoading: (loading: boolean) => void;
   setNoteGenerationError: (error: string | null) => void;
+
+  // Note Checkpoints - Dual Tracking System
+  // Analytics Checkpoints - append-only, captures everything
+  analyticsCheckpoints: NoteCheckpoint[];
+  addAnalyticsCheckpoint: (content: string, type: 'user_edit' | 'transformation' | 'checkpoint_navigation', metadata?: { targetCheckpointId?: string }) => void;
+
+  // UI Checkpoints - mutable, for navigation
+  uiCheckpoints: NoteCheckpoint[];
+  currentCheckpointIndex: number; // -1 means live editing, 0+ means browsing
+  isBrowsingCheckpoints: boolean; // true when in browse mode (back button clicked)
+  navigateCheckpoint: (direction: 'back' | 'forward') => void; // Browse without logging
+  acceptCheckpoint: () => void; // Accept current checkpoint, log to analytics, discard forward history
+  clearAllCheckpoints: () => void;
 
   // Settings
   settings: AppSettings;

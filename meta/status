@@ -8,7 +8,23 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
 
 
 Todo:
-- now will shift gears to improving the voice and observability interface 
+- now will shift gears to improving the voice and observability interface
+
+- [x] implement RAI
+- [x] upgrade RAI -> persistent state on note generator  | after editing the note - if you leave and come back
+- [ ] get rid of default templates for good
+- [ ] enter after dot pharse works too
+- [ ] dot phrase should have Title  and Description  (Description shows first) ] (DONT BREAK
+EXIStiNG dot phrases)
+- [ ] legend for the dot phrases that shows next to the voice box
+- [ ] alphabetically sort the dot phrases
+- [ ] EXPAND THE CONDITIONAL LOGIC TO INCLUDE THREE POSIBILITYs, true/false/missing
+- [ ] CLick on dot phrase to EDIT it (remove the edit button)
+- [ ]  NEED TO AUTOFORMAT the text box grammatically (use a fast AI model)
+
+
+
+HOME AND LOGIN AT THE TOP 
 
 
 Possible upgrades 

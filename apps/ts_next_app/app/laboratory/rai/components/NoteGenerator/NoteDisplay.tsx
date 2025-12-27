@@ -1,26 +1,100 @@
 // Note Display Component - Editable note with validation
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Paper, IconButton, Tooltip, Snackbar, TextField } from '@mui/material';
-import { ContentCopy } from '@mui/icons-material';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Box, Paper, IconButton, Tooltip, Snackbar, TextField, Typography } from '@mui/material';
+import { ContentCopy, ArrowBack, ArrowForward, Check } from '@mui/icons-material';
 import { useRaiStore } from '../../store/useRaiStore';
-import { DotPhrase } from '../../types';
+import { DotPhrase, NoteCheckpoint } from '../../types';
+import * as tsw from 'tidyscripts_web';
+
+const log = tsw.common.logger.get_logger({ id: 'rai-note-display' });
 
 interface NoteDisplayProps {
   note: string;
 }
 
 export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
-  const { dotPhrases } = useRaiStore();
+  const {
+    dotPhrases,
+    uiCheckpoints,
+    currentCheckpointIndex,
+    isBrowsingCheckpoints,
+    addAnalyticsCheckpoint,
+    navigateCheckpoint,
+    acceptCheckpoint,
+  } = useRaiStore();
   const [copySuccess, setCopySuccess] = useState(false);
-  const [editedNote, setEditedNote] = useState(note);
+
+  // Initialize editedNote from last checkpoint if available, otherwise use note prop
+  const [editedNote, setEditedNote] = useState(() => {
+    log(`[Mount] uiCheckpoints: ${uiCheckpoints.length}, index: ${currentCheckpointIndex}, note: ${note.length} chars`);
+    if (uiCheckpoints.length > 0 && currentCheckpointIndex === -1) {
+      // In live mode with checkpoints - restore from last checkpoint
+      const lastCheckpoint = uiCheckpoints[uiCheckpoints.length - 1];
+      log(`[Mount] Restoring from last checkpoint: ${lastCheckpoint.content.length} chars`);
+      return lastCheckpoint.content;
+    }
+    log('[Mount] Using note prop for initialization');
+    return note;
+  });
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const cursorStateRef = useRef<{ start: number; end: number } | null>(null);
 
-  // Sync editedNote when note prop changes (e.g., regeneration)
+  // Helper to add checkpoint to both arrays
+  const addCheckpoint = useCallback((content: string, type: 'user_edit' | 'transformation') => {
+    // Always add to analytics
+    addAnalyticsCheckpoint(content, type);
+
+    // Add to UI checkpoints only if in live editing mode
+    if (currentCheckpointIndex === -1) {
+      // Normal case: append to UI checkpoints
+      const checkpoint: NoteCheckpoint = {
+        id: crypto.randomUUID(),
+        content,
+        timestamp: new Date(),
+        type,
+      };
+
+      const newUiCheckpoints = [...uiCheckpoints, checkpoint];
+      useRaiStore.setState({ uiCheckpoints: newUiCheckpoints });
+    }
+  }, [addAnalyticsCheckpoint, currentCheckpointIndex, uiCheckpoints]);
+
+  // Determine what content to display
+  const displayContent = useMemo(() => {
+    if (currentCheckpointIndex === -1) {
+      // Live editing mode - show editedNote
+      return editedNote;
+    } else {
+      // Navigating - show checkpoint content
+      return uiCheckpoints[currentCheckpointIndex]?.content || editedNote;
+    }
+  }, [currentCheckpointIndex, editedNote, uiCheckpoints]);
+
+  // Sync editedNote when note prop changes (only for NEW generated notes)
+  const prevNoteRef = useRef(note);
   useEffect(() => {
-    setEditedNote(note);
-  }, [note]);
+    // Only reset if:
+    // 1. Note is non-empty (actual new generation, not just navigation)
+    // 2. OR we have no checkpoints (fresh start)
+    if (note.length > 0 || uiCheckpoints.length === 0) {
+      if (prevNoteRef.current !== note) {
+        log(`[Note prop changed] Setting editedNote to note prop: ${note.length} chars`);
+        setEditedNote(note);
+        prevNoteRef.current = note;
+      }
+    } else {
+      log(`[Note prop changed] Ignoring empty note - keeping existing edits (${uiCheckpoints.length} checkpoints)`);
+    }
+  }, [note, uiCheckpoints.length]);
+
+  // Sync editedNote when navigating to a checkpoint
+  useEffect(() => {
+    if (currentCheckpointIndex !== -1) {
+      setEditedNote(uiCheckpoints[currentCheckpointIndex]?.content || '');
+    }
+  }, [currentCheckpointIndex, uiCheckpoints]);
 
   // Validation/transformation logic
   const validateAndTransform = useCallback((text: string, dotPhrases: DotPhrase[]): string => {
@@ -62,9 +136,12 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
     // Run validation after 500ms of no typing
     debouncedValidateRef.current = setTimeout(() => {
+      // Save checkpoint BEFORE transformation
+      addCheckpoint(newValue, 'user_edit');
+
       const transformed = validateAndTransform(newValue, dotPhrases);
       if (transformed !== newValue) {
-        // Calculate adjusted cursor position based on text length change
+        // Calculate adjusted cursor position
         const diff = transformed.length - newValue.length;
         const newCursorPos = Math.max(0, Math.min(cursorPos + diff, transformed.length));
 
@@ -72,6 +149,9 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
         cursorStateRef.current = { start: newCursorPos, end: newCursorPos };
 
         setEditedNote(transformed);
+
+        // Save checkpoint AFTER transformation
+        addCheckpoint(transformed, 'transformation');
       }
     }, 500);
   };
@@ -95,10 +175,10 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
     }
   }, [editedNote]);
 
-  // Copy edited content
+  // Copy displayed content (edited or checkpoint)
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(editedNote);
+      await navigator.clipboard.writeText(displayContent);
       setCopySuccess(true);
     } catch (error) {
       console.error('Failed to copy:', error);
@@ -135,13 +215,65 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
           </IconButton>
         </Tooltip>
 
+        {/* Navigation Controls */}
+        {uiCheckpoints.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+            <Tooltip title="Browse backwards">
+              <span>
+                <IconButton
+                  onClick={() => navigateCheckpoint('back')}
+                  disabled={currentCheckpointIndex === 0}
+                  size="small"
+                  color="primary"
+                >
+                  <ArrowBack />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Browse forwards">
+              <span>
+                <IconButton
+                  onClick={() => navigateCheckpoint('forward')}
+                  disabled={currentCheckpointIndex === -1 || currentCheckpointIndex >= uiCheckpoints.length - 1}
+                  size="small"
+                  color="primary"
+                >
+                  <ArrowForward />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            {/* Accept/Checkmark button - only show when browsing */}
+            {isBrowsingCheckpoints && (
+              <Tooltip title="Accept this checkpoint">
+                <IconButton
+                  onClick={acceptCheckpoint}
+                  size="small"
+                  color="success"
+                >
+                  <Check />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <Typography variant="caption" color="text.secondary">
+              {isBrowsingCheckpoints
+                ? `Browsing: ${currentCheckpointIndex + 1} of ${uiCheckpoints.length}`
+                : ``
+              }
+            </Typography>
+          </Box>
+        )}
+
         {/* Editable textarea */}
         <TextField
           fullWidth
           multiline
           rows={20}
-          value={editedNote}
+          value={displayContent}
           onChange={handleNoteChange}
+          disabled={isBrowsingCheckpoints}
           variant="outlined"
           inputRef={inputRef}
           InputProps={{
@@ -149,6 +281,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
               fontFamily: 'monospace',
               fontSize: '0.9rem',
               lineHeight: 1.6,
+              bgcolor: isBrowsingCheckpoints ? 'action.hover' : 'background.paper',
             },
           }}
           sx={{ mt: 1 }}

@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
-import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult, DotPhrase } from '../types';
+import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult, DotPhrase, NoteCheckpoint } from '../types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
 import {
   loadTemplates as loadTemplatesFromFiles,
@@ -268,6 +268,8 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   setGeneratedNote: (note: string) => {
     debug.add('generated_note', { noteLength: note.length });
     set({ generatedNote: note, noteGenerationError: null });
+    // Clear all checkpoints when a new note is generated
+    get().clearAllCheckpoints();
   },
   setNoteGenerationLoading: (loading: boolean) => {
     debug.add('note_generation_loading', { loading });
@@ -280,6 +282,133 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       debug.add('note_generation_error', { error });
     }
     set({ noteGenerationError: error });
+  },
+
+  // Note Checkpoints - Dual Tracking System
+  // Analytics Checkpoints - append-only, never delete
+  analyticsCheckpoints: [],
+  addAnalyticsCheckpoint: (content: string, type: 'user_edit' | 'transformation' | 'checkpoint_navigation', metadata?: { targetCheckpointId?: string }) => {
+    const checkpoints = get().analyticsCheckpoints;
+
+    // Deduplicate: skip if same as last checkpoint (unless it's a navigation event)
+    const lastCheckpoint = checkpoints[checkpoints.length - 1];
+    if (type !== 'checkpoint_navigation' && lastCheckpoint && lastCheckpoint.content === content) {
+      return;
+    }
+
+    const checkpoint: NoteCheckpoint = {
+      id: crypto.randomUUID(),
+      content,
+      timestamp: new Date(),
+      type,
+      ...metadata, // Spread targetCheckpointId if provided
+    };
+
+    set({ analyticsCheckpoints: [...checkpoints, checkpoint] });
+    debug.add('analytics_checkpoint_added', {
+      type,
+      checkpointCount: checkpoints.length + 1,
+      contentLength: content.length,
+      ...metadata,
+    });
+  },
+
+  // UI Checkpoints - mutable, for navigation
+  uiCheckpoints: [],
+  currentCheckpointIndex: -1, // -1 = live editing, 0+ = browsing
+  isBrowsingCheckpoints: false, // true when in browse mode
+
+  navigateCheckpoint: (direction: 'back' | 'forward') => {
+    const { uiCheckpoints, currentCheckpointIndex } = get();
+
+    if (uiCheckpoints.length === 0) return;
+
+    let newIndex: number;
+
+    if (direction === 'back') {
+      // Navigate backwards
+      if (currentCheckpointIndex === -1) {
+        // Currently in live editing, enter browse mode at last checkpoint
+        newIndex = uiCheckpoints.length - 1;
+        set({ isBrowsingCheckpoints: true });
+      } else if (currentCheckpointIndex > 0) {
+        // Go back one step
+        newIndex = currentCheckpointIndex - 1;
+      } else {
+        // Already at oldest checkpoint
+        return;
+      }
+    } else {
+      // Navigate forwards
+      if (currentCheckpointIndex === -1) {
+        // Already in live editing mode
+        return;
+      } else if (currentCheckpointIndex < uiCheckpoints.length - 1) {
+        // Go forward one step
+        newIndex = currentCheckpointIndex + 1;
+      } else {
+        // At newest checkpoint, can't go further forward
+        return;
+      }
+    }
+
+    set({ currentCheckpointIndex: newIndex });
+
+    debug.add('checkpoint_browsed', {
+      direction,
+      newIndex,
+      checkpointId: uiCheckpoints[newIndex].id,
+    });
+  },
+
+  acceptCheckpoint: () => {
+    const { uiCheckpoints, currentCheckpointIndex, addAnalyticsCheckpoint } = get();
+
+    if (currentCheckpointIndex === -1 || uiCheckpoints.length === 0) {
+      // Not in browse mode, nothing to accept
+      return;
+    }
+
+    const acceptedCheckpoint = uiCheckpoints[currentCheckpointIndex];
+
+    // Log to analytics - this is the ONLY place checkpoint_navigation is logged
+    addAnalyticsCheckpoint(
+      acceptedCheckpoint.content,
+      'checkpoint_navigation',
+      {
+        targetCheckpointId: acceptedCheckpoint.id,
+      }
+    );
+
+    // Discard forward history: keep checkpoints up to and including current
+    const newUiCheckpoints = uiCheckpoints.slice(0, currentCheckpointIndex + 1);
+
+    // Exit browse mode, return to live editing
+    set({
+      uiCheckpoints: newUiCheckpoints,
+      currentCheckpointIndex: -1,
+      isBrowsingCheckpoints: false,
+    });
+
+    debug.add('checkpoint_accepted', {
+      checkpointId: acceptedCheckpoint.id,
+      discardedCount: uiCheckpoints.length - currentCheckpointIndex - 1,
+    });
+  },
+
+  clearAllCheckpoints: () => {
+    const analyticsCount = get().analyticsCheckpoints.length;
+    const uiCount = get().uiCheckpoints.length;
+
+    set({
+      analyticsCheckpoints: [],
+      uiCheckpoints: [],
+      currentCheckpointIndex: -1,
+      isBrowsingCheckpoints: false,
+    });
+
+    debug.add('all_checkpoints_cleared', { analyticsCount, uiCount });
+    log(`Cleared ${analyticsCount} analytics checkpoints and ${uiCount} UI checkpoints`);
   },
 
   // Settings
