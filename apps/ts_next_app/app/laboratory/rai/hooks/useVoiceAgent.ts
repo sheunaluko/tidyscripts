@@ -151,7 +151,7 @@ export function useVoiceAgent() {
 
         // Error handling
         if (event.type === 'error') {
-          log('❌ Transport error:', event.error?.message);
+          log(`❌ Transport error: ${event.error?.message || 'Unknown error'}`);
           debug.add('transport_error', {
             timestamp: new Date().toISOString(),
             error: event.error,
@@ -179,7 +179,7 @@ export function useVoiceAgent() {
                   text: content.text,
                   timestamp: new Date(),
                 });
-                log('✅ User text:', content.text);
+                log(`✅ User text: ${content.text}`);
               }
             }
           }
@@ -197,7 +197,7 @@ export function useVoiceAgent() {
                 text: transcript,
                 timestamp: new Date(),
               });
-              log('✅ User audio transcript:', transcript);
+              log(`✅ User audio transcript: ${transcript}`);
             }
           }
         }
@@ -214,7 +214,7 @@ export function useVoiceAgent() {
                 text: transcript,
                 timestamp: new Date(),
               });
-              log('✅ Assistant audio transcript:', transcript);
+              log(`✅ Assistant audio transcript: ${transcript}`);
             }
           }
         }
@@ -239,7 +239,7 @@ export function useVoiceAgent() {
                   text: `Calling function: ${functionName}`,
                   timestamp: new Date(),
                 });
-                log('✅ Function call:', functionName);
+                log(`✅ Function call: ${functionName}`);
               }
             }
           });

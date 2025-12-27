@@ -231,7 +231,7 @@ export function validateTemplate(
  * @returns Normalized title (e.g., "HPI Differential" -> "HPI-DIFFERENTIAL")
  */
 export function normalizeDotPhraseTitle(title: string): string {
-  return title.trim().replace(/\s+/g, '-').toUpperCase();
+  return title.trim().replace(/\s+/g, '-');
 }
 
 /**

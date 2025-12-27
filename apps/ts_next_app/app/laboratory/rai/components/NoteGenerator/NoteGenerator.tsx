@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { Box, Typography, Button, Alert, Paper, Chip, Skeleton } from '@mui/material';
 import { AutoAwesome, Refresh } from '@mui/icons-material';
 import { NoteDisplay } from './NoteDisplay';
+import { VoiceBox } from './VoiceBox';
 import { useNoteGeneration } from '../../hooks/useNoteGeneration';
 import { useRaiStore } from '../../store/useRaiStore';
 
@@ -11,9 +12,8 @@ export const NoteGenerator: React.FC = () => {
   const { generate, generatedNote, loading, error } = useNoteGeneration();
   const { settings, selectedTemplate, collectedInformation } = useRaiStore();
 
-  // Determine what note to display
-  const noteToDisplay = generatedNote ||
-    (settings.showBlankNoteForTesting ? '' : null);
+  // Always show blank note editor by default
+  const noteToDisplay = generatedNote || '';
 
   useEffect(() => {
     // Autostart generation if enabled and no note generated yet
@@ -21,30 +21,6 @@ export const NoteGenerator: React.FC = () => {
       generate();
     }
   }, [settings.autostartGeneration, generatedNote, loading, collectedInformation.length, generate]);
-
-  if (!selectedTemplate && !settings.showBlankNoteForTesting) {
-    return (
-      <Box>
-        <Typography variant="h5" color="text.secondary">
-          No template selected. Please select a template first.
-        </Typography>
-      </Box>
-    );
-  }
-
-  // Only show "no information" message if NOT in testing mode
-  if (collectedInformation.length === 0 && !settings.showBlankNoteForTesting) {
-    return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          Note Generator
-        </Typography>
-        <Alert severity="info">
-          No information has been collected yet. Please collect information first.
-        </Alert>
-      </Box>
-    );
-  }
 
   return (
     <Box>
@@ -56,7 +32,7 @@ export const NoteGenerator: React.FC = () => {
 
         <Paper sx={{ p: 2, mb: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6">{selectedTemplate.title}</Typography>
+            <Typography variant="h6">{selectedTemplate ? selectedTemplate.title  : "None"}</Typography>
             <Chip
               label={settings.aiModel}
               size="small"
@@ -76,18 +52,23 @@ export const NoteGenerator: React.FC = () => {
         </Alert>
       )}
 
-      {/* Generate Button */}
-      {!noteToDisplay && !loading && (
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<AutoAwesome />}
-          onClick={generate}
-          fullWidth
-          sx={{ mb: 3 }}
-        >
-          Generate Note
-        </Button>
+      {/* Generate Button and Voice Box - only show when no note generated */}
+      {!generatedNote && !loading && (
+        <>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AutoAwesome />}
+            onClick={generate}
+            fullWidth
+            sx={{ mb: 3 }}
+          >
+            Generate Note
+          </Button>
+
+          {/* Voice Box Component */}
+          <VoiceBox />
+        </>
       )}
 
       {/* Loading State */}
@@ -112,21 +93,23 @@ export const NoteGenerator: React.FC = () => {
         </Paper>
       )}
 
-      {/* Generated Note OR Blank Note for Testing */}
-      {noteToDisplay !== null && !loading && (
+      {/* Note Display - always show when not loading */}
+      {!loading && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">
-              {generatedNote ? 'Generated Note' : 'Note Editor (Testing)'}
+              {generatedNote ? 'Generated Note' : 'Note Editor'}
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<Refresh />}
-              onClick={generate}
-              size="small"
-            >
-              {generatedNote ? 'Regenerate' : 'Generate'}
-            </Button>
+            {generatedNote && (
+              <Button
+                variant="outlined"
+                startIcon={<Refresh />}
+                onClick={generate}
+                size="small"
+              >
+                Regenerate
+              </Button>
+            )}
           </Box>
 
           <NoteDisplay note={noteToDisplay} />

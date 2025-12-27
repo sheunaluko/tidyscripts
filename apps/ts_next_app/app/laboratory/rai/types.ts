@@ -28,7 +28,6 @@ export interface AppSettings {
   advancedFeaturesEnabled: boolean;
   vadThreshold: number;
   vadSilenceDurationMs: number;
-  showBlankNoteForTesting: boolean;
 }
 
 // Note Template

@@ -56,7 +56,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   advancedFeaturesEnabled: false,
   vadThreshold: 0.05,
   vadSilenceDurationMs: 750,
-  showBlankNoteForTesting: false,
 };
 
 // Advanced Features Password Hash (SHA-256)

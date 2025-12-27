@@ -119,7 +119,7 @@ export const TemplateEditor: React.FC = () => {
 
             {dotPhrases.length === 0 ? (
               <Alert severity="info">
-                No dot phrases created yet. Click "Create Dot Phrase" to add your first shortcut.
+                No dot phrases created yet. Click &quot;Create Dot Phrase&quot; to add your first shortcut.
               </Alert>
             ) : (
               <Grid container spacing={2}>
