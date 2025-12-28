@@ -113,24 +113,13 @@ export function createVoiceTools(
       // Return structured review instructions
       return `TEMPLATE REVIEW INSTRUCTIONS:
 
-1. CAREFULLY read the entire template text below, paying special attention to any instructions at the END of the template.
+1. CAREFULLY read the entire template text included here, paying special instruction to any text that occurs after the @END_TEMPLATE marker.
 
-2. Look for:
-   - Required variables or fields that MUST be completed (often marked as "REQUIRED:", "MUST INCLUDE:", etc.)
-   - Special instructions about what information is mandatory
-   - Specific requirements for note completion
-   - Any conditional logic or required sections
+2. If there is no @END_TEMPLATE marker then finish your review and call the informationComplete tool. Do not prompt the user for confirmation or missinng variable.
 
-3. Compare the template requirements against the information you have collected from the physician.
+3. If there is an @END_TEMPLATE marker, then closely review the information after this marker to see if the user has provided special instructions. These may include reminders to fulfill specific variables before proceeding, etc...
 
-4. If ANY required information is missing:
-   - Clearly notify the physician what specific information is still needed
-   - Reference the template requirement directly
-   - Ask if they want to provide it now or proceed without it
-
-5. If ALL requirements are satisfied OR no special requirements exist:
-   - Acknowledge that the information is complete
-   - Proceed to call the information_complete tool
+4. If these instructions need to be addressd, please address them prior to proceeding. 
 
 TEMPLATE TO REVIEW:
 ${templateText}
@@ -222,9 +211,9 @@ When the physician provides any clinical information:
 When the physician indicates they are finished (says "finished", "done", "that's all", etc.):
 1. FIRST call the review_template tool to check for any required information
 2. The review_template tool will return instructions and the template text for you to analyze
-3. Follow the review instructions carefully to determine if all required information is present
-4. If any required information is missing, notify the physician and ask if they want to provide it
-5. If all requirements are satisfied, acknowledge and call the information_complete tool
+3. Follow the review instructions (text after @END_TEMPLATE) carefully to determine if all required information is present
+4. If any required information specified after @END_TEMPLATE is missing, notify the physician and ask if they want to provide it
+5. If all requirements are satisfied or there is no @END_TEMPLATE marker, acknowledge and call the information_complete tool
 6. Only after calling information_complete, say "generating note"
 
 Keep all responses brief and professional. You don't need to extract structured data - just collect what the physician says naturally and use the tools to record it.`;
