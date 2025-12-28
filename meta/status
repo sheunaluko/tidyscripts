@@ -10,21 +10,29 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
 Todo:
 - now will shift gears to improving the voice and observability interface
 
+- [ ] observability 
+- [ ] transfer local storage to LOGIN (or allow user to toggle) ??
+      --> seems it would be great to have a lib that supports a unified interface ? 
+
+
+- [x] EXPAND THE CONDITIONAL LOGIC TO INCLUDE THREE POSIBILITYs, true/false/missing
+- [x] before the template is processed, any text including and after  "@END_TEMPLATE" shouuld be discarded 
+
+
+
+Completed:
+- [x] legend for the dot phrases that shows next to the voice box
+- [x]  NEED TO AUTOFORMAT the text box grammatically (use a fast AI model)
+- [x] dot phrase should have Title  and Description  (Description shows first) ] (DONT BREAK
+EXIStiNG dot phrases)
+- [x] alphabetically sort the dot phrases
+- [x] CLick on dot phrase to EDIT it (remove the edit button)
 - [x] implement RAI
 - [x] upgrade RAI -> persistent state on note generator  | after editing the note - if you leave and come back
-- [ ] get rid of default templates for good
-- [ ] enter after dot pharse works too
-- [ ] dot phrase should have Title  and Description  (Description shows first) ] (DONT BREAK
-EXIStiNG dot phrases)
-- [ ] legend for the dot phrases that shows next to the voice box
-- [ ] alphabetically sort the dot phrases
-- [ ] EXPAND THE CONDITIONAL LOGIC TO INCLUDE THREE POSIBILITYs, true/false/missing
-- [ ] CLick on dot phrase to EDIT it (remove the edit button)
-- [ ]  NEED TO AUTOFORMAT the text box grammatically (use a fast AI model)
+- [x] get rid of default templates for good
+- [x] enter after dot pharse works too
 
 
-
-HOME AND LOGIN AT THE TOP 
 
 
 Possible upgrades 
@@ -35,4 +43,6 @@ Possible upgrades
 -> initializing the system in a non blocking way -- or with all blocking calls in parallel
 -> potentially exploring changing calling methodology for run_call_chain_template (different model?)
 
--> [x] try with gemini flash model -> wow works incredibly well 
+-> [x] try with gemini flash model -> wow works incredibly well
+
+HOME AND LOGIN AT THE TOP

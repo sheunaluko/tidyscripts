@@ -535,13 +535,14 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   },
 
   // Dot Phrase CRUD operations
-  createDotPhrase: (title: string, phrase: string) => {
+  createDotPhrase: (title: string, phrase: string, description?: string) => {
     const titleNormalized = normalizeDotPhraseTitle(title);
     const newDotPhrase: DotPhrase = {
       id: generateDotPhraseId(),
       title,
       titleNormalized,
       phrase,
+      description,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

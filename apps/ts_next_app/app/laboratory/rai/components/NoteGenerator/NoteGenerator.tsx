@@ -1,10 +1,11 @@
 // Note Generator Component
 
 import React, { useEffect } from 'react';
-import { Box, Typography, Button, Alert, Paper, Chip, Skeleton } from '@mui/material';
+import { Box, Typography, Button, Alert, Paper, Chip, Skeleton, Grid } from '@mui/material';
 import { AutoAwesome, Refresh } from '@mui/icons-material';
 import { NoteDisplay } from './NoteDisplay';
 import { VoiceBox } from './VoiceBox';
+import { DotPhraseIndex } from './DotPhraseIndex';
 import { useNoteGeneration } from '../../hooks/useNoteGeneration';
 import { useRaiStore } from '../../store/useRaiStore';
 
@@ -23,7 +24,9 @@ export const NoteGenerator: React.FC = () => {
     }, [settings.autostartGeneration, generatedNote, loading, collectedInformation.length, generate]);
 
     return (
-	<Box>
+	<Box sx={{display: 'flex' ,
+		  justifyContent : 'space-between' , 
+		  flexDirection : 'column'}}>
 	    {/* Header */}
 	    <Box sx={{ mb: 3 }}>
 		<Typography variant="h4" gutterBottom>
@@ -60,14 +63,14 @@ export const NoteGenerator: React.FC = () => {
 		    startIcon={<AutoAwesome />}
 		    onClick={generate}
 		    fullWidth
-		    sx={{ mb: 3 }}
+		    sx={{ mb: 2 }}
 		>
 		    Generate Note
 		</Button>
 
-		{/* Voice Box Component */}
-		<VoiceBox />
 	    </Box>
+
+
 
 	    {/* Loading State */}
 	    {loading && (
@@ -113,6 +116,21 @@ export const NoteGenerator: React.FC = () => {
 		    <NoteDisplay note={noteToDisplay} />
 		</Box>
 	    )}
+
+
+		{/* Two-Column Layout: VoiceBox + Dot Phrase Index */}
+		<Box sx={{ mt: 3, mb: 3, maxHeight: '300px', height: '300px' }}>
+		    <Grid container spacing={2} sx={{ height: '100%' }}>
+			<Grid item xs={12} md={8} sx={{ height: '100%' }}>
+			    <VoiceBox />
+			</Grid>
+			<Grid item xs={12} md={4} sx={{ height: '100%' }}>
+			    <DotPhraseIndex />
+			</Grid>
+		    </Grid>
+		</Box> 
+
+
 	</Box>
     );
 };

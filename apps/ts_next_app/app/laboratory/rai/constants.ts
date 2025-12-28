@@ -103,17 +103,19 @@ export const TEMPLATE_SYNTAX = {
       notes: 'Text before/after @variable (prefix/postfix) is included only when variable is present',
     },
     {
-      name: 'Boolean (two | separators, variable ends with ?)',
-      syntax: '{{ @variable? | text_if_true | text_if_false }}',
+      name: 'Boolean (three | separators, variable ends with ?)',
+      syntax: '{{ @variable? | text_if_true | text_if_false | text_if_undefined }}',
       rules: [
-        'If variable is true/yes/present → use first text',
-        'If variable is false/no/absent → use second text',
+        'If variable is true/yes → use first text',
+        'If variable is false/no → use second text',
+        'If variable is undefined/missing → use third text',
       ],
       examples: [
-        '{{ @needs_appointment? | [ ] schedule appointment | no appointment needed }}',
-        '{{ @is_male? | Male factor evaluation | Female factor evaluation }}',
+        '{{ @needs_appointment? | [ ] schedule appointment | no appointment needed | appointment status unknown }}',
+        '{{ @is_male? | Male factor evaluation | Female factor evaluation | Gender not specified }}',
+        '{{ @smoking? | Patient smokes | Non-smoker | Smoking history not documented }}',
       ],
-      notes: 'Use the ? suffix to indicate boolean variables',
+      notes: 'Use the ? suffix to indicate boolean variables. All three conditions must be provided.',
     },
   ],
 
@@ -128,5 +130,25 @@ export const TEMPLATE_SYNTAX = {
       '{{PATIENT_NAME}} → "John Doe"',
       '{{VISIT_DATE}} → "2024-03-15"',
     ],
+  },
+
+  specialMarkers: {
+    name: 'Template End Marker',
+    marker: '@END_TEMPLATE',
+    description: 'Content after this marker is visible to voice agent but hidden from note generator',
+    usage: 'Use this to give voice agent instructions about required fields and collection strategy',
+    example: `# Template Content
+{{ @age | not documented }}
+{{ @consult_needed? | Yes | No | Not assessed }}
+
+@END_TEMPLATE
+
+## VOICE AGENT INSTRUCTIONS
+### REQUIRED FIELDS
+Make sure I specify: age, consult_needed
+
+### COLLECTION STRATEGY
+1. Always ask patient age if not mentioned
+2. Confirm whether specialist consult is needed`,
   },
 } as const;

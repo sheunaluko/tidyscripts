@@ -16,7 +16,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Add, Delete } from '@mui/icons-material';
 import { useRaiStore } from '../../store/useRaiStore';
 import { TemplateList } from './TemplateList';
 import { TemplateForm } from './TemplateForm';
@@ -123,10 +123,27 @@ export const TemplateEditor: React.FC = () => {
               </Alert>
             ) : (
               <Grid container spacing={2}>
-                {dotPhrases.map((dp) => (
+                {[...dotPhrases]
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map((dp) => (
                   <Grid item xs={12} sm={6} md={4} key={dp.id}>
-                    <Card>
+                    <Card
+                      onClick={() => handleEditDotPhrase(dp)}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
+                    >
                       <CardContent>
+                        {/* Show description first if present */}
+                        {dp.description && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {dp.description}
+                          </Typography>
+                        )}
+
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                           <Typography variant="h6" sx={{ fontFamily: 'monospace' }}>
                             .{dp.titleNormalized}
@@ -134,14 +151,11 @@ export const TemplateEditor: React.FC = () => {
                           <Box>
                             <IconButton
                               size="small"
-                              onClick={() => handleEditDotPhrase(dp)}
-                            >
-                              <Edit />
-                            </IconButton>
-                            <IconButton
-                              size="small"
                               color="error"
-                              onClick={() => handleDeleteDotPhrase(dp.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteDotPhrase(dp.id);
+                              }}
                             >
                               <Delete />
                             </IconButton>

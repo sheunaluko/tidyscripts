@@ -100,6 +100,7 @@ export interface DotPhrase {
   title: string;              // Display title (e.g., "HPI Differential")
   titleNormalized: string;    // Normalized for matching (e.g., "HPI-DIFFERENTIAL")
   phrase: string;             // The replacement text
+  description?: string;       // Optional description (shown first in UI)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -212,7 +213,7 @@ export interface RaiState {
 
   // Dot Phrases
   dotPhrases: DotPhrase[];
-  createDotPhrase: (title: string, phrase: string) => void;
+  createDotPhrase: (title: string, phrase: string, description?: string) => void;
   updateDotPhrase: (id: string, updates: Partial<DotPhrase>) => void;
   deleteDotPhrase: (id: string) => void;
   loadDotPhrases: () => void;

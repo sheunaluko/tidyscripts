@@ -23,13 +23,13 @@ import { useRaiStore } from '../../store/useRaiStore';
 import { NoteTemplate } from '../../types';
 
 export const TemplateList: React.FC = () => {
-  const { templates, deleteCustomTemplate, setTemplateEditorMode, setEditingTemplate } = useRaiStore();
+  const { templates, deleteCustomTemplate, setTemplateEditorMode, setEditingTemplate, settings } = useRaiStore();
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     template: NoteTemplate | null;
   }>({ open: false, template: null });
 
-  const defaultTemplates = templates.filter(t => t.isDefault);
+  const defaultTemplates = templates.filter(t => t.isDefault && settings.showDefaultTemplates);
   const customTemplates = templates.filter(t => !t.isDefault);
 
   const handleEdit = (template: NoteTemplate) => {

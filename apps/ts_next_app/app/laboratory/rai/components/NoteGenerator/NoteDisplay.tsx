@@ -108,13 +108,10 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
     // Apply dot phrase replacements
     sortedPhrases.forEach(phrase => {
-      // Match: period + normalized title + space (case-sensitive)
-      const pattern = new RegExp(`\\.${phrase.titleNormalized} `, 'g');
-      result = result.replace(pattern, phrase.phrase + ' ');
+      // Match: period + normalized title + (space or newline)
+      const pattern = new RegExp(`\\.${phrase.titleNormalized}([ \\n])`, 'g');
+      result = result.replace(pattern, phrase.phrase + '$1');
     });
-
-    // Legacy test transformation (can be removed later)
-    result = result.replace(/\.test /g, ' MAGIC ');
 
     return result;
   }, []);

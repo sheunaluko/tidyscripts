@@ -1,2 +1,6 @@
-By default just show a None template and empty note editor if navigatign to note generator and the selected template is null OR there is no collected information.
-since this will be the default -- can remove that option from the settings 
+
+Here are several upgrades:
+
+1) Now for the note generator interface, I want a widget to the right of the voicebox component that will display a scrollable index of available dotphrases , with a search function as well -- they should be formatted pretty concisely
+
+2) the copy button for voice box component should be in top right like it is for the generated note display 

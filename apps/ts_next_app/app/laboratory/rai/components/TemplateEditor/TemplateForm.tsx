@@ -158,8 +158,9 @@ export const TemplateForm: React.FC<TemplateFormProps> = ({ onCancel }) => {
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               No variables detected yet. <br/> Add variables using {'{{VARIABLE}}'} for simple replacement,{' '}
               {'{{ @variable | fallback }}'} for presence/absence, or{' '}
-              {'{{ @variable? | true | false }}'} for conditional syntax.
-	      <br/> Expand syntax guide below for details. 
+              {'{{ @variable? | true | false | undefined }}'} for boolean conditionals.
+	      <br/> Optionally, end the template with @END_TEMPLATE, after which you can include direct text based instructions to the Voice Agent.
+	      <br/> Expand syntax guide below for details.
             </Typography>
           )}
         </Box>
@@ -244,6 +245,48 @@ export const TemplateForm: React.FC<TemplateFormProps> = ({ onCancel }) => {
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {TEMPLATE_SYNTAX.traditional.examples.join(' • ')}
+            </Typography>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="subtitle2" gutterBottom>
+              {TEMPLATE_SYNTAX.specialMarkers.name}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: 'monospace',
+                bgcolor: 'action.hover',
+                p: 1,
+                borderRadius: 1,
+                mb: 1,
+              }}
+            >
+              {TEMPLATE_SYNTAX.specialMarkers.marker}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              {TEMPLATE_SYNTAX.specialMarkers.description}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mt: 1 }}>
+              {TEMPLATE_SYNTAX.specialMarkers.usage}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+              Example:
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                fontFamily: 'monospace',
+                color: 'text.secondary',
+                bgcolor: 'action.hover',
+                p: 1,
+                borderRadius: 1,
+                whiteSpace: 'pre-wrap',
+                mt: 1,
+              }}
+            >
+              {TEMPLATE_SYNTAX.specialMarkers.example}
             </Typography>
           </AccordionDetails>
         </Accordion>

@@ -29,15 +29,18 @@ export const DotPhraseDialog: React.FC<DotPhraseDialogProps> = ({
   const { createDotPhrase, updateDotPhrase } = useRaiStore();
   const [title, setTitle] = useState('');
   const [phrase, setPhrase] = useState('');
+  const [description, setDescription] = useState('');
 
   // Populate form when editing
   useEffect(() => {
     if (editingDotPhrase) {
       setTitle(editingDotPhrase.title);
       setPhrase(editingDotPhrase.phrase);
+      setDescription(editingDotPhrase.description || '');
     } else {
       setTitle('');
       setPhrase('');
+      setDescription('');
     }
   }, [editingDotPhrase, open]);
 
@@ -45,9 +48,9 @@ export const DotPhraseDialog: React.FC<DotPhraseDialogProps> = ({
     if (!title.trim() || !phrase.trim()) return;
 
     if (editingDotPhrase) {
-      updateDotPhrase(editingDotPhrase.id, { title, phrase });
+      updateDotPhrase(editingDotPhrase.id, { title, phrase, description });
     } else {
-      createDotPhrase(title, phrase);
+      createDotPhrase(title, phrase, description);
     }
 
     onClose();
@@ -65,13 +68,25 @@ export const DotPhraseDialog: React.FC<DotPhraseDialogProps> = ({
         <Box sx={{ pt: 1 }}>
           <TextField
             fullWidth
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of what this dot phrase does"
+            helperText="Optional - shown in the card to help you identify this phrase"
+            sx={{ mb: 2 }}
+            autoFocus
+            multiline
+            rows={2}
+          />
+
+          <TextField
+            fullWidth
             label="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., HPI Differential"
             helperText={`Will be saved as: .${normalizedPreview || 'TITLE'} `}
             sx={{ mb: 2 }}
-            autoFocus
           />
 
           <TextField

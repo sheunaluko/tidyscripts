@@ -1,6 +1,7 @@
 // Voice Box Component - Simple transcription using Web Speech API
 
 import React, { useState, useEffect, useRef } from 'react';
+import { formatTranscriptText } from '../../lib/noteGenerator';
 import {
   Box,
   Stack,
@@ -9,12 +10,18 @@ import {
   Alert,
   Chip,
   Snackbar,
+  Paper,
+  Tooltip,
+  IconButton,
+  Typography,
+  CircularProgress,
 } from '@mui/material';
 import {
   Mic,
   MicOff,
   ContentCopy,
   Circle,
+  AutoAwesome,
 } from '@mui/icons-material';
 
 // TypeScript declarations for Web Speech API
@@ -65,6 +72,7 @@ export const VoiceBox: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState<boolean>(true);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [formatting, setFormatting] = useState<boolean>(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -197,13 +205,82 @@ export const VoiceBox: React.FC = () => {
     }
   };
 
+  // Format text with AI
+  const handleFormat = async () => {
+    if (!transcript) return;
+
+    // Stop recording when formatting
+    if (recognitionState === 'listening' && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setRecognitionState('idle');
+      setInterimTranscript('');
+    }
+
+    setFormatting(true);
+    setErrorMessage(null);
+
+    try {
+      const formatted = await formatTranscriptText(transcript);
+      setTranscript(formatted);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to format text';
+      setErrorMessage(`Formatting error: ${errorMsg}`);
+    } finally {
+      setFormatting(false);
+    }
+  };
+
   // Manual text editing
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTranscript(e.target.value);
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Paper sx={{ p: 3, position: 'relative', border: '1px solid', borderColor: 'divider', height: '100%' }}>
+      {/* Mic button - top right */}
+      <IconButton
+        onClick={handleToggle}
+        disabled={!isSupported}
+        size="large"
+        color={recognitionState === 'listening' ? 'error' : 'primary'}
+        sx={{ position: 'absolute', top: 12, right: 64, zIndex: 1 }}
+      >
+        {recognitionState === 'listening' ? <MicOff /> : <Mic />}
+      </IconButton>
+
+      {/* Format button - top right */}
+      <Tooltip title="Format with AI">
+        <IconButton
+          onClick={handleFormat}
+          disabled={!transcript || formatting}
+          sx={{ position: 'absolute', top: 16, right: 112, zIndex: 1 }}
+          color="primary"
+        >
+          {formatting ? (
+            <CircularProgress size={20} color="primary" />
+          ) : (
+            <AutoAwesome />
+          )}
+        </IconButton>
+      </Tooltip>
+
+      {/* Copy button - top right */}
+      <Tooltip title="Copy to clipboard">
+        <IconButton
+          onClick={handleCopy}
+          disabled={!transcript}
+          sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
+          color="primary"
+        >
+          <ContentCopy />
+        </IconButton>
+      </Tooltip>
+
+      {/* Title */}
+      <Typography variant="h6" gutterBottom>
+        Dictation
+      </Typography>
+
       {/* Header with status */}
       <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
         {recognitionState === 'listening' && (
@@ -260,32 +337,6 @@ export const VoiceBox: React.FC = () => {
         }}
       />
 
-      {/* Control buttons */}
-      <Stack direction="row" spacing={2} alignItems="center">
-        {/* Mic button (icon only) */}
-        <Button
-          variant={recognitionState === 'idle' ? 'contained' : 'outlined'}
-          color={recognitionState === 'listening' ? 'error' : 'primary'}
-          onClick={handleToggle}
-          disabled={!isSupported}
-          size="large"
-          sx={{ minWidth: 'auto', px: 2 }}
-        >
-          {recognitionState === 'listening' ? <MicOff /> : <Mic />}
-        </Button>
-
-        {/* Copy button */}
-        <Button
-          variant="outlined"
-          startIcon={<ContentCopy />}
-          onClick={handleCopy}
-          disabled={!transcript}
-          size="large"
-        >
-          Copy
-        </Button>
-      </Stack>
-
       {/* Copy success notification */}
       <Snackbar
         open={copySuccess}
@@ -293,6 +344,6 @@ export const VoiceBox: React.FC = () => {
         onClose={() => setCopySuccess(false)}
         message="Copied to clipboard!"
       />
-    </Box>
+    </Paper>
   );
 };
