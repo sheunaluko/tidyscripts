@@ -76,13 +76,15 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 				    paddingTop: footer_v_padding,
 				    paddingBottom: footer_v_padding,
 				    paddingLeft: footer_h_padding,
-				    paddingRight: footer_h_padding
+				    paddingRight: footer_h_padding,
+				    position: 'relative',
+				    zIndex: 10
 				}}
 			    >
 				<ChakraProvider>
 				    <Footer/>
 				</ChakraProvider>
-				<Toast/> 
+				<Toast/>
 			    </div>
 		    </ThemeWrapper>
 			

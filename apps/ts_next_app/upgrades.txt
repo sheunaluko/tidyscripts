@@ -1,0 +1,9 @@
+Hello
+
+We did lots of great work in apps/laboratory/rai , and I specifically love the menu bar we made there
+
+I want to redesign the tidyscripts index page to have this menu bar , and move the index selection items to it (nested menu for App Library and Laboratory)
+
+I want to keep the main layout page however (footer, etc).
+
+Leave space in the middle area of the index page for a custom visualization using three js (simple tidyscripts rotating logo in the center while the component is loading) 

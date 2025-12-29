@@ -47,6 +47,7 @@
         "rehype-highlight": "^7.0.2",
         "remark-gfm": "^4.0.1",
         "sigma": "^3.0.2",
+        "three": "^0.160.0",
         "tidyscripts_node": "*",
         "tidyscripts_web": "*",
         "webpack-cli": "^5.1.4",

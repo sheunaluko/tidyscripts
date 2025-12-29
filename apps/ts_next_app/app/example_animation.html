@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Three.js Background: Rotating 3D Points + Shadow Projection</title>
+
+    <!--
+      PURPOSE
+      -------
+      A single-file, drop-in background animation:
+        - A 3D point cloud rotates in space (latent object).
+        - Its 2D “shadow” (projection to the ground plane) updates continuously (observed signal).
+        - Optional FUTURISTIC_MODE enables bloom + trails + stronger scanline/grid + more “sensor” vibes.
+
+      HOW TO USE
+      ----------
+      1) Save as e.g. bg-projection.html and open directly, OR
+      2) Copy the <canvas> + <script type="module"> into your app.
+      3) Keep canvas pointer-events:none so it stays a background.
+
+      PERFORMANCE NOTES
+      -----------------
+      - Point count and postprocessing drive performance.
+      - FUTURISTIC_MODE uses EffectComposer + bloom and a trail buffer; reduce pointCount if needed.
+      - Respects prefers-reduced-motion.
+
+      LICENSE / ATTRIBUTION
+      ---------------------
+      - Uses three.js via CDN and three.js examples postprocessing modules via CDN.
+    -->
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #05060a;
+        overflow: hidden;
+      }
+      canvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        pointer-events: none; /* background */
+      }
+
+      /* Optional content overlay demo */
+      .overlay {
+        position: relative;
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.86);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        padding: 42px 44px;
+        max-width: 860px;
+      }
+      .overlay h1 {
+        margin: 0 0 10px 0;
+        font-size: 22px;
+        font-weight: 620;
+        letter-spacing: 0.2px;
+      }
+      .overlay p {
+        margin: 0;
+        line-height: 1.45;
+        opacity: 0.88;
+        font-size: 14.5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="bg"></canvas>
+
+    <!-- Optional demo overlay -->
+    <div class="overlay">
+      <h1>Background: Rotating Point Cloud Projection</h1>
+      <p>
+        A 3D point set rotates in space. Its 2D projection updates on the ground plane like a live
+        sensor readout. Toggle FUTURISTIC_MODE inside the file for bloom + trails.
+      </p>
+    </div>
+
+    <script type="module">
+      /**
+       * ============================================================
+       * 0) FUTURISTIC TOGGLE (PRIMARY USER REQUEST)
+       * ============================================================
+       * Flip this boolean:
+       *   - false = clean/minimal background (faster)
+       *   - true  = bloom + trails + stronger scanline/grid (more futuristic)
+       */
+      const FUTURISTIC_MODE = true;
+
+      /**
+       * ============================================================
+       * 1) Imports (Three.js + optional postprocessing)
+       * ============================================================
+       * All via CDN, still a single HTML file.
+       */
+      import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+      // Postprocessing is only imported if FUTURISTIC_MODE is enabled.
+      // This keeps the minimal mode lighter.
+      let EffectComposer, RenderPass, UnrealBloomPass, ShaderPass;
+      if (FUTURISTIC_MODE) {
+        ({ EffectComposer } = await import(
+          "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"
+        ));
+        ({ RenderPass } = await import(
+          "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"
+        ));
+        ({ UnrealBloomPass } = await import(
+          "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js"
+        ));
+        ({ ShaderPass } = await import(
+          "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js"
+        ));
+      }
+
+      /**
+       * ============================================================
+       * 2) Configuration
+       * ============================================================
+       * You can tune these for your aesthetic/performance.
+       */
+      const CONFIG = {
+        // Core geometry
+        pointCount: FUTURISTIC_MODE ? 2200 : 1600,
+        cloudScale: 1.2,
+
+        // Ground plane
+        groundSize: 12,
+        shadowLift: 0.002, // avoid z-fighting
+
+        // Camera
+        cameraDistance: 6.5,
+
+        // Point rendering
+        pointSize3D: FUTURISTIC_MODE ? 0.022 : 0.020,
+        pointSizeShadow: FUTURISTIC_MODE ? 0.020 : 0.018,
+
+        // Motion
+        rotationBaseSpeed: FUTURISTIC_MODE ? 0.26 : 0.22,
+        wobbleStrength: FUTURISTIC_MODE ? 0.45 : 0.35,
+
+        // Ground scanline (shader)
+        scanlineSpeed: FUTURISTIC_MODE ? 0.75 : 0.55,
+
+        // Vertical “measurement link” lines
+        linkCount: FUTURISTIC_MODE ? 180 : 120,
+        linkOpacity: FUTURISTIC_MODE ? 0.16 : 0.12,
+
+        // Trails (futuristic mode only; implemented as a fading overlay plane)
+        trailStrength: 0.14, // higher = longer trails (more persistence)
+        trailDarkness: 0.55, // how much to dim the previous frame each step
+
+        // Bloom (futuristic mode only)
+        bloomStrength: 0.85,
+        bloomRadius: 0.65,
+        bloomThreshold: 0.15,
+      };
+
+      // Respect reduced motion.
+      const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+      if (prefersReducedMotion) {
+        CONFIG.rotationBaseSpeed *= 0.15;
+        CONFIG.wobbleStrength *= 0.10;
+        CONFIG.scanlineSpeed *= 0.25;
+      }
+
+      /**
+       * ============================================================
+       * 3) Renderer / Scene / Camera
+       * ============================================================
+       */
+      const canvas = document.getElementById("bg");
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: false,
+        powerPreference: "high-performance",
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x05060a, 1);
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x05060a, 6, 18);
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0.0, 2.0, CONFIG.cameraDistance);
+      camera.lookAt(0, 0.6, 0);
+
+      /**
+       * ============================================================
+       * 4) Lighting (subtle, primarily for depth)
+       * ============================================================
+       */
+      scene.add(new THREE.AmbientLight(0xffffff, 0.20));
+
+      const key = new THREE.DirectionalLight(0xffffff, 0.65);
+      key.position.set(3, 5, 2);
+      scene.add(key);
+
+      // Visual “scanner orb” (purely aesthetic)
+      const scannerOrb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 24, 24),
+        new THREE.MeshBasicMaterial({ color: 0x8bd3ff })
+      );
+      scannerOrb.position.set(1.4, 2.4, 0.6);
+      scene.add(scannerOrb);
+
+      /**
+       * ============================================================
+       * 5) Ground plane shader: grid + scanline + fog blending
+       * ============================================================
+       */
+      const groundGeo = new THREE.PlaneGeometry(CONFIG.groundSize, CONFIG.groundSize, 1, 1);
+
+      const groundMat = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          uTime: { value: 0 },
+          uFogNear: { value: scene.fog.near },
+          uFogFar: { value: scene.fog.far },
+          uFuturistic: { value: FUTURISTIC_MODE ? 1.0 : 0.0 },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          varying float vDepth;
+          void main() {
+            vUv = uv;
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vec4 viewPos = viewMatrix * worldPos;
+            vDepth = -viewPos.z;
+            gl_Position = projectionMatrix * viewPos;
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          varying float vDepth;
+          uniform float uTime;
+          uniform float uFogNear;
+          uniform float uFogFar;
+          uniform float uFuturistic;
+
+          float gridLine(float coord, float scale, float thickness) {
+            float g = abs(fract(coord * scale - 0.5) - 0.5) / fwidth(coord * scale);
+            return 1.0 - smoothstep(thickness, thickness + 1.0, g);
+          }
+
+          void main() {
+            vec3 col = vec3(0.03, 0.035, 0.05);
+
+            // Grid intensity changes by mode
+            float fine = uFuturistic > 0.5 ? 22.0 : 18.0;
+            float coarse = uFuturistic > 0.5 ? 7.0 : 6.0;
+
+            float g1 = gridLine(vUv.x, fine, 0.9) + gridLine(vUv.y, fine, 0.9);
+            float g2 = gridLine(vUv.x, coarse, 0.8) + gridLine(vUv.y, coarse, 0.8);
+
+            float grid = clamp(0.08 * g1 + (uFuturistic > 0.5 ? 0.13 : 0.10) * g2, 0.0, uFuturistic > 0.5 ? 0.26 : 0.18);
+            col += vec3(0.14, 0.18, 0.24) * grid;
+
+            // Scanline: stronger/narrower in futuristic mode
+            float freq = uFuturistic > 0.5 ? 54.0 : 40.0;
+            float scan = 0.5 + 0.5 * sin((vUv.y + uTime * 0.22) * freq);
+            scan = pow(scan, uFuturistic > 0.5 ? 8.0 : 6.0);
+            col += (uFuturistic > 0.5 ? vec3(0.06, 0.14, 0.18) : vec3(0.05, 0.10, 0.14)) * scan;
+
+            // Slight vignette
+            float dx = (vUv.x - 0.5);
+            float dy = (vUv.y - 0.5);
+            float vign = smoothstep(0.95, 0.25, sqrt(dx*dx + dy*dy));
+            col *= 0.92 + 0.08 * vign;
+
+            float alpha = (uFuturistic > 0.5 ? 0.44 : 0.38) + 0.10 * grid + (uFuturistic > 0.5 ? 0.10 : 0.08) * scan;
+
+            // Fog blend
+            float fogFactor = smoothstep(uFogNear, uFogFar, vDepth);
+            col = mix(col, vec3(0.02, 0.02, 0.03), fogFactor);
+            alpha = mix(alpha, 0.0, fogFactor);
+
+            gl_FragColor = vec4(col, alpha);
+          }
+        `,
+      });
+
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = 0;
+      scene.add(ground);
+
+      /**
+       * ============================================================
+       * 6) Generate a "latent" 3D point set (torus knot + thickness noise)
+       * ============================================================
+       * This is the underlying 3D structure you are "measuring" with projections.
+       */
+      function makePointCloud(count) {
+        const base = new Float32Array(count * 3);
+
+        // Torus knot parameters (controls structure complexity)
+        const p = 2;
+        const q = 3;
+
+        for (let i = 0; i < count; i++) {
+          const t = (i / count) * Math.PI * 2;
+
+          const r = 0.65;
+          const R = 1.35;
+
+          // Torus knot-ish (x,y,z in a loop)
+          const x = (R + r * Math.cos(q * t)) * Math.cos(p * t);
+          const y = (R + r * Math.cos(q * t)) * Math.sin(p * t);
+          const z = r * Math.sin(q * t);
+
+          // Add thickness jitter
+          const n1 = (Math.random() - 0.5) * 0.18;
+          const n2 = (Math.random() - 0.5) * 0.18;
+          const n3 = (Math.random() - 0.5) * 0.18;
+
+          base[i * 3 + 0] = (x + n1) * CONFIG.cloudScale * 0.7;
+          base[i * 3 + 1] = (z + n2) * CONFIG.cloudScale * 0.9 + 1.25; // lift above ground
+          base[i * 3 + 2] = (y + n3) * CONFIG.cloudScale * 0.7;
+        }
+        return base;
+      }
+
+      const basePositions = makePointCloud(CONFIG.pointCount);
+
+      // Working buffers for rotated 3D and projected 2D (stored in XZ plane with y ~ 0)
+      const pos3D = new Float32Array(basePositions.length);
+      const posShadow = new Float32Array(basePositions.length);
+
+      /**
+       * ============================================================
+       * 7) Create THREE.Points for:
+       *    - floating 3D structure
+       *    - projected shadow on ground
+       * ============================================================
+       */
+      const pointsMat3D = new THREE.PointsMaterial({
+        color: 0x8bd3ff,
+        size: CONFIG.pointSize3D,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: FUTURISTIC_MODE ? 0.72 : 0.65,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      const geom3D = new THREE.BufferGeometry();
+      geom3D.setAttribute("position", new THREE.BufferAttribute(pos3D, 3));
+      const points3D = new THREE.Points(geom3D, pointsMat3D);
+      scene.add(points3D);
+
+      const pointsMatShadow = new THREE.PointsMaterial({
+        color: FUTURISTIC_MODE ? 0x6fffb0 : 0x7dffbf,
+        size: CONFIG.pointSizeShadow,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: FUTURISTIC_MODE ? 0.55 : 0.45,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      const geomShadow = new THREE.BufferGeometry();
+      geomShadow.setAttribute("position", new THREE.BufferAttribute(posShadow, 3));
+      const shadowPoints = new THREE.Points(geomShadow, pointsMatShadow);
+      shadowPoints.frustumCulled = false;
+      scene.add(shadowPoints);
+
+      /**
+       * ============================================================
+       * 8) Sparse vertical link lines (optional "measurement rays")
+       * ============================================================
+       */
+      const linkCount = CONFIG.linkCount;
+      const linkIdx = new Uint32Array(linkCount);
+      for (let i = 0; i < linkCount; i++) linkIdx[i] = Math.floor(Math.random() * CONFIG.pointCount);
+
+      const linkPositions = new Float32Array(linkCount * 2 * 3);
+      const linkGeom = new THREE.BufferGeometry();
+      linkGeom.setAttribute("position", new THREE.BufferAttribute(linkPositions, 3));
+
+      const linkMat = new THREE.LineBasicMaterial({
+        color: 0x9aa7ff,
+        transparent: true,
+        opacity: CONFIG.linkOpacity,
+        blending: THREE.AdditiveBlending,
+      });
+
+      const links = new THREE.LineSegments(linkGeom, linkMat);
+      links.frustumCulled = false;
+      scene.add(links);
+
+      /**
+       * ============================================================
+       * 9) Rotation + Projection update
+       * ============================================================
+       * Each frame:
+       *   - Rotate basePositions by a quaternion R(t)
+       *   - pos3D = rotated points
+       *   - posShadow = orthographic projection onto plane (x, 0, z)
+       */
+      const rot = new THREE.Quaternion();
+      const axisA = new THREE.Vector3(0.55, 0.85, 0.12).normalize();
+      const axisB = new THREE.Vector3(-0.15, 0.35, 0.92).normalize();
+      const tmpVec = new THREE.Vector3();
+      const tmpMat = new THREE.Matrix4();
+
+      function updatePositions(time, dt) {
+        // Add gentle non-uniform angular velocity to avoid a “robot spin”
+        const wobble = CONFIG.wobbleStrength;
+        const wx = Math.sin(time * 0.55) * wobble;
+        const wy = Math.cos(time * 0.42) * wobble * 0.8;
+        const wz = Math.sin(time * 0.31) * wobble * 0.6;
+
+        const speed = CONFIG.rotationBaseSpeed;
+        const dqa = new THREE.Quaternion().setFromAxisAngle(axisA, (speed + wx) * dt);
+        const dqb = new THREE.Quaternion().setFromAxisAngle(axisB, (speed * 0.65 + wy + wz) * dt);
+        rot.multiply(dqa).multiply(dqb).normalize();
+
+        // Move scanner orb subtly (visual)
+        scannerOrb.position.x = 1.2 + 0.6 * Math.sin(time * 0.55);
+        scannerOrb.position.y = 2.3 + 0.25 * Math.cos(time * 0.42);
+        scannerOrb.position.z = 0.8 + 0.4 * Math.sin(time * 0.31);
+
+        tmpMat.makeRotationFromQuaternion(rot);
+
+        // Rotate and project
+        for (let i = 0; i < basePositions.length; i += 3) {
+          tmpVec.set(basePositions[i], basePositions[i + 1], basePositions[i + 2]);
+          tmpVec.applyMatrix4(tmpMat);
+
+          // 3D
+          pos3D[i] = tmpVec.x;
+          pos3D[i + 1] = tmpVec.y;
+          pos3D[i + 2] = tmpVec.z;
+
+          // 2D shadow on ground: orthographic top-down projection
+          posShadow[i] = tmpVec.x;
+          posShadow[i + 1] = CONFIG.shadowLift;
+          posShadow[i + 2] = tmpVec.z;
+        }
+
+        geom3D.attributes.position.needsUpdate = true;
+        geomShadow.attributes.position.needsUpdate = true;
+
+        // Update sparse link segments from 3D -> projected point
+        for (let j = 0; j < linkCount; j++) {
+          const idx = linkIdx[j] * 3;
+          linkPositions[j * 6 + 0] = pos3D[idx];
+          linkPositions[j * 6 + 1] = pos3D[idx + 1];
+          linkPositions[j * 6 + 2] = pos3D[idx + 2];
+
+          linkPositions[j * 6 + 3] = posShadow[idx];
+          linkPositions[j * 6 + 4] = posShadow[idx + 1];
+          linkPositions[j * 6 + 5] = posShadow[idx + 2];
+        }
+        linkGeom.attributes.position.needsUpdate = true;
+      }
+
+      /**
+       * ============================================================
+       * 10) Postprocessing (FUTURISTIC_MODE)
+       * ============================================================
+       * - Bloom: adds glow.
+       * - Trails: achieved by drawing a translucent fullscreen quad that slightly darkens
+       *   the previous frame, then rendering scene again on top.
+       *
+       * Trails approach rationale:
+       *   - Robust for a single-file background without needing ping-pong render targets.
+       *   - Very low code complexity.
+       *   - Works best with additive points (your scene).
+       */
+      let composer = null;
+      let trailPass = null;
+
+      if (FUTURISTIC_MODE) {
+        composer = new EffectComposer(renderer);
+
+        // Render the scene
+        composer.addPass(new RenderPass(scene, camera));
+
+        // Optional trail pass: a fullscreen quad that slightly darkens previous frame
+        // implemented as a shader pass.
+        trailPass = new ShaderPass({
+          uniforms: {
+            tDiffuse: { value: null },
+            uDarken: { value: CONFIG.trailDarkness }, // higher darken = shorter trails
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = vec4(position.xy, 0.0, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform float uDarken;
+            varying vec2 vUv;
+            void main() {
+              vec4 c = texture2D(tDiffuse, vUv);
+              // Darken slightly to create persistence when the next frame is drawn on top.
+              c.rgb *= (1.0 - 0.18 * (1.0 - uDarken));
+              gl_FragColor = c;
+            }
+          `,
+        });
+
+        // The trail pass must run BEFORE bloom to avoid blooming the darken step too aggressively.
+        // Note: ShaderPass by default uses input from previous pass.
+        composer.addPass(trailPass);
+
+        // Bloom
+        const bloom = new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          CONFIG.bloomStrength,
+          CONFIG.bloomRadius,
+          CONFIG.bloomThreshold
+        );
+        composer.addPass(bloom);
+      }
+
+      /**
+       * ============================================================
+       * 11) Animation loop + lifecycle
+       * ============================================================
+       */
+      const clock = new THREE.Clock();
+      let running = true;
+
+      function renderFrame() {
+        const dt = Math.min(clock.getDelta(), 0.033);
+        const t = clock.elapsedTime;
+
+        // Update ground shader time
+        groundMat.uniforms.uTime.value = t * CONFIG.scanlineSpeed;
+
+        // Update positions
+        updatePositions(t, dt);
+
+        // Render
+        if (composer) composer.render();
+        else renderer.render(scene, camera);
+      }
+
+      function animate() {
+        if (!running) return;
+        requestAnimationFrame(animate);
+        renderFrame();
+      }
+      animate();
+
+      // Pause when tab is hidden
+      document.addEventListener("visibilitychange", () => {
+        running = !document.hidden;
+        if (running) {
+          clock.getDelta(); // prevent delta spike
+          animate();
+        }
+      });
+
+      /**
+       * ============================================================
+       * 12) Resize + subtle parallax
+       * ============================================================
+       */
+      function onResize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+
+        if (composer) composer.setSize(w, h);
+      }
+      window.addEventListener("resize", onResize);
+
+      // Subtle parallax: keep low amplitude for background.
+      window.addEventListener("pointermove", (e) => {
+        const nx = (e.clientX / window.innerWidth) * 2 - 1;
+        const ny = (e.clientY / window.innerHeight) * 2 - 1;
+        camera.position.x = nx * 0.35;
+        camera.position.y = 2.0 + ny * 0.25;
+        camera.lookAt(0, 0.65, 0);
+      });
+    </script>
+  </body>
+</html>
