@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Box } from '@mui/material';
-import { motion } from 'framer-motion';
+import { Box, Typography } from '@mui/material';
 import Image from 'next/image';
 
 interface IndexLoadingLogoProps {
@@ -27,44 +26,54 @@ export const IndexLoadingLogo: React.FC<IndexLoadingLogoProps> = ({
 
   return (
     <Box
-      component={motion.div}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 2,
       }}
     >
       <Box
-        component={motion.div}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          '@keyframes spin': {
+            from: { transform: 'rotate(0deg)' },
+            to: { transform: 'rotate(360deg)' },
+          },
+          animation: 'spin 4s linear infinite',
         }}
       >
         <Image
           src="/tidyscripts_logo.png"
           alt="Loading..."
-          width={120}
-          height={120}
+          width={80}
+          height={80}
           style={{ borderRadius: '50%' }}
         />
       </Box>
+      <Typography
+        variant="h6"
+        sx={{
+          '@keyframes ellipsis': {
+            '0%': { content: '"Loading"' },
+            '25%': { content: '"Loading."' },
+            '50%': { content: '"Loading.."' },
+            '75%': { content: '"Loading..."' },
+          },
+          '&::after': {
+            content: '"Loading..."',
+            animation: 'ellipsis 1.5s steps(4, end) infinite',
+          },
+        }}
+      />
     </Box>
   );
 };
