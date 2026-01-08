@@ -34,10 +34,10 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
 
    It will then run the test_template with the provided args and report the result back to cortex (including the error if it errored). If it runs successfully the function template is also saved to CortexRAM and the id is reported back to Cortex
 
-   [ ]
+   [x]
    Next - claude should make another function called save_function_template, which will take the reference to a function template (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=function_template and with template=the_actual_template_object
 
-   [ ]
+   [x]
    After the above is done: coach cortex (via chat) on developing a template called create_user_log which takes a category parameter and then uses accumulate text to get a log and then computes the embedding of the text and saves everything into the logs table with { category, text, embedding }
 
 

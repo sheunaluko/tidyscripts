@@ -24,7 +24,7 @@ export async function enable_vad() {
     let onSpeechStart = () => {
 	log(`Detected speech start will cancel audio if speeaking`) ;
 
-	let speaking = tsw.util.voice_interface.tts.is_speaking
+	let speaking = tsw.util.voice_interface.tts.is_speaking()
 	log(`Is speaking=${speaking}`)
 	if (speaking) {
 	    log(`Canceling...`) 

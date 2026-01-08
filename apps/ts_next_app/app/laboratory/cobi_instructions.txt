@@ -1,0 +1,16 @@
+hi
+i want to create cobi which stands for cortex observability interface
+
+This will be a component within the laboratory/component_viewer (see architecture guidelines)
+
+This is a bit of a challenging task.
+
+The idea is I want a visualization of the cortex voice agent internals as it is running.
+
+It is in cortex_0/app3.tsx
+
+I want to visualize the state , like what function is being called, with what parameter, which events are being fired, what the function return value is. how much context space is left , etc. Its like a dashboard for the running agent to help me understand what is happening.
+
+First I want you to understand the architecture deeply.
+
+Then we should discuss what features I want and should want, and your suggestions - before we proceed. 

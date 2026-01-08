@@ -51,9 +51,6 @@ export async function get_question(qid : string) {
     return (await fb.fu.get_user_doc({ path: [qid] , app_id : "usync" }))
 } 
 
-/*
-   Todo -- create widget that can render HTML into it   
-*/ 
 
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -78,7 +75,8 @@ import HTML_Widget from "./HTMLWidget"
 declare var window : any ;
 declare var Bokeh : any  ; 
 
-const log   = tsw.common.logger.get_logger({id:"cortex"}) ;
+const logger = tsw.common.logger
+const log   = logger.get_logger({id:"cortex"}) ;
 const ap    = tsw.util.audio_processing;
 const dsp   = tsw.common.util.dsp ;
 const debug = tsw.common.util.debug ;
@@ -88,6 +86,14 @@ const wa    = tsw.apis.web_audio;
 const vi    = tsw.util.voice_interface ; 
 const oai   = tsw.apis.openai;
 const sounds = tsw.util.sounds
+
+/*
+   Global log suppression
+ */
+for (var x of  ["html","toast"]) {
+    logger.suppress(x) ; 
+}
+
 
 
 /* For the chat box */ 
@@ -168,7 +174,7 @@ const  Component: NextPage = (props : any) => {
     useEffect( () => {
 
 	async function get_agent() {
-            let agent =  await cortex_agent.get_agent_with_mcp(ai_model)
+            let agent =  await cortex_agent.get_agent(ai_model)
 	    setCOR(agent) ; 
 	}
 
@@ -1298,6 +1304,7 @@ const  Component: NextPage = (props : any) => {
               <MenuItem value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</MenuItem>
               <MenuItem value="o4-mini">o4-mini</MenuItem>
               <MenuItem value="chatgpt-4o-latest">chatgpt-4o-latest</MenuItem>
+              <MenuItem value="gemini-3-flash-preview">chatgpt-4o-latest</MenuItem>	      
             </Select>
           </FormControl>
         </Box>
