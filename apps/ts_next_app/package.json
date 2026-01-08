@@ -4,7 +4,8 @@
     "private": true,
     "scripts": {
         "dev": "next dev -p 8000",
-        "prebuild": "node scripts/generate_build_info.js",
+        "prebuild": "node scripts/generate_build_info.js && mkdir -p public/onnx && cp ../../node_modules/onnxruntime-web/dist/*.wasm public/onnx/ && cp ../../node_modules/onnxruntime-web/dist/*.mjs public/onnx/ && npm run cleanup-onnx",
+        "cleanup-onnx": "rm -f public/onnx/*.js public/onnx/*.map public/onnx/ort.all.bundle.* public/onnx/ort.all.mjs public/onnx/ort.bundle.* public/onnx/ort.mjs public/onnx/ort.min.mjs public/onnx/ort.wasm.* public/onnx/ort.webgl.* public/onnx/ort.webgpu.* public/onnx/ort.node.* public/onnx/*asyncify* public/onnx/*jsep* public/onnx/silero_vad_legacy.onnx && rm -rf public/onnx/cpu",
         "build": "next build",
         "build:dev": "NODE_ENV=development next build",
         "start": "next start",
@@ -31,7 +32,6 @@
         "@ricky0123/vad-react": "^0.0.36",
         "@sigma/edge-curve": "^3.1.0",
         "ace-builds": "^1.37.1",
-        "copy-webpack-plugin": "^13.0.1",
         "crypto": "^1.0.1",
         "eslint": "^8.57.0",
         "firebase": "^10.12.4",
@@ -65,10 +65,12 @@
         "@types/react": "^18",
         "@types/react-dom": "^18",
         "@types/three": "^0.182.0",
+        "copy-webpack-plugin": "^13.0.1",
         "eslint-config-next": "14.2.2",
         "jest": "^30.0.2",
         "jest-environment-jsdom": "^30.0.2",
         "jest-html-reporters": "^3.1.7",
+        "node-polyfill-webpack-plugin": "^4.1.0",
         "typescript": "^5"
     }
 }

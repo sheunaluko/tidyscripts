@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TSVAD } from './ts_vad/src';
-import { get_silero_session } from './onnx';
+import { get_silero_session, get_ort } from './onnx';
 import * as vi from './tsw/voice_interface';
 import * as wa from './tsw/web_audio';
 import type { UseTiviOptions, UseTiviReturn } from './types';
@@ -48,14 +48,18 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       try {
         log('Initializing VAD...');
 
-        // Load Silero VAD model
+        // Load ONNX runtime and Silero VAD model
+        const ortRuntime = await get_ort();
         const silero = await get_silero_session();
 
         // Create TSVAD with event handlers in constructor
         const vad = new TSVAD({
           silero,
+          ort: ortRuntime,
           positiveSpeechThreshold,
           negativeSpeechThreshold,
+          redemptionMs: 1400,
+          preSpeechPadMs: 2000,
           minSpeechMs,
 
           // Handler: Speech detected

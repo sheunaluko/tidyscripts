@@ -5,6 +5,9 @@ export interface TSVADOptions {
   // Pre-loaded Silero ONNX session (user provides)
   silero: InferenceSession;
 
+  // ONNX Runtime instance (required for creating tensors)
+  ort?: any;
+
   // Frame processor thresholds
   positiveSpeechThreshold: number;
   negativeSpeechThreshold: number;

@@ -59,7 +59,10 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
     };
 
     // Initialize model wrapper
-    this.model = new SileroV5Model(options.silero);
+    if (!options.ort) {
+      throw new Error('TSVAD requires ort runtime to be provided in options');
+    }
+    this.model = new SileroV5Model(options.silero, options.ort);
 
     // Initialize frame processor
     this.frameProcessor = new FrameProcessor(this.options, MS_PER_FRAME);

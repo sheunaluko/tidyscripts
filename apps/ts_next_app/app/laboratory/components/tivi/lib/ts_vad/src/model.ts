@@ -1,5 +1,4 @@
-import * as ort from 'onnxruntime-web';
-import type { InferenceSession, Tensor } from 'onnxruntime-web';
+import type { InferenceSession, Tensor } from 'onnxruntime-web/wasm';
 import { SpeechProbabilities, SAMPLE_RATE } from './types';
 
 /**
@@ -9,13 +8,16 @@ import { SpeechProbabilities, SAMPLE_RATE } from './types';
 export class SileroV5Model {
   private state: Tensor;
   private readonly sr: Tensor;
+  private readonly ort: any; // Store the ort runtime
 
-  constructor(private readonly session: InferenceSession) {
+  constructor(private readonly session: InferenceSession, ort: any) {
+    this.ort = ort; // Save the ort runtime
+
     // Initialize state tensor for Silero V5: [2, 1, 128]
     this.state = this.createStateTensor();
 
     // Initialize sample rate tensor (constant 16000)
-    this.sr = new ort.Tensor('int64', [BigInt(SAMPLE_RATE)]);
+    this.sr = new this.ort.Tensor('int64', [BigInt(SAMPLE_RATE)]);
   }
 
   /**
@@ -25,7 +27,7 @@ export class SileroV5Model {
    */
   async process(frame: Float32Array): Promise<SpeechProbabilities> {
     // Create input tensor from audio frame
-    const inputTensor = new ort.Tensor('float32', frame, [1, frame.length]);
+    const inputTensor = new this.ort.Tensor('float32', frame, [1, frame.length]);
 
     // Run inference
     const inputs = {
@@ -69,6 +71,6 @@ export class SileroV5Model {
   private createStateTensor(): Tensor {
     const stateSize = 2 * 128; // 256 total elements
     const zeros = Array(stateSize).fill(0);
-    return new ort.Tensor('float32', zeros, [2, 1, 128]);
+    return new this.ort.Tensor('float32', zeros, [2, 1, 128]);
   }
 }

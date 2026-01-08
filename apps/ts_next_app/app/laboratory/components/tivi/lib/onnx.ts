@@ -16,16 +16,17 @@ async function getOnnxRuntime() {
   }
 
   if (!ort) {
-    ort = await import('onnxruntime-web/wasm');
-  }
+    // This bypasses the entire Webpack/Terser/SWC pipeline
+    // It loads the minified file directly from the public folder
+    // webpackIgnore tells webpack to completely ignore this import
+    // @ts-expect-error - Dynamic import from public folder, type checking not applicable
+    ort = await import(/* webpackIgnore: true */ '/onnx/ort.all.min.mjs');
 
-  if (!onnxInitialized) {
-    // Configure where onnxruntime looks for wasm and mjs files
+    // Explicitly set the WASM paths to the public folder
     ort.env.wasm.wasmPaths = '/onnx/';
-    ort.env.wasm.mjs = '/onnx/';
     ort.env.logLevel = 'error';
     onnxInitialized = true;
-    log('ONNX runtime initialized');
+    log('ONNX runtime initialized from /onnx/ort.all.min.mjs');
   }
 
   return ort;

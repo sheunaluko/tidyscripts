@@ -91,7 +91,7 @@ const sounds = tsw.util.sounds
    Global log suppression
  */
 for (var x of  ["html","toast"]) {
-    logger.suppress(x) ; 
+    logger.suppress(x, "clean up") ;
 }
 
 

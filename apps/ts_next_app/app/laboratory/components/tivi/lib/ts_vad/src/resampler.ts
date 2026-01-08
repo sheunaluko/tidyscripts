@@ -25,6 +25,7 @@ export class Resampler {
   process(audioFrame: Float32Array): Float32Array[] {
     const outputFrames: Float32Array[] = [];
 
+    // @ts-ignore - Float32Array iteration supported in modern browsers
     for (const sample of audioFrame) {
       this.inputBuffer.push(sample);
 
