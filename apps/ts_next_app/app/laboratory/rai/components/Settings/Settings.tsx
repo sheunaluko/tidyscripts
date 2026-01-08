@@ -172,6 +172,23 @@ export const Settings: React.FC = () => {
           </Typography>
         </Box>
 
+        {settings.advancedFeaturesEnabled && (
+          <Box sx={{ mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={settings.useUnstructuredMode || false}
+                  onChange={(e) => updateSettings({ useUnstructuredMode: e.target.checked })}
+                />
+              }
+              label="Use Unstructured Mode"
+            />
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
+              Experimental: Use unstructured LLM calls for note generation. May have different output format compared to structured mode.
+            </Typography>
+          </Box>
+        )}
+
         <Divider sx={{ my: 3 }} />
 
         {/* Voice Agent Audio Controls */}

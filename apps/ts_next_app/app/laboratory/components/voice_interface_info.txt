@@ -1,0 +1,940 @@
+# Voice Pipeline Architecture Reference
+
+## Overview
+
+This document describes a voice agent architecture that uses:
+1. **OpenAI Realtime API (transcription mode)** — VAD + Speech-to-Text
+2. **Custom LLM backend** — Your choice (Claude, local model, etc.)
+3. **OpenAI Streaming TTS API** — Text-to-Speech with `gpt-4o-mini-tts`
+
+The goal is to leverage OpenAI's excellent VAD and STT while using your own LLM for response generation.
+
+---
+
+## Architecture Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           USER AUDIO INPUT                               │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    OPENAI REALTIME API (TRANSCRIPTION MODE)              │
+│                                                                          │
+│  Session Config:                                                         │
+│    type: "transcription"                                                 │
+│    VAD: semantic_vad or server_vad                                       │
+│    STT model: gpt-4o-transcribe                                          │
+│                                                                          │
+│  Events Emitted:                                                         │
+│    • input_audio_buffer.speech_started  → User started speaking          │
+│    • input_audio_buffer.speech_stopped  → User stopped speaking          │
+│    • conversation.item.input_audio_transcription.delta → Partial text    │
+│    • conversation.item.input_audio_transcription.completed → Final text  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+        ┌─────────────────────┐         ┌─────────────────────┐
+        │   speech_started    │         │ transcription.done  │
+        │                     │         │                     │
+        │  INTERRUPT HANDLER  │         │   PROCESS INPUT     │
+        │  • Stop TTS playback│         │   • Send to LLM     │
+        │  • Abort LLM stream │         │                     │
+        └─────────────────────┘         └──────────┬──────────┘
+                                                   │
+                                                   ▼
+                                    ┌─────────────────────────┐
+                                    │      YOUR CUSTOM LLM    │
+                                    │   (Claude, GPT, local)  │
+                                    │                         │
+                                    │   Streaming response    │
+                                    └──────────┬──────────────┘
+                                               │
+                                               ▼
+                                    ┌─────────────────────────┐
+                                    │   OPENAI STREAMING TTS  │
+                                    │    gpt-4o-mini-tts      │
+                                    │                         │
+                                    │   PCM16 audio chunks    │
+                                    └──────────┬──────────────┘
+                                               │
+                                               ▼
+                                    ┌─────────────────────────┐
+                                    │     AUDIO PLAYBACK      │
+                                    │   (Speaker / WebRTC)    │
+                                    └─────────────────────────┘
+```
+
+---
+
+## Component 1: OpenAI Realtime API (Transcription Mode)
+
+### Connection
+
+WebSocket endpoint:
+```
+wss://api.openai.com/v1/realtime?intent=transcription
+```
+
+Or use the Agents SDK transport layer directly:
+```typescript
+import { OpenAIRealtimeWebSocket } from '@openai/agents/realtime';
+```
+
+### Session Configuration
+
+Send `session.update` after connection:
+
+```typescript
+const transcriptionSessionConfig = {
+  type: "session.update",
+  session: {
+    type: "transcription",  // IMPORTANT: transcription-only mode
+    input_audio_format: "pcm16",
+    input_audio_transcription: {
+      model: "gpt-4o-transcribe",  // or "gpt-4o-mini-transcribe"
+      language: "en",  // optional, auto-detect if omitted
+    },
+    turn_detection: {
+      type: "semantic_vad",  // recommended for natural conversation
+      eagerness: "medium",   // "low" | "medium" | "high"
+      // OR use server_vad:
+      // type: "server_vad",
+      // threshold: 0.5,
+      // prefix_padding_ms: 300,
+      // silence_duration_ms: 500,
+    },
+    input_audio_noise_reduction: {
+      type: "near_field",  // or "far_field" for speakerphone
+    },
+  },
+};
+```
+
+### Events to Handle
+
+```typescript
+// Server events you'll receive:
+
+interface SpeechStartedEvent {
+  type: "input_audio_buffer.speech_started";
+  event_id: string;
+  audio_start_ms: number;
+}
+
+interface SpeechStoppedEvent {
+  type: "input_audio_buffer.speech_stopped";
+  event_id: string;
+  audio_end_ms: number;
+}
+
+interface TranscriptionDeltaEvent {
+  type: "conversation.item.input_audio_transcription.delta";
+  event_id: string;
+  item_id: string;
+  content_index: number;
+  delta: string;  // Partial transcript
+}
+
+interface TranscriptionCompletedEvent {
+  type: "conversation.item.input_audio_transcription.completed";
+  event_id: string;
+  item_id: string;
+  content_index: number;
+  transcript: string;  // Final transcript
+}
+```
+
+### Sending Audio
+
+```typescript
+// Client event to send audio chunks:
+const audioAppendEvent = {
+  type: "input_audio_buffer.append",
+  audio: base64EncodedPCM16Audio,  // Base64 encoded PCM16 @ 24kHz mono
+};
+
+// Audio format requirements:
+// - PCM16 (16-bit signed little-endian)
+// - 24000 Hz sample rate
+// - Mono (single channel)
+```
+
+### Full Transcription Client Example
+
+```typescript
+import WebSocket from 'ws';
+
+class TranscriptionClient {
+  private ws: WebSocket | null = null;
+  private onSpeechStart: () => void;
+  private onSpeechEnd: () => void;
+  private onTranscript: (text: string, isFinal: boolean) => void;
+
+  constructor(handlers: {
+    onSpeechStart: () => void;
+    onSpeechEnd: () => void;
+    onTranscript: (text: string, isFinal: boolean) => void;
+  }) {
+    this.onSpeechStart = handlers.onSpeechStart;
+    this.onSpeechEnd = handlers.onSpeechEnd;
+    this.onTranscript = handlers.onTranscript;
+  }
+
+  async connect(apiKey: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.ws = new WebSocket(
+        'wss://api.openai.com/v1/realtime?intent=transcription',
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'OpenAI-Beta': 'realtime=v1',
+          },
+        }
+      );
+
+      this.ws.on('open', () => {
+        this.sendSessionConfig();
+        resolve();
+      });
+
+      this.ws.on('message', (data) => {
+        const event = JSON.parse(data.toString());
+        this.handleEvent(event);
+      });
+
+      this.ws.on('error', reject);
+    });
+  }
+
+  private sendSessionConfig(): void {
+    this.send({
+      type: "session.update",
+      session: {
+        type: "transcription",
+        input_audio_format: "pcm16",
+        input_audio_transcription: {
+          model: "gpt-4o-transcribe",
+        },
+        turn_detection: {
+          type: "semantic_vad",
+          eagerness: "medium",
+        },
+      },
+    });
+  }
+
+  private handleEvent(event: any): void {
+    switch (event.type) {
+      case 'input_audio_buffer.speech_started':
+        this.onSpeechStart();
+        break;
+
+      case 'input_audio_buffer.speech_stopped':
+        this.onSpeechEnd();
+        break;
+
+      case 'conversation.item.input_audio_transcription.delta':
+        this.onTranscript(event.delta, false);
+        break;
+
+      case 'conversation.item.input_audio_transcription.completed':
+        this.onTranscript(event.transcript, true);
+        break;
+
+      case 'error':
+        console.error('Realtime API error:', event.error);
+        break;
+    }
+  }
+
+  sendAudio(pcm16Buffer: Buffer): void {
+    const base64Audio = pcm16Buffer.toString('base64');
+    this.send({
+      type: "input_audio_buffer.append",
+      audio: base64Audio,
+    });
+  }
+
+  private send(event: any): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(event));
+    }
+  }
+
+  disconnect(): void {
+    this.ws?.close();
+    this.ws = null;
+  }
+}
+```
+
+---
+
+## Component 2: Custom LLM Integration
+
+### Abstract Interface
+
+```typescript
+interface LLMClient {
+  // Streaming chat completion
+  streamChat(
+    messages: ChatMessage[],
+    signal?: AbortSignal
+  ): AsyncIterable<string>;
+}
+
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+```
+
+### Claude (Anthropic) Implementation
+
+```typescript
+import Anthropic from '@anthropic-ai/sdk';
+
+class ClaudeLLMClient implements LLMClient {
+  private client: Anthropic;
+  private model: string;
+  private systemPrompt: string;
+
+  constructor(config: {
+    apiKey: string;
+    model?: string;
+    systemPrompt?: string;
+  }) {
+    this.client = new Anthropic({ apiKey: config.apiKey });
+    this.model = config.model || 'claude-sonnet-4-20250514';
+    this.systemPrompt = config.systemPrompt || 'You are a helpful voice assistant. Keep responses concise and conversational.';
+  }
+
+  async *streamChat(
+    messages: ChatMessage[],
+    signal?: AbortSignal
+  ): AsyncIterable<string> {
+    const anthropicMessages = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+    const stream = this.client.messages.stream({
+      model: this.model,
+      max_tokens: 1024,
+      system: this.systemPrompt,
+      messages: anthropicMessages,
+    });
+
+    // Handle abort signal
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        stream.abort();
+      });
+    }
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta') {
+        if (event.delta.type === 'text_delta') {
+          yield event.delta.text;
+        }
+      }
+    }
+  }
+}
+```
+
+### OpenAI GPT Implementation (Alternative)
+
+```typescript
+import OpenAI from 'openai';
+
+class OpenAILLMClient implements LLMClient {
+  private client: OpenAI;
+  private model: string;
+
+  constructor(config: { apiKey: string; model?: string }) {
+    this.client = new OpenAI({ apiKey: config.apiKey });
+    this.model = config.model || 'gpt-4o';
+  }
+
+  async *streamChat(
+    messages: ChatMessage[],
+    signal?: AbortSignal
+  ): AsyncIterable<string> {
+    const stream = await this.client.chat.completions.create({
+      model: this.model,
+      messages: messages,
+      stream: true,
+    }, { signal });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        yield content;
+      }
+    }
+  }
+}
+```
+
+---
+
+## Component 3: OpenAI Streaming TTS
+
+### API Details
+
+Endpoint: `POST https://api.openai.com/v1/audio/speech`
+
+```typescript
+interface TTSRequest {
+  model: "gpt-4o-mini-tts" | "tts-1" | "tts-1-hd";
+  input: string;
+  voice: "alloy" | "ash" | "ballad" | "coral" | "echo" | "fable" | "onyx" | "nova" | "sage" | "shimmer" | "verse";
+  response_format?: "mp3" | "opus" | "aac" | "flac" | "wav" | "pcm";
+  speed?: number;  // 0.25 to 4.0, default 1.0
+  instructions?: string;  // Voice style instructions (gpt-4o-mini-tts only)
+}
+```
+
+### Streaming TTS Client
+
+```typescript
+import OpenAI from 'openai';
+
+class StreamingTTSClient {
+  private client: OpenAI;
+  private voice: string;
+  private instructions: string;
+
+  constructor(config: {
+    apiKey: string;
+    voice?: string;
+    instructions?: string;
+  }) {
+    this.client = new OpenAI({ apiKey: config.apiKey });
+    this.voice = config.voice || 'alloy';
+    this.instructions = config.instructions || 'Speak naturally and conversationally.';
+  }
+
+  async *streamSpeech(
+    text: string,
+    signal?: AbortSignal
+  ): AsyncIterable<Buffer> {
+    const response = await this.client.audio.speech.create({
+      model: 'gpt-4o-mini-tts',
+      voice: this.voice as any,
+      input: text,
+      response_format: 'pcm',  // Raw PCM16 for lowest latency
+      instructions: this.instructions,
+    }, { signal });
+
+    // Response is a ReadableStream
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        yield Buffer.from(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+}
+```
+
+### Chunked TTS for Streaming LLM Output
+
+Since you're streaming text from your LLM, you need to buffer text and send to TTS in chunks:
+
+```typescript
+class ChunkedTTSProcessor {
+  private ttsClient: StreamingTTSClient;
+  private buffer: string = '';
+  private minChunkLength: number;
+  private sentenceEnders = /[.!?]\s/;
+
+  constructor(ttsClient: StreamingTTSClient, minChunkLength = 50) {
+    this.ttsClient = ttsClient;
+    this.minChunkLength = minChunkLength;
+  }
+
+  // Returns audio chunks as they become available
+  async *processTextStream(
+    textStream: AsyncIterable<string>,
+    signal?: AbortSignal
+  ): AsyncIterable<Buffer> {
+    for await (const text of textStream) {
+      if (signal?.aborted) break;
+
+      this.buffer += text;
+
+      // Check if we have a complete sentence or enough text
+      const splitPoint = this.findSplitPoint();
+      if (splitPoint > 0) {
+        const chunk = this.buffer.slice(0, splitPoint).trim();
+        this.buffer = this.buffer.slice(splitPoint);
+
+        if (chunk.length > 0) {
+          // Stream audio for this chunk
+          for await (const audio of this.ttsClient.streamSpeech(chunk, signal)) {
+            yield audio;
+          }
+        }
+      }
+    }
+
+    // Flush remaining buffer
+    if (this.buffer.trim().length > 0 && !signal?.aborted) {
+      for await (const audio of this.ttsClient.streamSpeech(this.buffer.trim(), signal)) {
+        yield audio;
+      }
+    }
+    this.buffer = '';
+  }
+
+  private findSplitPoint(): number {
+    // Look for sentence endings
+    const match = this.sentenceEnders.exec(this.buffer);
+    if (match && match.index + match[0].length >= this.minChunkLength) {
+      return match.index + match[0].length;
+    }
+
+    // If buffer is very long, split at a reasonable point
+    if (this.buffer.length > this.minChunkLength * 3) {
+      // Look for comma, semicolon, or other natural break
+      const breakChars = /[,;:]\s/;
+      const breakMatch = breakChars.exec(this.buffer.slice(this.minChunkLength));
+      if (breakMatch) {
+        return this.minChunkLength + breakMatch.index + breakMatch[0].length;
+      }
+    }
+
+    return 0;
+  }
+}
+```
+
+---
+
+## Component 4: Audio Playback with Interruption Support
+
+### Browser (Web Audio API)
+
+```typescript
+class AudioPlayer {
+  private audioContext: AudioContext | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private scheduledBuffers: AudioBufferSourceNode[] = [];
+  private nextStartTime: number = 0;
+  private isPlaying: boolean = false;
+
+  constructor() {
+    this.audioContext = new AudioContext({ sampleRate: 24000 });
+  }
+
+  async queueAudio(pcm16Buffer: ArrayBuffer): Promise<void> {
+    if (!this.audioContext) return;
+
+    // Convert PCM16 to Float32
+    const int16Array = new Int16Array(pcm16Buffer);
+    const float32Array = new Float32Array(int16Array.length);
+    for (let i = 0; i < int16Array.length; i++) {
+      float32Array[i] = int16Array[i] / 32768;
+    }
+
+    // Create audio buffer
+    const audioBuffer = this.audioContext.createBuffer(
+      1,  // mono
+      float32Array.length,
+      24000  // sample rate
+    );
+    audioBuffer.getChannelData(0).set(float32Array);
+
+    // Schedule playback
+    const source = this.audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(this.audioContext.destination);
+
+    const startTime = Math.max(
+      this.audioContext.currentTime,
+      this.nextStartTime
+    );
+    source.start(startTime);
+    this.nextStartTime = startTime + audioBuffer.duration;
+
+    this.scheduledBuffers.push(source);
+    this.isPlaying = true;
+
+    source.onended = () => {
+      const index = this.scheduledBuffers.indexOf(source);
+      if (index > -1) this.scheduledBuffers.splice(index, 1);
+      if (this.scheduledBuffers.length === 0) this.isPlaying = false;
+    };
+  }
+
+  stop(): void {
+    // Stop all scheduled audio immediately
+    for (const source of this.scheduledBuffers) {
+      try {
+        source.stop();
+      } catch (e) {
+        // Already stopped
+      }
+    }
+    this.scheduledBuffers = [];
+    this.nextStartTime = 0;
+    this.isPlaying = false;
+  }
+
+  getIsPlaying(): boolean {
+    return this.isPlaying;
+  }
+}
+```
+
+### Node.js (Speaker package or raw output)
+
+```typescript
+import Speaker from 'speaker';
+
+class NodeAudioPlayer {
+  private speaker: Speaker | null = null;
+  private isPlaying: boolean = false;
+
+  start(): void {
+    this.speaker = new Speaker({
+      channels: 1,
+      bitDepth: 16,
+      sampleRate: 24000,
+    });
+    this.isPlaying = true;
+  }
+
+  write(pcm16Buffer: Buffer): void {
+    if (this.speaker && !this.speaker.destroyed) {
+      this.speaker.write(pcm16Buffer);
+    }
+  }
+
+  stop(): void {
+    if (this.speaker) {
+      this.speaker.end();
+      this.speaker = null;
+    }
+    this.isPlaying = false;
+  }
+
+  getIsPlaying(): boolean {
+    return this.isPlaying;
+  }
+}
+```
+
+---
+
+## Putting It All Together: Voice Pipeline Orchestrator
+
+```typescript
+interface VoicePipelineConfig {
+  openaiApiKey: string;
+  llmClient: LLMClient;
+  ttsVoice?: string;
+  ttsInstructions?: string;
+  systemPrompt?: string;
+}
+
+class VoicePipeline {
+  private transcriptionClient: TranscriptionClient;
+  private llmClient: LLMClient;
+  private ttsClient: StreamingTTSClient;
+  private ttsProcessor: ChunkedTTSProcessor;
+  private audioPlayer: AudioPlayer;
+
+  private conversationHistory: ChatMessage[] = [];
+  private currentAbortController: AbortController | null = null;
+  private isProcessing: boolean = false;
+
+  constructor(config: VoicePipelineConfig) {
+    this.llmClient = config.llmClient;
+
+    this.ttsClient = new StreamingTTSClient({
+      apiKey: config.openaiApiKey,
+      voice: config.ttsVoice,
+      instructions: config.ttsInstructions,
+    });
+
+    this.ttsProcessor = new ChunkedTTSProcessor(this.ttsClient);
+    this.audioPlayer = new AudioPlayer();
+
+    // Initialize transcription client with handlers
+    this.transcriptionClient = new TranscriptionClient({
+      onSpeechStart: () => this.handleSpeechStart(),
+      onSpeechEnd: () => this.handleSpeechEnd(),
+      onTranscript: (text, isFinal) => this.handleTranscript(text, isFinal),
+    });
+
+    // Add system prompt to history
+    if (config.systemPrompt) {
+      this.conversationHistory.push({
+        role: 'system',
+        content: config.systemPrompt,
+      });
+    }
+  }
+
+  async start(openaiApiKey: string): Promise<void> {
+    await this.transcriptionClient.connect(openaiApiKey);
+    console.log('Voice pipeline started');
+  }
+
+  // Call this with audio from microphone
+  sendAudio(pcm16Buffer: Buffer): void {
+    this.transcriptionClient.sendAudio(pcm16Buffer);
+  }
+
+  private handleSpeechStart(): void {
+    console.log('User started speaking - interrupting');
+
+    // INTERRUPT: Stop everything
+    this.interrupt();
+  }
+
+  private handleSpeechEnd(): void {
+    console.log('User stopped speaking');
+    // Transcript will arrive via handleTranscript
+  }
+
+  private handleTranscript(text: string, isFinal: boolean): void {
+    if (!isFinal) {
+      // Could show partial transcript in UI
+      console.log('Partial:', text);
+      return;
+    }
+
+    console.log('Final transcript:', text);
+
+    // Add to conversation history
+    this.conversationHistory.push({
+      role: 'user',
+      content: text,
+    });
+
+    // Generate response
+    this.generateResponse();
+  }
+
+  private async generateResponse(): Promise<void> {
+    if (this.isProcessing) {
+      console.log('Already processing, skipping');
+      return;
+    }
+
+    this.isProcessing = true;
+    this.currentAbortController = new AbortController();
+    const signal = this.currentAbortController.signal;
+
+    try {
+      // Stream from LLM
+      const llmStream = this.llmClient.streamChat(
+        this.conversationHistory,
+        signal
+      );
+
+      // Collect full response for history while streaming
+      let fullResponse = '';
+
+      // Create a tee of the LLM stream
+      const textChunks: string[] = [];
+      const llmIterator = llmStream[Symbol.asyncIterator]();
+
+      async function* teedStream(): AsyncIterable<string> {
+        while (true) {
+          const { done, value } = await llmIterator.next();
+          if (done) break;
+          textChunks.push(value);
+          fullResponse += value;
+          yield value;
+        }
+      }
+
+      // Process through TTS and play
+      for await (const audioChunk of this.ttsProcessor.processTextStream(
+        teedStream(),
+        signal
+      )) {
+        if (signal.aborted) break;
+        await this.audioPlayer.queueAudio(audioChunk);
+      }
+
+      // Add assistant response to history
+      if (fullResponse && !signal.aborted) {
+        this.conversationHistory.push({
+          role: 'assistant',
+          content: fullResponse,
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Response generation aborted');
+      } else {
+        console.error('Error generating response:', error);
+      }
+    } finally {
+      this.isProcessing = false;
+      this.currentAbortController = null;
+    }
+  }
+
+  private interrupt(): void {
+    // 1. Abort any in-flight LLM/TTS requests
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+      this.currentAbortController = null;
+    }
+
+    // 2. Stop audio playback immediately
+    this.audioPlayer.stop();
+
+    // 3. Reset processing state
+    this.isProcessing = false;
+  }
+
+  stop(): void {
+    this.interrupt();
+    this.transcriptionClient.disconnect();
+  }
+
+  // Utility: Get conversation history
+  getHistory(): ChatMessage[] {
+    return [...this.conversationHistory];
+  }
+
+  // Utility: Clear conversation history (keep system prompt)
+  clearHistory(): void {
+    const systemPrompt = this.conversationHistory.find(m => m.role === 'system');
+    this.conversationHistory = systemPrompt ? [systemPrompt] : [];
+  }
+}
+```
+
+---
+
+## Usage Example
+
+```typescript
+import Anthropic from '@anthropic-ai/sdk';
+
+async function main() {
+  // Initialize Claude as the LLM
+  const claudeClient = new ClaudeLLMClient({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+    model: 'claude-sonnet-4-20250514',
+    systemPrompt: `You are a helpful voice assistant. 
+      Keep responses concise (1-3 sentences unless asked for more).
+      Speak naturally and conversationally.
+      Don't use markdown formatting or special characters.`,
+  });
+
+  // Create the voice pipeline
+  const pipeline = new VoicePipeline({
+    openaiApiKey: process.env.OPENAI_API_KEY!,
+    llmClient: claudeClient,
+    ttsVoice: 'nova',
+    ttsInstructions: 'Speak in a warm, friendly tone. Be conversational.',
+  });
+
+  // Start the pipeline
+  await pipeline.start(process.env.OPENAI_API_KEY!);
+
+  // Feed audio from microphone (example with node-record-lpcm16)
+  import record from 'node-record-lpcm16';
+
+  const recording = record.record({
+    sampleRate: 24000,
+    channels: 1,
+    audioType: 'raw',
+  });
+
+  recording.stream().on('data', (chunk: Buffer) => {
+    pipeline.sendAudio(chunk);
+  });
+
+  // Handle shutdown
+  process.on('SIGINT', () => {
+    recording.stop();
+    pipeline.stop();
+    process.exit();
+  });
+}
+
+main().catch(console.error);
+```
+
+---
+
+## Browser Implementation Notes
+
+For browser usage, you'll need to:
+
+1. **Get microphone access:**
+```typescript
+const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+```
+
+2. **Convert to PCM16 @ 24kHz:**
+```typescript
+const audioContext = new AudioContext({ sampleRate: 24000 });
+const source = audioContext.createMediaStreamSource(stream);
+const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+processor.onaudioprocess = (e) => {
+  const float32 = e.inputBuffer.getChannelData(0);
+  const int16 = new Int16Array(float32.length);
+  for (let i = 0; i < float32.length; i++) {
+    int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+  }
+  pipeline.sendAudio(Buffer.from(int16.buffer));
+};
+
+source.connect(processor);
+processor.connect(audioContext.destination);
+```
+
+3. **Use WebSocket directly** (not the Agents SDK WebRTC transport) since you want transcription-only mode.
+
+---
+
+## Key Implementation Notes
+
+1. **Latency Optimization:**
+   - Start TTS as soon as you have ~50 chars from LLM (don't wait for full response)
+   - Use PCM format for TTS (no decode overhead)
+   - Pre-initialize AudioContext on user interaction (browser requirement)
+
+2. **Interruption Handling:**
+   - `speech_started` = immediate interrupt
+   - Abort controller cancels both LLM fetch and TTS fetch
+   - Audio player stops all queued audio
+
+3. **Conversation History:**
+   - Keep track for multi-turn context
+   - On interrupt, don't add partial assistant response to history
+   - Consider truncating history to manage context length
+
+4. **Error Handling:**
+   - Reconnect transcription WebSocket on disconnect
+   - Retry TTS on transient errors
+   - Surface errors to UI appropriately
+
+5. **Audio Format:**
+   - Transcription input: PCM16, 24kHz, mono
+   - TTS output: PCM16, 24kHz, mono (when using `response_format: 'pcm'`)

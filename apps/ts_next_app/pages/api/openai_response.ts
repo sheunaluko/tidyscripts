@@ -15,12 +15,22 @@ export const config = {
 /**
  * Simple OpenAI Responses API endpoint
  *
- * Expected request body:
+ * Supports two request formats for backward compatibility:
+ *
+ * Format 1 (current):
  * {
  *   model: string,
  *   instructions: string,  // System prompt
  *   input: string          // User message
  * }
+ *
+ * Format 2 (new - messages array):
+ * {
+ *   model: string,
+ *   input: Array<{ role: string, content: string }>  // Messages array
+ * }
+ *
+ * Note: OpenAI Responses API doesn't support max_tokens or temperature parameters
  *
  * Returns:
  * {
@@ -51,22 +61,47 @@ export default async function handler(
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
-    const { model, instructions, input } = req.body;
+    const { model, instructions, input, max_tokens, temperature } = req.body;
 
-    if (!model || !instructions || !input) {
+    if (!model || !input) {
         return res.status(400).json({
-            message: 'model, instructions, and input are required'
+            message: 'model and input are required'
         });
     }
 
     log(`Got POST request for simple response`);
     console.log(req.body);
 
+    // Determine format and extract instructions/input
+    let finalInstructions: string;
+    let finalInput: string;
+
+    if (Array.isArray(input)) {
+        // New format: messages array
+        const systemMsg = input.find((m: any) => m.role === 'system');
+        const userMsgs = input.filter((m: any) => m.role !== 'system');
+        finalInstructions = systemMsg?.content || '';
+        finalInput = userMsgs.map((m: any) => m.content).join('\n');
+        log('Using messages array format');
+    } else {
+        // Current format: instructions + input string
+        if (!instructions) {
+            return res.status(400).json({
+                message: 'instructions is required when input is a string'
+            });
+        }
+        finalInstructions = instructions;
+        finalInput = input;
+        log('Using legacy format (instructions + input)');
+    }
+
     try {
+        // Note: OpenAI Responses API doesn't support max_tokens or temperature
+        // It uses a simpler interface with just model, instructions, and input
         const response = await client.responses.create({
             model,
-            instructions,
-            input,
+            instructions: finalInstructions,
+            input: finalInput,
         });
 
         log(`Got response:`);

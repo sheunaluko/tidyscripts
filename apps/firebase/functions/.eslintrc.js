@@ -29,5 +29,13 @@ module.exports = {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
+    // Relaxed rules for existing codebase
+    "camelcase": "off",
+    "max-len": ["warn", {code: 120}],
+    "require-jsdoc": "off",
+    "no-tabs": "off",
+    "no-mixed-spaces-and-tabs": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
   },
 };

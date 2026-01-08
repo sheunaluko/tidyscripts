@@ -49,13 +49,14 @@ export const SUPPORTED_MODELS = [
 // Default Settings
 export const DEFAULT_SETTINGS: AppSettings = {
   inputMode: 'voice',
-  aiModel: 'gemini-3-flash-preview',
+  aiModel: 'gpt-5.2',
   autostartAgent: false,
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
   vadThreshold: 0.05,
   vadSilenceDurationMs: 750,
+  useUnstructuredMode: false,
 };
 
 // Advanced Features Password Hash (SHA-256)

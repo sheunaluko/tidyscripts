@@ -28,6 +28,7 @@ export interface AppSettings {
   advancedFeaturesEnabled: boolean;
   vadThreshold: number;
   vadSilenceDurationMs: number;
+  useUnstructuredMode?: boolean; // Toggle between structured/unstructured LLM calls
 }
 
 // Note Template

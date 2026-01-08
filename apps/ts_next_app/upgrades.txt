@@ -1,9 +1,105 @@
-Hello
+Ok
 
-We did lots of great work in apps/laboratory/rai , and I specifically love the menu bar we made there
+the RAI app is working well; however the LLM endpoints are taking a while to run
 
-I want to redesign the tidyscripts index page to have this menu bar , and move the index selection items to it (nested menu for App Library and Laboratory)
+I am wondering if this is because I am unnecessarily using structured inputs.
 
-I want to keep the main layout page however (footer, etc).
+Thus I want to try switching over to simple completioncalls.
 
-Leave space in the middle area of the index page for a custom visualization using three js (simple tidyscripts rotating logo in the center while the component is loading) 
+Crucially ; I want to preserve the current interface in case I want to easily revert back to it.
+
+
+
+For gemini models it looks like this:
+
+const response = await ai.models.generateContent({
+  model: "gemini-2.0-flash",
+  contents: "Write a story about a magic backpack.",
+});
+console.log(response.text);
+
+
+I already implemented a openai api endpoint i think just openai_response (not structured)
+
+For claude:
+
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({
+  apiKey: process.env['ANTHROPIC_API_KEY'], // This is the default and can be omitted
+});
+
+const message = await client.messages.create({
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello, Claude' }],
+  model: 'claude-sonnet-4-5-20250929',
+});
+
+console.log(message.content);
+
+
+----
+
+
+Im also seeing that streaming is supported:
+
+by google:
+
+// Make sure to include the following import:
+// import {GoogleGenAI} from '@google/genai';
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const response = await ai.models.generateContentStream({
+  model: "gemini-2.0-flash",
+  contents: "Write a story about a magic backpack.",
+});
+let text = "";
+for await (const chunk of response) {
+  console.log(chunk.text);
+  text += chunk.text;
+}
+
+
+andby claude:
+
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic();
+
+const stream = await client.messages.create({
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello, Claude' }],
+  model: 'claude-sonnet-4-5-20250929',
+  stream: true,
+});
+for await (const messageStreamEvent of stream) {
+  console.log(messageStreamEvent.type);
+}
+
+
+and by openai
+
+import { OpenAI } from "openai";
+const client = new OpenAI();
+
+const stream = await client.responses.create({
+    model: "gpt-5",
+    input: [
+        {
+            role: "user",
+            content: "Say 'double bubble bath' ten times fast.",
+        },
+    ],
+    stream: true,
+});
+
+for await (const event of stream) {
+    console.log(event);
+}
+
+
+---->
+
+I think I first want to see how the timing performs with the unstructured endpoints , but would also like to be able to test streaming at some point.
+
+In short --- it seems I want to build a multimodel api for structured or unstructured calls with optional streaming for unstructured, with provider detection via model name. the backend will be my vercel functions (need some new ones), and the frontend will be a new class we create for abstracting all of this away - if that makes sense? Then the class can be instantiated with particular parameters ?? i dunno maybe a different architecture is better lets discuss

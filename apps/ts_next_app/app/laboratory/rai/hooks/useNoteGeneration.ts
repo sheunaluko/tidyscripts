@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useRaiStore } from '../store/useRaiStore';
-import { generateNote } from '../lib/noteGenerator';
+import { generateNote, generateNoteUnstructured } from '../lib/noteGenerator';
 import * as tsw from 'tidyscripts_web';
 import { NOTE_GENERATION_SYSTEM_PROMPT } from '../prompts/note_generation_prompt';
 
@@ -44,13 +44,20 @@ export function useNoteGeneration() {
         return entry.text;
       });
 
-      // Generate note
-      const note = await generateNote(
-        settings.aiModel,
-        selectedTemplate.template,
-        collectedText,
-        NOTE_GENERATION_SYSTEM_PROMPT
-      );
+      // Generate note (structured or unstructured based on settings)
+      const note = settings.useUnstructuredMode
+        ? await generateNoteUnstructured(
+            settings.aiModel,
+            selectedTemplate.template,
+            collectedText,
+            NOTE_GENERATION_SYSTEM_PROMPT
+          )
+        : await generateNote(
+            settings.aiModel,
+            selectedTemplate.template,
+            collectedText,
+            NOTE_GENERATION_SYSTEM_PROMPT
+          );
 
       setGeneratedNote(note);
     } catch (error) {
@@ -65,6 +72,7 @@ export function useNoteGeneration() {
     selectedTemplate,
     collectedInformation,
     settings.aiModel,
+    settings.useUnstructuredMode,
     setGeneratedNote,
     setNoteGenerationLoading,
     setNoteGenerationError,

@@ -1,13 +1,10 @@
-/** @type {import('next').NextConfig} */
+// @ts-check
+ 
+/**
+ * @type {import('next').NextConfig}
+ */
 const nextConfig = {
-  webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      config.devtool = 'eval-source-map';
-    }
-    return config;
-  },
-
-};
-
-
-export default nextConfig;
+  /* config options here */
+}
+ 
+export default nextConfig

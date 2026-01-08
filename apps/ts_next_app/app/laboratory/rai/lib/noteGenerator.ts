@@ -135,10 +135,11 @@ ${syntaxInstructions}
    - Apply the appropriate conditional logic based on the variable's state
    - Substitute with the correct text
 
-4. Format as clean, professional markdown for medical documentation
+4. Format as clean, professional plain text for medical documentation
 5. Preserve the natural flow of the note
+6. PRESERVE any [ ] brackets in the template exactly as they appear - these are todo items that must remain intact
 
-Output only the completed note with all substitutions made.`;
+IMPORTANT: Output ONLY the completed note as plain text. Do NOT use markdown syntax (no **, ##, -, backticks, etc.). Do NOT wrap your response in code blocks or fences. Do NOT include any preamble, explanation, or meta-commentary. Start directly with the note content in plain text format.`;
 
   return {
     system: systemPrompt,
@@ -247,6 +248,72 @@ export async function generateNote(
 }
 
 /**
+ * Generate note using unstructured LLM API (faster, no schema)
+ * Alternative to generateNote() for testing performance
+ */
+export async function generateNoteUnstructured(
+  model: string,
+  template: string,
+  collectedText: string[],
+  systemPrompt: string,
+  retries: number = 3
+): Promise<string> {
+  const { createUnstructuredClient } = await import('./llmClient');
+
+  const provider = getProviderFromModel(model);
+  const endpoint = getEndpointForProvider(provider).replace('_structured_', '_');
+  const { system, user } = buildNotePrompt(systemPrompt, template, collectedText);
+
+  debug.add('note_generation_unstructured_request', {
+    model,
+    provider,
+    endpoint,
+    templateLength: template.length,
+    collectedTextCount: collectedText.length,
+  });
+
+  debug.add('note_generation_unstructured_prompt', { system, user });
+
+  const client = createUnstructuredClient();
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      log(`Generating note (unstructured) with ${model} (attempt ${attempt + 1}/${retries})...`);
+
+      const noteText = await client.sendUnstructured({
+        model,
+        input: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        max_tokens: 4096,
+      });
+
+      debug.add('note_generation_unstructured_success', {
+        noteLength: noteText.length,
+      });
+
+      log('Note generated successfully (unstructured mode)');
+      return noteText;
+
+    } catch (error) {
+      log(`Error generating note (unstructured, attempt ${attempt + 1}):`);
+      log(error);
+
+      if (attempt === retries - 1) {
+        debug.add('note_generation_unstructured_failed', { error: String(error) });
+        throw error;
+      }
+
+      // Exponential backoff
+      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+
+  throw new Error('Failed to generate note (unstructured) after all retries');
+}
+
+/**
  * Format transcribed text using GPT-5-nano
  * Fixes grammatical errors and adds proper punctuation
  * Uses simple OpenAI Responses API for speed
@@ -274,8 +341,10 @@ export async function formatTranscriptText(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
-          instructions,
-          input,
+          input: [
+            { role: 'system', content: instructions },
+            { role: 'user', content: input },
+          ],
         }),
       });
 

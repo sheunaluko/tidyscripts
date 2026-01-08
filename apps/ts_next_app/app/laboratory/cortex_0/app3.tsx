@@ -42,6 +42,7 @@ import {
     ListItemText
 } from "@mui/material"
 
+import * as onnx from "./src/onnx" 
 
 import * as fb from "../../../src/firebase" ;
 
@@ -117,7 +118,7 @@ const  Component: NextPage = (props : any) => {
     const theme = useTheme() ;
 
     // Mode state: 'voice' or 'chat'
-    const [mode, setMode] = useState<'voice' | 'chat'>('chat');
+    const [mode, setMode] = useState<'voice' | 'chat'>('voice');
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     // Chat mode state
@@ -144,7 +145,6 @@ const  Component: NextPage = (props : any) => {
     const [last_ai_message, set_last_ai_message] = useState("" as string);
     const last_ai_message_ref = React.useRef(last_ai_message) 
     
-    const [transcription_similarity_threshold, set_transcription_similarity_threshold] = useState(0.7);
     const [interim_result, set_interim_result] = useState("" as string);            
 
     const init_thoughts : string[] = []  ; 
@@ -334,7 +334,8 @@ const  Component: NextPage = (props : any) => {
 	    last_ai_message,
 	    last_ai_message_ref,
 	    COR,
-	    cu : cortex_utils, 
+	    cu : cortex_utils,
+	    onnx 
 	    
 	}) ;
 
@@ -429,40 +430,6 @@ const  Component: NextPage = (props : any) => {
     let transcription_cb = (async function(text : string , ) {
 
 	log(`tcb: ${text}`)	
-
-	/*
-	   The system may have detected its own output, so we check for that
-	   This is only the case though if vi.listen_while_speaking == true //continues listening 
-	 */
-
-	if (vi.listen_while_speaking) {
-	    log(`Listening while speaking, so will check...`)
-
-	    let sim  = cortex_utils.string_similarity(text.trim() , last_ai_message_ref.current) ;
-
-	    if (sim > transcription_similarity_threshold ) {
-		log(`Detected similarity (${sim}) > threshold (${transcription_similarity_threshold})`)
-		log(`Thus will ignore it :)`)
-		return 
-	    }
-
-	    if (text.trim().toLowerCase().includes("stop") && !last_ai_message_ref.current.toLowerCase().includes("stop") )  {
-		log(`Detected unique "stop" inside transcription`)
-
-		if (! vi.tts.tts().speaking) {
-		    log(`AI is speaking`) 
-		    vi.tts.cancel_speech()
-		    vi.pause_recognition();
-		    add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop". Do not respond until I prompt you again`) 
-
-		    
-		    return ; 
-		}
-
-	    }
-
-	}
-
 
 	/*
            This is where I need to pass the transcript Dynamically either to: 

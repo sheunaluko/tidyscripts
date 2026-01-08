@@ -18,6 +18,7 @@ import {
   LibraryMusic as LibraryMusicIcon,
   RecordVoiceOver as RecordVoiceOverIcon,
   Description as DescriptionIcon,
+  ViewComfy as ViewComfyIcon,
 } from '@mui/icons-material';
 
 export interface MenuItem {
@@ -127,6 +128,12 @@ export const INDEX_MENU_ITEMS: MenuItem[] = [
         label: 'Note Wrangler',
         icon: DescriptionIcon,
         href: '/laboratory/note_wrangler',
+      },
+      {
+        id: 'component-viewer',
+        label: 'Component Viewer',
+        icon: ViewComfyIcon,
+        href: '/laboratory/component_viewer',
       },
     ],
   },

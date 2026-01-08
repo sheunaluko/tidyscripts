@@ -1,0 +1,31 @@
+{
+  "name": "ts_vad",
+  "version": "1.0.0",
+  "description": "Minimal, modular Voice Activity Detection library for the browser",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "vad",
+    "voice-activity-detection",
+    "speech-detection",
+    "silero",
+    "onnx",
+    "audio",
+    "webrtc"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "onnxruntime-web": "^1.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/audioworklet": "^0.0.36"
+  }
+}
