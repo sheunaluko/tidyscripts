@@ -17,7 +17,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CodeIcon from '@mui/icons-material/Code';
 import { alpha, useTheme } from '@mui/material/styles';
-import { VoiceInterface } from '../components/voice_interface';
+import { Tivi } from '../components/tivi';
 
 interface ComponentDemo {
   name: string;
@@ -36,34 +36,63 @@ export const ComponentViewerClient = () => {
   // Component demos registry
   const demos: ComponentDemo[] = [
     {
-      name: 'Interruptible Voice Interface',
+      name: 'Tidyscripts Voice Interface (tivi)',
       category: 'voice',
-      description: 'VAD-based voice interface with automatic TTS interruption (uses ephemeral tokens)',
+      description: 'Voice-only interface with VAD-based TTS interruption, speech recognition, and text-to-speech. Self-contained component extracted from cortex_0.',
       component: (
-        <VoiceInterface
+        <Tivi
           onTranscription={(text) => console.log('Transcription:', text)}
-          onInterrupt={() => console.log('Interrupted!')}
+          onInterrupt={() => console.log('TTS Interrupted!')}
+          positiveSpeechThreshold={0.3}
+          negativeSpeechThreshold={0.25}
+          minSpeechMs={400}
         />
       ),
-      code: `<VoiceInterface
-  onTranscription={(text) => console.log('Transcription:', text)}
+      code: `<Tivi
+  onTranscription={(text) => console.log(text)}
   onInterrupt={() => console.log('Interrupted!')}
+  positiveSpeechThreshold={0.3}
 />`,
       props: [
         {
-          name: 'vadType',
-          type: "'semantic_vad' | 'server_vad'",
-          description: 'Type of Voice Activity Detection (default: semantic_vad)',
-        },
-        {
           name: 'onTranscription',
           type: '(text: string) => void',
-          description: 'Callback fired when speech is transcribed',
+          description: 'Callback when speech is transcribed',
         },
         {
           name: 'onInterrupt',
           type: '() => void',
-          description: 'Callback fired when TTS is interrupted by user speech',
+          description: 'Callback when TTS is interrupted by user speech',
+        },
+        {
+          name: 'onAudioLevel',
+          type: '(level: number) => void',
+          description: 'Callback for audio power level (0-1) for visualization',
+        },
+        {
+          name: 'positiveSpeechThreshold',
+          type: 'number',
+          description: 'VAD speech detection threshold (0-1). Default: 0.3',
+        },
+        {
+          name: 'negativeSpeechThreshold',
+          type: 'number',
+          description: 'VAD silence detection threshold (0-1). Default: 0.25',
+        },
+        {
+          name: 'minSpeechMs',
+          type: 'number',
+          description: 'Minimum speech duration in ms. Default: 400',
+        },
+        {
+          name: 'language',
+          type: 'string',
+          description: 'Speech recognition language. Default: "en-US"',
+        },
+        {
+          name: 'verbose',
+          type: 'boolean',
+          description: 'Enable verbose logging. Default: false',
         },
       ],
     },

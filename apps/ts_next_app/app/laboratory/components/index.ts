@@ -1,4 +1,4 @@
 // Voice components
-export * from './voice_interface';
+export * from './tivi';
 
 // Add other component exports here as you create them

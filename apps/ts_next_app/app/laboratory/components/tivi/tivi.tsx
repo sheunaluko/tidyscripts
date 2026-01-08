@@ -15,170 +15,151 @@ import {
   Collapse,
   Checkbox,
   FormControlLabel,
+  LinearProgress,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import StopIcon from '@mui/icons-material/Stop';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { alpha, useTheme } from '@mui/material/styles';
-import { useInterruptibleVoice } from './lib';
+import { useTivi } from './lib';
+import type { TiviProps } from './lib';
 import * as tsw from 'tidyscripts_web';
 
-export interface VoiceInterfaceProps {
-  /**
-   * Callback when transcription is completed
-   */
-  onTranscription?: (text: string) => void;
-
-  /**
-   * Callback when TTS is interrupted
-   */
-  onInterrupt?: () => void;
-
-  // Silero VAD Configuration (optional - uses sensible defaults)
-  /**
-   * Speech detection sensitivity (0-1). Lower = more sensitive.
-   * Default: 0.3
-   */
-  positiveSpeechThreshold?: number;
-
-  /**
-   * Silence detection threshold (0-1).
-   * Default: 0.25
-   */
-  negativeSpeechThreshold?: number;
-
-  /**
-   * Minimum speech duration in ms to trigger transcription.
-   * Default: 400
-   */
-  minSpeechMs?: number;
-
-  /**
-   * Language for WebSpeech API transcription (e.g., 'en-US', 'es-ES').
-   * Default: 'en-US'
-   */
-  language?: string;
-}
+const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
 /**
- * VoiceInterface - Test component for client-side interruptible voice
+ * Tivi - Tidyscripts Voice Interface Component
  *
  * Features:
- * - Client-side VAD using Silero VAD v5 (no server required!)
+ * - VAD-based voice activity detection using Silero VAD v5
  * - Browser speech recognition via WebSpeech API
- * - Display transcription (interim + final)
- * - Test TTS button to trigger cortex speech
- * - Visual feedback for interruptions
- * - Connection status display
- * - Fully offline-capable after initial load
+ * - Text-to-speech with automatic interruption on user speech
+ * - Real-time audio level visualization
+ * - Adjustable VAD parameters with localStorage persistence
  *
  * @example
  * ```tsx
- * <VoiceInterface
+ * <Tivi
  *   onTranscription={(text) => console.log(text)}
  *   onInterrupt={() => console.log('Interrupted!')}
- *   positiveSpeechThreshold={0.3}  // Optional: tune VAD sensitivity
+ *   positiveSpeechThreshold={0.3}
  * />
  * ```
  */
-export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
+export const Tivi: React.FC<TiviProps> = ({
   onTranscription,
   onInterrupt,
-  positiveSpeechThreshold,
-  negativeSpeechThreshold,
-  minSpeechMs,
+  onAudioLevel,
+  onError,
+  positiveSpeechThreshold: propPositiveThreshold,
+  negativeSpeechThreshold: propNegativeThreshold,
+  minSpeechMs: propMinSpeechMs,
   language,
 }) => {
   const theme = useTheme();
 
   // Local state
-  const [testTTSText, setTestTTSText] = useState('Hello! This is a test of the text to speech system. Try speaking while I am talking to interrupt me.');
+  const [testTTSText, setTestTTSText] = useState(
+    'Hello! This is a test of the text to speech system. Try speaking while I am talking to interrupt me.'
+  );
   const [interruptCount, setInterruptCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
   // VAD parameters with localStorage persistence
   const [vadParams, setVadParams] = useState({
-    positiveSpeechThreshold: positiveSpeechThreshold ?? 0.9,
-    negativeSpeechThreshold: negativeSpeechThreshold ?? 0.65,
-    minSpeechMs: minSpeechMs ?? 500,
+    positiveSpeechThreshold: propPositiveThreshold ?? 0.7,
+    negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
+    minSpeechMs: propMinSpeechMs ?? 400,
     verbose: false,
   });
 
   // Load VAD parameters from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem('vad-params');
+    const stored = localStorage.getItem('tivi-vad-params');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         setVadParams(parsed);
       } catch (error) {
-        console.error('[VoiceInterface] Failed to parse stored VAD params:', error);
+        console.error('[Tivi] Failed to parse stored VAD params:', error);
       }
     }
   }, []);
 
   // Save VAD parameters to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('vad-params', JSON.stringify(vadParams));
+    localStorage.setItem('tivi-vad-params', JSON.stringify(vadParams));
   }, [vadParams]);
 
   // Update VAD parameter
-  const updateVadParam = useCallback((key: keyof typeof vadParams, value: number) => {
-    setVadParams(prev => ({ ...prev, [key]: value }));
+  const updateVadParam = useCallback((key: keyof typeof vadParams, value: number | boolean) => {
+    setVadParams((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // Memoize callbacks to prevent WebSpeech re-initialization on every render
+  // Restore VAD parameters to defaults
+  const restoreDefaults = useCallback(() => {
+    const defaults = {
+      positiveSpeechThreshold: 0.7,
+      negativeSpeechThreshold: 0.45,
+      minSpeechMs: 400,
+      verbose: false,
+    };
+    setVadParams(defaults);
+    localStorage.setItem('tivi-vad-params', JSON.stringify(defaults));
+    log('Restored VAD defaults');
+  }, []);
+
+  // Memoize callbacks
   const handleTranscription = useCallback(
     (text: string) => {
-      console.log('[VoiceInterface] Transcription:', text);
+      log(`Transcription: ${text}`);
       onTranscription?.(text);
     },
     [onTranscription]
   );
 
   const handleInterrupt = useCallback(() => {
-    console.log('[VoiceInterface] Interrupted!');
+    log('Interrupted!');
     setInterruptCount((prev) => prev + 1);
     onInterrupt?.();
   }, [onInterrupt]);
 
-  const handleError = useCallback((error: Error) => {
-    console.error('[VoiceInterface] Error:', error);
-  }, []);
+  const handleAudioLevel = useCallback(
+    (level: number) => {
+      onAudioLevel?.(level);
+    },
+    [onAudioLevel]
+  );
 
-  // Use the interruptible voice hook with Silero VAD
-  const voice = useInterruptibleVoice({
-    // VAD parameters from state (persisted in localStorage)
+  const handleError = useCallback(
+    (error: Error) => {
+      console.error('[Tivi] Error:', error);
+      onError?.(error);
+    },
+    [onError]
+  );
+
+  // Use the tivi hook with VAD
+  const voice = useTivi({
     positiveSpeechThreshold: vadParams.positiveSpeechThreshold,
     negativeSpeechThreshold: vadParams.negativeSpeechThreshold,
     minSpeechMs: vadParams.minSpeechMs,
     verbose: vadParams.verbose,
     language,
-
-    // Callbacks
     onTranscription: handleTranscription,
     onInterrupt: handleInterrupt,
+    onAudioLevel: handleAudioLevel,
     onError: handleError,
   });
 
   /**
-   * Test TTS function - triggers tidyscripts TTS
+   * Test TTS function
    */
   const handleTestTTS = () => {
-    try {
-      const vi = tsw?.util?.voice_interface;
-      if (vi?.speak) {
-        vi.speak(testTTSText);
-      } else {
-        console.warn('[VoiceInterface] speak function not available');
-        alert('tidyscripts TTS speak() function not available.');
-      }
-    } catch (error) {
-      console.error('[VoiceInterface] TTS error:', error);
-      alert('Error calling tidyscripts TTS: ' + (error as Error).message);
+    if (testTTSText.trim()) {
+      voice.speak(testTTSText, 1.0);
     }
   };
 
@@ -188,7 +169,10 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
       sx={{
         p: 3,
         borderRadius: 2,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(
+          theme.palette.secondary.main,
+          0.05
+        )} 100%)`,
         border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         maxWidth: 800,
         margin: '0 auto',
@@ -198,7 +182,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" color="primary" fontWeight="bold">
-            Interruptible Voice Interface
+            Tidyscripts Voice Interface (tivi)
           </Typography>
           <Stack direction="row" spacing={1}>
             <Chip
@@ -207,11 +191,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
               size="small"
             />
             {interruptCount > 0 && (
-              <Chip
-                label={`Interruptions: ${interruptCount}`}
-                color="warning"
-                size="small"
-              />
+              <Chip label={`Interruptions: ${interruptCount}`} color="warning" size="small" />
             )}
           </Stack>
         </Box>
@@ -225,42 +205,58 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
             border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box display="flex" alignItems="center" gap={1}>
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  background: voice.isListening
-                    ? theme.palette.success.main
-                    : theme.palette.grey[400],
-                  animation: voice.isListening ? 'pulse 1.5s infinite' : 'none',
-                  '@keyframes pulse': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0.5 },
-                  },
-                }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {voice.isListening ? 'Listening' : 'Idle'}
-              </Typography>
-            </Box>
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: voice.isListening
+                      ? theme.palette.success.main
+                      : theme.palette.grey[400],
+                    animation: voice.isListening ? 'pulse 1.5s infinite' : 'none',
+                    '@keyframes pulse': {
+                      '0%, 100%': { opacity: 1 },
+                      '50%': { opacity: 0.5 },
+                    },
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {voice.isListening ? 'Listening' : 'Idle'}
+                </Typography>
+              </Box>
 
-            <Box display="flex" alignItems="center" gap={1}>
-              <Box
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: voice.isSpeaking ? theme.palette.info.main : theme.palette.grey[400],
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {voice.isSpeaking ? 'Speaking' : 'Silent'}
+                </Typography>
+              </Box>
+            </Stack>
+
+            {/* Audio Level Visualization */}
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Audio Level
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(voice.audioLevel * 1000, 100)}
                 sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  background: voice.isSpeaking
-                    ? theme.palette.info.main
-                    : theme.palette.grey[400],
+                  height: 8,
+                  borderRadius: 1,
+                  backgroundColor: alpha(theme.palette.grey[400], 0.3),
                 }}
               />
-              <Typography variant="body2" color="text.secondary">
-                {voice.isSpeaking ? 'Speaking' : 'Silent'}
-              </Typography>
             </Box>
           </Stack>
         </Box>
@@ -398,8 +394,10 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
                   </Typography>
                   <Slider
                     value={vadParams.positiveSpeechThreshold}
-                    onChange={(_, value) => updateVadParam('positiveSpeechThreshold', value as number)}
-                    min={0.5}
+                    onChange={(_, value) =>
+                      updateVadParam('positiveSpeechThreshold', value as number)
+                    }
+                    min={0.1}
                     max={0.95}
                     step={0.05}
                     marks
@@ -418,8 +416,10 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
                   </Typography>
                   <Slider
                     value={vadParams.negativeSpeechThreshold}
-                    onChange={(_, value) => updateVadParam('negativeSpeechThreshold', value as number)}
-                    min={0.35}
+                    onChange={(_, value) =>
+                      updateVadParam('negativeSpeechThreshold', value as number)
+                    }
+                    min={0.05}
                     max={0.8}
                     step={0.05}
                     marks
@@ -453,7 +453,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
                   control={
                     <Checkbox
                       checked={vadParams.verbose}
-                      onChange={(e) => updateVadParam('verbose', e.target.checked ? 1 : 0)}
+                      onChange={(e) => updateVadParam('verbose', e.target.checked)}
                     />
                   }
                   label={
@@ -462,6 +462,18 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
                     </Typography>
                   }
                 />
+
+                {/* Restore Defaults Button */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  onClick={restoreDefaults}
+                  disabled={voice.isListening}
+                  sx={{ mt: 1 }}
+                >
+                  Restore Defaults (0.7 / 0.45 / 400ms)
+                </Button>
 
                 <Alert severity="info" sx={{ mt: 2 }}>
                   <Typography variant="caption">
@@ -479,4 +491,4 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
   );
 };
 
-export default VoiceInterface;
+export default Tivi;
