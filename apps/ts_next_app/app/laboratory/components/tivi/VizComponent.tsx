@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import * as tsw from 'tidyscripts_web';
@@ -45,7 +45,7 @@ function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[
 /**
  * Create a Bokeh scatter plot for visualization
  */
-function createVizPlot(bgc: string) {
+function createVizPlot(paperColor: string) {
   const x = [0];
   const y = [0];
   const source = new Bokeh.ColumnDataSource({ data: { x, y } });
@@ -60,8 +60,17 @@ function createVizPlot(bgc: string) {
   ops.x_range = new Bokeh.Range1d({ start: -1, end: 1 });
 
   const plot = new Bokeh.Plot(ops);
-  plot.background_fill_color = bgc;
-  plot.border_fill_color = bgc;
+
+  // Proper MUI theme mapping per Bokeh+MUI best practices:
+  plot.background_fill_color = paperColor;  // Main canvas background
+  plot.border_fill_color = null;            // Transparent - let container show through
+  plot.outline_line_color = null;           // No outline
+
+  // Collapse all external margins for seamless integration
+  plot.min_border_left = 0;
+  plot.min_border_right = 0;
+  plot.min_border_top = 0;
+  plot.min_border_bottom = 0;
 
   plot.toolbar.logo = null;
   plot.toolbar_location = null;
@@ -85,49 +94,63 @@ function createVizPlot(bgc: string) {
 export const VizComponent: React.FC<VizComponentProps> = ({ audioLevel }) => {
   const theme = useTheme();
   const sourceRef = useRef<any>(null);
-  const initializingRef = useRef(false);
+  const plotRef = useRef<any>(null);
+  const [bokehReady, setBokehReady] = useState(false);
 
-  // Initialize Bokeh plot
+  // Load Bokeh scripts once on mount
   useEffect(() => {
-    if (initializingRef.current) return;
-    initializingRef.current = true;
-
-    async function initViz() {
+    async function loadBokeh() {
       try {
-        log('Initializing Bokeh visualization...');
-
-        // Load Bokeh scripts if not already loaded
+        log('Loading Bokeh scripts...');
         if (!window.Bokeh) {
           await tsw.apis.bokeh.load_bokeh_scripts();
         }
-
-        if (!window.Bokeh) {
+        if (window.Bokeh) {
+          setBokehReady(true);
+          log('Bokeh ready');
+        } else {
           log('Bokeh failed to load');
-          return;
-        }
-
-        // Create the plot
-        const bgc = theme.palette.background.default;
-        const { plot, source } = createVizPlot(bgc);
-        sourceRef.current = source;
-
-        // Render the plot
-        const vizElement = document.getElementById('tivi-viz');
-        if (vizElement) {
-          Bokeh.Plotting.show(plot, vizElement);
-          log('Visualization initialized');
         }
       } catch (error) {
-        console.error('[tivi-viz] Failed to initialize:', error);
+        console.error('[tivi-viz] Failed to load Bokeh:', error);
+      }
+    }
+    loadBokeh();
+  }, []);
+
+  // Create/recreate plot when Bokeh is ready or theme changes
+  useEffect(() => {
+    if (!bokehReady) return;
+
+    async function createPlot() {
+      try {
+        log('Creating Bokeh plot with theme...');
+
+        // Clear previous plot if exists
+        const vizElement = document.getElementById('tivi-viz');
+        if (vizElement) {
+          vizElement.innerHTML = '';
+        }
+
+        // Create the plot with proper MUI theme colors
+        const paperColor = theme.palette.background.paper;
+        const { plot, source } = createVizPlot(paperColor);
+        sourceRef.current = source;
+        plotRef.current = plot;
+
+        // Render the plot
+        if (vizElement) {
+          window.Bokeh.Plotting.show(plot, vizElement);
+          log(`Visualization rendered with theme (paper: ${paperColor})`);
+        }
+      } catch (error) {
+        console.error('[tivi-viz] Failed to create plot:', error);
       }
     }
 
-    initViz();
+    createPlot();
+  }, [bokehReady, theme.palette.background.paper]);
 
-    return () => {
-      initializingRef.current = false;
-    };
-  }, [theme.palette.background.default]);
 
   // Update visualization based on audio level
   useEffect(() => {
@@ -153,6 +176,7 @@ export const VizComponent: React.FC<VizComponentProps> = ({ audioLevel }) => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: 120,
+        background: theme.palette.background.paper,
       }}
     />
   );

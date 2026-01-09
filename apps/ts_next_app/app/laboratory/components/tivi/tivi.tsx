@@ -15,17 +15,22 @@ import {
   Collapse,
   Checkbox,
   FormControlLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useTivi } from './lib';
 import type { TiviProps } from './lib';
 import * as tsw from 'tidyscripts_web';
 import { VizComponent } from './VizComponent';
+import { VoiceSelector } from './VoiceSelector';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
@@ -273,6 +278,34 @@ export const Tivi: React.FC<TiviProps> = ({
             <DeleteIcon />
           </IconButton>
         </Box>
+
+        {/* Voice Selector */}
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              background: alpha(theme.palette.background.default, 0.3),
+              '&:hover': {
+                background: alpha(theme.palette.background.default, 0.5),
+              },
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1}>
+              <VolumeUpIcon color="action" />
+              <Typography variant="body2" fontWeight={500}>
+                Voice Selector
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{
+              background: alpha(theme.palette.background.default, 0.1),
+              pt: 2,
+            }}
+          >
+            <VoiceSelector />
+          </AccordionDetails>
+        </Accordion>
 
         {/* Test TTS Controls */}
         <Box>

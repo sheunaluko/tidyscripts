@@ -9,9 +9,9 @@ import { TSVAD } from './ts_vad/src';
 import { enable_vad } from './onnx';
 import type { UseTiviOptions, UseTiviReturn } from './types';
 import * as tsw from 'tidyscripts_web';
+import * as tts from './tts';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
-const vi = tsw.util.voice_interface;
 
 export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const {
@@ -42,9 +42,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const recognitionActiveRef = useRef(false);
   const isMountedRef = useRef(true);
 
-  // Track mounted state
+  // Track mounted state and pre-load TTS voices
   useEffect(() => {
     isMountedRef.current = true;
+
+    // Pre-load TTS voices to fix voice-switching issue on first utterance
+    tts.waitForVoices().catch((err) => {
+      log('Failed to pre-load TTS voices:', err);
+    });
+
     return () => {
       // Cleanup on unmount
       isMountedRef.current = false;
@@ -150,9 +156,9 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
           log(`VAD detected speech start with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
 
           /* If TTS is speaking, interrupt it!
-          if (vi.tts.is_speaking()) {
+          if (tts.isSpeaking()) {
             log('Interrupting TTS');
-            vi.tts.cancel_speech();
+            tts.cancelSpeech();
             onInterrupt?.();
           }
 
@@ -251,7 +257,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const speak = useCallback(async (text: string, rate: number = 1.0) => {
     setIsSpeaking(true);
     try {
-      await vi.speak_with_rate(text, rate);
+      await tts.speakWithRate(text, rate);
     } finally {
       setIsSpeaking(false);
     }

@@ -10,5 +10,6 @@
 
 export { Tivi } from './tivi';
 export { useTivi } from './lib';
+export { VoiceSelector } from './VoiceSelector';
 export type { TiviProps, UseTiviOptions, UseTiviReturn } from './lib';
 export { default } from './tivi';
