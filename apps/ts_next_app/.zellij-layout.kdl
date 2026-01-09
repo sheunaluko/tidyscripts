@@ -1,0 +1,47 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+
+    tab name="dev" focus=true {
+        pane split_direction="vertical" {
+            pane name="emacs" {
+                command "emacs"
+		args "-nw" "."
+            }
+            pane split_direction="horizontal" {
+                pane name="shell" focus=true
+                pane name="dev-server" {
+                    command "npm"
+                    args "run" "dev"
+                }
+                pane name="type-check" {
+                    command "sh"
+                    args "-c" "sleep 5 && npm run type-check:watch"
+                }
+            }
+        }
+    }
+
+    tab name="firebase" {
+        pane split_direction="vertical" {
+            pane name="emacs" {
+                command "emacs"
+                args "-nw" "."
+            }
+            pane split_direction="horizontal" {
+                pane name="shell" focus=true
+                pane name="firebase-dev" {
+                    command "sh"
+                    args "-c" "cd ../firebase && ./dev"
+                }
+            }
+        }
+    }
+}

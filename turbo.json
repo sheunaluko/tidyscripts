@@ -18,7 +18,8 @@
 	    "dependsOn": [ "docs#build" ],
 	    "outputs": [
 		".next/**"
-	    ]
+	    ],
+	    "inputs": ["$TURBO_DEFAULT$", "!generated/**"]
 	},
 	"docs#build": {
 	    "dependsOn": [ 

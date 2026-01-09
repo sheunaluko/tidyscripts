@@ -1,0 +1,3 @@
+#!/bin/bash
+# Fast build with Turborepo caching
+cd "$(dirname "$0")/../../.." && turbo run build --filter=ts_next_app

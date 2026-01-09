@@ -2,7 +2,7 @@
 
 import * as common from "tidyscripts_common";
 import * as tsw from "tidyscripts_web";
-import { TSVAD } from "./ts_vad/src";
+import { TSVAD } from "../../components/tivi/lib/ts_vad/src";
 
 const log = common.logger.get_logger({ id: "onnx" });
 
