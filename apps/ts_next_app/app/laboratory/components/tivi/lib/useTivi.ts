@@ -7,12 +7,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TSVAD } from './ts_vad/src';
 import { enable_vad } from './onnx';
-import * as vi from './tsw/voice_interface';
-import * as wa from './tsw/web_audio';
 import type { UseTiviOptions, UseTiviReturn } from './types';
 import * as tsw from 'tidyscripts_web';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
+const vi = tsw.util.voice_interface;
 
 export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const {
@@ -38,6 +37,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
   // Refs
   const vadRef = useRef<TSVAD | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const recognitionActiveRef = useRef(false);
   const isMountedRef = useRef(true);
 
@@ -48,7 +49,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       // Cleanup on unmount
       isMountedRef.current = false;
       vadRef.current?.stop();
-      vi.stop_recognition();
+      //vi.stop_recognition();
       recognitionActiveRef.current = false;
     };
   }, []);
@@ -105,6 +106,34 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     };
   }, [onAudioLevel]);
 
+  // Power monitoring function using VAD's analyser
+  const startPowerMonitoring = useCallback((analyser: AnalyserNode) => {
+    const dataArray = new Float32Array(analyser.fftSize);
+
+    function calculatePower() {
+      if (!analyserRef.current || !isMountedRef.current) return;
+
+      analyser.getFloatTimeDomainData(dataArray);
+
+      // Calculate RMS power
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i] * dataArray[i];
+      }
+      const rms = Math.sqrt(sum / dataArray.length);
+
+      // Dispatch event for compatibility with existing viz
+      window.dispatchEvent(
+        new CustomEvent('tidyscripts_web_mic', { detail: rms })
+      );
+
+      // Continue at 60 FPS
+      animationFrameRef.current = requestAnimationFrame(calculatePower);
+    }
+
+    calculatePower();
+  }, []);
+
   // Public API
   const startListening = useCallback(async () => {
     try {
@@ -114,13 +143,13 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       // Log the VAD parameters being used
       log(`Starting VAD with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
 
-      // Enable VAD FIRST (matches cortex_0 order)
-      const vad = await enable_vad({
+      // Enable VAD and get audio components
+      const { vad, audioContext, analyserNode, stream } = await enable_vad({
         onSpeechStart: async () => {
           if (!isMountedRef.current) return;
           log(`VAD detected speech start with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
 
-          // CRITICAL: If TTS is speaking, interrupt it!
+          /* If TTS is speaking, interrupt it!
           if (vi.tts.is_speaking()) {
             log('Interrupting TTS');
             vi.tts.cancel_speech();
@@ -130,10 +159,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
           // Start WebSpeech recognition (VAD-triggered)
           if (!recognitionActiveRef.current) {
             log('Starting speech recognition');
-            await vi.initialize_recognition({ language });
+            await vi.initialize_recognition();
             await vi.start_recognition();
             recognitionActiveRef.current = true;
           }
+
+	    */
+
+
+	    
         },
 
         onSpeechEnd: (audio: Float32Array) => {
@@ -141,13 +175,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
           log(`VAD detected speech end, audio length: ${audio.length}`);
 
           // Give WebSpeech time to process final words, then pause
-          setTimeout(() => {
+            setTimeout(() => {
+		/*
             if (recognitionActiveRef.current && isMountedRef.current) {
               log('Pausing speech recognition');
               vi.pause_recognition();
               recognitionActiveRef.current = false;
             }
-          }, 500);
+		*/
+          }, 2000);
         },
 
         onFrameProcessed: (prob, frame) => {
@@ -171,10 +207,11 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       });
 
       vadRef.current = vad;
+      analyserRef.current = analyserNode;
       setIsConnected(true);
 
-      // THEN initialize microphone and audio power monitoring
-      await wa.initialize_microphone();
+      // Start power monitoring using VAD's analyser
+      startPowerMonitoring(analyserNode);
 
       setIsListening(true);
       log('Listening started');
@@ -185,10 +222,17 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setError(errorMsg);
       onError?.(err instanceof Error ? err : new Error(errorMsg));
     }
-  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechMs]);
+  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechMs, startPowerMonitoring]);
 
   const stopListening = useCallback(() => {
     log('Stopping listening...');
+
+    // Stop power monitoring
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    analyserRef.current = null;
 
     // Stop and clean up VAD
     vadRef.current?.stop();
@@ -197,7 +241,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
     // Stop speech recognition if active
     if (recognitionActiveRef.current) {
-      vi.pause_recognition();
+      //vi.pause_recognition();
       recognitionActiveRef.current = false;
     }
 

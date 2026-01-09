@@ -54,7 +54,12 @@ export async function enable_vad(options: {
   redemptionMs?: number;
   preSpeechPadMs?: number;
   minSpeechMs?: number;
-}) {
+}): Promise<{
+  vad: TSVAD;
+  audioContext: AudioContext;
+  analyserNode: AnalyserNode;
+  stream: MediaStream;
+}> {
   log('Enabling VAD...');
   const ortRuntime = await getOnnxRuntime();
   const silero = await get_silero_session();
@@ -73,9 +78,19 @@ export async function enable_vad(options: {
     minSpeechMs: options.minSpeechMs ?? 400,
   });
 
-  vad.start();
+  await vad.start();
+
+  // Get audio components from VAD
+  const audioContext = vad.getAudioContext();
+  const analyserNode = vad.getAnalyserNode();
+  const stream = vad.getStream();
+
+  if (!audioContext || !analyserNode || !stream) {
+    throw new Error('Failed to initialize VAD audio pipeline');
+  }
+
   log('VAD enabled and started');
-  return vad;
+  return { vad, audioContext, analyserNode, stream };
 }
 
 export { TSVAD };

@@ -46,7 +46,9 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
   private audioContext: AudioContext | null = null;
   private stream: MediaStream | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
+  private analyserNode: AnalyserNode | null = null;
   private workletNode: AudioWorkletNode | null = null;
+  private gainNode: GainNode | null = null;
   private workletBlobUrl: string | null = null;
 
   constructor(options: TSVADOptions) {
@@ -130,12 +132,24 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
           mediaStream: this.stream,
         });
 
-        // Connect nodes
-        this.sourceNode.connect(this.workletNode);
+        // Create analyser node for power monitoring
+        this.analyserNode = this.audioContext.createAnalyser();
+        this.analyserNode.fftSize = 2048;
+
+        // Create gain node set to 0 (silent) to connect to destination
+        // This ensures browser applies echo cancellation properly
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.gain.value = 0;
+
+        // Connect nodes: source → analyser → worklet → gain(0) → destination
+        this.sourceNode.connect(this.analyserNode);
+        this.analyserNode.connect(this.workletNode);
+        this.workletNode.connect(this.gainNode);
+        this.gainNode.connect(this.audioContext.destination);
       } else {
         // Resuming from pause - reconnect existing stream
-        if (!this.audioContext || !this.stream) {
-          throw new Error('Cannot resume - audio context or stream not available');
+        if (!this.audioContext || !this.stream || !this.analyserNode || !this.gainNode) {
+          throw new Error('Cannot resume - audio context, stream, analyser, or gain node not available');
         }
 
         // Recreate source node
@@ -143,8 +157,11 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
           mediaStream: this.stream,
         });
 
-        // Reconnect
-        this.sourceNode.connect(this.workletNode!);
+        // Reconnect: source → analyser → worklet → gain(0) → destination
+        this.sourceNode.connect(this.analyserNode);
+        this.analyserNode.connect(this.workletNode!);
+        this.workletNode!.connect(this.gainNode);
+        this.gainNode.connect(this.audioContext.destination);
       }
 
       this.state = 'running';
@@ -193,11 +210,21 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
       this.sourceNode = null;
     }
 
+    if (this.analyserNode) {
+      this.analyserNode.disconnect();
+      this.analyserNode = null;
+    }
+
     if (this.workletNode) {
       // Send stop message to worklet
       this.workletNode.port.postMessage(MessageType.Stop);
       this.workletNode.disconnect();
       this.workletNode = null;
+    }
+
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+      this.gainNode = null;
     }
 
     // Stop media stream tracks
@@ -319,5 +346,26 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
    */
   getState(): TSVADState {
     return this.state;
+  }
+
+  /**
+   * Get the audio context
+   */
+  getAudioContext(): AudioContext | null {
+    return this.audioContext;
+  }
+
+  /**
+   * Get the analyser node
+   */
+  getAnalyserNode(): AnalyserNode | null {
+    return this.analyserNode;
+  }
+
+  /**
+   * Get the media stream
+   */
+  getStream(): MediaStream | null {
+    return this.stream;
   }
 }

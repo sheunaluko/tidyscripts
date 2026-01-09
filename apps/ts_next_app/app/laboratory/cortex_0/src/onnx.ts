@@ -59,6 +59,7 @@ export async function enable_vad() {
         ort: ortRuntime,
         positiveSpeechThreshold: 0.8,
         negativeSpeechThreshold: 0.6,
+        redemptionMs: 1400,
         preSpeechPadMs: 1000,
         minSpeechMs: 400
     });
