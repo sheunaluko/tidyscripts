@@ -27,13 +27,9 @@ export async function get_audio_context(): Promise<AudioContext> {
 
 export async function get_audio_stream(): Promise<MediaStream> {
   if (!stream) {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
-    });
+    // Use simple {audio: true} to match cortex_0 behavior
+    // This allows browser to manage echo cancellation automatically
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   }
   return stream;
 }

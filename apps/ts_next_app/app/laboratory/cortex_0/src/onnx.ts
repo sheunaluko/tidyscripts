@@ -21,13 +21,13 @@ async function getOnnxRuntime() {
     // It loads the minified file directly from the public folder
     // webpackIgnore tells webpack to completely ignore this import
     // @ts-expect-error - Dynamic import from public folder, type checking not applicable
-    ort = await import(/* webpackIgnore: true */ '/onnx/ort.all.min.mjs');
+    ort = await import(/* webpackIgnore: true */ '/onnx/ort.wasm.min.mjs');
 
     // Explicitly set the WASM paths to the public folder
     ort.env.wasm.wasmPaths = '/onnx/';
     ort.env.logLevel = 'error';
     onnxInitialized = true;
-    log('ONNX runtime initialized from /onnx/ort.all.min.mjs');
+    log('ONNX runtime initialized from /onnx/ort.wasm.min.mjs');
   }
 
   return ort;
@@ -57,10 +57,9 @@ export async function enable_vad() {
         silero,
         onSpeechStart,
         ort: ortRuntime,
-        positiveSpeechThreshold: 0.3,
-        negativeSpeechThreshold: 0.25,
-        redemptionMs: 1400,
-        preSpeechPadMs: 2000,
+        positiveSpeechThreshold: 0.8,
+        negativeSpeechThreshold: 0.6,
+        preSpeechPadMs: 1000,
         minSpeechMs: 400
     });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -15,7 +15,6 @@ import {
   Collapse,
   Checkbox,
   FormControlLabel,
-  LinearProgress,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MicIcon from '@mui/icons-material/Mic';
@@ -26,6 +25,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { useTivi } from './lib';
 import type { TiviProps } from './lib';
 import * as tsw from 'tidyscripts_web';
+import { VizComponent } from './VizComponent';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
@@ -68,6 +68,7 @@ export const Tivi: React.FC<TiviProps> = ({
   const [showSettings, setShowSettings] = useState(false);
 
   // VAD parameters with localStorage persistence
+  // Always initialize with defaults to match SSR
   const [vadParams, setVadParams] = useState({
     positiveSpeechThreshold: propPositiveThreshold ?? 0.7,
     negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
@@ -75,12 +76,13 @@ export const Tivi: React.FC<TiviProps> = ({
     verbose: false,
   });
 
-  // Load VAD parameters from localStorage on mount
+  // Load from localStorage after mount (client-side only)
   useEffect(() => {
     const stored = localStorage.getItem('tivi-vad-params');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
+        log(`Loaded VAD params from localStorage: ${stored}`);
         setVadParams(parsed);
       } catch (error) {
         console.error('[Tivi] Failed to parse stored VAD params:', error);
@@ -88,17 +90,18 @@ export const Tivi: React.FC<TiviProps> = ({
     }
   }, []);
 
-  // Save VAD parameters to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('tivi-vad-params', JSON.stringify(vadParams));
-  }, [vadParams]);
-
-  // Update VAD parameter
+  // Update VAD parameter and save to localStorage
   const updateVadParam = useCallback((key: keyof typeof vadParams, value: number | boolean) => {
-    setVadParams((prev) => ({ ...prev, [key]: value }));
+    setVadParams((prev) => {
+      const updated = { ...prev, [key]: value };
+      const stringified = JSON.stringify(updated);
+      log(`Saving VAD params to localStorage: ${stringified}`);
+      localStorage.setItem('tivi-vad-params', stringified);
+      return updated;
+    });
   }, []);
 
-  // Restore VAD parameters to defaults
+  // Restore VAD parameters to defaults and save to localStorage
   const restoreDefaults = useCallback(() => {
     const defaults = {
       positiveSpeechThreshold: 0.7,
@@ -106,9 +109,9 @@ export const Tivi: React.FC<TiviProps> = ({
       minSpeechMs: 400,
       verbose: false,
     };
-    setVadParams(defaults);
+    log('Restoring VAD defaults');
     localStorage.setItem('tivi-vad-params', JSON.stringify(defaults));
-    log('Restored VAD defaults');
+    setVadParams(defaults);
   }, []);
 
   // Memoize callbacks
@@ -245,18 +248,7 @@ export const Tivi: React.FC<TiviProps> = ({
 
             {/* Audio Level Visualization */}
             <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                Audio Level
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={Math.min(voice.audioLevel * 1000, 100)}
-                sx={{
-                  height: 8,
-                  borderRadius: 1,
-                  backgroundColor: alpha(theme.palette.grey[400], 0.3),
-                }}
-              />
+              <VizComponent audioLevel={voice.audioLevel} />
             </Box>
           </Stack>
         </Box>

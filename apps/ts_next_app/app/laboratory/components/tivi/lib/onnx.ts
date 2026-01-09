@@ -20,13 +20,13 @@ async function getOnnxRuntime() {
     // It loads the minified file directly from the public folder
     // webpackIgnore tells webpack to completely ignore this import
     // @ts-expect-error - Dynamic import from public folder, type checking not applicable
-    ort = await import(/* webpackIgnore: true */ '/onnx/ort.all.min.mjs');
+    ort = await import(/* webpackIgnore: true */ '/onnx/ort.wasm.min.mjs');
 
     // Explicitly set the WASM paths to the public folder
     ort.env.wasm.wasmPaths = '/onnx/';
     ort.env.logLevel = 'error';
     onnxInitialized = true;
-    log('ONNX runtime initialized from /onnx/ort.all.min.mjs');
+    log('ONNX runtime initialized from /onnx/ort.wasm.min.mjs');
   }
 
   return ort;
@@ -42,6 +42,40 @@ export async function get_silero_session() {
   const session = await ortRuntime.InferenceSession.create('/onnx/silero_vad_v5.onnx');
   log('Silero session loaded');
   return session;
+}
+
+export async function enable_vad(options: {
+  onSpeechStart?: () => void;
+  onSpeechEnd?: (audio: Float32Array) => void;
+  onFrameProcessed?: (prob: number, frame: Float32Array) => void;
+  onError?: (err: Error) => void;
+  positiveSpeechThreshold?: number;
+  negativeSpeechThreshold?: number;
+  redemptionMs?: number;
+  preSpeechPadMs?: number;
+  minSpeechMs?: number;
+}) {
+  log('Enabling VAD...');
+  const ortRuntime = await getOnnxRuntime();
+  const silero = await get_silero_session();
+
+  const vad = new TSVAD({
+    silero,
+    ort: ortRuntime,
+    onSpeechStart: options.onSpeechStart,
+    onSpeechEnd: options.onSpeechEnd,
+    onFrameProcessed: options.onFrameProcessed,
+    onError: options.onError,
+    positiveSpeechThreshold: options.positiveSpeechThreshold ?? 0.8,
+    negativeSpeechThreshold: options.negativeSpeechThreshold ?? 0.6,
+    redemptionMs: options.redemptionMs ?? 1400,
+    preSpeechPadMs: options.preSpeechPadMs ?? 1000,
+    minSpeechMs: options.minSpeechMs ?? 400,
+  });
+
+  vad.start();
+  log('VAD enabled and started');
+  return vad;
 }
 
 export { TSVAD };

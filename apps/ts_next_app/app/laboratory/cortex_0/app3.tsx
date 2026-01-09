@@ -41,7 +41,7 @@ import {
     ListItemText
 } from "@mui/material"
 
-import * as onnx from "./src/onnx" 
+import * as onnx from "./src/onnx"  
 
 import * as fb from "../../../src/firebase" ;
 
@@ -1372,6 +1372,9 @@ async function init_graph(bgc : string) {
 
 
 async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
+
+    //enable vad FIRST
+    await onnx.enable_vad() ; 
 
     //start streaming microphone data to the mic graph
     log(`Initializing microphone`) ; 

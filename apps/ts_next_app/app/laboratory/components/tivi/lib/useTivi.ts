@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TSVAD } from './ts_vad/src';
-import { get_silero_session, get_ort } from './onnx';
+import { enable_vad } from './onnx';
 import * as vi from './tsw/voice_interface';
 import * as wa from './tsw/web_audio';
 import type { UseTiviOptions, UseTiviReturn } from './types';
@@ -34,104 +34,16 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Refs
   const vadRef = useRef<TSVAD | null>(null);
   const recognitionActiveRef = useRef(false);
   const isMountedRef = useRef(true);
 
-  // Initialize TSVAD with speech recognition integration
+  // Track mounted state
   useEffect(() => {
     isMountedRef.current = true;
-
-    async function initVAD() {
-      try {
-        log('Initializing VAD...');
-
-        // Load ONNX runtime and Silero VAD model
-        const ortRuntime = await get_ort();
-        const silero = await get_silero_session();
-
-        // Create TSVAD with event handlers in constructor
-        const vad = new TSVAD({
-          silero,
-          ort: ortRuntime,
-          positiveSpeechThreshold,
-          negativeSpeechThreshold,
-          redemptionMs: 1400,
-          preSpeechPadMs: 2000,
-          minSpeechMs,
-
-          // Handler: Speech detected
-          onSpeechStart: async () => {
-            if (!isMountedRef.current) return;
-
-            log('VAD detected speech start');
-
-            // CRITICAL: If TTS is speaking, interrupt it!
-            if (vi.tts.is_speaking()) {
-              log('Interrupting TTS');
-              vi.tts.cancel_speech();
-              onInterrupt?.();
-            }
-
-            // Start WebSpeech recognition (VAD-triggered)
-            if (!recognitionActiveRef.current) {
-              log('Starting speech recognition');
-              await vi.initialize_recognition({ language });
-              await vi.start_recognition();
-              recognitionActiveRef.current = true;
-            }
-          },
-
-          // Handler: Speech ended
-          onSpeechEnd: (audio: Float32Array) => {
-            if (!isMountedRef.current) return;
-
-            log(`VAD detected speech end, audio length: ${audio.length}`);
-
-            // Give WebSpeech time to process final words, then pause
-            setTimeout(() => {
-              if (recognitionActiveRef.current && isMountedRef.current) {
-                log('Pausing speech recognition');
-                vi.pause_recognition();
-                recognitionActiveRef.current = false;
-              }
-            }, 500); // 500ms delay for final transcription
-          },
-
-          // Handler: Frame processed (for debugging)
-          onFrameProcessed: (prob, frame) => {
-            if (verbose && isMountedRef.current) {
-              log(`VAD probability: ${prob}`);
-            }
-          },
-
-          // Handler: Errors
-          onError: (err) => {
-            if (!isMountedRef.current) return;
-
-            console.error('[tivi] VAD error:', err);
-            setError(err.message);
-            onError?.(err);
-          },
-        });
-
-        vadRef.current = vad;
-        log('VAD initialized successfully');
-
-      } catch (err) {
-        if (!isMountedRef.current) return;
-
-        console.error('[tivi] VAD initialization failed:', err);
-        const errorMsg = err instanceof Error ? err.message : 'VAD initialization failed';
-        setError(errorMsg);
-        onError?.(err instanceof Error ? err : new Error(errorMsg));
-      }
-    }
-
-    initVAD();
-
     return () => {
       // Cleanup on unmount
       isMountedRef.current = false;
@@ -139,7 +51,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       vi.stop_recognition();
       recognitionActiveRef.current = false;
     };
-  }, [positiveSpeechThreshold, negativeSpeechThreshold, minSpeechMs, language, verbose, onInterrupt, onError]);
+  }, []);
 
   // Listen for transcription events from WebSpeech
   useEffect(() => {
@@ -199,11 +111,70 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       log('Starting listening...');
       setError(null);
 
-      // Initialize microphone and audio power monitoring
-      await wa.initialize_microphone();
+      // Log the VAD parameters being used
+      log(`Starting VAD with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
 
-      // Start VAD (will automatically handle speech recognition via events)
-      await vadRef.current?.start();
+      // Enable VAD FIRST (matches cortex_0 order)
+      const vad = await enable_vad({
+        onSpeechStart: async () => {
+          if (!isMountedRef.current) return;
+          log(`VAD detected speech start with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
+
+          // CRITICAL: If TTS is speaking, interrupt it!
+          if (vi.tts.is_speaking()) {
+            log('Interrupting TTS');
+            vi.tts.cancel_speech();
+            onInterrupt?.();
+          }
+
+          // Start WebSpeech recognition (VAD-triggered)
+          if (!recognitionActiveRef.current) {
+            log('Starting speech recognition');
+            await vi.initialize_recognition({ language });
+            await vi.start_recognition();
+            recognitionActiveRef.current = true;
+          }
+        },
+
+        onSpeechEnd: (audio: Float32Array) => {
+          if (!isMountedRef.current) return;
+          log(`VAD detected speech end, audio length: ${audio.length}`);
+
+          // Give WebSpeech time to process final words, then pause
+          setTimeout(() => {
+            if (recognitionActiveRef.current && isMountedRef.current) {
+              log('Pausing speech recognition');
+              vi.pause_recognition();
+              recognitionActiveRef.current = false;
+            }
+          }, 500);
+        },
+
+        onFrameProcessed: (prob, frame) => {
+          if (verbose && isMountedRef.current) {
+            log(`VAD probability: ${prob}`);
+          }
+        },
+
+        onError: (err) => {
+          if (!isMountedRef.current) return;
+          console.error('[tivi] VAD error:', err);
+          setError(err.message);
+          onError?.(err);
+        },
+
+        positiveSpeechThreshold,
+        negativeSpeechThreshold,
+        redemptionMs: 1400,
+        preSpeechPadMs: 2000,
+        minSpeechMs,
+      });
+
+      vadRef.current = vad;
+      setIsConnected(true);
+
+      // THEN initialize microphone and audio power monitoring
+      await wa.initialize_microphone();
 
       setIsListening(true);
       log('Listening started');
@@ -214,13 +185,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setError(errorMsg);
       onError?.(err instanceof Error ? err : new Error(errorMsg));
     }
-  }, [onError]);
+  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechMs]);
 
   const stopListening = useCallback(() => {
     log('Stopping listening...');
 
-    // Pause VAD (stops speech detection)
-    vadRef.current?.pause();
+    // Stop and clean up VAD
+    vadRef.current?.stop();
+    vadRef.current = null;
+    setIsConnected(false);
 
     // Stop speech recognition if active
     if (recognitionActiveRef.current) {
@@ -249,7 +222,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     // State
     isListening,
     isSpeaking,
-    isConnected: vadRef.current !== null,
+    isConnected,
     transcription,
     interimResult,
     audioLevel,
