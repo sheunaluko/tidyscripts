@@ -1,28 +1,16 @@
-So.
+ok heres the sitch
 
-I have got a nice working version of the voice interface module demonstrated
-in apps/laboratory/cortex_0
+in laboratory/cortex_0 i have a working implementation of my voice module
 
-However it draws on source code from various places:
+in laboratory/components/tivi I have a non working implementation
 
-tidyscripts web voice_interface
-onnx.ts (and src/ts_vad )
-directly
+The goal is to provide cancelable text to speech, which needs to use echo cancellation so that the speech itself is not heard but only the user.
 
-inside app3.tsx as well
+This works in cortex but not in tivi.
 
+Both cortex_0 and tivi have an audio power interface. I can see that in cortex the audio power is SILENT while tts is active.
+But in tivi it is NOT silent.
 
-The idea is I want to extract the relevant source code and recreate it all in a packaged form as a
-component called Tidyscripts Voice Interface (tivi)
+What could be causing this?
 
-There is a laboratory/component_viewer app that i want to component to be built at, with ALL the relevant source code included
-with it. The only assumptions to make are that the wasm and onnx files are indeed present at their coded locations
-
-Completely delete the "Interruptible Voice Interface" component that already exists.
-
-Given the implementation is working currently, I want you to focus on collecting the various source files via copying into the com
-
-
-
-component folder, and plugging everything together - rather than re-architecting things.
-
+Come up with a differential of 4 possibilities
