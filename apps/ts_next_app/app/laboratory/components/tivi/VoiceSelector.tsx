@@ -218,7 +218,7 @@ export function VoiceSelector() {
         {filteredVoices.length === 0 ? (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              No voices found matching "{searchFilter}"
+              No voices found matching &quot;{searchFilter}&quot;
             </Typography>
           </Box>
         ) : (

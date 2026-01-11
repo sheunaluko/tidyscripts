@@ -155,6 +155,15 @@ export async function speak(options: TTSOptions): Promise<void> {
     };
 
     utterance.onerror = (event) => {
+      // Don't reject for intentional interruption
+      if (event.error === 'interrupted') {
+        // This is expected when cancelSpeech() is called
+        // Resolve the promise normally (speaking was stopped, not failed)
+        resolve();
+        return;
+      }
+
+      // Only reject for actual errors
       reject(new Error(`TTS error: ${event.error}`));
     };
 
