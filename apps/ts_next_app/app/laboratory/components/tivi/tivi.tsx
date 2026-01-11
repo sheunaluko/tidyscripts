@@ -190,7 +190,7 @@ export const Tivi: React.FC<TiviProps> = ({
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" color="primary" fontWeight="bold">
-            Tidyscripts Voice Interface (Tivi)
+            Tidyscripts Voice Interface (tivi)
           </Typography>
           <Stack direction="row" spacing={1}>
             <Chip

@@ -10,7 +10,6 @@ import { enable_vad } from './onnx';
 import type { UseTiviOptions, UseTiviReturn } from './types';
 import * as tsw from 'tidyscripts_web';
 import * as tts from './tts';
-import { SpeechRecognitionManager } from './speech-recognition';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
@@ -21,9 +20,9 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     onAudioLevel,
     onError,
     language = 'en-US',
-    positiveSpeechThreshold = 0.8,
-    negativeSpeechThreshold = 0.6,
-    minSpeechMs = 500,
+    positiveSpeechThreshold = 0.3,
+    negativeSpeechThreshold = 0.25,
+    minSpeechMs = 400,
     verbose = false,
   } = options;
 
@@ -38,12 +37,10 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
   // Refs
   const vadRef = useRef<TSVAD | null>(null);
-  const recognitionRef = useRef<SpeechRecognitionManager | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const recognitionActiveRef = useRef(false);
   const isMountedRef = useRef(true);
-  const pauseRecognitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track mounted state and pre-load TTS voices
   useEffect(() => {
@@ -51,21 +48,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
     // Pre-load TTS voices to fix voice-switching issue on first utterance
     tts.waitForVoices().catch((err) => {
-      log(`Failed to pre-load TTS voices: ${err}`);
+      log('Failed to pre-load TTS voices:', err);
     });
 
     return () => {
       // Cleanup on unmount
       isMountedRef.current = false;
       vadRef.current?.stop();
-      recognitionRef.current?.stop();
+      //vi.stop_recognition();
       recognitionActiveRef.current = false;
-
-      // Clear pending pause timeout
-      if (pauseRecognitionTimeoutRef.current) {
-        clearTimeout(pauseRecognitionTimeoutRef.current);
-        pauseRecognitionTimeoutRef.current = null;
-      }
     };
   }, []);
 
@@ -121,68 +112,6 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     };
   }, [onAudioLevel]);
 
-  // Initialize speech recognition
-  useEffect(() => {
-    try {
-      log('Initializing speech recognition...');
-      recognitionRef.current = new SpeechRecognitionManager({
-        language: language || 'en-US',
-        continuous: true,
-        interimResults: true,
-        verbose: verbose,
-
-        onResult: (text, isFinal) => {
-          if (!isMountedRef.current) return;
-
-          if (isFinal) {
-            // Dispatch final result
-            window.dispatchEvent(
-              new CustomEvent('tidyscripts_web_speech_recognition_result', {
-                detail: text
-              })
-            );
-            log(`Final transcription: ${text}`);
-          } else {
-            // Dispatch interim result
-            window.dispatchEvent(
-              new CustomEvent('tidyscripts_web_speech_recognition_interim', {
-                detail: text
-              })
-            );
-            if (verbose) log(`Interim transcription: ${text}`);
-          }
-        },
-
-        onError: (error) => {
-          if (!isMountedRef.current) return;
-          log(`Speech recognition error: ${error.message}`);
-          setError(error.message);
-          onError?.(error);
-        },
-
-        onStart: () => {
-          if (!isMountedRef.current) return;
-          log('Speech recognition started');
-        },
-
-        onEnd: () => {
-          if (!isMountedRef.current) return;
-          log('Speech recognition ended');
-        }
-      });
-
-      log('Speech recognition initialized');
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Speech recognition not supported';
-      log(`Failed to initialize speech recognition: ${errorMsg}`);
-      setError(errorMsg);
-    }
-
-    return () => {
-      recognitionRef.current?.stop();
-    };
-  }, [language, verbose, onError]);
-
   // Power monitoring function using VAD's analyser
   const startPowerMonitoring = useCallback((analyser: AnalyserNode) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -224,52 +153,42 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       const { vad, audioContext, analyserNode, stream } = await enable_vad({
         onSpeechStart: async () => {
           if (!isMountedRef.current) return;
-          log('VAD detected speech start');
+          log(`VAD detected speech start with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
 
-          // Cancel any pending pause timeout (user started speaking again)
-          if (pauseRecognitionTimeoutRef.current) {
-            clearTimeout(pauseRecognitionTimeoutRef.current);
-            pauseRecognitionTimeoutRef.current = null;
-            log('Cancelled pending recognition pause (user speaking again)');
-          }
-
-          // If TTS is speaking, interrupt it
+          /* If TTS is speaking, interrupt it!
           if (tts.isSpeaking()) {
             log('Interrupting TTS');
             tts.cancelSpeech();
             onInterrupt?.();
-
-            // Start speech recognition immediately after interrupting TTS
-            if (recognitionRef.current && !recognitionRef.current.isRunning()) {
-              log('Starting speech recognition after TTS interruption');
-              recognitionRef.current.start();
-            }
-            return;
           }
 
-          // If TTS is NOT speaking AND speech recognition is not active, start it
-          if (recognitionRef.current && !recognitionRef.current.isRunning()) {
-            log('Starting speech recognition (VAD-triggered)');
-            recognitionRef.current.start();
+          // Start WebSpeech recognition (VAD-triggered)
+          if (!recognitionActiveRef.current) {
+            log('Starting speech recognition');
+            await vi.initialize_recognition();
+            await vi.start_recognition();
+            recognitionActiveRef.current = true;
           }
+
+	    */
+
+
+	    
         },
 
         onSpeechEnd: (audio: Float32Array) => {
           if (!isMountedRef.current) return;
           log(`VAD detected speech end, audio length: ${audio.length}`);
 
-          // Clear any existing timeout first
-          if (pauseRecognitionTimeoutRef.current) {
-            clearTimeout(pauseRecognitionTimeoutRef.current);
-          }
-
-          // Wait 2 seconds, then pause speech recognition
-          pauseRecognitionTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current && recognitionRef.current?.isRunning()) {
-              log('Pausing speech recognition after speech end');
-              recognitionRef.current.pause();
-              pauseRecognitionTimeoutRef.current = null;
+          // Give WebSpeech time to process final words, then pause
+            setTimeout(() => {
+		/*
+            if (recognitionActiveRef.current && isMountedRef.current) {
+              log('Pausing speech recognition');
+              vi.pause_recognition();
+              recognitionActiveRef.current = false;
             }
+		*/
           }, 2000);
         },
 
@@ -300,9 +219,6 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       // Start power monitoring using VAD's analyser
       startPowerMonitoring(analyserNode);
 
-      // Don't start speech recognition here - let VAD trigger it
-      // Speech recognition will be started on VAD onSpeechStart
-
       setIsListening(true);
       log('Listening started');
 
@@ -329,13 +245,10 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     vadRef.current = null;
     setIsConnected(false);
 
-    // Stop speech recognition
-    recognitionRef.current?.stop();
-
-    // Clear pending pause timeout
-    if (pauseRecognitionTimeoutRef.current) {
-      clearTimeout(pauseRecognitionTimeoutRef.current);
-      pauseRecognitionTimeoutRef.current = null;
+    // Stop speech recognition if active
+    if (recognitionActiveRef.current) {
+      //vi.pause_recognition();
+      recognitionActiveRef.current = false;
     }
 
     setIsListening(false);

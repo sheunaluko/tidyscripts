@@ -36,9 +36,9 @@ export const ComponentViewerClient = () => {
   // Component demos registry
   const demos: ComponentDemo[] = [
     {
-      name: 'Tidyscripts Voice Interface (Tivi)',
+      name: 'Tidyscripts Voice Interface (tivi)',
       category: 'voice',
-      description: 'Voice-only interface with VAD-based TTS interruption, speech recognition, and text-to-speech',
+      description: 'Voice-only interface with VAD-based TTS interruption, speech recognition, and text-to-speech. Self-contained component extracted from cortex_0.',
       component: (
         <Tivi
           onTranscription={(text) => console.log('Transcription:', text)}
