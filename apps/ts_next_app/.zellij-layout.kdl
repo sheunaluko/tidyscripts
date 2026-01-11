@@ -37,6 +37,10 @@ layout {
             }
             pane split_direction="horizontal" {
                 pane name="shell" focus=true
+		pane name="tes" {
+		    command "sh"
+		    args "-c" "cd /home/oluwa/dev/tidyscripts; ./bin/tes"
+		}
                 pane name="firebase-dev" {
                     command "sh"
                     args "-c" "cd ../firebase && ./dev"

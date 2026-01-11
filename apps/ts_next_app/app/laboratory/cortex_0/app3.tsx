@@ -41,7 +41,8 @@ import {
     ListItemText
 } from "@mui/material"
 
-import * as onnx from "./src/onnx"  
+import {useTivi} from "../components/tivi/lib/index"
+
 
 import * as fb from "../../../src/firebase" ;
 
@@ -82,7 +83,6 @@ const debug = tsw.common.util.debug ;
 const fp    = tsw.common.fp ;
 const dom   = tsw.util.dom ; 
 const wa    = tsw.apis.web_audio;
-const vi    = tsw.util.voice_interface ; 
 const oai   = tsw.apis.openai;
 const sounds = tsw.util.sounds
 
@@ -165,6 +165,25 @@ const  Component: NextPage = (props : any) => {
     // State for Cortex agent, re-created when ai_model changes
     var [COR, setCOR] = useState( null as any ) 
 
+
+    
+    //initilize tivi
+
+    //create graph callback
+    let handle_graph = function(val : number) {
+	if (false && ! GLOBAL_PAUSE ) { //disable for a second 
+	    let new_data = x_y_gaussian(viz_n, val+viz_s, val+viz_s) ; 
+	    window.data_sources['viz'].stream(new_data, viz_n) ;
+	} 
+    } ; 
+
+    const tivi = useTivi({
+	verbose: false , 
+	onAudioLevel: handle_graph
+    }); 
+
+
+    
     var get_agent = function() {
 	return COR 
     }
@@ -284,7 +303,7 @@ const  Component: NextPage = (props : any) => {
 
     useEffect( ()=> {
         let speak = async function(content : string) {
-            await vi.speak_with_rate(content, playbackRate);
+            await tivi.speak(content, playbackRate) ; 
         }
 	
 	if (COR) {
@@ -340,7 +359,7 @@ const  Component: NextPage = (props : any) => {
 	    last_ai_message_ref,
 	    COR,
 	    cu : cortex_utils,
-	    onnx 
+	    tivi, 
 	    
 	}) ;
 
@@ -361,39 +380,6 @@ const  Component: NextPage = (props : any) => {
     }, [last_ai_message] )
 
 
-    useEffect( ()=> {
-	//log(`Interim result: ${interim_result}`)
-	//compare the interim result to last ai message to determine if we should stop...
-
-	
-	if (interim_result.includes("stop") ) {
-	    log(`Detected stop word in the interim results`);
-
-	    //if the AI is NOT talking then we should NOT stop (since its just the user talking)
-	    if (! vi.tts.tts().speaking) {
-		log(`However the AI is not talking so will ignore`) 
-		return 
-	    }
-
-	    
-	    if (last_ai_message.includes("stop")){
-		log(`However the AI also said stop so... ignoring`)
-	    } else {
-		log(`AND the AI did not say stop so assuming it is the user`) ;
-
-		
-		vi.tts.cancel_speech() ; 
-		vi.pause_recognition();
-		add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop" at the following location in your output: ${interim_result}. Do not respond until I prompt you again`) ; 
-		
-		
-	    }
-	    
-	}
-
-	
-    }, [interim_result])
-    
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {
@@ -511,8 +497,11 @@ const  Component: NextPage = (props : any) => {
 	//here we need to actually speak the response too!
 	if (mode != "chat") { 
 	    log(`generating audio response...`)
-	    log(`Using playbackRate to ${playbackRate}`)	
-	    await vi.speak_with_rate(content, playbackRate) ;
+	    log(`Using playbackRate to ${playbackRate}`)
+	    //first pause SR
+	    tivi.pauseSpeechRecognition() ;  // this will get retriggered based on VAD
+	    //then speak 
+	    await tivi.speak(content, playbackRate) ;
 	    log(`done`)
 	} else {
 	    log(`Skipping speech!`) 
@@ -1277,12 +1266,9 @@ const  Component: NextPage = (props : any) => {
 
 			<IconButton onClick={
 			function() {
-			    if (vi.tts.tts().speaking) { 
-				vi.tts.cancel_speech() ; 
-				vi.pause_recognition();
-				add_user_message(`I no longer wanted to listen to your output and so I interrupted your speech with the keyword "stop". Do not respond until I prompt you again`) ;
+			    if (tivi.isSpeaking) { 
+				tivi.cancelSpeech() ; 
 			    }
-
 			} 
 			}>
         <PauseCircleOutlineIcon />
@@ -1373,25 +1359,9 @@ async function init_graph(bgc : string) {
 
 async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 
-    //enable vad FIRST
-    await onnx.enable_vad() ; 
+    /* upgrading to use TIVI */ 
 
-    //start streaming microphone data to the mic graph
-    log(`Initializing microphone`) ; 
-    await wa.initialize_microphone() ;
-
-    //register graph callback 
-    wa.register_mic_callback('update_viz'  , function(f32 : Float32Array) {
-	if (! GLOBAL_PAUSE ) { 
-	    let val = dsp.mean_abs(f32 as any) ;
-	    let new_data = x_y_gaussian(viz_n, val+viz_s, val+viz_s) ; 
-	    window.data_sources['viz'].stream(new_data, viz_n) ;
-	} 
-    })
-
-    //register mic callback
-    await vi.initialize_recognition() ;
-
+    //transcript handler 
     window.addEventListener( 'tidyscripts_web_speech_recognition_result' , async (e: any) => {
 	let transcript = e.detail ;
 	log(`Transcribe Ref: ${transcribeRef.current}`) ;
@@ -1408,6 +1378,8 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
     })
 
 
+    //and finially initialize tivi
+    await tivi.startListening()
     
 
 } 

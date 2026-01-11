@@ -112,6 +112,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       const power = e.detail as number;
       setAudioLevel(power);
       onAudioLevel?.(power);
+      /*
+      //dispatch tivi event
+      window.dispatchEvent( new CustomEvent('tivi_audio_level',{
+      detail: {
+        level : power, 
+      }	      
+      });
+      */
+
     };
 
     window.addEventListener('tidyscripts_web_mic', handleAudioPower as EventListener);
@@ -355,6 +364,15 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     setInterimResult('');
   }, []);
 
+  const cancelSpeech = useCallback( ()=> {
+  	tts.cancelSpeech();
+  },[]);
+
+    const pauseSpeechRecognition = useCallback( ()=> {
+	log('Pausing speech recognition');
+        recognitionRef.current.pause();
+    },[]);
+
   return {
     // State
     isListening,
@@ -370,5 +388,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     stopListening,
     speak,
     clearTranscription,
+    cancelSpeech ,
+    pauseSpeechRecognition
   };
 }
