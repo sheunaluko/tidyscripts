@@ -171,7 +171,7 @@ const  Component: NextPage = (props : any) => {
 
     //create graph callback
     let handle_graph = function(val : number) {
-	if (false && ! GLOBAL_PAUSE ) { //disable for a second 
+	if ( ! GLOBAL_PAUSE ) { //disable for a second 
 	    let new_data = x_y_gaussian(viz_n, val+viz_s, val+viz_s) ; 
 	    window.data_sources['viz'].stream(new_data, viz_n) ;
 	} 
@@ -867,7 +867,7 @@ const  Component: NextPage = (props : any) => {
                 <Box
                     sx={{
                         height: '90vh',
-			width : "100%", 
+			width : "100%",
                         display: 'flex',
                         flexDirection: 'column',
                         background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
@@ -1116,12 +1116,12 @@ const  Component: NextPage = (props : any) => {
 				log(`Starting audio`)
 				set_started(true) ;
 				if (!plots_initialized) {
-				    console.log(theme) 
-				    init_graph(theme.palette.background.default) 
-				    on_init_audio(transcribeRef, transcription_cb )
+				    console.log(theme)
+				    init_graph(theme.palette.background.default)
+				    on_init_audio(transcribeRef, transcription_cb, tivi )
 				} else {
-				    GLOBAL_PAUSE = false 						     
-				} 
+				    GLOBAL_PAUSE = false
+				}
 			    } else {
 				//already started; so now we stop it
 				log(`Stopping audio`)
@@ -1357,11 +1357,11 @@ async function init_graph(bgc : string) {
 }
 
 
-async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
+async function on_init_audio( transcribeRef : any  , transcription_cb : any, tivi : any) {
 
-    /* upgrading to use TIVI */ 
+    /* upgrading to use TIVI */
 
-    //transcript handler 
+    //transcript handler
     window.addEventListener( 'tidyscripts_web_speech_recognition_result' , async (e: any) => {
 	let transcript = e.detail ;
 	log(`Transcribe Ref: ${transcribeRef.current}`) ;
@@ -1371,16 +1371,16 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any) {
 	    log(`Transcribing audio`)
 	    debug.add("transcript" , transcript) ;
 	    log(`Sound event transcription: ${transcript}`)
-	    await transcription_cb(transcript)  
+	    await transcription_cb(transcript)
 	} else {
 	    log(`NOT Transcribing audio`)
-	} 
+	}
     })
 
 
     //and finially initialize tivi
     await tivi.startListening()
-    
+
 
 } 
 

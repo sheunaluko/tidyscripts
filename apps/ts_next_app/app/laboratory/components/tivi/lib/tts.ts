@@ -123,7 +123,7 @@ export async function waitForUtteranceComplete(): Promise<void> {
  * Speak text with specified options
  */
 export async function speak(options: TTSOptions): Promise<void> {
-  const { text, voiceURI, rate = 1.0 } = options;
+  const { text, voiceURI, rate = 1.5 } = options;
 
   // Wait for voices to be loaded first (fixes voice switching issue)
   await waitForVoices();

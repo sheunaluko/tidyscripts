@@ -13,6 +13,7 @@ import * as tts from './tts';
 import { SpeechRecognitionManager } from './speech-recognition';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
+const THROTTLE_MS = 20; // Only update audio power every 20ms
 
 export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const {
@@ -100,7 +101,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   // Listen for audio power events (for visualization)
   useEffect(() => {
     let lastUpdate = 0;
-    const THROTTLE_MS = 50; // Only update every 50ms (20 FPS)
+
 
     const handleAudioPower = (e: CustomEvent) => {
       if (!isMountedRef.current) return;
