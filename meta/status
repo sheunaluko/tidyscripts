@@ -12,6 +12,10 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
   -> [x] implemented silero 
 
 
+[ ] change status popup to a widget that can be positioned
+[ ] move audio visualization to center of dashbar 
+
+
 
 Ok [ ] --> getting lots of bugs - inconsistent functionality.
 Want to retain existing architecture //archive it -- and shift to a different model
