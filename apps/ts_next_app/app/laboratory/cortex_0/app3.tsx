@@ -1,6 +1,6 @@
 'use client';
 import type { NextPage } from 'next'
-import {useEffect, useState, useRef } from 'react' ;
+import {useEffect, useState, useRef, useCallback, useMemo } from 'react' ;
 import React from 'react' ; 
 import styles from '../../../styles/Default.module.css'
 import  "./app.css"
@@ -63,7 +63,22 @@ import * as cortex_utils from "./src/cortex_utils"
 
 
 import Code_Widget from "./CodeWidget"
-import HTML_Widget from "./HTMLWidget" 
+import HTML_Widget from "./HTMLWidget"
+
+// Import extracted widgets
+import ThoughtsWidget from "./widgets/ThoughtsWidget"
+import LogWidget from "./widgets/LogWidget"
+import WorkspaceWidget from "./widgets/WorkspaceWidget"
+import ChatWidget from "./widgets/ChatWidget"
+import CodeWidget from "./widgets/CodeWidget"
+import HTMLWidget from "./widgets/HTMLWidget"
+
+// Import AudioVisualization component
+import AudioVisualization from "./components/AudioVisualization"
+
+// Import custom hooks
+import { useWidgetConfig } from "./hooks/useWidgetConfig"
+import { useCortexAgent } from "./hooks/useCortexAgent" 
 
 /*
 
@@ -72,8 +87,7 @@ import HTML_Widget from "./HTMLWidget"
 
  */
 
-declare var window : any ;
-declare var Bokeh : any  ; 
+declare var window : any ; 
 
 const logger = tsw.common.logger
 const log   = logger.get_logger({id:"cortex"}) ;
@@ -133,6 +147,7 @@ const  Component: NextPage = (props : any) => {
 
     const [transcribe, setTranscribe] = useState(true)
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
+    const audioCleanupRef = useRef<(() => void) | null>(null); //cleanup function for audio listeners
 
     let init_chat_history = [
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
@@ -162,20 +177,24 @@ const  Component: NextPage = (props : any) => {
     const [ai_model, set_ai_model] = useState(default_model);    
     const [playbackRate, setPlaybackRate] = useState(1.2)
     const [workspace, set_workspace] = useState({}) ;
-    // State for Cortex agent, re-created when ai_model changes
-    var [COR, setCOR] = useState( null as any ) 
+
+    // Cortex agent hook - automatically re-initializes when model changes
+    const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(ai_model);
+
+    // Converted from global variables to React state
+    const [globalPause, setGlobalPause] = useState(false);
+    const [audioLevel, setAudioLevel] = useState(0);
 
 
-    
+
     //initilize tivi
 
-    //create graph callback
-    let handle_graph = function(val : number) {
-	if ( ! GLOBAL_PAUSE ) { //disable for a second 
-	    let new_data = x_y_gaussian(viz_n, val+viz_s, val+viz_s) ; 
-	    window.data_sources['viz'].stream(new_data, viz_n) ;
-	} 
-    } ; 
+    //create graph callback - now just updates audioLevel state
+    const handle_graph = useCallback((val : number) => {
+	if (!globalPause) {
+	    setAudioLevel(val);
+	}
+    }, [globalPause]); 
 
     const tivi = useTivi({
 	verbose: false , 
@@ -183,34 +202,6 @@ const  Component: NextPage = (props : any) => {
     }); 
 
 
-    
-    var get_agent = function() {
-	return COR 
-    }
-
-    // Re-instantiate agent whenever model selection changes
-    useEffect( () => {
-
-	async function get_agent() {
-            let agent =  await cortex_agent.get_agent(ai_model)
-	    setCOR(agent) ; 
-	}
-
-	get_agent() 
-
-	/* may have bug by disabling this */
-
-	/*
-
-        const oldAgent = COR;
-	if (oldAgent) {
-	    console.log(oldAgent) 
-            oldAgent.off('event', handle_event);
-	}
-	*/
-	
-    }, [ai_model]);
-    
     const [text_input, set_text_input] = useState<string>('');
     const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
 
@@ -235,71 +226,82 @@ const  Component: NextPage = (props : any) => {
     },[])
     */
 
-    let handle_code_change = function(code_params : any) {
+    const handle_code_change = useCallback((code_params : any) => {
 	codeParamsRef.current.code = code_params.code ;
-	codeParamsRef.current.mode = code_params.mode ; 
-    	//set_code_params( { code : v , mode : code_params.mode  } ) 
-    }	
+	codeParamsRef.current.mode = code_params.mode ;
+    	//set_code_params( { code : v , mode : code_params.mode  } )
+    }, []);	
     
 
-    
+
     const [focusedWidget, setFocusedWidget] = useState<string | null>(null);
+
+    // Widget configuration hook
+    const { widgets, visibleWidgets, toggleWidget } = useWidgetConfig();
     /* E V E N T _ H A N D L I N G */
-    const handle_thought = (evt : any) => {
-	let {thought} = evt ; 
+    const handle_thought = useCallback((evt : any) => {
+	let {thought} = evt ;
 	log(`Got thought event: ${thought}`)
-	set_thought_history((prev) => [...prev, thought])	    
-    }
+	set_thought_history((prev) => [...prev, thought])
+    }, []);
 
-    const handle_log = (evt : any) => {
+    const handle_log = useCallback((evt : any) => {
 	log(`Got log event: ${evt.log}`)
-	set_log_history((prev) => [...prev, evt.log])	    
-    }
-    
-    const handle_workspace_update = (evt : any) => {
+	set_log_history((prev) => [...prev, evt.log])
+    }, []);
+
+    const handle_workspace_update = useCallback((evt : any) => {
 	log(`Got workspace update event`)
-	let new_workspace = structuredClone(window.workspace) ; 
-	set_workspace( { ...new_workspace }) ; 
-    }
+	let new_workspace = structuredClone(window.workspace) ;
+	set_workspace( { ...new_workspace }) ;
+    }, []);
 
-    const handle_code_update = (evt : any) => {
+    const handle_code_update = useCallback((evt : any) => {
 	log(`Got code update event`)
-	log(evt) 
-	handle_code_change(evt.code_params) ; 
-    }
+	log(evt)
+	handle_code_change(evt.code_params) ;
+    }, [handle_code_change]);
 
-    const handle_html_update = (evt : any) => {
+    const handle_html_update = useCallback((evt : any) => {
 	log(`Got html update event`)
-	log(evt) 
+	log(evt)
 	set_html_display(evt.html)
-    }
+    }, []);
     
     
-    const event_dic  : {[k:string] : any}  = {
+    const event_dic: {[k:string] : any} = useMemo(() => ({
 	'thought' : handle_thought ,
 	'workspace_update' : handle_workspace_update,
 	'log' : handle_log ,
 	'code_update' : handle_code_update ,
-	'html_update' : handle_html_update , 	
-    }
+	'html_update' : handle_html_update ,
+    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update]);
     
-    const handle_event = (evt : any) => {
+    const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
 	let fn = event_dic[evt.type] ;
-	fn(evt) 
-    }
+	fn(evt)
+    }, [event_dic]);
 
-    /* L I S T E N E R */
+    /* E F F E C T S */
 
-    if (typeof window !== "undefined" ) { 
-	window.addEventListener( 'tidyscripts_web_speech_recognition_interim' , async (e: any) => {
-	    let transcript = e.detail ;
-	    set_interim_result(transcript) ; 
-	})
-    }
+    // Cleanup event listener for speech recognition interim results
+    useEffect(() => {
+	const handleInterim = (e: any) => {
+	    const transcript = e.detail;
+	    set_interim_result(transcript);
+	};
 
-    
-    /* E F F E C T S */ 
+	if (typeof window !== "undefined") {
+	    window.addEventListener('tidyscripts_web_speech_recognition_interim', handleInterim);
+	}
+
+	return () => {
+	    if (typeof window !== "undefined") {
+		window.removeEventListener('tidyscripts_web_speech_recognition_interim', handleInterim);
+	    }
+	};
+    }, []); 
 
     useEffect( ()=> {
         let speak = async function(content : string) {
@@ -323,9 +325,10 @@ const  Component: NextPage = (props : any) => {
             COR.on('event', handle_event)
             return () => { COR.off('event', handle_event) }
 	}
-    }, [COR])
+    }, [COR, handle_event])
 
 
+    // Auto-scroll for widget displays - only depend on data that affects scroll
     useEffect(() => {
 	const ids = ['chat_display', 'log_display', 'thought_display'];
 
@@ -337,7 +340,7 @@ const  Component: NextPage = (props : any) => {
 		}
 	    });
 	});
-    }, [chat_history, thought_history, log_history, last_ai_message, transcribe, playbackRate, focusedWidget, interim_result]);    
+    }, [chat_history, thought_history, log_history]); // Only scroll-related deps    
 
     useEffect(  ()=> {
 
@@ -347,20 +350,20 @@ const  Component: NextPage = (props : any) => {
 	
 	Object.assign(window, {
 	    fb,
-	    get_question, 
+	    get_question,
 	    tsw,
 	    wa ,
 	    debug ,
 	    get_ai_response ,
-	    get_agent, 
+	    get_agent: () => COR,  // Simple getter for backward compatibility
 	    transcription_cb ,
 	    workspace : {} ,
 	    last_ai_message,
 	    last_ai_message_ref,
 	    COR,
 	    cu : cortex_utils,
-	    tivi, 
-	    
+	    tivi,
+
 	}) ;
 
 	return ()=>{
@@ -564,188 +567,7 @@ const  Component: NextPage = (props : any) => {
         }
     };
 
-    /* define widgets */
-
-
-    let widget_scroll_styles = {
-	overflowY: 'auto',
-	maxHeight: '95%' ,
-	scrollbarWidth: 'none',         // Firefox
-	'&::-webkit-scrollbar': {
-	    display: 'none',              // Chrome, Safari
-	}
-    }
-
-    
-    const ThoughtsWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="Thoughts"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-	<Box id="thought_display" sx={widget_scroll_styles} >	    
-	    {
-		thought_history.map( (thought,index) => (
-		    <Box
-			key={index}
-			    sx={{
-				borderRadius: '8px',
-				//border:  '1px solid' , 
-				color: 'success.light' 
-			    }} 
-		    >
-			{thought} 
-		    </Box>
-
-		    
-		))
-		
-	    }
-	</Box> 
-	</WidgetItem>
-    ) ; 
-
-
-    const LogWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="Log"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-	<Box id="log_display" sx={widget_scroll_styles} >	    
-	    {
-		log_history.map( (log,index) => (
-		    <Box
-			key={index}
-			    sx={{
-				borderRadius: '8px',
-				//border:  '1px solid' , 
-				color: (log.indexOf('ERROR') > -1 ) ?  'error.light' : 'info.light'  , 
-			    }} 
-		    >
-			{log} 
-		    </Box>
-
-		    
-		))
-		
-	    }
-	</Box> 
-	</WidgetItem>
-    ) ; 
-
-    
-    const WorkspaceWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="Workspace"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-
-	<Box id="workspace_display" sx={widget_scroll_styles} >	    
-	    <ObjectInspector style={{width: "90%"  , marginTop : "10px" }}
-			     theme={theme.palette.mode == "dark" ? "chromeDark" : "chromeLight" }
-			     data={workspace} expandPaths={['$', '$.*','$.*.*']} />
-	</Box> 
-
-	</WidgetItem>
-    )
-
-    const ChatWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="Chat"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-	<Box id="chat_display" sx={widget_scroll_styles} >
-
-	    {chat_history.slice(1).map((message, index) => (
-		<Box
-		    key={index}
-		    sx={{
-			display: 'flex',
-			justifyContent: message.role === 'user' ? 'flex-start' : 'flex-end',
-			marginBottom: '10px'
-		    }}
-		>
-		    <Box
-			sx={{
-			    padding: '8px',
-			    borderRadius: '8px',
-			    backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,							    
-			    border: message.role === 'user' ? '1px solid' : '1px solid',
-			    borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-			    color: message.role === 'assistant' ? 'inherit' : 'inherit'
-			}}
-
-		    >
-			<ReactMarkdown>
-			    {message.content}
-			</ReactMarkdown>
-		    </Box>
-
-		</Box>
-	    ))}
-	</Box> 
-	</WidgetItem>
-
-    )
-
-
-
-    const CodeWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="Code"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-	    <Box id="code_display" sx={  {
-
-		overflowY: 'auto',
-		height : "95%" ,
-
-	scrollbarWidth: 'none',         // Firefox
-	'&::-webkit-scrollbar': {
-	    display: 'none',              // Chrome, Safari
-	}
-
-		
-	    } } >
-	    <Code_Widget code_params={codeParamsRef.current} onChange={handle_code_change}  /> 
-	</Box> 
-	</WidgetItem>
-
-    )
-
-    const HTMLWidget = ({ fullscreen = false, onFocus, onClose }: any) => (
-	<WidgetItem
-	title="HTML"
-	fullscreen={fullscreen}
-	onFocus={onFocus}
-	onClose={onClose}
-	>
-	    <Box id="html_display" sx={  {
-
-		overflowY: 'auto',
-		height : "95%" ,
-
-	scrollbarWidth: 'none',         // Firefox
-	'&::-webkit-scrollbar': {
-	    display: 'none',              // Chrome, Safari
-	}
-
-		
-	    } } >
-	    <HTML_Widget to_display={html_display} /> 
-	</Box> 
-	</WidgetItem>
-
-    )
+    /* Widgets are now imported from separate files */
 
     // Auto-scroll chat in chat mode
     useEffect(() => {
@@ -872,7 +694,6 @@ const  Component: NextPage = (props : any) => {
                         flexDirection: 'column',
                         background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
                         position: 'relative',
-                        overflow: 'hidden',
                     }}
                 >
             {/* Chat Header */}
@@ -1111,23 +932,23 @@ const  Component: NextPage = (props : any) => {
 
 	    <Box> 
 		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
-			onClick={function() {
+			onClick={async function() {
 			    if (!started) {
 				log(`Starting audio`)
 				set_started(true) ;
-				if (!plots_initialized) {
-				    console.log(theme)
-				    init_graph(theme.palette.background.default)
-				    on_init_audio(transcribeRef, transcription_cb, tivi )
-				} else {
-				    GLOBAL_PAUSE = false
-				}
+				audioCleanupRef.current = await on_init_audio(transcribeRef, transcription_cb, tivi )
+				setGlobalPause(false)
 			    } else {
 				//already started; so now we stop it
 				log(`Stopping audio`)
-				GLOBAL_PAUSE = true 
-				set_started(false) 
-			    } 
+				setGlobalPause(true)
+				set_started(false)
+				// Cleanup event listeners
+				if (audioCleanupRef.current) {
+				    audioCleanupRef.current();
+				    audioCleanupRef.current = null;
+				}
+			    }
 			}
 			}
 		> {started ? "Stop" : "Start"} </Button>
@@ -1143,7 +964,15 @@ const  Component: NextPage = (props : any) => {
 	<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
 
 	<Box display='flex' flexDirection='row' justifyContent='center' width="100%"  >
-	    <Box id="viz" />
+	    <AudioVisualization
+		audioLevel={audioLevel}
+		paused={globalPause}
+		width={300}
+		height={100}
+		backgroundColor={theme.palette.background.default}
+		particleColor="#34eb49"
+		particleCount={50}
+	    />
 	</Box>
 
 	<br />
@@ -1151,37 +980,68 @@ const  Component: NextPage = (props : any) => {
 
 	{ !focusedWidget && (
 	      <Grid width="100%" height="100%" container spacing={2} padding="20px" >
+		  {visibleWidgets.map(widget => {
+		      // Render widget based on ID
+		      let widgetComponent = null;
+		      switch (widget.id) {
+			  case 'chat':
+			      widgetComponent = (
+				  <ChatWidget
+				      chatHistory={chat_history}
+				      onFocus={() => setFocusedWidget('chat')}
+				  />
+			      );
+			      break;
+			  case 'workspace':
+			      widgetComponent = (
+				  <WorkspaceWidget
+				      workspace={workspace}
+				      onFocus={() => setFocusedWidget('workspace')}
+				  />
+			      );
+			      break;
+			  case 'thoughts':
+			      widgetComponent = (
+				  <ThoughtsWidget
+				      thoughtHistory={thought_history}
+				      onFocus={() => setFocusedWidget('thoughts')}
+				  />
+			      );
+			      break;
+			  case 'log':
+			      widgetComponent = (
+				  <LogWidget
+				      logHistory={log_history}
+				      onFocus={() => setFocusedWidget('log')}
+				  />
+			      );
+			      break;
+			  case 'code':
+			      widgetComponent = (
+				  <CodeWidget
+				      codeParams={codeParamsRef.current}
+				      onChange={handle_code_change}
+				      onFocus={() => setFocusedWidget('code')}
+				  />
+			      );
+			      break;
+			  case 'html':
+			      widgetComponent = (
+				  <HTMLWidget
+				      htmlDisplay={html_display}
+				      onFocus={() => setFocusedWidget('html')}
+				  />
+			      );
+			      break;
+		      }
 
-		  <Grid size={{ xs: 12, md: 6 }}>
-		      <ChatWidget onFocus={() => setFocusedWidget('chat')} />
-
-		  </Grid>
-
-		  <Grid size={{ xs: 12, md: 6 }}>
-		      <WorkspaceWidget onFocus={() => setFocusedWidget('workspace')} />
-		  </Grid>
-		  
-
-		  <Grid size={{ xs: 12, md: 6 }}>
-
-		      <ThoughtsWidget onFocus={() => setFocusedWidget('thoughts')} />
-		  </Grid>
-		  
-		  <Grid size={{ xs: 12, md: 6 }}>
-		      <LogWidget onFocus={() => setFocusedWidget('log')} />
-		  </Grid>
-
-		  <Grid size={{ xs: 12, md: 6 }}>
-		      <CodeWidget onFocus={() => setFocusedWidget('code')} />
-		  </Grid>
-
-
-		  <Grid size={{ xs: 12, md: 6 }}>
-		      <HTMLWidget onFocus={() => setFocusedWidget('html')} />
-		  </Grid>
-		  
-		  
-	      </Grid> ) 
+		      return (
+			  <Grid key={widget.id} size={{ xs: 12, md: 6 }}>
+			      {widgetComponent}
+			  </Grid>
+		      );
+		  })}
+	      </Grid> )
 	} 
 
 	
@@ -1191,14 +1051,50 @@ const  Component: NextPage = (props : any) => {
 
 	<Box style={{flexGrow : 1 , width  : "100%"  }}>
 
-	    	{focusedWidget === 'chat' && <ChatWidget fullscreen onClose={() => setFocusedWidget(null)} />}
-	{focusedWidget === 'workspace' && <WorkspaceWidget fullscreen onClose={() => setFocusedWidget(null)} />}
-	{focusedWidget === 'thoughts' && <ThoughtsWidget fullscreen onClose={() => setFocusedWidget(null)} />}
-	    {focusedWidget === 'log' && <LogWidget fullscreen onClose={() => setFocusedWidget(null)} />}
-	    {focusedWidget === 'code' && <CodeWidget fullscreen onClose={() => setFocusedWidget(null)} />}	    
+	    	{focusedWidget === 'chat' && (
+		    <ChatWidget
+			chatHistory={chat_history}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'workspace' && (
+		    <WorkspaceWidget
+			workspace={workspace}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'thoughts' && (
+		    <ThoughtsWidget
+			thoughtHistory={thought_history}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+	    	{focusedWidget === 'log' && (
+		    <LogWidget
+			logHistory={log_history}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+	    	{focusedWidget === 'code' && (
+		    <CodeWidget
+			codeParams={codeParamsRef.current}
+			onChange={handle_code_change}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
 
-	    {focusedWidget === 'html' && <HTMLWidget fullscreen onClose={() => setFocusedWidget(null)} />}	    
-	    
+	    	{focusedWidget === 'html' && (
+		    <HTMLWidget
+			htmlDisplay={html_display}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
 
 
 	</Box>
@@ -1284,17 +1180,37 @@ const  Component: NextPage = (props : any) => {
               label="Model"
               onChange={e => set_ai_model(e.target.value as string)}
             >
-              <MenuItem value="gpt-5.1">gpt-4o</MenuItem>		
+              <MenuItem value="gpt-5.1">gpt-4o</MenuItem>
               <MenuItem value="gpt-4o">gpt-4o</MenuItem>
               <MenuItem value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</MenuItem>
               <MenuItem value="o4-mini">o4-mini</MenuItem>
               <MenuItem value="chatgpt-4o-latest">chatgpt-4o-latest</MenuItem>
-              <MenuItem value="gemini-3-flash-preview">chatgpt-4o-latest</MenuItem>	      
+              <MenuItem value="gemini-3-flash-preview">chatgpt-4o-latest</MenuItem>
             </Select>
           </FormControl>
         </Box>
 
-
+        {/* Widget visibility toggles */}
+        <Box sx={{ mt: 3, mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, textAlign: 'center' }}>
+            Visible Widgets
+          </Typography>
+          <Box display="flex" flexDirection="column" gap={0.5} alignItems="center">
+            {widgets.map(widget => (
+              <FormControlLabel
+                key={widget.id}
+                control={
+                  <Switch
+                    size="small"
+                    checked={widget.visible}
+                    onChange={() => toggleWidget(widget.id)}
+                  />
+                }
+                label={widget.name}
+              />
+            ))}
+          </Box>
+        </Box>
 
 		    </Box>
 
@@ -1318,51 +1234,16 @@ const  Component: NextPage = (props : any) => {
     )
 }
 
-export default Component ; 
+export default Component ;
 
 
 
-var plots_initialized = false
-var GLOBAL_PAUSE      = false
-
-async function init_graph(bgc : string) {
-
-    //initialize the graphs
-    await tsw.apis.bokeh.load_bokeh_scripts() ;
-    if (! window.Bokeh ) {  return  } 
-    // -
-    let plot_names = ['viz' ] // , 'plot_mic' , 'plot_mic_zoom' ] 
-    window.data_sources = {} ; 
-    // -    
-    plot_names.map( (x:string) => {
-	let el = document.getElementById(x) ;
-	let tmp : any; 
-	if (x == 'plot_mic_zoom' ) { 
-	    tmp = make_plot(null) ;
-
-	} else if ( x == 'viz'  ) {
-	    tmp = point_plt(bgc) ;
-
-	} else 	{
-	    tmp = make_plot([-1.1,1.1]) ;
-	} ;
-
-	let {plot,source} = tmp
-	plot.toolbar.logo = null ; 
-	window.data_sources[x]  = source  ; 
-	Bokeh.Plotting.show(plot,el)
-    })
-
-    plots_initialized = true 
-}
-
-
-async function on_init_audio( transcribeRef : any  , transcription_cb : any, tivi : any) {
+async function on_init_audio( transcribeRef : any  , transcription_cb : any, tivi : any): Promise<() => void> {
 
     /* upgrading to use TIVI */
 
     //transcript handler
-    window.addEventListener( 'tidyscripts_web_speech_recognition_result' , async (e: any) => {
+    const handleTranscript = async (e: any) => {
 	let transcript = e.detail ;
 	log(`Transcribe Ref: ${transcribeRef.current}`) ;
 
@@ -1375,132 +1256,23 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any, tiv
 	} else {
 	    log(`NOT Transcribing audio`)
 	}
-    })
+    };
+
+    window.addEventListener( 'tidyscripts_web_speech_recognition_result' , handleTranscript)
 
 
     //and finially initialize tivi
     await tivi.startListening()
 
+    // Return cleanup function
+    return () => {
+	window.removeEventListener('tidyscripts_web_speech_recognition_result', handleTranscript);
+    };
 
-} 
+}
 
 /* Params  */
-const viz_n = 50 ;
-const viz_s = 0.03 ; 
-var   sound_feedback = true 
-
-
-
-function make_plot(yr : any) {
-    // create some data and a ColumnDataSource
-    const x = [0]
-    const y = [0] 
-    const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
-
-    // create some ranges for the plot
-    const ydr =  yr ? new Bokeh.Range1d({ start: yr[0], end: yr[1]}) : null ;
-
-    let ops : any  = {width: 300, height : 100}; 
-    if (yr) { ops.y_range = ydr } 
-
-    const plot = new Bokeh.Plot(ops); 
-
-    // add axes to the plot
-    const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
-    const yaxis = new Bokeh.LinearAxis({ axis_line_color: null });
-    plot.add_layout(xaxis, "below");
-    plot.add_layout(yaxis, "left");
-
-    // add grids to the plot
-    const xgrid = new Bokeh.Grid({ ticker: xaxis.ticker, dimension: 0 });
-    const ygrid = new Bokeh.Grid({ ticker: yaxis.ticker, dimension: 1 });
-    plot.add_layout(xgrid);
-    plot.add_layout(ygrid);
-
-    // add a Line glyph
-    const line = new Bokeh.Line({
-	x: { field: "x" },
-	y: { field: "y" },
-	line_color: "#666699",
-	line_width: 2
-    });
-    plot.add_glyph(line, source);
-
-
-    return {plot , source} 
-
-}
-
-
-
-
-export function point_plt(bgc : string) {
-    // create some data and a ColumnDataSource
-    const x = [0]
-    const y = [0] 
-    const source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
-
-    // create some ranges for the plot
-    const ydr =  null ;
-
-    let ops : any  = {width: 300, height : 100, outline_line_color : null }; 
-
-    ops.y_range = new Bokeh.Range1d({start : -1 , end : 1 })
-    ops.x_range = new Bokeh.Range1d({start : -1 , end : 1 })    
-
-    const plot = new Bokeh.Plot(ops);
-    plot.background_fill_color=bgc
-    plot.border_fill_color=bgc
-
-    plot.toolbar.logo = null
-    plot.toolbar_location = null
-
-    // add axes to the plot
-    const xaxis = new Bokeh.LinearAxis({ axis_line_color: null });
-    const yaxis = new Bokeh.LinearAxis({ axis_line_color: null });
-    //plot.add_layout(xaxis, "below");
-    //plot.add_layout(yaxis, "left");
-
-    // add grids to the plot
-    const xgrid = new Bokeh.Grid({ ticker: xaxis.ticker, dimension: 0 });
-    const ygrid = new Bokeh.Grid({ ticker: yaxis.ticker, dimension: 1 });
-    //plot.add_layout(xgrid);
-    //plot.add_layout(ygrid);
-
-    // add  glyph
-    const g = new Bokeh.Circle({
-	x: { field: "x" },
-	y: { field: "y" },
-	line_color: "#34eb49",
-	//line_width: 2
-    });
-    plot.add_glyph(g, source);
-
-
-    return {plot , source} 
-} 
-
-
-function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[], y: number[] } {
-    const x: number[] = [];
-    const y: number[] = [];
-
-    for (let i = 0; i < n; i++) {
-	// Generate two uniform random numbers between 0 and 1
-	const u1 = Math.random();
-	const u2 = Math.random();
-
-	// Use Box-Muller transform to obtain two independent standard normal random numbers
-	const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-	const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
-
-	// Scale by the specified standard deviations
-	x.push(z0 * sigma_x);
-	y.push(z1 * sigma_y);
-    }
-
-    return { x, y };
-}
+var   sound_feedback = true
 
 
 /*

@@ -114,6 +114,16 @@ export interface UseTiviReturn {
    * Clear accumulated transcription
    */
   clearTranscription: () => void;
+
+  /**
+   * Cancel current speech output
+   */
+  cancelSpeech: () => void;
+
+  /**
+   * Pause speech recognition
+   */
+  pauseSpeechRecognition: () => void;
 }
 
 export interface TiviProps extends UseTiviOptions {

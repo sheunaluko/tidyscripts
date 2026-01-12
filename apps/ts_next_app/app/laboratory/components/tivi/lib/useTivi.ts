@@ -371,7 +371,9 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
     const pauseSpeechRecognition = useCallback( ()=> {
 	log('Pausing speech recognition');
-        recognitionRef.current.pause();
+        if (recognitionRef.current) {
+            recognitionRef.current.pause();
+        }
     },[]);
 
   return {

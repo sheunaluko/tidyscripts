@@ -30,7 +30,7 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
         p: 2,
           height: fullscreen ? '100%' : '300px',
 	  width : "100%" ,
-        overflow: 'hidden',
+        overflow: 'visible',
         display: 'flex',
         flexDirection: 'column',
         ...sx,
