@@ -4,6 +4,7 @@ import React from 'react';
 import { Paper, Box, Typography, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 interface WidgetItemProps {
   title: string;
@@ -28,18 +29,34 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
       sx={{
         backgroundColor: 'background.paper',
         p: 2,
-          height: fullscreen ? '100%' : '300px',
-	  width : "100%" ,
-        overflow: 'visible',
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         ...sx,
       }}
     >
-	<Box display="flex" justifyContent="space-between" alignItems="center" mb={1}
+	<Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+        {/* Drag handle and title */}
+        <Box
+          className="widget-drag-handle"
+          sx={{
+            cursor: 'move',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flex: 1,
+            '&:hover': {
+              opacity: 0.8
+            }
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" color="action" />
+          <Typography variant="subtitle1">{title}</Typography>
+        </Box>
 
-	>
-        <Typography variant="subtitle1">{title}</Typography>
+        {/* Action buttons */}
         {fullscreen ? (
           <IconButton size="small" onClick={onClose}>
             <CloseIcon fontSize="small" />

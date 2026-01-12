@@ -72,13 +72,20 @@ import WorkspaceWidget from "./widgets/WorkspaceWidget"
 import ChatWidget from "./widgets/ChatWidget"
 import CodeWidget from "./widgets/CodeWidget"
 import HTMLWidget from "./widgets/HTMLWidget"
+import ChatInputWidget from "./widgets/ChatInputWidget"
 
 // Import AudioVisualization component
 import AudioVisualization from "./components/AudioVisualization"
 
 // Import custom hooks
 import { useWidgetConfig } from "./hooks/useWidgetConfig"
-import { useCortexAgent } from "./hooks/useCortexAgent" 
+import { useCortexAgent } from "./hooks/useCortexAgent"
+
+// Import TopBar, SettingsPanel, VoiceStatusIndicator, and DraggableWidgetGrid
+import { TopBar } from "./components/TopBar"
+import { SettingsPanel } from "./components/SettingsPanel"
+import { VoiceStatusIndicator } from "./components/VoiceStatusIndicator"
+import { DraggableWidgetGrid } from "./components/DraggableWidgetGrid" 
 
 /*
 
@@ -139,6 +146,11 @@ const  Component: NextPage = (props : any) => {
     // Mode state: 'voice' or 'chat'
     const [mode, setMode] = useState<'voice' | 'chat'>('voice');
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+
+    // Voice status indicator state
+    type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking';
+    const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
 
     // Chat mode state
     const [chatInput, setChatInput] = useState('');
@@ -174,12 +186,28 @@ const  Component: NextPage = (props : any) => {
     const [log_history, set_log_history] = useState(init_logs);    
     
     const [audio_history, set_audio_history] = useState([]);
-    const [ai_model, set_ai_model] = useState(default_model);    
+    const [ai_model, set_ai_model] = useState(default_model);
     const [playbackRate, setPlaybackRate] = useState(1.2)
+
+    // Tivi voice recognition parameters
+    const [tiviParams, setTiviParams] = useState({
+        positiveSpeechThreshold: 0.8,
+        negativeSpeechThreshold: 0.6,
+        minSpeechMs: 500,
+        language: 'en-US',
+        verbose: false
+    });
+
     const [workspace, set_workspace] = useState({}) ;
 
     // Cortex agent hook - automatically re-initializes when model changes
     const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(ai_model);
+
+    // Keep a ref to the latest COR to avoid stale closures in transcription_cb
+    const CORRef = useRef(COR);
+    useEffect(() => {
+        CORRef.current = COR;
+    }, [COR]);
 
     // Converted from global variables to React state
     const [globalPause, setGlobalPause] = useState(false);
@@ -194,13 +222,34 @@ const  Component: NextPage = (props : any) => {
 	if (!globalPause) {
 	    setAudioLevel(val);
 	}
-    }, [globalPause]); 
+    }, [globalPause]);
+
+    // Handler for tivi parameter changes
+    const handleTiviParamsChange = useCallback((params: Partial<typeof tiviParams>) => {
+        setTiviParams(prev => ({ ...prev, ...params }));
+    }, []);
 
     const tivi = useTivi({
-	verbose: false , 
-	onAudioLevel: handle_graph
-    }); 
+	verbose: tiviParams.verbose,
+	onAudioLevel: handle_graph,
+        positiveSpeechThreshold: tiviParams.positiveSpeechThreshold,
+        negativeSpeechThreshold: tiviParams.negativeSpeechThreshold,
+        minSpeechMs: tiviParams.minSpeechMs,
+        language: tiviParams.language
+    });
 
+    // Update voice status based on current state
+    useEffect(() => {
+        if (tivi.isSpeaking) {
+            setVoiceStatus('speaking');
+        } else if (isAiTyping) {
+            setVoiceStatus('processing');
+        } else if (started) {
+            setVoiceStatus('listening');
+        } else {
+            setVoiceStatus('idle');
+        }
+    }, [tivi.isSpeaking, isAiTyping, started]);
 
     const [text_input, set_text_input] = useState<string>('');
     const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
@@ -237,7 +286,7 @@ const  Component: NextPage = (props : any) => {
     const [focusedWidget, setFocusedWidget] = useState<string | null>(null);
 
     // Widget configuration hook
-    const { widgets, visibleWidgets, toggleWidget } = useWidgetConfig();
+    const { widgets, visibleWidgets, toggleWidget, widgetLayout, saveLayout, resetLayout, applyPreset } = useWidgetConfig();
     /* E V E N T _ H A N D L I N G */
     const handle_thought = useCallback((evt : any) => {
 	let {thought} = evt ;
@@ -533,6 +582,31 @@ const  Component: NextPage = (props : any) => {
 	setTranscribe(v);
     };
 
+    const handleTranscribeToggle = () => {
+	const newValue = !transcribe;
+	log(`Transcribe=${newValue}`)
+	setTranscribe(newValue);
+    };
+
+    const handle_start_stop = useCallback(async () => {
+	if (!started) {
+	    log(`Starting audio`)
+	    set_started(true);
+	    audioCleanupRef.current = await on_init_audio(transcribeRef, transcription_cb, tivi)
+	    setGlobalPause(false)
+	} else {
+	    //already started; so now we stop it
+	    log(`Stopping audio`)
+	    setGlobalPause(true)
+	    set_started(false)
+	    // Cleanup event listeners
+	    if (audioCleanupRef.current) {
+		audioCleanupRef.current();
+		audioCleanupRef.current = null;
+	    }
+	}
+    }, [started, transcribeRef, tivi]);
+
     const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
         if (
             event.type === 'keydown' &&
@@ -588,100 +662,35 @@ const  Component: NextPage = (props : any) => {
 
     return (
         <>
-            {/* Sidebar Drawer */}
-            <Drawer
-                anchor="left"
-                open={drawerOpen}
-                onClose={toggleDrawer(false)}
-                sx={{
-                    '& .MuiDrawer-paper': {
-                        width: 280,
-                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.95)} 0%, ${alpha(theme.palette.secondary.main, 0.95)} 100%)`,
-                        backdropFilter: 'blur(10px)',
-                        borderRight: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-                    }
-                }}
-            >
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'white' }}>
-                        Cortex
-                    </Typography>
-                    <List>
-                        <ListItem disablePadding sx={{ mb: 1 }}>
-                            <ListItemButton
-                                selected={mode === 'voice'}
-                                onClick={() => handleModeChange('voice')}
-                                sx={{
-                                    borderRadius: '12px',
-                                    '&.Mui-selected': {
-                                        backgroundColor: alpha(theme.palette.common.white, 0.2),
-                                        '&:hover': {
-                                            backgroundColor: alpha(theme.palette.common.white, 0.3),
-                                        }
-                                    },
-                                    '&:hover': {
-                                        backgroundColor: alpha(theme.palette.common.white, 0.1),
-                                    }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <MicIcon sx={{ color: 'white' }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="Voice Mode"
-                                    sx={{ color: 'white' }}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                        <ListItem disablePadding>
-                            <ListItemButton
-                                selected={mode === 'chat'}
-                                onClick={() => handleModeChange('chat')}
-                                sx={{
-                                    borderRadius: '12px',
-                                    '&.Mui-selected': {
-                                        backgroundColor: alpha(theme.palette.common.white, 0.2),
-                                        '&:hover': {
-                                            backgroundColor: alpha(theme.palette.common.white, 0.3),
-                                        }
-                                    },
-                                    '&:hover': {
-                                        backgroundColor: alpha(theme.palette.common.white, 0.1),
-                                    }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <ChatIcon sx={{ color: 'white' }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="Chat Mode"
-                                    sx={{ color: 'white' }}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    </List>
-                </Box>
-            </Drawer>
+            {/* Top Bar - Always visible */}
+            <TopBar
+                mode={mode}
+                onModeChange={(newMode) => handleModeChange(newMode)}
+                started={started}
+                onStartStop={handle_start_stop}
+                transcribe={transcribe}
+                onTranscribeToggle={handleTranscribeToggle}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={(rate) => setPlaybackRate(rate)}
+                isSpeaking={tivi.isSpeaking}
+                onCancelSpeech={() => tivi.cancelSpeech()}
+                aiModel={ai_model}
+                onModelChange={(model) => set_ai_model(model)}
+                onOpenSettings={() => setSettingsOpen(true)}
+                audioLevel={audioLevel}
+            />
 
-            {/* Menu Button - Always visible */}
-            <IconButton
-                onClick={toggleDrawer(true)}
-                sx={{
-                    position: 'fixed',
-                    top: 16,
-                    left: 16,
-                    zIndex: 1300,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-
-                    '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.8),
-                        transform: 'scale(1.05)',
-                    },
-                    transition: 'all 0.3s ease',
-                }}
-            >
-                <MenuIcon />
-            </IconButton>
+            {/* Settings Panel */}
+            <SettingsPanel
+                widgets={widgets}
+                toggleWidget={toggleWidget}
+                onApplyPreset={applyPreset}
+                onResetLayout={resetLayout}
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                tiviParams={tiviParams}
+                onTiviParamsChange={handleTiviParamsChange}
+            />
 
             {/* Render Chat Mode or Voice Mode */}
             {mode === 'chat' ? (
@@ -923,126 +932,88 @@ const  Component: NextPage = (props : any) => {
             ) : (
                 <Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , width : '100%', padding : "5px" }} >
 
-	<Box display='flex' flexDirection='row' alignItems='center' >
-	    <Box>
-		<h1 className={styles.title}>
-		    <a href="https://github.com/sheunaluko/tidyscripts">Cortex </a>  
-		</h1>
-	    </Box>
-
-	    <Box> 
-		<Button variant='outlined' style={{width:"10%" , borderRadius : "20px", marginLeft : '25px' , marginTop : '11px'}}
-			onClick={async function() {
-			    if (!started) {
-				log(`Starting audio`)
-				set_started(true) ;
-				audioCleanupRef.current = await on_init_audio(transcribeRef, transcription_cb, tivi )
-				setGlobalPause(false)
-			    } else {
-				//already started; so now we stop it
-				log(`Stopping audio`)
-				setGlobalPause(true)
-				set_started(false)
-				// Cleanup event listeners
-				if (audioCleanupRef.current) {
-				    audioCleanupRef.current();
-				    audioCleanupRef.current = null;
-				}
-			    }
-			}
-			}
-		> {started ? "Stop" : "Start"} </Button>
-	    </Box> 
-
-
-	</Box>
-
-	<br />
+	{/* Voice Status Indicator */}
+	<VoiceStatusIndicator
+	    status={voiceStatus}
+	    interimResult={interim_result}
+	    onStop={() => {
+		if (voiceStatus === 'speaking') {
+		    tivi.cancelSpeech();
+		}
+		// For processing, we might want to add a cancel handler
+	    }}
+	    visible={mode === 'voice'}
+	/>
 
 
 
-	<Box flexDirection="column" display='flex' alignItems='start'  width="100%">
-
-	<Box display='flex' flexDirection='row' justifyContent='center' width="100%"  >
-	    <AudioVisualization
-		audioLevel={audioLevel}
-		paused={globalPause}
-		width={300}
-		height={100}
-		backgroundColor={theme.palette.background.default}
-		particleColor="#34eb49"
-		particleCount={50}
-	    />
-	</Box>
-
-	<br />
+	<Box flexDirection="column" display='flex' alignItems='start'  width="100%" paddingRight="20px">
 
 
 	{ !focusedWidget && (
-	      <Grid width="100%" height="100%" container spacing={2} padding="20px" >
-		  {visibleWidgets.map(widget => {
+	      <DraggableWidgetGrid
+		  visibleWidgets={visibleWidgets}
+		  initialLayout={widgetLayout}
+		  onLayoutChange={saveLayout}
+		  renderWidget={(widgetId) => {
 		      // Render widget based on ID
-		      let widgetComponent = null;
-		      switch (widget.id) {
+		      switch (widgetId) {
 			  case 'chat':
-			      widgetComponent = (
+			      return (
 				  <ChatWidget
 				      chatHistory={chat_history}
 				      onFocus={() => setFocusedWidget('chat')}
 				  />
 			      );
-			      break;
+			  case 'chatInput':
+			      return (
+				  <ChatInputWidget
+				      onSubmit={(text) => transcription_cb(text)}
+				      onFocus={() => setFocusedWidget('chatInput')}
+				  />
+			      );
 			  case 'workspace':
-			      widgetComponent = (
+			      return (
 				  <WorkspaceWidget
 				      workspace={workspace}
 				      onFocus={() => setFocusedWidget('workspace')}
 				  />
 			      );
-			      break;
 			  case 'thoughts':
-			      widgetComponent = (
+			      return (
 				  <ThoughtsWidget
 				      thoughtHistory={thought_history}
 				      onFocus={() => setFocusedWidget('thoughts')}
 				  />
 			      );
-			      break;
 			  case 'log':
-			      widgetComponent = (
+			      return (
 				  <LogWidget
 				      logHistory={log_history}
 				      onFocus={() => setFocusedWidget('log')}
 				  />
 			      );
-			      break;
 			  case 'code':
-			      widgetComponent = (
+			      return (
 				  <CodeWidget
 				      codeParams={codeParamsRef.current}
 				      onChange={handle_code_change}
 				      onFocus={() => setFocusedWidget('code')}
 				  />
 			      );
-			      break;
 			  case 'html':
-			      widgetComponent = (
+			      return (
 				  <HTMLWidget
 				      htmlDisplay={html_display}
 				      onFocus={() => setFocusedWidget('html')}
 				  />
 			      );
-			      break;
+			  default:
+			      return null;
 		      }
-
-		      return (
-			  <Grid key={widget.id} size={{ xs: 12, md: 6 }}>
-			      {widgetComponent}
-			  </Grid>
-		      );
-		  })}
-	      </Grid> )
-	} 
+		  }}
+	      />
+	)} 
 
 	
 
@@ -1054,6 +1025,13 @@ const  Component: NextPage = (props : any) => {
 	    	{focusedWidget === 'chat' && (
 		    <ChatWidget
 			chatHistory={chat_history}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'chatInput' && (
+		    <ChatInputWidget
+			onSubmit={(text) => transcription_cb(text)}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />
@@ -1095,130 +1073,6 @@ const  Component: NextPage = (props : any) => {
 			onClose={() => setFocusedWidget(null)}
 		    />
 		)}
-
-
-	</Box>
-
-
-	<Box style={{width : "60%" }}>
-	    <Accordion style={{ marginTop: "15px" , marginBottom : '5px'  }}>
-		<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-		    <Typography>Tools</Typography>
-		</AccordionSummary>
-		<AccordionDetails>
-
-		    <Box style={{display:'flex' , justifyContent : 'center' }}> 
-
-			<TextField
-			    variant="outlined"
-			    value={text_input}
-			    onChange={(e) => set_text_input(e.target.value)}
-			    onKeyPress={handleKeyPress}
-			    placeholder="Input text and press enter to submit"
-			    sx={{ marginBottom: '5px', marginTop: '5px', width : "100%" }}
-			/>
-
-
-
-		    </Box>
-		    
-		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%">
-			<FormGroup>
-			    <FormControlLabel control={
-				<Switch
-				    size='small'
-				    checked={transcribe}
-				    onChange={handleSwitch}
-				    inputProps={{ 'aria-label': 'controlled' }}
-				/>
-			    } label="Listen" />
-			</FormGroup>
-
-		    </Box>
-
-
-		    <Box display='flex' flexDirection='row' justifyContent='center' width="100%" alignItems='center'>
-
-
-			<Box width="20%"> 
-			    <Slider
-
-				size='small'
-				value={playbackRate}
-				min={0.5}
-				max={2.0}
-				step={0.1}
-				onChange={handleRateChange}
-				valueLabelDisplay="auto"
-				sx={{ marginTop: '8px' }}
-			    />
-			</Box>
-
-			<Box 				sx={{ marginLeft : '7px'  }}
-			>
-			    <Typography >{`Speech Rate: ${playbackRate.toFixed(1)}x`}</Typography>
-			</Box> 
-
-
-			<IconButton onClick={
-			function() {
-			    if (tivi.isSpeaking) { 
-				tivi.cancelSpeech() ; 
-			    }
-			} 
-			}>
-        <PauseCircleOutlineIcon />
-        </IconButton>
-
-        {/* Model selector */}
-        <Box display='flex' flexDirection='row' justifyContent='center' width="100%" alignItems='center' sx={{ mt: 2 }}>
-          <FormControl size='small' sx={{ minWidth: 200 }}>
-            <InputLabel id="model-select-label">Model</InputLabel>
-            <Select
-              labelId="model-select-label"
-              value={ai_model}
-              label="Model"
-              onChange={e => set_ai_model(e.target.value as string)}
-            >
-              <MenuItem value="gpt-5.1">gpt-4o</MenuItem>
-              <MenuItem value="gpt-4o">gpt-4o</MenuItem>
-              <MenuItem value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</MenuItem>
-              <MenuItem value="o4-mini">o4-mini</MenuItem>
-              <MenuItem value="chatgpt-4o-latest">chatgpt-4o-latest</MenuItem>
-              <MenuItem value="gemini-3-flash-preview">chatgpt-4o-latest</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-
-        {/* Widget visibility toggles */}
-        <Box sx={{ mt: 3, mb: 1 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, textAlign: 'center' }}>
-            Visible Widgets
-          </Typography>
-          <Box display="flex" flexDirection="column" gap={0.5} alignItems="center">
-            {widgets.map(widget => (
-              <FormControlLabel
-                key={widget.id}
-                control={
-                  <Switch
-                    size="small"
-                    checked={widget.visible}
-                    onChange={() => toggleWidget(widget.id)}
-                  />
-                }
-                label={widget.name}
-              />
-            ))}
-          </Box>
-        </Box>
-
-		    </Box>
-
-
-
-		</AccordionDetails>
-	    </Accordion>
-
 
 
 	</Box>
