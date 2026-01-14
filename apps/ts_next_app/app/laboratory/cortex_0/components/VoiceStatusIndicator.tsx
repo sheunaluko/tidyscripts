@@ -13,7 +13,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import StopIcon from '@mui/icons-material/Stop';
 import PsychologyIcon from '@mui/icons-material/Psychology';
-import { theme } from '../../../theme';
+import { useTheme } from '@mui/material/styles';
 
 type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking';
 
@@ -22,38 +22,42 @@ interface VoiceStatusIndicatorProps {
   interimResult?: string;
   onStop?: () => void;
   visible: boolean;
+  inline?: boolean; // If true, renders inline instead of fixed positioned
 }
 
 export const VoiceStatusIndicator: React.FC<VoiceStatusIndicatorProps> = ({
   status,
   interimResult,
   onStop,
-  visible
+  visible,
+  inline = false
 }) => {
+  const theme = useTheme();
+
   if (!visible || status === 'idle') return null;
 
   return (
     <Paper
-      elevation={8}
+      elevation={inline ? 2 : 8}
       sx={{
-        position: 'fixed',
-        top: 80, // Below top bar
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 9999,
+        position: inline ? 'static' : 'fixed',
+        top: inline ? undefined : 80,
+        left: inline ? undefined : '50%',
+        transform: inline ? undefined : 'translateX(-50%)',
+        zIndex: inline ? undefined : 9999,
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
-        px: 3,
-        py: 2,
+        gap: inline ? 1 : 2,
+        px: inline ? 2 : 3,
+        py: inline ? 1 : 2,
         background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.background.default, 0.98)} 100%)`,
         backdropFilter: 'blur(20px)',
-        borderRadius: 3,
+        borderRadius: inline ? 2 : 3,
         border: `2px solid ${getStatusColor(status)}`,
-        boxShadow: `0 8px 32px ${alpha(getStatusColor(status), 0.3)}`,
-        minWidth: 300,
-        maxWidth: 600,
-        animation: 'slideDown 0.3s ease-out',
+        boxShadow: inline ? `0 2px 8px ${alpha(getStatusColor(status), 0.2)}` : `0 8px 32px ${alpha(getStatusColor(status), 0.3)}`,
+        minWidth: inline ? 200 : 300,
+        maxWidth: inline ? 400 : 600,
+        animation: inline ? undefined : 'slideDown 0.3s ease-out',
         '@keyframes slideDown': {
           from: {
             opacity: 0,
@@ -72,8 +76,8 @@ export const VoiceStatusIndicator: React.FC<VoiceStatusIndicatorProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 48,
-          height: 48,
+          width: inline ? 32 : 48,
+          height: inline ? 32 : 48,
           borderRadius: '50%',
           background: alpha(getStatusColor(status), 0.15),
           color: getStatusColor(status),

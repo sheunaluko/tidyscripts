@@ -16,11 +16,13 @@ const fp     = tsw.common.fp
 const HTMLWidget = ({to_display   } : any) => {
 
      useEffect( () => {
-	 log(`init html widget`)
+	 log(`updating html widget`)
 	 let el = (document.getElementById("HTMLWIDGET") as any)
-	 el.innerHTML = to_display ;
-	 log(`set inner html`) 
-     }, []) 
+	 if (el) {
+	     el.innerHTML = to_display ;
+	     log(`set inner html`)
+	 }
+     }, [to_display]) 
 
     return (
         <Box id='HTMLWIDGET' display="flex" flexDirection="column" height="100%" width="100%">

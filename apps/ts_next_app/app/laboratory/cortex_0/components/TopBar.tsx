@@ -25,8 +25,9 @@ import StopIcon from '@mui/icons-material/Stop';
 import PauseIcon from '@mui/icons-material/Pause';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import { theme } from '../../../theme';
+import { useTheme } from '@mui/material/styles';
 import AudioVisualization from './AudioVisualization';
+import { VoiceStatusIndicator } from './VoiceStatusIndicator';
 
 interface TopBarProps {
   // Mode
@@ -58,6 +59,10 @@ interface TopBarProps {
 
   // Audio visualization
   audioLevel: number;
+
+  // Voice status
+  voiceStatus: 'idle' | 'listening' | 'processing' | 'speaking';
+  interimResult?: string;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -74,8 +79,12 @@ export const TopBar: React.FC<TopBarProps> = ({
   aiModel,
   onModelChange,
   onOpenSettings,
-  audioLevel
+  audioLevel,
+  voiceStatus,
+  interimResult
 }) => {
+  const theme = useTheme();
+
   return (
     <AppBar
       position="sticky"
@@ -88,7 +97,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     >
       <Toolbar sx={{ gap: 2, minHeight: '64px', px: 3 }}>
         {/* Logo/Title */}
-        <Typography variant="h6" sx={{ fontWeight: 700, mr: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mr: 2, color: theme.palette.text.primary }}>
           Cortex
         </Typography>
 
@@ -203,17 +212,33 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Spacer */}
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Audio Visualization - only in voice mode */}
+        {/* Audio Visualization - centered, only in voice mode */}
         {mode === 'voice' && (
-          <Box sx={{ mr: '20px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <AudioVisualization
               audioLevel={audioLevel}
               paused={!started}
               width={120}
               height={40}
-              backgroundColor={theme.palette.background.default}
+              backgroundColor="transparent"
               particleColor="#34eb49"
               particleCount={25}
+            />
+          </Box>
+        )}
+
+        {/* Spacer */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* Voice Status Indicator - only in voice mode */}
+        {mode === 'voice' && (
+          <Box sx={{ mr: '20px' }}>
+            <VoiceStatusIndicator
+              status={voiceStatus}
+              interimResult={interimResult}
+              onStop={onCancelSpeech}
+              visible={true}
+              inline={true}
             />
           </Box>
         )}

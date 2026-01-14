@@ -55,8 +55,12 @@ const AudioVisualization: React.FC<AudioVisualizationProps> = ({
 
     const render = () => {
       // Clear canvas
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, width, height);
+      if (backgroundColor === 'transparent') {
+        ctx.clearRect(0, 0, width, height);
+      } else {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, width, height);
+      }
 
       // Generate particles based on audio level
       const sigma = audioLevel + 0.03;
@@ -101,4 +105,4 @@ const AudioVisualization: React.FC<AudioVisualizationProps> = ({
   );
 };
 
-export default React.memo(AudioVisualization);
+export default AudioVisualization;

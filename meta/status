@@ -14,6 +14,10 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
 
 [ ] change status popup to a widget that can be positioned
 [ ] move audio visualization to center of dashbar 
+[ ] update html widget (need to trigger automatic re-render, only changing when the full sc
+[ ] fix background of audio viz (toolbar not responding to dark / light mode and not passing it to  the audio viz
+
+)
 
 
 

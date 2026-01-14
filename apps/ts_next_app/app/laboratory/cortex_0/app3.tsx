@@ -59,7 +59,8 @@ import ChatIcon from '@mui/icons-material/Chat';
 import SendIcon from '@mui/icons-material/Send';
 import WidgetItem from "./WidgetItem" ;
 
-import * as cortex_utils from "./src/cortex_utils" 
+import * as cortex_utils from "./src/cortex_utils"
+import * as sandbox from "./src/sandbox"
 
 
 import Code_Widget from "./CodeWidget"
@@ -412,6 +413,7 @@ const  Component: NextPage = (props : any) => {
 	    COR,
 	    cu : cortex_utils,
 	    tivi,
+	    sandbox,  // Sandboxed JavaScript execution
 
 	}) ;
 
@@ -678,6 +680,8 @@ const  Component: NextPage = (props : any) => {
                 onModelChange={(model) => set_ai_model(model)}
                 onOpenSettings={() => setSettingsOpen(true)}
                 audioLevel={audioLevel}
+                voiceStatus={voiceStatus}
+                interimResult={interim_result}
             />
 
             {/* Settings Panel */}
@@ -933,17 +937,6 @@ const  Component: NextPage = (props : any) => {
                 <Box style={{ height : "100%", flexDirection : 'column' , display : 'flex' , alignItems : 'center' , width : '100%', padding : "5px" }} >
 
 	{/* Voice Status Indicator */}
-	<VoiceStatusIndicator
-	    status={voiceStatus}
-	    interimResult={interim_result}
-	    onStop={() => {
-		if (voiceStatus === 'speaking') {
-		    tivi.cancelSpeech();
-		}
-		// For processing, we might want to add a cancel handler
-	    }}
-	    visible={mode === 'voice'}
-	/>
 
 
 
