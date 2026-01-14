@@ -12,22 +12,27 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
   -> [x] implemented silero 
 
 
-[ ] change status popup to a widget that can be positioned
-[ ] move audio visualization to center of dashbar 
+[x] change status popup to a widget that can be positioned
+[x] move audio visualization to center of dashbar 
 [ ] update html widget (need to trigger automatic re-render, only changing when the full sc
 [ ] fix background of audio viz (toolbar not responding to dark / light mode and not passing it to  the audio viz
 
-)
 
 
 
-Ok [ ] --> getting lots of bugs - inconsistent functionality.
+== CORTEX JS EXEC ENV UPGRADE == 
+Ok getting lots of bugs - inconsistent functionality.
 Want to retain existing architecture //archive it -- and shift to a different model
 ? DSL for the ai to write DSL code that orchestrates the available functions
-
 --> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
 
-Also check out claude for chrome 
+[x] implemented iframe executation with configurable contex
+[ ] re-architect cortex to use the JS exec env (sandbox.ts)
+
+--- 
+
+
+[ ] Also check out PLAYRIGHT MCP server 
 
 
 == FIREBASE ==

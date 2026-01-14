@@ -1,23 +1,32 @@
 /**
- * Sandboxed JavaScript Execution using QuickJS WASM
+ * Sandboxed JavaScript Execution using Iframe Isolation
  *
- * This module provides secure, isolated JavaScript execution using the QuickJS
- * WebAssembly engine. Code executed in the sandbox cannot access the DOM,
- * localStorage, cookies, or any browser APIs unless explicitly provided.
+ * This module provides secure, isolated JavaScript execution using a hidden
+ * iframe with strict sandboxing attributes. Code executed in the sandbox
+ * cannot access the DOM, localStorage, cookies, or any browser APIs unless
+ * explicitly provided.
  *
  * @module sandbox
  */
 
-import variant from "@jitl/quickjs-ng-wasmfile-release-sync"
-import { loadQuickJs, type SandboxOptions } from "@sebastianwessel/quickjs"
+import { getExecutor, type SandboxLog, type SandboxEvent } from './IframeSandbox'
 
 /**
- * Result of a sandboxed execution
+ * Log entry captured from sandbox
+ */
+export type { SandboxLog, SandboxEvent }
+
+/**
+ * Result of a sandboxed execution with observability
  */
 export interface SandboxResult<T = any> {
   ok: boolean
   data?: T
   error?: string
+  executionId: string
+  logs: SandboxLog[]
+  events: SandboxEvent[]
+  duration?: number
 }
 
 /**
@@ -28,43 +37,34 @@ export interface SandboxExecutionOptions {
   context?: Record<string, any>       // Variables to inject into sandbox context
 }
 
-// Singleton QuickJS instance
-let sandboxInstance: any = null
-let initPromise: Promise<void> | null = null
+// Singleton initialization flag
+let initialized = false
 
 const DEFAULT_TIMEOUT = 5000 // 5 seconds
 
 /**
- * Initializes the QuickJS sandbox (one-time operation)
+ * Initializes the sandbox (one-time operation)
  *
- * This function loads the QuickJS WASM module and caches it for reuse.
- * It's automatically called by execution functions, but can be called
- * manually to preload the sandbox during app initialization.
+ * This function is maintained for API compatibility but is essentially
+ * a no-op for iframe-based sandboxing (no pre-initialization needed).
  *
  * @returns Promise that resolves when initialization is complete
  */
 export async function initializeSandbox(): Promise<void> {
-  if (sandboxInstance) {
+  if (initialized) {
     return // Already initialized
   }
 
-  if (initPromise) {
-    return initPromise // Currently initializing
+  try {
+    console.log('[Sandbox] Initializing iframe sandbox...')
+    // Iframe sandbox doesn't need pre-initialization
+    // Just set flag for compatibility
+    initialized = true
+    console.log('[Sandbox] Initialized successfully')
+  } catch (error: any) {
+    console.error('[Sandbox] Initialization failed:', error)
+    throw new Error(`Failed to initialize sandbox: ${error.message}`)
   }
-
-  initPromise = (async () => {
-    try {
-      console.log('[Sandbox] Initializing QuickJS...')
-      const { runSandboxed } = await loadQuickJs(variant)
-      sandboxInstance = runSandboxed
-      console.log('[Sandbox] Initialized successfully')
-    } catch (error: any) {
-      console.error('[Sandbox] Initialization failed:', error)
-      throw new Error(`Failed to initialize QuickJS sandbox: ${error.message}`)
-    }
-  })()
-
-  return initPromise
 }
 
 /**
@@ -130,24 +130,19 @@ export async function evaluateJavaScriptSandboxed(
     await initializeSandbox()
 
     const timeout = options.timeout ?? DEFAULT_TIMEOUT
-    const contextCode = buildContextCode(options.context ?? {})
-    const fullCode = contextCode ? `${contextCode}\n${code}` : code
+    const context = options.context ?? {}
 
     console.log(`[Sandbox] Executing code (timeout: ${timeout}ms)`)
 
-    // Execute in sandbox with timeout
-    const result = await sandboxInstance(
-      async ({ evalCode }: any) => evalCode(fullCode),
-      {
-        timeout,
-        allowFetch: false,  // Block network access
-        allowFs: false,     // Block filesystem access
-        env: {}
-      } as SandboxOptions
-    )
+    // Execute in iframe sandbox
+    const executor = getExecutor()
+    const result = await executor.execute(code, context, timeout)
 
-    console.log('[Sandbox] Execution successful')
-    return { ok: true, data: result.data }
+    if (result.ok) {
+      console.log('[Sandbox] Execution successful')
+    }
+
+    return result
 
   } catch (error: any) {
     console.error('[Sandbox] Execution failed:', error)
