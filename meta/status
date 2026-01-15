@@ -14,8 +14,8 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
 
 [x] change status popup to a widget that can be positioned
 [x] move audio visualization to center of dashbar 
-[ ] update html widget (need to trigger automatic re-render, only changing when the full sc
-[ ] fix background of audio viz (toolbar not responding to dark / light mode and not passing it to  the audio viz
+[x] update html widget (need to trigger automatic re-render, only changing when the full sc
+[x] fix background of audio viz (toolbar not responding to dark / light mode and not passing it to  the audio viz
 
 
 
@@ -27,9 +27,20 @@ Want to retain existing architecture //archive it -- and shift to a different mo
 --> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
 
 [x] implemented iframe executation with configurable contex
-[ ] re-architect cortex to use the JS exec env (sandbox.ts)
+[x] re-architect cortex to use the JS exec env (sandbox.ts)
 
+Todo:
+[ ] add widget that enables paging through JS exec history (see prior code, fn calls)
+[ ] need to rearchitect the call chain templates system
+[ ] fix the get_user_input function  (also should fire event? to be displayed in UI
+[ ] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
 --- 
+
+[ ] when function returns, should ?CAPTURE its value and append it to the function call U
+
+[ ] improve the thoughts UI with a brain emoji to start the line of each thought
+[ ] default speed 1.5 
+
 
 
 [ ] Also check out PLAYRIGHT MCP server 

@@ -839,6 +839,25 @@ return: { template_name: "embed_and_store", template_args: { text: "hello", cate
 	    return execution_result.result;
 	},
 	return_type: "any"
+    },
+
+    {
+	enabled: true,
+	description: "Resets the JavaScript execution environment, clearing all variables and state. The iframe persists but all JavaScript context is cleared. Use this when you need a fresh start.",
+	name: "reset_sandbox",
+	parameters: null,
+	signature: "async reset_sandbox(): Promise<string>",
+	fn: async (ops: any) => {
+	    const { log } = ops.util;
+	    log("Resetting sandbox environment");
+
+	    // Dynamically import resetSandbox
+	    const { resetSandbox } = await import("./src/sandbox");
+	    await resetSandbox();
+
+	    return "Sandbox environment reset successfully";
+	},
+	return_type: "string"
     }
 
 ]

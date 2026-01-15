@@ -27,12 +27,18 @@ const DEFAULT_LAYOUT: { [key: string]: WidgetGridConfig } = {
     chat: { i: 'chat', x: 0, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
     chatInput: { i: 'chatInput', x: 0, y: 2, w: 6, h: 1, minW: 4, minH: 1 },
   log: { i: 'log', x: 0, y: 3, w: 6, h: 3, minW: 4, minH: 2 },
-  html: { i: 'html', x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },    
+  html: { i: 'html', x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
 
   // Right column - no gaps
   thoughts: { i: 'thoughts', x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 2 },
-  workspace: { i: 'workspace', x: 6, y: 4, w: 6, h: 2, minW: 4, minH: 3 },    
+  workspace: { i: 'workspace', x: 6, y: 4, w: 6, h: 2, minW: 4, minH: 3 },
   code: { i: 'code', x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+
+  // New observability widgets - row below
+  codeExecution: { i: 'codeExecution', x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
+  functionCalls: { i: 'functionCalls', x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
+  sandboxLogs: { i: 'sandboxLogs', x: 0, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
+  variableInspector: { i: 'variableInspector', x: 6, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
 
 };
 

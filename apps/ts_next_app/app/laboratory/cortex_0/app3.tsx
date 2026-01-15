@@ -74,6 +74,10 @@ import ChatWidget from "./widgets/ChatWidget"
 import CodeWidget from "./widgets/CodeWidget"
 import HTMLWidget from "./widgets/HTMLWidget"
 import ChatInputWidget from "./widgets/ChatInputWidget"
+import CodeExecutionWidget from "./widgets/CodeExecutionWidget"
+import FunctionCallsWidget from "./widgets/FunctionCallsWidget"
+import VariableInspectorWidget from "./widgets/VariableInspectorWidget"
+import SandboxLogsWidget from "./widgets/SandboxLogsWidget"
 
 // Import AudioVisualization component
 import AudioVisualization from "./components/AudioVisualization"
@@ -286,6 +290,16 @@ const  Component: NextPage = (props : any) => {
 
     const [focusedWidget, setFocusedWidget] = useState<string | null>(null);
 
+    // Observability state for new widgets
+    const [currentCode, setCurrentCode] = useState<string>("");
+    const [executionId, setExecutionId] = useState<string>("");
+    const [executionStatus, setExecutionStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
+    const [executionError, setExecutionError] = useState<string>("");
+    const [executionDuration, setExecutionDuration] = useState<number>(0);
+    const [functionCalls, setFunctionCalls] = useState<any[]>([]);
+    const [variableAssignments, setVariableAssignments] = useState<any[]>([]);
+    const [sandboxLogs, setSandboxLogs] = useState<any[]>([]);
+
     // Widget configuration hook
     const { widgets, visibleWidgets, toggleWidget, widgetLayout, saveLayout, resetLayout, applyPreset } = useWidgetConfig();
     /* E V E N T _ H A N D L I N G */
@@ -302,8 +316,8 @@ const  Component: NextPage = (props : any) => {
 
     const handle_workspace_update = useCallback((evt : any) => {
 	log(`Got workspace update event`)
-	let new_workspace = structuredClone(window.workspace) ;
-	set_workspace( { ...new_workspace }) ;
+	// Use workspace from event payload instead of window.workspace
+	set_workspace({ ...evt.workspace });
     }, []);
 
     const handle_code_update = useCallback((evt : any) => {
@@ -317,15 +331,81 @@ const  Component: NextPage = (props : any) => {
 	log(evt)
 	set_html_display(evt.html)
     }, []);
-    
-    
+
+    // New event handlers for sandbox observability
+    const handle_code_execution_start = useCallback((evt: any) => {
+	log(`Got code execution start event`)
+	setCurrentCode(evt.code);
+	setExecutionId(evt.executionId);
+	setExecutionStatus('running');
+	setExecutionError("");
+	// Clear previous execution data
+	setFunctionCalls([]);
+	setVariableAssignments([]);
+	setSandboxLogs([]);
+    }, []);
+
+    const handle_sandbox_log = useCallback((evt: any) => {
+	log(`Got sandbox log event: ${evt.level}`)
+	setSandboxLogs(prev => [...prev, {
+	    level: evt.level,
+	    args: evt.args,
+	    timestamp: evt.timestamp
+	}]);
+    }, []);
+
+    const handle_sandbox_event = useCallback((evt: any) => {
+	const { eventType, data, timestamp } = evt;
+	log(`Got sandbox event: ${eventType}`)
+
+	switch (eventType) {
+	    case 'function_start':
+		setFunctionCalls(prev => [...prev, {
+		    name: data.name,
+		    args: data.args,
+		    timestamp,
+		    callId: data.callId,
+		    status: 'running'
+		}]);
+		break;
+
+	    case 'function_end':
+		setFunctionCalls(prev => prev.map(call =>
+		    call.callId === data.callId
+			? { ...call, duration: data.duration, status: 'success', result: data.result }
+			: call
+		));
+		break;
+
+	    case 'function_error':
+		setFunctionCalls(prev => prev.map(call =>
+		    call.callId === data.callId
+			? { ...call, error: data.error, status: 'error' }
+			: call
+		));
+		break;
+
+	    case 'variable_set':
+		setVariableAssignments(prev => [...prev, {
+		    name: data.name,
+		    value: data.value,
+		    timestamp
+		}]);
+		break;
+	}
+    }, []);
+
+
     const event_dic: {[k:string] : any} = useMemo(() => ({
 	'thought' : handle_thought ,
 	'workspace_update' : handle_workspace_update,
 	'log' : handle_log ,
 	'code_update' : handle_code_update ,
 	'html_update' : handle_html_update ,
-    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update]);
+	'code_execution_start': handle_code_execution_start,
+	'sandbox_log': handle_sandbox_log,
+	'sandbox_event': handle_sandbox_event,
+    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_code_execution_start, handle_sandbox_log, handle_sandbox_event]);
     
     const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
@@ -1001,6 +1081,38 @@ const  Component: NextPage = (props : any) => {
 				      onFocus={() => setFocusedWidget('html')}
 				  />
 			      );
+			  case 'codeExecution':
+			      return (
+				  <CodeExecutionWidget
+				      currentCode={currentCode}
+				      executionId={executionId}
+				      status={executionStatus}
+				      error={executionError}
+				      duration={executionDuration}
+				      onFocus={() => setFocusedWidget('codeExecution')}
+				  />
+			      );
+			  case 'functionCalls':
+			      return (
+				  <FunctionCallsWidget
+				      calls={functionCalls}
+				      onFocus={() => setFocusedWidget('functionCalls')}
+				  />
+			      );
+			  case 'variableInspector':
+			      return (
+				  <VariableInspectorWidget
+				      variables={variableAssignments}
+				      onFocus={() => setFocusedWidget('variableInspector')}
+				  />
+			      );
+			  case 'sandboxLogs':
+			      return (
+				  <SandboxLogsWidget
+				      logs={sandboxLogs}
+				      onFocus={() => setFocusedWidget('sandboxLogs')}
+				  />
+			      );
 			  default:
 			      return null;
 		      }
@@ -1062,6 +1174,38 @@ const  Component: NextPage = (props : any) => {
 	    	{focusedWidget === 'html' && (
 		    <HTMLWidget
 			htmlDisplay={html_display}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'codeExecution' && (
+		    <CodeExecutionWidget
+			currentCode={currentCode}
+			executionId={executionId}
+			status={executionStatus}
+			error={executionError}
+			duration={executionDuration}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'functionCalls' && (
+		    <FunctionCallsWidget
+			calls={functionCalls}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'variableInspector' && (
+		    <VariableInspectorWidget
+			variables={variableAssignments}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'sandboxLogs' && (
+		    <SandboxLogsWidget
+			logs={sandboxLogs}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />

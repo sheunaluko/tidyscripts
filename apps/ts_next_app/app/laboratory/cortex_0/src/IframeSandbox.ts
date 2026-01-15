@@ -40,6 +40,11 @@ export interface IframeSandboxResult<T = any> {
 }
 
 /**
+ * Default execution timeout: 1 hour (3,600,000 milliseconds)
+ */
+export const DEFAULT_SANDBOX_TIMEOUT = 60 * 60 * 1000;
+
+/**
  * Generate unique execution ID
  */
 function generateExecutionId(): string {
@@ -55,11 +60,83 @@ function generateExecutionId(): string {
  */
 export class IframeSandboxExecutor {
   private iframe: HTMLIFrameElement | null = null
+  private persistentIframe: HTMLIFrameElement | null = null
   private executionId: string | null = null
   private messageHandler: ((event: MessageEvent) => void) | null = null
+  private isInitialized: boolean = false
 
   /**
-   * Executes JavaScript code in isolated iframe sandbox
+   * Initializes persistent iframe for reuse across executions
+   */
+  async initializePersistent(): Promise<void> {
+    if (this.isInitialized && this.persistentIframe) {
+      console.log('[Sandbox] Already initialized, skipping')
+      return
+    }
+
+    console.log('[Sandbox] Initializing persistent iframe...')
+
+    // Create persistent iframe
+    this.persistentIframe = document.createElement('iframe')
+    this.persistentIframe.setAttribute('sandbox', 'allow-scripts')
+    this.persistentIframe.style.display = 'none'
+
+    // Initialize with empty document
+    this.persistentIframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body></body></html>`
+
+    // Append to DOM
+    document.body.appendChild(this.persistentIframe)
+
+    // Wait for iframe to load
+    await new Promise<void>((resolve) => {
+      this.persistentIframe!.onload = () => resolve()
+    })
+
+    this.isInitialized = true
+    console.log('[Sandbox] Persistent iframe initialized')
+  }
+
+  /**
+   * Resets the sandbox environment, clearing all variables but keeping iframe alive
+   */
+  async reset(): Promise<void> {
+    console.log('[Sandbox] Resetting sandbox environment...')
+
+    if (!this.persistentIframe || !this.isInitialized) {
+      console.warn('[Sandbox] Not initialized, nothing to reset')
+      return
+    }
+
+    // Reload iframe to clear all state
+    if (this.persistentIframe.contentWindow) {
+      this.persistentIframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body></body></html>`
+
+      // Wait for reload
+      await new Promise<void>((resolve) => {
+        this.persistentIframe!.onload = () => resolve()
+      })
+    }
+
+    console.log('[Sandbox] Sandbox environment reset')
+  }
+
+  /**
+   * Destroys the persistent iframe completely
+   */
+  destroy(): void {
+    console.log('[Sandbox] Destroying persistent iframe...')
+
+    if (this.persistentIframe && this.persistentIframe.parentNode) {
+      this.persistentIframe.parentNode.removeChild(this.persistentIframe)
+    }
+    this.persistentIframe = null
+    this.isInitialized = false
+
+    console.log('[Sandbox] Persistent iframe destroyed')
+  }
+
+  /**
+   * Executes JavaScript code in persistent isolated iframe sandbox
    *
    * @param code - JavaScript code to execute
    * @param context - Variables and functions to inject
@@ -69,10 +146,18 @@ export class IframeSandboxExecutor {
   async execute(
     code: string,
     context: Record<string, any> = {},
-    timeout: number = 5000
+    timeout: number = DEFAULT_SANDBOX_TIMEOUT
   ): Promise<IframeSandboxResult> {
+    // Initialize if not already done
+    if (!this.isInitialized) {
+      await this.initializePersistent()
+    }
+
     const startTime = Date.now()
     this.executionId = generateExecutionId()
+
+    // Use persistent iframe
+    this.iframe = this.persistentIframe
 
     // Observability collectors
     const logs: SandboxLog[] = []
@@ -103,6 +188,10 @@ export class IframeSandboxExecutor {
 
     } catch (error: any) {
       console.error('[Sandbox] Execution failed:', error)
+
+      // Mark any in-flight function calls as errored
+      this.markActiveCallsAsErrored(events, error.message || String(error))
+
       return {
         ok: false,
         error: error.message || String(error),
@@ -112,8 +201,8 @@ export class IframeSandboxExecutor {
         duration: Date.now() - startTime
       }
     } finally {
-      // Always cleanup
-      this.cleanup()
+      // Cleanup message listener only (keep iframe alive)
+      this.cleanupExecution()
     }
   }
 
@@ -167,19 +256,18 @@ export class IframeSandboxExecutor {
       // Build iframe srcdoc with embedded code
       const srcdoc = this.buildSrcDoc(code, context, executionId)
 
-      // Create and inject iframe
-      this.iframe = document.createElement('iframe')
-      this.iframe.setAttribute('sandbox', 'allow-scripts')
-      this.iframe.style.display = 'none'
+      // Inject code into persistent iframe
+      if (!this.iframe) {
+        reject(new Error('Persistent iframe not available'))
+        return
+      }
+
       this.iframe.srcdoc = srcdoc
 
       // Handle iframe load errors
       this.iframe.onerror = (error) => {
         reject(new Error(`Iframe load failed: ${error}`))
       }
-
-      // Append to DOM to trigger execution
-      document.body.appendChild(this.iframe)
     })
   }
 
@@ -235,8 +323,8 @@ export class IframeSandboxExecutor {
     // Build context code (inject primitives and function stubs)
     const contextCode = this.buildContextCode(context, executionId)
 
-    // Escape user code for safe injection
-    const escapedCode = code.replace(/<\/script>/gi, '<\\/script>')
+    // JSON.stringify the code to safely escape all special characters
+    const escapedCode = JSON.stringify(code)
 
     return `<!DOCTYPE html>
 <html>
@@ -247,6 +335,7 @@ export class IframeSandboxExecutor {
   <script>
     (function() {
       const executionId = '${executionId}'
+      const __userCode = ${escapedCode}
 
       // Helper to send messages to parent
       function sendMessage(type, payload) {
@@ -354,11 +443,15 @@ export class IframeSandboxExecutor {
               return value
             }
 
-            throw new Error(\`Access to '\${String(prop)}' is not allowed in sandbox\`)
+            // Return undefined for non-existent properties (normal JavaScript behavior)
+            // Don't throw error, as has() now returns true for all properties
+            return undefined
           },
 
           has(target, prop) {
-            return target.hasOwnProperty(prop)
+            // Always return true so unqualified assignments go through set trap
+            // This enables variable tracking in the Variable Inspector
+            return true
           },
 
           set(target, prop, value) {
@@ -370,16 +463,19 @@ export class IframeSandboxExecutor {
         })
 
         // Execute user code with membrane scope
-        let __result
-        with (membrane) {
-          __result = (async function() {
-            return eval(\`${escapedCode}\`)
-          })()
-        }
+        // Use AsyncFunction constructor for top-level await
+        const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor
+
+        // Wrap code to execute user code and then return both result and workspace
+        // This allows unqualified assignments to go through the proxy
+        const wrappedCode = 'with (this) { return (async () => { const __userResult = await (async () => { ' + __userCode + ' })(); return { __userResult, __workspace: workspace }; })(); }'
+        const fn = new AsyncFunction(wrappedCode)
+        const __result = fn.call(membrane)
 
         // Handle async results
         Promise.resolve(__result).then(
           (result) => {
+            // Send the full result (includes __userResult and __workspace)
             sendMessage('success', result)
           },
           (error) => {
@@ -485,22 +581,90 @@ export class IframeSandboxExecutor {
   }
 
   /**
-   * Cleans up iframe and message listener after execution
+   * Cleans up message listener after execution (keeps iframe alive)
    */
-  private cleanup(): void {
+  private cleanupExecution(): void {
     // Remove message listener
     if (this.messageHandler) {
       window.removeEventListener('message', this.messageHandler)
       this.messageHandler = null
     }
 
-    // Remove iframe from DOM
-    if (this.iframe && this.iframe.parentNode) {
-      this.iframe.parentNode.removeChild(this.iframe)
-    }
+    // Don't remove iframe - it's persistent
+    // Just clear the reference
     this.iframe = null
-
     this.executionId = null
+  }
+
+  /**
+   * Marks any in-flight function calls as errored when execution fails
+   *
+   * Scans events array for function_start events without corresponding
+   * function_end or function_error events, and adds error events for them.
+   * Also emits these events to parent window for real-time UI updates.
+   */
+  private markActiveCallsAsErrored(events: SandboxEvent[], errorMessage: string): void {
+    // Track which function calls have completed
+    const completedCalls = new Set<string>()
+
+    // First pass: collect all callIds that have finished
+    for (const event of events) {
+      if (event.type === 'function_end' || event.type === 'function_error') {
+        completedCalls.add(event.data.callId)
+      }
+    }
+
+    // Second pass: find active (incomplete) function calls
+    const activeCalls: Array<{name: string, callId: string}> = []
+    for (const event of events) {
+      if (event.type === 'function_start') {
+        const callId = event.data.callId
+        if (!completedCalls.has(callId)) {
+          activeCalls.push({
+            name: event.data.name,
+            callId: callId
+          })
+        }
+      }
+    }
+
+    // Mark active calls as errored
+    const timestamp = Date.now()
+    for (const call of activeCalls) {
+      const errorEvent: SandboxEvent = {
+        type: 'function_error',
+        data: {
+          name: call.name,
+          callId: call.callId,
+          error: errorMessage
+        },
+        timestamp
+      }
+
+      // Add to events array
+      events.push(errorEvent)
+
+      // Also emit to parent window for real-time UI update
+      if (this.executionId && typeof window !== 'undefined') {
+        window.postMessage({
+          executionId: this.executionId,
+          type: 'event',
+          payload: errorEvent
+        }, '*')
+      }
+    }
+
+    if (activeCalls.length > 0) {
+      console.log(`[Sandbox] Marked ${activeCalls.length} active function calls as errored`)
+    }
+  }
+
+  /**
+   * Legacy cleanup method for backward compatibility
+   * @deprecated Use cleanupExecution() instead
+   */
+  private cleanup(): void {
+    this.cleanupExecution()
   }
 }
 

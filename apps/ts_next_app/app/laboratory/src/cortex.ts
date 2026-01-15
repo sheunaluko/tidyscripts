@@ -4,15 +4,19 @@
  */
 import { zodResponseFormat } from 'openai/helpers/zod' ;
 import { z } from "zod" ;
-import { buildPrompt, cortexOutputFormat, DEFAULT_CORTEX_SECTIONS } from "./cortex_prompt_blocks"
+import { buildPrompt, codeOutputFormat, DEFAULT_CORTEX_SECTIONS } from "./cortex_prompt_blocks"
 import type { SectionName } from "./cortex_prompt_blocks"
 import { PromptManager } from "./prompt_manager"
 import type { SectionOverrides } from "./prompt_manager"
 import * as tsw from "tidyscripts_web"
-import {EventEmitter} from 'events'  ;  
+import {EventEmitter} from 'events'  ;
 const {debug} = tsw.common.util ;
 const log = tsw.common.logger.get_logger({'id':'cortex_base'})
-import * as Channel from "./channel" 
+import * as Channel from "./channel"
+
+// Import sandbox for code execution
+import type { SandboxLog, SandboxEvent } from "../cortex_0/src/sandbox"
+import { DEFAULT_SANDBOX_TIMEOUT } from '../cortex_0/src/IframeSandbox' 
 
 
 /*
@@ -88,6 +92,12 @@ type CortexOutput = {
     thoughts : string,
     calls : FunctionCall[], //change output to array of function calls
     return_indeces : number[]
+}
+
+/* CodeOutput - for JavaScript code generation */
+type CodeOutput = {
+    thoughts: string,
+    code: string
 } 
 
 
@@ -108,6 +118,16 @@ export const CortexOutputResponseFormat = zodResponseFormat( zrf,  'CortexOutput
 /* Extract raw JSON schema for new Responses API */
 export const CortexOutputSchema = CortexOutputResponseFormat.json_schema.schema;
 export const CortexOutputSchemaName = 'CortexOutput';
+
+/* New CodeOutput schema for JavaScript code generation */
+const CodeOutputZod = z.object({
+    thoughts: z.string(),
+    code: z.string()
+})
+
+export const CodeOutputResponseFormat = zodResponseFormat(CodeOutputZod, 'CodeOutput');
+export const CodeOutputSchema = CodeOutputResponseFormat.json_schema.schema;
+export const CodeOutputSchemaName = 'CodeOutput';
 
 /* Helper to extract raw JSON schema from zodResponseFormat result */
 export function extractJsonSchema(zodFormat: ReturnType<typeof zodResponseFormat>) {
@@ -273,8 +293,8 @@ export class Cortex extends EventEmitter  {
 	this.promptManager = new PromptManager({
 	    sections: sectionsList,
 	    sectionArgs: {
-		functions: [functionInfos],
-		outputFormat: [cortexOutputFormat.types, cortexOutputFormat.examples],
+		codeGeneration: [functionInfos],
+		outputFormat: [codeOutputFormat.types, codeOutputFormat.examples],
 		...(additional_system_msg && { additional: [additional_system_msg] })
 	    }
 	})
@@ -524,8 +544,8 @@ The response will be validated against this structure.
 	let args = {
 	    model,
 	    input: messages,
-	    schema: CortexOutputSchema,
-	    schema_name: CortexOutputSchemaName
+	    schema: CodeOutputSchema,
+	    schema_name: CodeOutputSchemaName
 	};
 
 	this.log(`[LLM Call] model=${this.model}, provider=${this.provider}, endpoint=${endpoint}`);
@@ -751,6 +771,160 @@ The response will be validated against this structure.
 	return filtered;
     }
 
+    /**
+     * Sets up real-time event listener for sandbox execution
+     * Returns cleanup function
+     */
+    private setup_realtime_event_listener(): () => void {
+	const handler = (event: MessageEvent) => {
+	    if (!event.data.executionId) return;
+
+	    const { type, payload } = event.data;
+
+	    switch (type) {
+		case 'log':
+		    // Emit immediately to UI
+		    this.emit_event({
+			type: 'sandbox_log',
+			level: payload.level,
+			args: payload.args,
+			timestamp: payload.timestamp
+		    });
+		    break;
+
+		case 'event':
+		    // Emit execution events immediately
+		    this.emit_event({
+			type: 'sandbox_event',
+			eventType: payload.type,
+			data: payload.data,
+			timestamp: payload.timestamp
+		    });
+		    break;
+	    }
+	};
+
+	window.addEventListener('message', handler);
+	return () => window.removeEventListener('message', handler);
+    }
+
+    /**
+     * Builds sandbox context with all cortex functions
+     */
+    private build_sandbox_context(): Record<string, any> {
+	const context: Record<string, any> = {};
+
+	// Inject all enabled cortex functions
+	for (const fn of this.functions) {
+	    // Expect single object parameter
+	    context[fn.name] = async (params: any = {}) => {
+		try {
+		    // Build ops object
+		    const ops = {
+			params, // Always an object
+			util: {
+			    log: this.log,
+			    event: this.emit_event.bind(this),
+			    user_output: this.user_output,
+			    get_var: this.get_var.bind(this),
+			    set_var: this.set_var.bind(this),
+			    set_var_with_id: this.set_var_with_id.bind(this),
+			    get_embedding: tsw.common.apis.ailand.get_cloud_embedding,
+			    handle_function_call: this.handle_function_call.bind(this),
+			    collect_args: this.collect_args.bind(this),
+			    resolve_args: this.resolve_args.bind(this),
+			    run_cortex_output: this.run_cortex_output.bind(this),
+			    run_structured_completion: this.run_structured_completion.bind(this),
+			    rerun_llm_with_output_format: this.rerun_llm_with_output_format.bind(this),
+			    build_system_message: buildPrompt,
+			    cortex_functions: this.functions,
+			    feedback: {
+				error: tsw.util.sounds.error,
+				activated: tsw.util.sounds.input_ready,
+				ok: tsw.util.sounds.proceed,
+				success: tsw.util.sounds.success
+			    }
+			}
+		    };
+
+		    // Execute function
+		    const result = await fn.fn(ops);
+
+		    // Ensure serializable
+		    return structuredClone(result);
+		} catch (error: any) {
+		    throw new Error(error.message || String(error));
+		}
+	    };
+	}
+
+	// Add workspace reference - use persistent workspace from instance
+	context.workspace = this.workspace || {};
+
+	return context;
+    }
+
+    /**
+     * Executes JavaScript code in sandbox instead of running function calls
+     */
+    async run_code_output(output: CodeOutput): Promise<FunctionResult> {
+	const { code } = output;
+
+	// Setup real-time event listener BEFORE execution starts
+	const cleanup = this.setup_realtime_event_listener();
+
+	try {
+	    // Build context with all cortex functions
+	    const context = this.build_sandbox_context();
+
+	    // Dynamically import sandbox to avoid circular dependencies
+	    const { getExecutor } = await import('../cortex_0/src/sandbox');
+
+	    // Execute in sandbox (workspace is passed by reference and auto-updates)
+	    const sandbox = getExecutor();
+	    const result = await sandbox.execute(code, context, DEFAULT_SANDBOX_TIMEOUT);
+
+	    this.log(`Sandbox execution complete: ok=${result.ok}, duration=${result.duration}ms`);
+
+	    // Log all console outputs from sandbox
+	    if (result.logs && result.logs.length > 0) {
+		this.log(`Sandbox logs: ${result.logs.length} entries`);
+	    }
+
+	    // Extract workspace and user result from wrapped execution
+	    let userResult = result.data;
+	    if (result.ok && result.data?.__workspace) {
+		// Update workspace from sandbox
+		this.workspace = result.data.__workspace;
+		this.emit_event({ type: 'workspace_update', workspace: this.workspace });
+		this.log(`Workspace updated: ${Object.keys(this.workspace || {}).length} keys`);
+
+		// Extract the actual user result
+		userResult = result.data.__userResult;
+	    }
+
+	    return {
+		name: 'code_execution',
+		error: result.ok ? false : result.error || 'Unknown error',
+		result: userResult,
+		events: result.events || []  // Include events for loop decision
+	    };
+	} catch (error: any) {
+	    const errorMsg = `Sandbox execution failed: ${error.message}`;
+	    this.log(errorMsg);
+	    this.log_event(errorMsg);
+	    return {
+		name: 'code_execution',
+		error: errorMsg,
+		result: null,
+		events: []
+	    };
+	} finally {
+	    // Cleanup event listener
+	    cleanup();
+	}
+    }
+
     async handle_llm_response(fetchResponse : any , loop : number ) {
 
 	/*
@@ -773,7 +947,7 @@ The response will be validated against this structure.
 	}
 
 	// New Responses API returns output_text instead of choices[0].message.parsed
-	let output: CortexOutput;
+	let output: CodeOutput;
 	if (jsonData.output_text) {
 	    output = JSON.parse(jsonData.output_text);
 	} else if (jsonData.choices?.[0]?.message?.parsed) {
@@ -784,37 +958,60 @@ The response will be validated against this structure.
 	}
 
 	console.log(output)
-	debug.add("output", output) ; 
+	debug.add("output", output) ;
 
-	//add the message 
-	this.add_cortex_output(output)	
+	// Add code output as cortex message
+	this.add_cortex_message(this._cortex_msg(JSON.stringify(output)));
 
-	//at this point parsed is a CortexOutput object
-	this.log(`Got respond_to_user function`) 	    
+	// Emit thoughts
 	this.emit_event({'type': 'thought', 'thought' : output.thoughts})
 
+	// Emit code execution start event
+	this.emit_event({
+	    type: 'code_execution_start',
+	    code: output.code,
+	    executionId: `exec_${Date.now()}`
+	});
 
-	this.set_is_running_function(true) ; //function running indicator 	
+	this.set_is_running_function(true) ; //function running indicator
 
-
-	let result = await this.run_cortex_output(output);
+	// Execute code in sandbox
+	let result = await this.run_code_output(output);
 	this.set_is_running_function(false) ;  //turn off function running indicator
-	this.add_user_result_input(result)
 
-	// Check if last function was respond_to_user AND execution succeeded
+	// Check if execution succeeded
 	const executionFailed = result.error;
-	const lastCall = output.calls[output.calls.length - 1];
-	const plannedRespondToUser = lastCall && lastCall.name === "respond_to_user";
 
-	// Only consider it done if respond_to_user actually executed successfully
-	const isRespondToUser = !executionFailed && plannedRespondToUser;
+	// Check if the LAST function call was respond_to_user
+	// This allows the agent to call respond_to_user for status updates, then continue working
+	let lastFunctionCallWasRespondToUser = false;
+	if (!executionFailed && result.events && result.events.length > 0) {
+		// Find the last function_start event
+		const functionStartEvents = result.events.filter((e: any) => e.type === 'function_start');
+		if (functionStartEvents.length > 0) {
+			const lastFunctionCall = functionStartEvents[functionStartEvents.length - 1];
+			lastFunctionCallWasRespondToUser = lastFunctionCall.data?.name === 'respond_to_user';
+			this.log(`Last function call: ${lastFunctionCall.data?.name}`);
+		}
+	}
 
-	if (isRespondToUser) {
+	// Strip events before adding to LLM context (they're for observability, not LLM consumption)
+	const resultForLLM = {
+		name: result.name,
+		error: result.error,
+		result: result.result
+	};
+	this.add_user_result_input(resultForLLM);
+
+	// Only consider it done if execution succeeded and last function call was respond_to_user
+	const isComplete = !executionFailed && lastFunctionCallWasRespondToUser;
+
+	if (isComplete) {
 	    // User got response, conversation ends
 	    return "done";
 	}
 
-	// Last call wasn't respond_to_user, LLM needs to process results
+	// Code didn't call respond_to_user or failed, LLM needs to continue
 	if (loop > 0) {
 	    // Re-invoke LLM with decremented loop counter
 	    this.log(`Continuing LLM invocation::  [loops remaining: ${loop}] - Error=${result.error}`);
@@ -835,7 +1032,7 @@ The response will be validated against this structure.
 	    // loop < 0 (safety limit reached after instruction message)
 	    this.log(`Final loop limit reached without respond_to_user, forcing stop`);
 	    return "done";
-	} 
+	}
 
 
     }

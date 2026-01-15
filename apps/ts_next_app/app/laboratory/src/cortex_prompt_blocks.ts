@@ -23,11 +23,13 @@ export type SectionName =
     | 'responseGuidance'
     | 'functions'
     | 'outputFormat'
+    | 'codeGeneration'
     | 'additional'
 
 export type SectionArgs = {
     intro?: [string]
     functions?: [FunctionInfo[]]
+    codeGeneration?: [FunctionInfo[]]
     outputFormat?: [string, string?]
     responseGuidance?: [string]
     additional?: [string]
@@ -116,6 +118,69 @@ ${typeDefinition}
 ${examples ? `\n${examples}` : ''}
 `,
 
+    codeGeneration: (fns: FunctionInfo[]) => `${header('CODE GENERATION')}
+You generate JavaScript code that executes in a sandboxed environment.
+
+All cortex functions are async and available in global scope. Call them directly in your code.
+
+CRITICAL RULES:
+1. Always call functions with a SINGLE OBJECT parameter containing named properties
+   Example: await compute_embedding({text: "hello"})
+   NOT: await compute_embedding("hello")
+
+2. Use console.log() for debugging - all logs will be returned to you in the result
+   Example: console.log("Processing query:", userQuery);
+
+3. A 'workspace' object is available for persisting state between executions
+   Example: workspace.counter = (workspace.counter || 0) + 1;
+
+4. Always call respond_to_user({response: "message"}) to send output back to the user
+
+5. IMPORTANT: Use UNQUALIFIED ASSIGNMENTS for variables (no const/let/var)
+   This enables variable tracking in the UI for observability.
+   CORRECT: query = "What is AI?";
+   CORRECT: results = await retrieve_declarative_knowledge({query: query});
+   WRONG: const query = "What is AI?";
+   WRONG: let results = await retrieve_declarative_knowledge({query: query});
+
+   Exception: You can use const/let/var inside function definitions if needed.
+
+6. Write natural async JavaScript code with control flow, error handling, etc.
+
+7. IMPORTANT - Seeing Data in Future Turns:
+   This is a turn-based system. You CANNOT see the results of async operations in the same turn.
+
+   To see data in the NEXT turn, you must:
+   - Return it directly (the return value becomes the function result)
+   - OR console.log() it (logs are included in the result)
+   - OR store it in workspace (persists between turns)
+
+   Example - Multi-turn pattern:
+   // Turn 1: Execute query and return results to see them
+   results = await retrieve_declarative_knowledge({query: "AI"});
+   console.log("Query results:", results);
+   return results;  // You'll see this in the next turn
+
+   // Turn 2: Now you can respond with verified data
+   // The previous result is in your context
+   await respond_to_user({response: "Based on the results, ..."});
+
+Available Functions:
+${JSON.stringify(fns, null, 2)}
+
+Example Code:
+query = "What is AI?";
+console.log("Searching knowledge graph for:", query);
+results = await retrieve_declarative_knowledge({query: query});
+console.log("Found results:", results.length);
+
+if (results.length > 0) {
+    await respond_to_user({response: \`Found \${results.length} results: \${JSON.stringify(results)}\`});
+} else {
+    await respond_to_user({response: "No results found for your query."});
+}
+`,
+
     additional: (msg: string) => `${header('ADDITIONAL INSTRUCTIONS')}
 ${msg}
 `,
@@ -176,6 +241,40 @@ This shows how to reference a value in CortexRAM using @ syntax:
 }
 
 // ==================================================
+// CODE OUTPUT FORMAT (for code generation mode)
+// ==================================================
+
+export const codeOutputFormat = {
+    types: `
+You receive UserInput messages and return CodeOutput messages, defined in TypeScript as:
+
+type CodeOutput = {
+    thoughts: string,
+    code: string
+}
+`,
+    examples: `
+[Example] Responding to user with text "Sounds great!"
+{
+  thoughts: "ready to respond to the user",
+  code: "await respond_to_user({response: \\"Sounds great!\\"});"
+}
+
+[Example] Computing embedding and responding with its length
+{
+  thoughts: "Need to compute embedding of 'hello' and tell user the length",
+  code: "text = \\"hello\\";\\nconsole.log(\\"Computing embedding for:\\", text);\\nembedding = await compute_embedding({text: text});\\nconsole.log(\\"Embedding length:\\", embedding.length);\\nawait respond_to_user({response: \`Embedding has \${embedding.length} dimensions\`});"
+}
+
+[Example] Multi-step workflow with error handling
+{
+  thoughts: "Search knowledge graph and handle potential errors",
+  code: "try {\\n  query = \\"What is AI?\\";\\n  console.log(\\"Searching for:\\", query);\\n  results = await retrieve_declarative_knowledge({query: query});\\n  \\n  if (results.length > 0) {\\n    await respond_to_user({response: \`Found \${results.length} results\`});\\n  } else {\\n    await respond_to_user({response: \\"No results found\\"});\\n  }\\n} catch (error) {\\n  console.error(\\"Search failed:\\", error);\\n  await respond_to_user({response: \\"Sorry, search encountered an error\\"});\\n}"
+}
+`
+}
+
+// ==================================================
 // PROMPT BUILDER
 // ==================================================
 
@@ -197,7 +296,8 @@ export function buildPrompt(ops: {
 // DEFAULT SECTIONS FOR MAIN CORTEX AGENT
 // ==================================================
 
-export const DEFAULT_CORTEX_SECTIONS: SectionName[] = [
+// Legacy sections (for backward compatibility)
+export const LEGACY_CORTEX_SECTIONS: SectionName[] = [
     'intro',
     'cortexRAM',
     'callChains',
@@ -205,4 +305,12 @@ export const DEFAULT_CORTEX_SECTIONS: SectionName[] = [
     'outputFormat',
     'responseGuidance',
     'functions'
+]
+
+// New code generation sections (default)
+export const DEFAULT_CORTEX_SECTIONS: SectionName[] = [
+    'intro',
+    'codeGeneration',
+    'outputFormat',
+    'responseGuidance'
 ]

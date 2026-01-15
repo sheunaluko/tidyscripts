@@ -1,16 +1,32 @@
-ok heres the sitch
+Hello
 
-in laboratory/cortex_0 i have a working implementation of my voice module
+I want to do a refactor of the cortex_0/app3.tsx
 
-in laboratory/components/tivi I have a non working implementation
+Not the UI - but the agent architecture.
 
-The goal is to provide cancelable text to speech, which needs to use echo cancellation so that the speech itself is not heard but only the user.
+Right now it imports laboratory/src/cortex.ts
 
-This works in cortex but not in tivi.
+This defines an agent that takes CortexFunctions (tools) and can call them.
 
-Both cortex_0 and tivi have an audio power interface. I can see that in cortex the audio power is SILENT while tts is active.
-But in tivi it is NOT silent.
+However I want to migrate to using a javascript sandbox instead (defined in cortex_0/src/sandbox.ts
 
-What could be causing this?
+The cortex functions should instead be injected into the sandbox.
 
-Come up with a differential of 4 possibilities
+This is a significant re-write. So i want you to explore the existing architecture and lets discuss it then come up with a plan
+
+Also - inherent in this restructuring is the desire to use all of the proxy/membrane features to enable a UI component for visualizing the STATUS of the onging javascript execution - i.e. the code being executed, variables that are assigned, functions calls (with the parameters that they were called with using react object inspector), duration of the function execuation. All functions should be async . Do you get what im saying?
+
+Some points:
+1) the concept of cortexRAM is not needed anymore for chaining results together, but I am wondering if something like it is needed for the agent to be able to persist information between script executions.. for example if it computes an embedding it should be able to store the result and reference it later (even on a different script execution). Currently variables are not persisted between script execution it looks like this is because a new iframe is injected for every execution? does this mean that multiple i frames will be generated for each execuation and pollute the app?
+
+im wondering if a method to reuse an iframe may enable persistent variabl
+
+context and thus allow the agent to just store vars normally and reference them later? 
+
+
+
+2) the return value of the sandbox execution function {ok, logs, etc} should be passed back to the agent
+
+3) the agent instructions need to be updated so it undestands what code to generate, what happens to the logs (they are returned to it) and the return values etc
+
+

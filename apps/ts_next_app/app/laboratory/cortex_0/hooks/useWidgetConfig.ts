@@ -18,6 +18,10 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'log', name: 'Log', visible: true, order: 4 },
   { id: 'code', name: 'Code', visible: true, order: 5 },
   { id: 'html', name: 'HTML', visible: true, order: 6 },
+  { id: 'codeExecution', name: 'Code Execution', visible: true, order: 7 },
+  { id: 'functionCalls', name: 'Function Calls', visible: true, order: 8 },
+  { id: 'variableInspector', name: 'Variables', visible: true, order: 9 },
+  { id: 'sandboxLogs', name: 'Sandbox Logs', visible: true, order: 10 },
 ];
 
 // Layout presets for different use cases
@@ -36,6 +40,9 @@ const LAYOUT_PRESETS: Record<string, WidgetGridConfig[]> = {
     { i: 'thoughts', x: 8, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
     { i: 'log', x: 0, y: 4, w: 6, h: 3, minW: 4, minH: 2 },
     { i: 'code', x: 6, y: 4, w: 6, h: 3, minW: 4, minH: 2 },
+    { i: 'codeExecution', x: 0, y: 7, w: 6, h: 4, minW: 4, minH: 3 },
+    { i: 'functionCalls', x: 6, y: 7, w: 6, h: 4, minW: 4, minH: 3 },
+    { i: 'sandboxLogs', x: 0, y: 11, w: 12, h: 3, minW: 4, minH: 2 },
   ],
   minimal: [
     { i: 'chat', x: 0, y: 0, w: 8, h: 6, minW: 4, minH: 3 },

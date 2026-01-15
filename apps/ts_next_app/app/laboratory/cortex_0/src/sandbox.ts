@@ -9,7 +9,7 @@
  * @module sandbox
  */
 
-import { getExecutor, type SandboxLog, type SandboxEvent } from './IframeSandbox'
+import { getExecutor, type SandboxLog, type SandboxEvent, DEFAULT_SANDBOX_TIMEOUT } from './IframeSandbox'
 
 /**
  * Log entry captured from sandbox
@@ -33,20 +33,17 @@ export interface SandboxResult<T = any> {
  * Options for sandboxed execution
  */
 export interface SandboxExecutionOptions {
-  timeout?: number                    // Execution timeout in milliseconds (default: 5000)
+  timeout?: number                    // Execution timeout in milliseconds (default: 3600000 / 1 hour)
   context?: Record<string, any>       // Variables to inject into sandbox context
 }
 
 // Singleton initialization flag
 let initialized = false
 
-const DEFAULT_TIMEOUT = 5000 // 5 seconds
+const DEFAULT_TIMEOUT = DEFAULT_SANDBOX_TIMEOUT // 1 hour
 
 /**
- * Initializes the sandbox (one-time operation)
- *
- * This function is maintained for API compatibility but is essentially
- * a no-op for iframe-based sandboxing (no pre-initialization needed).
+ * Initializes the persistent sandbox (one-time operation)
  *
  * @returns Promise that resolves when initialization is complete
  */
@@ -56,14 +53,57 @@ export async function initializeSandbox(): Promise<void> {
   }
 
   try {
-    console.log('[Sandbox] Initializing iframe sandbox...')
-    // Iframe sandbox doesn't need pre-initialization
-    // Just set flag for compatibility
+    console.log('[Sandbox] Initializing persistent iframe sandbox...')
+    const executor = getExecutor()
+    await executor.initializePersistent()
     initialized = true
     console.log('[Sandbox] Initialized successfully')
   } catch (error: any) {
     console.error('[Sandbox] Initialization failed:', error)
     throw new Error(`Failed to initialize sandbox: ${error.message}`)
+  }
+}
+
+/**
+ * Resets the sandbox environment, clearing all variables and state
+ *
+ * The iframe itself remains alive, but all JavaScript variables
+ * and state are cleared. Use this to start fresh without the
+ * overhead of creating a new iframe.
+ *
+ * @returns Promise that resolves when reset is complete
+ */
+export async function resetSandbox(): Promise<void> {
+  console.log('[Sandbox] Resetting sandbox environment...')
+  try {
+    const executor = getExecutor()
+    await executor.reset()
+    console.log('[Sandbox] Reset complete')
+  } catch (error: any) {
+    console.error('[Sandbox] Reset failed:', error)
+    throw new Error(`Failed to reset sandbox: ${error.message}`)
+  }
+}
+
+/**
+ * Destroys the sandbox completely
+ *
+ * Removes the iframe from the DOM and cleans up all resources.
+ * After calling this, the sandbox will need to be reinitialized
+ * before use.
+ *
+ * @returns void
+ */
+export function destroySandbox(): void {
+  console.log('[Sandbox] Destroying sandbox...')
+  try {
+    const executor = getExecutor()
+    executor.destroy()
+    initialized = false
+    console.log('[Sandbox] Destroy complete')
+  } catch (error: any) {
+    console.error('[Sandbox] Destroy failed:', error)
+    throw new Error(`Failed to destroy sandbox: ${error.message}`)
   }
 }
 
@@ -213,4 +253,10 @@ if (typeof window !== 'undefined') {
   initializeSandbox().catch(err => {
     console.warn('[Sandbox] Background initialization failed:', err)
   })
+}
+
+
+// Export everything for external use
+export {
+    getExecutor,
 }

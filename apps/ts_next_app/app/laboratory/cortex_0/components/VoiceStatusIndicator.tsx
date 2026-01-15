@@ -133,7 +133,7 @@ export const VoiceStatusIndicator: React.FC<VoiceStatusIndicatorProps> = ({
               whiteSpace: 'nowrap'
             }}
           >
-            &ldquo;{interimResult}&rdquo;
+            &ldquo;{interimResult.length > 10 ? '...' + interimResult.slice(-10) : interimResult}&rdquo;
           </Typography>
         )}
 
