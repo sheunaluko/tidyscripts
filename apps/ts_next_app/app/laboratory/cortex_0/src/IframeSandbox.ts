@@ -566,6 +566,7 @@ export class IframeSandboxExecutor {
           Array: Array,
           Object: Object,
           String: String,
+          eval  : eval,   // adding eval (^.^)
           Number: Number,
           Boolean: Boolean,
           Date: Date,

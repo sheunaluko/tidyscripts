@@ -291,7 +291,7 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 
 
     {
-	enabled : true, 
+	enabled : false, 
 	description : "use the javascript interpreter" ,
 	name        : "evaluate_javascript" ,
 	parameters  : { input : "string" }  ,
