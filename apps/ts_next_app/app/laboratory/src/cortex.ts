@@ -68,8 +68,9 @@ type FunctionCall =  {
 /* FunctionResult */
 type FunctionResult =  {
     name : string,
-    error : boolean | string , 
-    result  : FunctionReturnType
+    error : boolean | string ,
+    result  : FunctionReturnType,
+    events? : SandboxEvent[]  // Optional events for observability and control flow
 }
 
 type CallChainResult =  {
@@ -199,7 +200,7 @@ export function generate_system_msg(functions : Function[], additional_system_ms
         sections: sectionsList,
         sectionArgs: {
             functions: [functionInfos],
-            outputFormat: [cortexOutputFormat.types, cortexOutputFormat.examples],
+            outputFormat: [codeOutputFormat.types, codeOutputFormat.examples],
             ...(additional_system_msg && { additional: [additional_system_msg] })
         }
     })
@@ -247,6 +248,8 @@ export class Cortex extends EventEmitter  {
     user_output : any ;
 
     CortexRAM : { [k:string] : any } ;
+
+    workspace? : { [k:string] : any } ; // Persistent workspace for sandbox executions
 
     promptManager : PromptManager ;
 

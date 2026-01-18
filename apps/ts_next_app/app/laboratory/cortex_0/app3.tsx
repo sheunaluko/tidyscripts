@@ -59,7 +59,6 @@ import ChatIcon from '@mui/icons-material/Chat';
 import SendIcon from '@mui/icons-material/Send';
 import WidgetItem from "./WidgetItem" ;
 
-import * as cortex_utils from "./src/cortex_utils"
 import * as sandbox from "./src/sandbox"
 
 
@@ -268,22 +267,11 @@ const  Component: NextPage = (props : any) => {
 	code : "print(\"Welcome to Tidyscripts!\")" , 
 	mode : "python"
     }
-    
-    //const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
 
+    const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
 
-    const codeParamsRef = useRef(init_code_params);
-
-    /* 
-    useEffect( ()=> {
-	log(`initializing with code: ${code_params.code} + mode= ${code_params.mode}`) ; 
-    },[])
-    */
-
-    const handle_code_change = useCallback((code_params : any) => {
-	codeParamsRef.current.code = code_params.code ;
-	codeParamsRef.current.mode = code_params.mode ;
-    	//set_code_params( { code : v , mode : code_params.mode  } )
+    const handle_code_change = useCallback((new_params : any) => {
+    	set_code_params({ code: new_params.code, mode: new_params.mode });
     }, []);	
     
 
@@ -491,7 +479,6 @@ const  Component: NextPage = (props : any) => {
 	    last_ai_message,
 	    last_ai_message_ref,
 	    COR,
-	    cu : cortex_utils,
 	    tivi,
 	    sandbox,  // Sandboxed JavaScript execution
 
@@ -1069,7 +1056,7 @@ const  Component: NextPage = (props : any) => {
 			  case 'code':
 			      return (
 				  <CodeWidget
-				      codeParams={codeParamsRef.current}
+				      codeParams={code_params}
 				      onChange={handle_code_change}
 				      onFocus={() => setFocusedWidget('code')}
 				  />
@@ -1164,7 +1151,7 @@ const  Component: NextPage = (props : any) => {
 		)}
 	    	{focusedWidget === 'code' && (
 		    <CodeWidget
-			codeParams={codeParamsRef.current}
+			codeParams={code_params}
 			onChange={handle_code_change}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}

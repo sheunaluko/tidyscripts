@@ -578,6 +578,27 @@ export class IframeSandboxExecutor {
           clearTimeout: clearTimeout,
           clearInterval: clearInterval,
         }
+
+        // Sandbox helper: run_dynamic_function (defined after allowedGlobals so it can reference it)
+        allowedGlobals.run_dynamic_function = async function(args) {
+          const { name, args: functionArgs } = args;
+
+          // Load from DB (reference through allowedGlobals to go through membrane)
+          const dfn = await allowedGlobals.load_dynamic_function({ name });
+
+          // Create function using AsyncFunction constructor
+          // This handles both function declarations and raw code cleanly
+          let fn;
+          try {
+            const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+            fn = new AsyncFunction('args', dfn.code);
+          } catch (e) {
+            throw new Error(\`Syntax error in dynamic function '\${name}': \${e.message}\`);
+          }
+
+          // Execute (runtime errors bubble naturally)
+          return await fn(functionArgs);
+        };
     `
   }
 

@@ -22,7 +22,7 @@ const CodeWidget: React.FC<CodeWidgetProps> = ({
 }) => {
   return (
     <WidgetItem
-      title="Code"
+      title="Code Display"
       fullscreen={fullscreen}
       onFocus={onFocus}
       onClose={onClose}

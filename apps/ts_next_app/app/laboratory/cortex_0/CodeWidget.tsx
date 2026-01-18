@@ -39,11 +39,11 @@ const CodeEditor = ({code_params , onChange } : any) => {
     const [localCode, setLocalCode] = useState(code_params.code);
     const [localMode, setLocalMode] = useState(code_params.mode);    
 
-    // Only initialize once
+    // Update when code_params changes
     useEffect(() => {
 	setLocalCode(code_params.code);
-	setLocalMode(code_params.mode); 
-    }, []); // no dependency on `codeParams` to avoid reset on parent re-render
+	setLocalMode(code_params.mode);
+    }, [code_params.code, code_params.mode]); // Update when code or mode changes
 
     const handleChange = (value: string) => {
 	setLocalCode(value);
@@ -82,12 +82,13 @@ const CodeEditor = ({code_params , onChange } : any) => {
 		value={localCode}
 		onChange={handleChange}
 		name="ace-editor"
-		fontSize={20}
+		fontSize={16}
 		width="100%"
 		height="100%"
 		showPrintMargin={false}
 		editorProps={{ $blockScrolling: true }}
 		setOptions={{
+		    wrap: true,
 		    showLineNumbers: true,
 		    tabSize: 2,
 		    useWorker: false,

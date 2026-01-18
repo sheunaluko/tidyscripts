@@ -6,7 +6,6 @@ import * as fbu from "../../../src/firebase_utils"
 import * as fnu from "../src/fn_util"
 import * as tsw from "tidyscripts_web"
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
-import * as cu from "./src/cortex_utils"
 import { z } from "zod" 
 
 const vi = tsw.util.voice_interface ;
@@ -517,161 +516,82 @@ Please note: A subfunction runs to accumulate the users text until they say fini
     },
 
 
+    // ============================================================
+    // DYNAMIC FUNCTIONS - Reusable JavaScript functions in sandbox
+    // ============================================================
+
     {
 	enabled: true,
 	description: `
-Creates a Call Chain Template by using a specialized LLM to design the template structure.
+Creates and saves a dynamic function to the database.
 
-Simply describe what you want the template to do in natural language, and this function
-will generate a properly structured template with the correct calls, parameters, and references.
-
-The template will be stored in CortexRAM and its id returned. You can then use save_call_chain_template
-to persist it to the database, or run_call_chain_template to test it.
-
-Do not specify the template name or params_schema, this function will handle it on its own. Just use natural language. 
+Dynamic functions are full JavaScript async functions that can be executed in the sandbox.
+They have access to all cortex functions via closure and provide more power than templates.
 
 Parameters:
-- description (string): Natural language description of what the template should do
-  Example: "Create a template that takes text input, computes its embedding, and stores both in the logs table"
-	`,
-	name: "create_call_chain_template",
-	parameters: {
-	    description: "string"
-	},
-	fn: async (ops: any) => {
-	    const { description } = ops.params
-	    const { log, set_var, run_structured_completion, build_system_message, cortex_functions } = ops.util
+- name (string): Unique identifier for the function (snake_case)
+- description (string): Clear description of what the function does
+- code (string): Full async function code (e.g., "async function my_func(args) { ... }")
+- params_schema (object): Map of parameter names to types (e.g., {"text": "string", "count": "number"})
 
-	    log(`Creating call chain template from description: ${description}`)
-
-	    // Define the Zod schema for template structure
-	    // Using z.union([z.record(z.string()), z.null()]) pattern from cortex.ts FunctionCallObject
-	    const TemplateSchema = z.object({
-		name: z.string().describe("Unique identifier for the template, snake_case"),
-		description: z.string().describe("Clear description of what the template does"),
-		params_schema: z.union([z.record(z.string()), z.null()]).describe("Map of parameter names to types, or null if no params"),
-		calls: z.array(z.object({
-		    name: z.string(),
-		    parameters: z.union([z.record(z.string()), z.null()])
-		})),
-		return_indices: z.array(z.number())
-	    })
-
-	    // Build output format documentation
-	    const outputFormatTypes = `
-type CallChainTemplate = {
-    name: string,              // Unique template name (snake_case)
-    description: string,       // What the template does
-    params_schema: Record<string, string>,  // Parameter names -> types
-    calls: FunctionCall[],     // Sequence of calls to execute
-    return_indices: number[]   // Which results to return
-}
-
-type FunctionCall = {
-    name: string,
-    parameters: Record<string, any> | null
-}
-`
-
-	    const outputFormatExamples = `
-[Example] Template to compute embedding and store in database:
+Example:
 {
     name: "embed_and_store",
-    description: "Computes embedding for text and stores both in logs table",
-    params_schema: { "text": "string", "category": "string" },
-    calls: [
-        { name: "compute_embedding", parameters: { text: "&text" } },
-        { name: "access_database_with_surreal_ql", parameters: { query: "INSERT INTO logs { text: '&text', category: '&category', embedding: $0 }" } }
-    ],
-    return_indices: [1]
+    description: "Computes embedding for text and stores in database",
+    code: "async function embed_and_store(args) { const {text, category} = args; const emb = await compute_embedding({text}); return await access_database_with_surreal_ql({query: 'INSERT INTO logs {text: $text, category: $category, embedding: $emb}', variables: {text, category, emb}}); }",
+    params_schema: {"text": "string", "category": "string"}
 }
-`
-
-	    // Build system message with function awareness
-	    const system_msg = build_system_message({
-		sections: ['intro', 'templateCallChains', 'outputFormat', 'functions', 'responseGuidance'],
-		sectionArgs: {
-		    intro: ['TemplateBuilder'],
-		    outputFormat: [outputFormatTypes, outputFormatExamples],
-		    functions: [cortex_functions],
-		    responseGuidance: ['Create a valid call chain template based on the user description. Use only functions from the available list.']
-		}
-	    })
-
-	    // Run structured completion
-	    const template = await run_structured_completion({
-		schema: TemplateSchema,
-		schema_name: 'CallChainTemplate',
-		messages: [
-		    { role: 'system', content: system_msg },
-		    { role: 'user', content: description }
-		]
-	    })
-
-	    log(`Template created: ${template.name}`)
-
-	    // Store in CortexRAM
-	    const id = await set_var(template)
-	    log(`Template stored in CortexRAM with id: ${id}`)
-
-	    return `@${id}` 
-	},
-	return_type: "object"
-    },
-
-    {
-	enabled: true,
-	description: `
-Saves a Call Chain Template to the database.
-
-Accepts either:
-1. A CortexRAM reference (string starting with @) pointing to a template created by create_call_chain_template
-2. A full template object with: name, description, params_schema, calls, return_indices
-
-The template will be saved with an embedding computed from name + description for semantic search.
-
-Parameters:
-- template: Either a CortexRAM reference string (e.g., "@abc123") OR a template object
 	`,
-	name: "save_call_chain_template",
+	name: "create_dynamic_function",
 	parameters: {
-	    template: "object"
+	    name: "string",
+	    description: "string",
+	    code: "string",
+	    params_schema: "object"
 	},
 	fn: async (ops: any) => {
-	    
-	    const { template } = ops.params;
+	    const { name, description, code, params_schema } = ops.params;
 	    const { log, get_embedding } = ops.util;
 
-	    const { name, description, params_schema, calls, return_indices } = template;
+	    log(`Creating dynamic function: ${name}`);
 
-	    log(`Saving call chain template: ${name}`);
+	    // Validate code with eval (syntax check)
+	    try {
+		eval(code);
+		log(`Code validation passed for ${name}`);
+	    } catch (error: any) {
+		throw new Error(`Invalid function code syntax: ${error.message}`);
+	    }
 
 	    // Compute embedding for semantic search
 	    const embeddingText = `${name} ${description}`;
 	    log(`Computing embedding for: ${embeddingText}`);
 	    const embedding = await get_embedding(embeddingText);
 
+	    // Insert into database
 	    const query = `
-            INSERT INTO cortex_call_chain_templates {
+            INSERT INTO cortex_dynamic_functions {
+                type: 'dynamic_function',
                 name: $name,
                 description: $description,
+                code: $code,
                 params_schema: $params_schema,
-                calls: $calls,
-                return_indices: $return_indices,
                 embedding: $embedding,
+                created_at: time::now(),
+                updated_at: time::now()
             }
         `;
 
-	    const response = await fbu.surreal_query({
+	    await fbu.surreal_query({
 		query,
-		variables: { name, description, params_schema, calls, return_indices, embedding }
-	    }) as any;
+		variables: { name, description, code, params_schema, embedding }
+	    });
 
-	    log(`Template saved successfully`);
+	    log(`Dynamic function "${name}" created successfully`);
 	    return {
 		success: true,
 		name,
-		message: `Template "${name}" saved to database with embedding`
+		message: `Dynamic function "${name}" created and saved to database`
 	    };
 	},
 	return_type: "object"
@@ -680,11 +600,14 @@ Parameters:
     {
 	enabled: true,
 	description: `
-Retrieves a Call Chain Template by name from the database.
+Loads a dynamic function from the database by name.
 
-Returns the template object with its calls array and parameter schema.
+Returns the complete function object including code, description, and params_schema.
+
+Parameters:
+- name (string): The name of the function to load
 	`,
-	name: "get_call_chain_template",
+	name: "load_dynamic_function",
 	parameters: {
 	    name: "string"
 	},
@@ -692,10 +615,10 @@ Returns the template object with its calls array and parameter schema.
 	    const { name } = ops.params;
 	    const { log } = ops.util;
 
-	    log(`Fetching call chain template: ${name}`);
+	    log(`Loading dynamic function: ${name}`);
 
 	    const query = `
-            SELECT * FROM cortex_call_chain_templates
+            SELECT * FROM cortex_dynamic_functions
             WHERE name = $name
             LIMIT 1
         `;
@@ -705,13 +628,15 @@ Returns the template object with its calls array and parameter schema.
 		variables: { name }
 	    }) as any;
 
-	    const templates = response?.data?.result?.result;
+	    const functions = response?.data?.result?.result;
 
-	    if (!templates || templates.length === 0) {
-		throw new Error(`Template "${name}" not found`);
+	    if (!functions || functions.length === 0 || !functions[0].result || functions[0].result.length === 0) {
+		throw new Error(`Dynamic function "${name}" not found`);
 	    }
 
-	    return templates[0].result[0];
+	    const func = functions[0].result[0];
+	    log(`Dynamic function "${name}" loaded successfully`);
+	    return func;
 	},
 	return_type: "object"
     },
@@ -719,26 +644,31 @@ Returns the template object with its calls array and parameter schema.
     {
 	enabled: true,
 	description: `
-Lists all available Call Chain Templates from the database.
+Lists all available dynamic functions from the database.
 
-Returns an array of template objects showing their names and descriptions.
-Useful for discovering which templates are available to run.
+Returns an array of function summaries with name, description, and params_schema.
 	`,
-	name: "list_call_chain_templates",
+	name: "list_dynamic_functions",
 	parameters: null,
 	fn: async (ops: any) => {
 	    const { log } = ops.util;
 
-	    log(`Listing all call chain templates`);
+	    log(`Listing all dynamic functions`);
 
 	    const query = `
             SELECT name, description, params_schema
-            FROM cortex_call_chain_templates
+            FROM cortex_dynamic_functions
         `;
 
 	    const response = await fbu.surreal_query({ query }) as any;
 
-	    return response?.data?.result?.result || [];
+	    const functions = response?.data?.result?.result;
+
+	    if (!functions || functions.length === 0) {
+		return [];
+	    }
+
+	    return functions[0].result || [];
 	},
 	return_type: "array"
     },
@@ -746,99 +676,123 @@ Useful for discovering which templates are available to run.
     {
 	enabled: true,
 	description: `
-Executes a Call Chain Template.
+Updates an existing dynamic function in the database.
 
-Simply describe in natural language which template you want to run and what arguments to use.
-The function will extract the structured parameters internally using the conversation context.
-
-For example, if the user says "run the embed_and_store template with text 'hello world' and category 'test'",
-just forward that request to this function via the description parameter.
+You can update the code, description, and/or params_schema. Only provide fields you want to update.
 
 Parameters:
-- description: string - Natural language description of which template to run and with what arguments
+- name (string): The name of the function to update
+- code (string, optional): New function code
+- description (string, optional): New description
+- params_schema (object, optional): New params schema
 	`,
-	name: "run_call_chain_template",
+	name: "update_dynamic_function",
 	parameters: {
-	    description: "string"
+	    name: "string",
+	    code: "string",
+	    description: "string",
+	    params_schema: "object"
 	},
 	fn: async (ops: any) => {
-	    const { description } = ops.params;
-	    const {
-		log,
-		handle_function_call,
-		run_cortex_output,
-		rerun_llm_with_output_format
-	    } = ops.util;
+	    const { name, code, description, params_schema } = ops.params;
+	    const { log, get_embedding } = ops.util;
 
-	    log(`run_call_chain_template called with description: ${description}`);
+	    log(`Updating dynamic function: ${name}`);
 
-	    // Step 1: Define schema for extracting template_name and template_args
-	    const TemplateRunSchema = z.object({
-		template_name: z.string(),
-		template_args: z.union([z.record(z.string()), z.null()])
-	    });
+	    // Build SET clause dynamically based on provided fields
+	    const updates: string[] = [];
+	    const variables: any = { name };
 
-	    // Step 2: Use rerun_llm_with_output_format to extract structured parameters
-	    log(`Extracting structured parameters from conversation context`);
-	    const extracted = await rerun_llm_with_output_format({
-		schema: TemplateRunSchema,
-		schema_name: 'TemplateRunParams',
-		sectionOverrides: {
-		    functions: null,  // Exclude functions to prevent recursion
-		    responseGuidance: [`
-Extract the template name and arguments from the user's request.
-Return the template_name as a string and template_args as an object with the parameter values.
-For example, if the user wants to run "embed_and_store" with text="hello" and category="test",
-return: { template_name: "embed_and_store", template_args: { text: "hello", category: "test" } }
-`]
+	    if (code !== undefined) {
+		// Validate new code
+		try {
+		    eval(code);
+		    log(`Code validation passed for updated ${name}`);
+		} catch (error: any) {
+		    throw new Error(`Invalid function code syntax: ${error.message}`);
 		}
-	    });
-
-	    const { template_name, template_args } = extracted;
-	    log(`Extracted template_name: ${template_name}`);
-	    log(`Extracted template_args: ${JSON.stringify(template_args)}`);
-
-	    // Step 3: Fetch the template
-	    const template_result = await handle_function_call({
-		name: "get_call_chain_template",
-		parameters: { name: template_name }
-	    });
-
-	    if (template_result.error) {
-		throw new Error(`Failed to fetch template: ${template_result.error}`);
+		updates.push('code = $code');
+		variables.code = code;
 	    }
 
-	    const template = template_result.result;
-	    log(`Retrieved template: ${template.name}`);
+	    if (description !== undefined) {
+		updates.push('description = $description');
+		variables.description = description;
 
-	    // Step 4: Resolve & placeholders in calls array
-	    const resolved_calls = cu.resolve_call_chain_template_args(
-		template.calls,
-		template_args || {}
-	    );
+		// Recompute embedding if description changed
+		const embeddingText = `${name} ${description}`;
+		log(`Recomputing embedding for: ${embeddingText}`);
+		const embedding = await get_embedding(embeddingText);
+		updates.push('embedding = $embedding');
+		variables.embedding = embedding;
+	    }
 
-	    log(`Resolved calls: ${JSON.stringify(resolved_calls)}`);
+	    if (params_schema !== undefined) {
+		updates.push('params_schema = $params_schema');
+		variables.params_schema = params_schema;
+	    }
 
-	    // Step 5: Build CortexOutput
-	    const cortex_output = {
-		thoughts: `Executing call chain template: ${template_name}`,
-		calls: resolved_calls,
-		return_indeces: template.return_indices || []
+	    if (updates.length === 0) {
+		throw new Error('No fields provided to update');
+	    }
+
+	    // Always update timestamp
+	    updates.push('updated_at = time::now()');
+
+	    const query = `
+            UPDATE cortex_dynamic_functions
+            SET ${updates.join(', ')}
+            WHERE name = $name
+        `;
+
+	    await fbu.surreal_query({ query, variables });
+
+	    log(`Dynamic function "${name}" updated successfully`);
+	    return {
+		success: true,
+		name,
+		message: `Dynamic function "${name}" updated`
 	    };
-
-	    // Step 6: Execute via run_cortex_output
-	    const execution_result = await run_cortex_output(cortex_output);
-
-	    log(`Template execution completed`);
-
-	    // Step 7: Return the result
-	    if (execution_result.error) {
-		throw new Error(`Template execution failed: ${execution_result.error}`);
-	    }
-
-	    return execution_result.result;
 	},
-	return_type: "any"
+	return_type: "object"
+    },
+
+    {
+	enabled: true,
+	description: `
+Deletes a dynamic function from the database.
+
+Parameters:
+- name (string): The name of the function to delete
+	`,
+	name: "delete_dynamic_function",
+	parameters: {
+	    name: "string"
+	},
+	fn: async (ops: any) => {
+	    const { name } = ops.params;
+	    const { log } = ops.util;
+
+	    log(`Deleting dynamic function: ${name}`);
+
+	    const query = `
+            DELETE FROM cortex_dynamic_functions
+            WHERE name = $name
+        `;
+
+	    await fbu.surreal_query({
+		query,
+		variables: { name }
+	    });
+
+	    log(`Dynamic function "${name}" deleted successfully`);
+	    return {
+		success: true,
+		name,
+		message: `Dynamic function "${name}" deleted from database`
+	    };
+	},
+	return_type: "object"
     },
 
     {

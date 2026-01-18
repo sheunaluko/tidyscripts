@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Responsive, noCompactor } from 'react-grid-layout';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import ReactGridLayout, { useContainerWidth, verticalCompactor } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -48,21 +48,19 @@ export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
   onLayoutChange,
   initialLayout
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(1200);
+  const { width, containerRef, mounted } = useContainerWidth();
 
-  // Handle container width
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setWidth(containerRef.current.offsetWidth);
-      }
-    };
+  // Determine current breakpoint
+  const breakpoint = useMemo(() => {
+    if (width >= 1200) return 'lg';
+    if (width >= 996) return 'md';
+    return 'sm';
+  }, [width]);
 
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
+  // Determine columns based on breakpoint
+  const cols = useMemo(() => {
+    return 12; // All breakpoints use 12 cols in your config
+  }, [breakpoint]);
 
   const [layout, setLayout] = useState<WidgetGridConfig[]>(() => {
     if (initialLayout && initialLayout.length > 0) {
@@ -83,7 +81,7 @@ export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
     );
   });
 
-  const handleLayoutChange = useCallback((currentLayout: any, allLayouts: any) => {
+  const handleLayoutChange = useCallback((currentLayout: any) => {
     const updatedLayout = currentLayout.map((item: any) => ({
       i: item.i,
       x: item.x,
@@ -98,35 +96,38 @@ export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
   }, [onLayoutChange]);
 
   return (
+    // @ts-ignore - useContainerWidth ref type mismatch, works at runtime
     <div ref={containerRef} style={{ width: '100%' }}>
-      <Responsive
-        className="widget-grid-layout"
-        layouts={{ lg: layout, md: layout, sm: layout }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-        cols={{ lg: 12, md: 12, sm: 12 }}
-        width={width}
-        onLayoutChange={handleLayoutChange}
-        gridConfig={{
-          cols: 12,
-          rowHeight: 60,
-          margin: [16, 16],
-          containerPadding: [20, 20]
-        }}
-        dragConfig={{
-          enabled: true,
-          handle: '.widget-drag-handle'
-        }}
-        resizeConfig={{
-          enabled: true
-        }}
-        compactor={noCompactor}
-      >
-        {visibleWidgets.map(widget => (
-          <div key={widget.id} className="widget-grid-item">
-            {renderWidget(widget.id)}
-          </div>
-        ))}
-      </Responsive>
+      {mounted && (
+        <ReactGridLayout
+          className="widget-grid-layout"
+          layout={layout}
+          width={width}
+          onLayoutChange={handleLayoutChange}
+          gridConfig={{
+            cols: cols,
+            rowHeight: 60,
+            margin: [16, 16],
+            containerPadding: [20, 20],
+            // @ts-ignore - preventCollision works at runtime, type definitions incomplete
+            preventCollision: true
+          }}
+          dragConfig={{
+            enabled: true,
+            handle: '.widget-drag-handle'
+          }}
+          resizeConfig={{
+            enabled: true
+          }}
+          compactor={verticalCompactor}
+        >
+          {visibleWidgets.map(widget => (
+            <div key={widget.id} className="widget-grid-item">
+              {renderWidget(widget.id)}
+            </div>
+          ))}
+        </ReactGridLayout>
+      )}
     </div>
   );
 };

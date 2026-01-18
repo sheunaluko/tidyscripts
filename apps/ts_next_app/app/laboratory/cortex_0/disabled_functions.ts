@@ -9,7 +9,6 @@ import * as fbu from "../../../src/firebase_utils";
 import * as fnu from "../src/fn_util";
 import * as bashr from "../../../src/bashr/index";
 import * as tsw from "tidyscripts_web";
-import * as cu from "./src/cortex_utils";
 import { z } from "zod";
 
 const { common } = tsw;
@@ -252,7 +251,8 @@ Creates a new Tidyscripts log entry for the user.
             let arg_dic = collect_args(template_args);
 
             //resolve the function_args
-            let resolved_function_args = cu.resolve_function_args_array(function_args, arg_dic);
+            // NOTE: resolve_function_args_array was removed with template system migration
+            let resolved_function_args = function_args; // Stub - this function is disabled
             let collected_function_args = collect_args(resolved_function_args);
 
             //run it

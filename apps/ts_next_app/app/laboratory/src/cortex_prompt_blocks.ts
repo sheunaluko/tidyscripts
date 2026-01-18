@@ -18,7 +18,7 @@ export type SectionName =
     | 'intro'
     | 'cortexRAM'
     | 'callChains'
-    | 'templateCallChains'
+    | 'dynamicFunctions'
     | 'returnIndices'
     | 'responseGuidance'
     | 'functions'
@@ -90,11 +90,38 @@ ${syntax.resultReferences}
 ${syntax.cortexRAMReferences}
 `,
 
-    templateCallChains: `${header('CALL CHAINS IN TEMPLATES')}
-When defining a call chain template, specify the sequence of calls that will execute when the template runs.
+    dynamicFunctions: `${header('DYNAMIC FUNCTIONS')}
+Dynamic functions are reusable JavaScript functions stored in the database which you have access to.
+These are noted here again and pay special attention to
+run_dynamic_function which was not noted previously. 
 
-${syntax.resultReferences}
-${syntax.templateParamReferences}
+Functions available:
+- create_dynamic_function({name, description, code, params_schema})
+- load_dynamic_function({name})
+- list_dynamic_functions()
+- update_dynamic_function({name, code?, description?, params_schema?})
+- delete_dynamic_function({name})
+
+One special function is:
+- run_dynamic_function({name, args})
+This is available as well and should be used to run a dynamic function 
+
+
+Code format:
+- Named async function: async function my_func(args) { ... }
+- Takes single args object parameter
+- Has access to all cortex functions 
+- Use destructuring: const {text, category} = args;
+
+Example:
+async function embed_and_store(args) {
+  const {text, category} = args;
+  const embedding = await compute_embedding({text});
+  return await access_database_with_surreal_ql({
+    query: 'INSERT INTO logs {text: $text, category: $category, embedding: $emb}',
+    variables: {text, category, emb: embedding}
+  });
+}
 `,
 
     returnIndices: `${header('RETURN INDICES')}
@@ -128,13 +155,17 @@ CRITICAL RULES:
    Example: await compute_embedding({text: "hello"})
    NOT: await compute_embedding("hello")
 
-2. Use console.log() for debugging - all logs will be returned to you in the result
+2. You can use console.log() for debugging - all logs will be returned to you in the result
    Example: console.log("Processing query:", userQuery);
 
 3. A 'workspace' object is available for persisting state between executions
    Example: workspace.counter = (workspace.counter || 0) + 1;
 
-4. Always call respond_to_user({response: "message"}) to send output back to the user
+4. You can call respond_to_user({response: "message"}) to send output back to the us
+   If you do this at the end then we will assume you are done computing
+   and the user will get to respond. If instead you are indicating that you
+   are starting a task, then first call respond_to_user then continue the task
+   
 
 5. IMPORTANT: Use UNQUALIFIED ASSIGNMENTS for variables (no const/let/var)
    This enables variable tracking in the UI for observability.
@@ -143,7 +174,7 @@ CRITICAL RULES:
    WRONG: const query = "What is AI?";
    WRONG: let results = await retrieve_declarative_knowledge({query: query});
 
-   Exception: You can use const/let/var inside function definitions if needed.
+   Exception: You can use const/let/var inside function definitions IF NEEDED
 
 6. Write natural async JavaScript code with control flow, error handling, etc.
 
@@ -165,20 +196,14 @@ CRITICAL RULES:
    // The previous result is in your context
    await respond_to_user({response: "Based on the results, ..."});
 
+   In general you should PREFER this multiturn workflow rather that directly
+   computing and responding , esp for complex tasks or if the user requests
+   it 
+
 Available Functions:
 ${JSON.stringify(fns, null, 2)}
 
-Example Code:
-query = "What is AI?";
-console.log("Searching knowledge graph for:", query);
-results = await retrieve_declarative_knowledge({query: query});
-console.log("Found results:", results.length);
 
-if (results.length > 0) {
-    await respond_to_user({response: \`Found \${results.length} results: \${JSON.stringify(results)}\`});
-} else {
-    await respond_to_user({response: "No results found for your query."});
-}
 `,
 
     additional: (msg: string) => `${header('ADDITIONAL INSTRUCTIONS')}
@@ -311,6 +336,7 @@ export const LEGACY_CORTEX_SECTIONS: SectionName[] = [
 export const DEFAULT_CORTEX_SECTIONS: SectionName[] = [
     'intro',
     'codeGeneration',
+    'dynamicFunctions', 
     'outputFormat',
     'responseGuidance'
 ]

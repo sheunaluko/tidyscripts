@@ -188,7 +188,10 @@ export async function evaluateJavaScriptSandboxed(
     console.error('[Sandbox] Execution failed:', error)
     return {
       ok: false,
-      error: `Sandbox execution failed: ${error.message || String(error)}`
+      error: `Sandbox execution failed: ${error.message || String(error)}`,
+      executionId: '',
+      logs: [],
+      events: []
     }
   }
 }
@@ -242,7 +245,10 @@ workspace; // Return modified workspace
     console.error('[Sandbox] Workspace update failed:', error)
     return {
       ok: false,
-      error: `Workspace update failed: ${error.message || String(error)}`
+      error: `Workspace update failed: ${error.message || String(error)}`,
+      executionId: '',
+      logs: [],
+      events: []
     }
   }
 }

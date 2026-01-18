@@ -15,6 +15,8 @@ const customJestConfig = {
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    // Handle ESM .js imports in TypeScript files (for react-grid-layout)
+    '^\\.(.+)\\.js$': '.$1',
   },
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',

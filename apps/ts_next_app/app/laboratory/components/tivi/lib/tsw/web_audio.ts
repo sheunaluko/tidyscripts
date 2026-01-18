@@ -12,7 +12,7 @@ const log = tsw.common.logger.get_logger({ id: 'tivi/web_audio' });
 export let ctx: AudioContext | null = null;
 export let stream: MediaStream | null = null;
 export let analyser: AnalyserNode | null = null;
-export let data_array: Float32Array | null = null;
+export let data_array: Float32Array<ArrayBuffer> | null = null;
 export let mic_callbacks: { [key: string]: (data: Float32Array) => void } = {};
 export let mic_initialized = false;
 

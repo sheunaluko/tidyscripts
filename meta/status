@@ -77,6 +77,10 @@ EXIStiNG dot phrases)
 - [x] enter after dot pharse works too
 
 
+== BUGS ===
+
+In cortex - html display widget enables injection of javascript into page :( 
+
 
 
 Possible upgrades 

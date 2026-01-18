@@ -42,4 +42,4 @@ const HTMLWidget: React.FC<HTMLWidgetProps> = ({
   );
 };
 
-export default HTMLWidget;
+export default React.memo(HTMLWidget);
