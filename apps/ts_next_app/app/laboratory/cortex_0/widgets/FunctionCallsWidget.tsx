@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Box, Chip, Typography, Divider, useTheme, CircularProgress } from '@mui/material';
 import { ObjectInspector } from 'react-inspector';
 import WidgetItem from '../WidgetItem';
@@ -32,6 +32,17 @@ const FunctionCallsWidget: React.FC<FunctionCallsWidgetProps> = ({
   calls = []
 }) => {
   const theme = useTheme();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when calls change
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [calls]);
 
   const widget_scroll_styles = {
     overflowY: 'auto',
@@ -73,7 +84,7 @@ const FunctionCallsWidget: React.FC<FunctionCallsWidgetProps> = ({
       onFocus={onFocus}
       onClose={onClose}
     >
-      <Box id="function_calls_display" sx={widget_scroll_styles}>
+      <Box id="function_calls_display" ref={scrollContainerRef} sx={widget_scroll_styles}>
         {calls.length === 0 ? (
           <Box sx={{ p: 2, color: 'text.secondary', fontStyle: 'italic' }}>
             No function calls yet

@@ -408,7 +408,8 @@ export class IframeSandboxExecutor {
                           emitEvent('function_end', {
                             name: String(prop),
                             callId,
-                            duration: Date.now() - startTime
+                            duration: Date.now() - startTime,
+                            result: res
                           })
                           return res
                         },
@@ -426,7 +427,8 @@ export class IframeSandboxExecutor {
                     emitEvent('function_end', {
                       name: String(prop),
                       callId,
-                      duration: Date.now() - startTime
+                      duration: Date.now() - startTime,
+                      result: result
                     })
                     return result
                   } catch (error) {

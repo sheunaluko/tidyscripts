@@ -31,15 +31,17 @@ Want to retain existing architecture //archive it -- and shift to a different mo
 
 Todo:
 [ ] add widget that enables paging through JS exec history (see prior code, fn calls)
-[ ] need to rearchitect the call chain templates system
+[x] need to rearchitect the call chain templates system  (need to bootstrap the
+call chains that exist) 
 [ ] fix the get_user_input function  (also should fire event? to be displayed in UI
 [ ] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
 --- 
 
-[ ] when function returns, should ?CAPTURE its value and append it to the function call U
+[x] when function returns, should ?CAPTURE its value and append it to the function call U
 
 [ ] improve the thoughts UI with a brain emoji to start the line of each thought
-[ ] default speed 1.5 
+[ ] default speed 1.5
+
 
 
 
