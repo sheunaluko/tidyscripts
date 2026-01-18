@@ -13,6 +13,7 @@ interface WidgetItemProps {
   onClose?: () => void;
   children: React.ReactNode;
   sx?: any;
+  controls?: React.ReactNode;
 }
 
 const WidgetItem: React.FC<WidgetItemProps> = ({
@@ -22,6 +23,7 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
   onClose,
   children,
   sx,
+  controls,
 }) => {
   return (
     <Paper
@@ -55,6 +57,9 @@ const WidgetItem: React.FC<WidgetItemProps> = ({
           <DragIndicatorIcon fontSize="small" color="action" />
           <Typography variant="subtitle1">{title}</Typography>
         </Box>
+
+        {/* Custom controls */}
+        {controls}
 
         {/* Action buttons */}
         {fullscreen ? (

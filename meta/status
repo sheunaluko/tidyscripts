@@ -1,5 +1,41 @@
 Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0) 
 
+
+== CORTEX JS EXEC ENV UPGRADE == 
+Ok getting lots of bugs - inconsistent functionality.
+Want to retain existing architecture //archive it -- and shift to a different model
+? DSL for the ai to write DSL code that orchestrates the available functions
+--> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
+
+[x] implemented iframe executation with configurable contex
+[x] re-architect cortex to use the JS exec env (sandbox.ts)
+
+Todo
+
+[ ] dynamic function calling needs to be more debuggable - for example the run_dfn needs
+to actually RETURN a result as well as an error etc -- right now just seeing nothing,
+including no ersult in the database 
+
+[ ] add widget that enables paging through JS exec history (see prior code, fn calls)
+[ ] improve the thoughts UI with a brain emoji to start the line of each thought
+[ ] default speed 1.5
+[ ] bootstrap call chains that exist 
+[ ] fix the get_user_input function  (also should fire event? to be displayed in UI
+[ ] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
+--- 
+
+[x] when function returns, should ?CAPTURE its value and append it to the function call U
+[x] need to rearchitect the call chain templates system  (need to bootstrap the
+
+
+[ ] create voice interface to claude code 
+[ ] Also check out PLAYRIGHT MCP server 
+[ ] OBSERVABILITY interface for CORTEX SESSIONS (logged in user, etc) and RAI  
+
+
+
+
+
 == CORTEX == 
 [x] Implemented matrix
 [x] Need to integrate matrix with cortex
@@ -18,34 +54,6 @@ Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0)
 [x] fix background of audio viz (toolbar not responding to dark / light mode and not passing it to  the audio viz
 
 
-
-
-== CORTEX JS EXEC ENV UPGRADE == 
-Ok getting lots of bugs - inconsistent functionality.
-Want to retain existing architecture //archive it -- and shift to a different model
-? DSL for the ai to write DSL code that orchestrates the available functions
---> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
-
-[x] implemented iframe executation with configurable contex
-[x] re-architect cortex to use the JS exec env (sandbox.ts)
-
-Todo:
-[ ] add widget that enables paging through JS exec history (see prior code, fn calls)
-[x] need to rearchitect the call chain templates system  (need to bootstrap the
-call chains that exist) 
-[ ] fix the get_user_input function  (also should fire event? to be displayed in UI
-[ ] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
---- 
-
-[x] when function returns, should ?CAPTURE its value and append it to the function call U
-
-[ ] improve the thoughts UI with a brain emoji to start the line of each thought
-[ ] default speed 1.5
-
-
-
-
-[ ] Also check out PLAYRIGHT MCP server 
 
 
 == FIREBASE ==

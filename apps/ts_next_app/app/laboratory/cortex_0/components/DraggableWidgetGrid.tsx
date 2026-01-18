@@ -39,6 +39,7 @@ const DEFAULT_LAYOUT: { [key: string]: WidgetGridConfig } = {
   functionCalls: { i: 'functionCalls', x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
   sandboxLogs: { i: 'sandboxLogs', x: 0, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
   variableInspector: { i: 'variableInspector', x: 6, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
+  history: { i: 'history', x: 0, y: 17, w: 12, h: 4, minW: 6, minH: 3 },
 
 };
 

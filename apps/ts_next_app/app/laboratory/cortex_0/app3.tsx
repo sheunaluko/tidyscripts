@@ -43,7 +43,7 @@ import {
 
 import {useTivi} from "../components/tivi/lib/index"
 
-
+import { ExecutionSnapshot } from './types/execution';
 import * as fb from "../../../src/firebase" ;
 
 export async function get_question(qid : string) {
@@ -77,6 +77,7 @@ import CodeExecutionWidget from "./widgets/CodeExecutionWidget"
 import FunctionCallsWidget from "./widgets/FunctionCallsWidget"
 import VariableInspectorWidget from "./widgets/VariableInspectorWidget"
 import SandboxLogsWidget from "./widgets/SandboxLogsWidget"
+import HistoryWidget from "./widgets/HistoryWidget"
 
 // Import AudioVisualization component
 import AudioVisualization from "./components/AudioVisualization"
@@ -288,6 +289,11 @@ const  Component: NextPage = (props : any) => {
     const [variableAssignments, setVariableAssignments] = useState<any[]>([]);
     const [sandboxLogs, setSandboxLogs] = useState<any[]>([]);
 
+    // History state - single source of truth
+    const [executionHistory, setExecutionHistory] = useState<ExecutionSnapshot[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1); // -1 means "latest"
+    const [isPinned, setIsPinned] = useState<boolean>(false);
+
     // Widget configuration hook
     const { widgets, visibleWidgets, toggleWidget, widgetLayout, saveLayout, resetLayout, applyPreset } = useWidgetConfig();
     /* E V E N T _ H A N D L I N G */
@@ -327,11 +333,16 @@ const  Component: NextPage = (props : any) => {
 	setExecutionId(evt.executionId);
 	setExecutionStatus('running');
 	setExecutionError("");
+	setExecutionDuration(0);
 	// Clear previous execution data
 	setFunctionCalls([]);
 	setVariableAssignments([]);
 	setSandboxLogs([]);
-    }, []);
+	// Reset to show live execution (not pinned to history)
+	if (!isPinned) {
+	    setSelectedIndex(-1);
+	}
+    }, [isPinned]);
 
     const handle_sandbox_log = useCallback((evt: any) => {
 	log(`Got sandbox log event: ${evt.level}`)
@@ -383,6 +394,38 @@ const  Component: NextPage = (props : any) => {
 	}
     }, []);
 
+    const handle_code_execution_complete = useCallback((evt: any) => {
+	log(`Got code execution complete event`)
+	const { status, error, duration } = evt;
+	setExecutionStatus(status);
+	setExecutionError(error || "");
+	setExecutionDuration(duration);
+    }, []);
+
+    // Derive current execution from history and selected index
+    // When execution is running, return null to show live state
+    const currentExecution = useMemo(() => {
+	// If actively executing, show live state (not historical data)
+	if (executionStatus === 'running') {
+	    return null;
+	}
+
+	if (executionHistory.length === 0) return null;
+
+	// If selectedIndex is -1 (or out of bounds), show latest
+	if (selectedIndex === -1 || selectedIndex >= executionHistory.length) {
+	    return executionHistory[executionHistory.length - 1];
+	}
+
+	// Otherwise show selected execution
+	return executionHistory[selectedIndex];
+    }, [executionHistory, selectedIndex, executionStatus]);
+
+    const handleHistoryItemClick = useCallback((index: number) => {
+	setSelectedIndex(index);
+	// Note: Does NOT automatically set isPinned
+	// User must explicitly click pin toggle to lock
+    }, []);
 
     const event_dic: {[k:string] : any} = useMemo(() => ({
 	'thought' : handle_thought ,
@@ -391,9 +434,10 @@ const  Component: NextPage = (props : any) => {
 	'code_update' : handle_code_update ,
 	'html_update' : handle_html_update ,
 	'code_execution_start': handle_code_execution_start,
+	'code_execution_complete': handle_code_execution_complete,
 	'sandbox_log': handle_sandbox_log,
 	'sandbox_event': handle_sandbox_event,
-    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_code_execution_start, handle_sandbox_log, handle_sandbox_event]);
+    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event]);
     
     const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
@@ -445,6 +489,35 @@ const  Component: NextPage = (props : any) => {
 	}
     }, [COR, handle_event])
 
+    // Capture execution snapshot when complete
+    useEffect(() => {
+	if ((executionStatus === 'success' || executionStatus === 'error') && executionId) {
+	    const snapshot: ExecutionSnapshot = {
+		executionId,
+		timestamp: Date.now(),
+		code: currentCode,
+		status: executionStatus as 'success' | 'error',
+		error: executionError || undefined,
+		duration: executionDuration,
+		functionCalls: [...functionCalls],
+		variableAssignments: [...variableAssignments],
+		sandboxLogs: [...sandboxLogs]
+	    };
+
+	    setExecutionHistory(prev => {
+		const updated = [...prev, snapshot];
+		// Keep last 100 executions
+		return updated.slice(-100);
+	    });
+
+	    // If not pinned, auto-advance to latest
+	    if (!isPinned) {
+		setSelectedIndex(-1); // -1 means "show latest"
+	    }
+	    // If pinned, selectedIndex stays unchanged, just array grows
+	}
+    }, [executionStatus, executionId, currentCode, executionError, executionDuration,
+	functionCalls, variableAssignments, sandboxLogs, isPinned]);
 
     // Auto-scroll for widget displays - only depend on data that affects scroll
     useEffect(() => {
@@ -1071,33 +1144,44 @@ const  Component: NextPage = (props : any) => {
 			  case 'codeExecution':
 			      return (
 				  <CodeExecutionWidget
-				      currentCode={currentCode}
-				      executionId={executionId}
-				      status={executionStatus}
-				      error={executionError}
-				      duration={executionDuration}
+				      currentCode={currentExecution?.code || currentCode}
+				      executionId={currentExecution?.executionId || executionId}
+				      status={currentExecution?.status || executionStatus}
+				      error={currentExecution?.error || executionError}
+				      duration={currentExecution?.duration || executionDuration}
 				      onFocus={() => setFocusedWidget('codeExecution')}
 				  />
 			      );
 			  case 'functionCalls':
 			      return (
 				  <FunctionCallsWidget
-				      calls={functionCalls}
+				      calls={currentExecution?.functionCalls || functionCalls}
 				      onFocus={() => setFocusedWidget('functionCalls')}
 				  />
 			      );
 			  case 'variableInspector':
 			      return (
 				  <VariableInspectorWidget
-				      variables={variableAssignments}
+				      variables={currentExecution?.variableAssignments || variableAssignments}
 				      onFocus={() => setFocusedWidget('variableInspector')}
 				  />
 			      );
 			  case 'sandboxLogs':
 			      return (
 				  <SandboxLogsWidget
-				      logs={sandboxLogs}
+				      logs={currentExecution?.sandboxLogs || sandboxLogs}
 				      onFocus={() => setFocusedWidget('sandboxLogs')}
+				  />
+			      );
+			  case 'history':
+			      return (
+				  <HistoryWidget
+				      executions={executionHistory}
+				      selectedIndex={selectedIndex}
+				      isPinned={isPinned}
+				      onSelectExecution={handleHistoryItemClick}
+				      onTogglePin={() => setIsPinned(prev => !prev)}
+				      onFocus={() => setFocusedWidget('history')}
 				  />
 			      );
 			  default:
@@ -1167,32 +1251,43 @@ const  Component: NextPage = (props : any) => {
 		)}
 		{focusedWidget === 'codeExecution' && (
 		    <CodeExecutionWidget
-			currentCode={currentCode}
-			executionId={executionId}
-			status={executionStatus}
-			error={executionError}
-			duration={executionDuration}
+			currentCode={currentExecution?.code || currentCode}
+			executionId={currentExecution?.executionId || executionId}
+			status={currentExecution?.status || executionStatus}
+			error={currentExecution?.error || executionError}
+			duration={currentExecution?.duration || executionDuration}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />
 		)}
 		{focusedWidget === 'functionCalls' && (
 		    <FunctionCallsWidget
-			calls={functionCalls}
+			calls={currentExecution?.functionCalls || functionCalls}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />
 		)}
 		{focusedWidget === 'variableInspector' && (
 		    <VariableInspectorWidget
-			variables={variableAssignments}
+			variables={currentExecution?.variableAssignments || variableAssignments}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />
 		)}
 		{focusedWidget === 'sandboxLogs' && (
 		    <SandboxLogsWidget
-			logs={sandboxLogs}
+			logs={currentExecution?.sandboxLogs || sandboxLogs}
+			fullscreen
+			onClose={() => setFocusedWidget(null)}
+		    />
+		)}
+		{focusedWidget === 'history' && (
+		    <HistoryWidget
+			executions={executionHistory}
+			selectedIndex={selectedIndex}
+			isPinned={isPinned}
+			onSelectExecution={handleHistoryItemClick}
+			onTogglePin={() => setIsPinned(prev => !prev)}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />

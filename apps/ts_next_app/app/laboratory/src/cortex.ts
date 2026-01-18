@@ -979,8 +979,18 @@ The response will be validated against this structure.
 	this.set_is_running_function(true) ; //function running indicator
 
 	// Execute code in sandbox
+	const startTime = Date.now();
 	let result = await this.run_code_output(output);
+	const duration = Date.now() - startTime;
 	this.set_is_running_function(false) ;  //turn off function running indicator
+
+	// Emit code execution complete event
+	this.emit_event({
+	    type: 'code_execution_complete',
+	    status: result.error ? 'error' : 'success',
+	    error: result.error,
+	    duration: duration
+	});
 
 	// Check if execution succeeded
 	const executionFailed = result.error;

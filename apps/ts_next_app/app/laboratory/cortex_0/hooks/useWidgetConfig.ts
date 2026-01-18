@@ -22,10 +22,30 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'functionCalls', name: 'Function Calls', visible: true, order: 8 },
   { id: 'variableInspector', name: 'Variables', visible: true, order: 9 },
   { id: 'sandboxLogs', name: 'Sandbox Logs', visible: true, order: 10 },
+  { id: 'history', name: 'Execution History', visible: true, order: 11 },
+];
+
+// Default layout configuration
+const DEFAULT_LAYOUT: WidgetGridConfig[] = [
+  // Left column
+  { i: 'chat', x: 0, y: 0, w: 6, h: 5, minW: 4, minH: 2 },
+  { i: 'chatInput', x: 0, y: 5, w: 6, h: 2, minW: 4, minH: 1 },
+  { i: 'codeExecution', x: 0, y: 7, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'code', x: 0, y: 11, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'workspace', x: 0, y: 15, w: 6, h: 2, minW: 4, minH: 3 },
+  { i: 'variableInspector', x: 0, y: 17, w: 6, h: 3, minW: 4, minH: 2 },
+  // Right column
+  { i: 'thoughts', x: 6, y: 0, w: 6, h: 3, minW: 4, minH: 2 },
+  { i: 'functionCalls', x: 6, y: 3, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'log', x: 6, y: 7, w: 6, h: 2, minW: 4, minH: 2 },
+  { i: 'html', x: 6, y: 9, w: 6, h: 4, minW: 4, minH: 3 },
+  { i: 'sandboxLogs', x: 6, y: 13, w: 6, h: 3, minW: 4, minH: 2 },
+  { i: 'history', x: 6, y: 16, w: 6, h: 4, minW: 4, minH: 2 },
 ];
 
 // Layout presets for different use cases
 const LAYOUT_PRESETS: Record<string, WidgetGridConfig[]> = {
+  default: DEFAULT_LAYOUT,
   focus: [
     { i: 'chat', x: 0, y: 0, w: 12, h: 8, minW: 4, minH: 3 }
   ],
@@ -62,9 +82,9 @@ export function useWidgetConfig() {
   const [widgetLayout, setWidgetLayout] = useState<WidgetGridConfig[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('cortex_widget_layout');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
     }
-    return [];
+    return DEFAULT_LAYOUT;
   });
 
   useEffect(() => {
