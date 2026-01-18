@@ -589,11 +589,28 @@ export class IframeSandboxExecutor {
           const dfn = await allowedGlobals.load_dynamic_function({ name });
 
           // Create function using AsyncFunction constructor
-          // This handles both function declarations and raw code cleanly
           let fn;
           try {
             const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-            fn = new AsyncFunction('args', dfn.code);
+
+            // Check if code is a function declaration (starts with 'async function' or 'function')
+            const trimmedCode = dfn.code.trim();
+            const isFunctionDeclaration = trimmedCode.startsWith('async function') || trimmedCode.startsWith('function');
+
+            if (isFunctionDeclaration) {
+              // Extract function name and create wrapper that calls it
+              // This handles: async function foo(args) { ... }
+              const functionMatch = trimmedCode.match(/^(?:async\\s+)?function\\s+(\\w+)/);
+              const functionName = functionMatch ? functionMatch[1] : 'dynamicFn';
+
+              fn = new AsyncFunction('args', \`
+                \${dfn.code}
+                return await \${functionName}(args);
+              \`);
+            } else {
+              // Code is a raw function body, use as-is
+              fn = new AsyncFunction('args', dfn.code);
+            }
           } catch (e) {
             throw new Error(\`Syntax error in dynamic function '\${name}': \${e.message}\`);
           }
