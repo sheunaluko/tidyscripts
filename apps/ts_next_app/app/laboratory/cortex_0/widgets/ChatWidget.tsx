@@ -61,10 +61,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                 backgroundColor: message.role === 'assistant' ? light_primary : light_secondary,
                 border: message.role === 'user' ? '1px solid' : '1px solid',
                 borderColor: message.role === 'user' ? 'secondary.main' : 'primary.main',
-                color: message.role === 'assistant' ? 'inherit' : 'inherit'
+                color: message.role === 'assistant' ? 'inherit' : 'inherit',
+                overflow: 'hidden',
+                wordBreak: 'break-word',
+                '& ul, & ol': {
+                  marginLeft: '20px',
+                  paddingLeft: '0',
+                  marginTop: '4px',
+                  marginBottom: '4px'
+                },
+                '& p': {
+                  margin: '4px 0',
+                  whiteSpace: 'pre-wrap'
+                }
               }}
             >
-              <ReactMarkdown>
+              <ReactMarkdown className="line-break">
                 {message.content}
               </ReactMarkdown>
             </Box>

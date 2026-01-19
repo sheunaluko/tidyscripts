@@ -192,7 +192,7 @@ const  Component: NextPage = (props : any) => {
     
     const [audio_history, set_audio_history] = useState([]);
     const [ai_model, set_ai_model] = useState(default_model);
-    const [playbackRate, setPlaybackRate] = useState(1.2)
+    const [playbackRate, setPlaybackRate] = useState(1.5)
 
     // Tivi voice recognition parameters
     const [tiviParams, setTiviParams] = useState({
@@ -285,6 +285,7 @@ const  Component: NextPage = (props : any) => {
     const [executionStatus, setExecutionStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
     const [executionError, setExecutionError] = useState<string>("");
     const [executionDuration, setExecutionDuration] = useState<number>(0);
+    const [executionResult, setExecutionResult] = useState<any>(undefined);
     const [functionCalls, setFunctionCalls] = useState<any[]>([]);
     const [variableAssignments, setVariableAssignments] = useState<any[]>([]);
     const [sandboxLogs, setSandboxLogs] = useState<any[]>([]);
@@ -396,10 +397,11 @@ const  Component: NextPage = (props : any) => {
 
     const handle_code_execution_complete = useCallback((evt: any) => {
 	log(`Got code execution complete event`)
-	const { status, error, duration } = evt;
+	const { status, error, duration, result } = evt;
 	setExecutionStatus(status);
 	setExecutionError(error || "");
 	setExecutionDuration(duration);
+	setExecutionResult(result);
     }, []);
 
     // Derive current execution from history and selected index
@@ -499,6 +501,7 @@ const  Component: NextPage = (props : any) => {
 		status: executionStatus as 'success' | 'error',
 		error: executionError || undefined,
 		duration: executionDuration,
+		result: executionResult,
 		functionCalls: [...functionCalls],
 		variableAssignments: [...variableAssignments],
 		sandboxLogs: [...sandboxLogs]
@@ -516,7 +519,7 @@ const  Component: NextPage = (props : any) => {
 	    }
 	    // If pinned, selectedIndex stays unchanged, just array grows
 	}
-    }, [executionStatus, executionId, currentCode, executionError, executionDuration,
+    }, [executionStatus, executionId, currentCode, executionError, executionDuration, executionResult,
 	functionCalls, variableAssignments, sandboxLogs, isPinned]);
 
     // Auto-scroll for widget displays - only depend on data that affects scroll
@@ -1149,6 +1152,7 @@ const  Component: NextPage = (props : any) => {
 				      status={currentExecution?.status || executionStatus}
 				      error={currentExecution?.error || executionError}
 				      duration={currentExecution?.duration || executionDuration}
+				      result={currentExecution?.result !== undefined ? currentExecution.result : executionResult}
 				      onFocus={() => setFocusedWidget('codeExecution')}
 				  />
 			      );
@@ -1256,6 +1260,7 @@ const  Component: NextPage = (props : any) => {
 			status={currentExecution?.status || executionStatus}
 			error={currentExecution?.error || executionError}
 			duration={currentExecution?.duration || executionDuration}
+			result={currentExecution?.result !== undefined ? currentExecution.result : executionResult}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />

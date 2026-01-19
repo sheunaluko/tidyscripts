@@ -24,22 +24,22 @@ interface DraggableWidgetGridProps {
 
 const DEFAULT_LAYOUT: { [key: string]: WidgetGridConfig } = {
   // Left column - no gaps
-    chat: { i: 'chat', x: 0, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
-    chatInput: { i: 'chatInput', x: 0, y: 2, w: 6, h: 1, minW: 4, minH: 1 },
-  log: { i: 'log', x: 0, y: 3, w: 6, h: 3, minW: 4, minH: 2 },
-  html: { i: 'html', x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+    chat: { i: 'chat', x: 0, y: 0, w: 6, h: 2, minW: 1, minH: 1 },
+    chatInput: { i: 'chatInput', x: 0, y: 2, w: 6, h: 1, minW: 1, minH: 1 },
+  log: { i: 'log', x: 0, y: 3, w: 6, h: 3, minW: 1, minH: 1 },
+  html: { i: 'html', x: 0, y: 6, w: 6, h: 4, minW: 1, minH: 1 },
 
   // Right column - no gaps
-  thoughts: { i: 'thoughts', x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 2 },
-  workspace: { i: 'workspace', x: 6, y: 4, w: 6, h: 2, minW: 4, minH: 3 },
-  code: { i: 'code', x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+  thoughts: { i: 'thoughts', x: 6, y: 0, w: 6, h: 4, minW: 1, minH: 1 },
+  workspace: { i: 'workspace', x: 6, y: 4, w: 6, h: 2, minW: 1, minH: 1 },
+  code: { i: 'code', x: 6, y: 6, w: 6, h: 4, minW: 1, minH: 1 },
 
   // New observability widgets - row below
-  codeExecution: { i: 'codeExecution', x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
-  functionCalls: { i: 'functionCalls', x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
-  sandboxLogs: { i: 'sandboxLogs', x: 0, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
-  variableInspector: { i: 'variableInspector', x: 6, y: 14, w: 6, h: 3, minW: 4, minH: 2 },
-  history: { i: 'history', x: 0, y: 17, w: 12, h: 4, minW: 6, minH: 3 },
+  codeExecution: { i: 'codeExecution', x: 0, y: 10, w: 6, h: 4, minW: 1, minH: 1 },
+  functionCalls: { i: 'functionCalls', x: 6, y: 10, w: 6, h: 4, minW: 1, minH: 1 },
+  sandboxLogs: { i: 'sandboxLogs', x: 0, y: 14, w: 6, h: 3, minW: 1, minH: 1 },
+  variableInspector: { i: 'variableInspector', x: 6, y: 14, w: 6, h: 3, minW: 1, minH: 1 },
+  history: { i: 'history', x: 0, y: 17, w: 12, h: 4, minW: 1, minH: 1 },
 
 };
 
@@ -76,25 +76,29 @@ export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
         y: Infinity, // Put at bottom
         w: 6,
         h: 3,
-        minW: 4,
-        minH: 2
+        minW: 1,
+        minH: 1
       }
     );
   });
 
   const handleLayoutChange = useCallback((currentLayout: any) => {
-    const updatedLayout = currentLayout.map((item: any) => ({
-      i: item.i,
-      x: item.x,
-      y: item.y,
-      w: item.w,
-      h: item.h,
-      minW: item.minW,
-      minH: item.minH
-    })) as WidgetGridConfig[];
+    const updatedLayout = currentLayout.map((item: any) => {
+      // Preserve minW/minH from existing layout as callback doesn't include them
+      const existingItem = layout.find(l => l.i === item.i);
+      return {
+        i: item.i,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+        minW: existingItem?.minW ?? 1,
+        minH: existingItem?.minH ?? 1
+      };
+    }) as WidgetGridConfig[];
     setLayout(updatedLayout);
     onLayoutChange(updatedLayout);
-  }, [onLayoutChange]);
+  }, [onLayoutChange, layout]);
 
   return (
     // @ts-ignore - useContainerWidth ref type mismatch, works at runtime

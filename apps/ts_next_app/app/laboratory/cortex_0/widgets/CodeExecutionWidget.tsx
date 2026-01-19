@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Box, Chip, useTheme } from '@mui/material';
+import { Box, Chip, useTheme, Typography } from '@mui/material';
+import { ObjectInspector } from 'react-inspector';
 import WidgetItem from '../WidgetItem';
 import AceEditor from "react-ace";
 
@@ -18,6 +19,7 @@ interface CodeExecutionWidgetProps {
   status?: 'idle' | 'running' | 'success' | 'error';
   error?: string;
   duration?: number;
+  result?: any;
 }
 
 const CodeExecutionWidget: React.FC<CodeExecutionWidgetProps> = ({
@@ -28,7 +30,8 @@ const CodeExecutionWidget: React.FC<CodeExecutionWidgetProps> = ({
   executionId = '',
   status = 'idle',
   error = '',
-  duration = 0
+  duration = 0,
+  result
 }) => {
   const theme = useTheme();
 
@@ -81,7 +84,22 @@ const CodeExecutionWidget: React.FC<CodeExecutionWidgetProps> = ({
               variant="outlined"
             />
           )}
+
+          <Chip
+            label="Result="
+            color="white"
+            size="small"
+          />
+	  
+	  <ObjectInspector
+              data={result}
+              expandLevel={0}
+              theme={theme.palette.mode === 'dark' ? 'chromeDark' : 'chromeLight'}
+          />
+
         </Box>
+
+	
 
         {/* Code Display */}
         {currentCode ? (
@@ -127,6 +145,8 @@ const CodeExecutionWidget: React.FC<CodeExecutionWidgetProps> = ({
             {error}
           </Box>
         )}
+
+
       </Box>
     </WidgetItem>
   );

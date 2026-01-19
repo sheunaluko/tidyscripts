@@ -106,7 +106,6 @@ One special function is:
 - run_dynamic_function({name, args})
 This is available as well and should be used to run a dynamic function 
 
-
 Code format:
 - Named async function: async function my_func(args) { ... }
 - Takes single args object parameter
@@ -122,6 +121,26 @@ async function embed_and_store(args) {
     variables: {text, category, emb: embedding}
   });
 }
+
+Data does not automatically persist between execution turns unless explicitly returned or stored in the workspace.
+1. The 'Return' Requirement
+To access the result of an asynchronous operation (like accumulate_text or retrieve_declarative_knowledge) in the next turn, the current script must include a return statement for that value.
+
+// Turn 1
+result = await some_async_function();
+return result; // Required to populate 'last_result' in Turn 2
+
+// Turn 2
+console.log(last_result); // Accessing the data
+2. Avoiding the 'Null Turn'
+If a script concludes with respond_to_user but does not return a value, last_result will be null in the subsequent turn. This clears the chain of logic.
+
+3. Workspace vs. Last Result
+Workspace: Use for long-term state that needs to survive multiple turns without manual passing.
+Last Result: Use for sequential function outputs where the immediate next turn depends on the current turn's findings.
+
+IMPORTANT: if you encounter an error with code execution PLEASE STOP EXECUTION AND NOTIFY the user rather than trying to re-run the code 
+
 `,
 
     returnIndices: `${header('RETURN INDICES')}
@@ -161,13 +180,18 @@ CRITICAL RULES:
 3. A 'workspace' object is available for persisting state between executions
    Example: workspace.counter = (workspace.counter || 0) + 1;
 
-4. You can call respond_to_user({response: "message"}) to send output back to the us
+4. A 'last_result' variable contains the result from the previous code execution
+   - On the first execution, last_result is null
+   - Use this to reference previous computation results
+   Example: if (last_result) { console.log("Previous result was:", last_result); }
+
+5. You can call respond_to_user({response: "message"}) to send output back to the us
    If you do this at the end then we will assume you are done computing
    and the user will get to respond. If instead you are indicating that you
    are starting a task, then first call respond_to_user then continue the task
-   
 
-5. IMPORTANT: Use UNQUALIFIED ASSIGNMENTS for variables (no const/let/var)
+
+6. IMPORTANT: Use UNQUALIFIED ASSIGNMENTS for variables (no const/let/var)
    This enables variable tracking in the UI for observability.
    CORRECT: query = "What is AI?";
    CORRECT: results = await retrieve_declarative_knowledge({query: query});
@@ -176,9 +200,9 @@ CRITICAL RULES:
 
    Exception: You can use const/let/var inside function definitions IF NEEDED
 
-6. Write natural async JavaScript code with control flow, error handling, etc.
+7. Write natural async JavaScript code with control flow, error handling, etc.
 
-7. IMPORTANT - Seeing Data in Future Turns:
+8. IMPORTANT - Seeing Data in Future Turns:
    This is a turn-based system. You CANNOT see the results of async operations in the same turn.
 
    To see data in the NEXT turn, you must:

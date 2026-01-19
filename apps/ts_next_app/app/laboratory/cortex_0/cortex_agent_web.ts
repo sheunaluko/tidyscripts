@@ -5,8 +5,13 @@ import * as c from "../src/cortex"  ;
 import * as fbu from "../../../src/firebase_utils"
 import * as fnu from "../src/fn_util"
 import * as tsw from "tidyscripts_web"
+import * as bashr from "../../../src/bashr/index";
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
 import { z } from "zod" 
+
+// Bash client state
+var BASH_CLIENT: any = null;
+
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
@@ -18,48 +23,6 @@ const MCP_SERVER_URL = "http://localhost:8003/mcp";
 
 /**
  * Defines the cortex agent used in the Cortex UI 
- */
-
-/*
-   Todo :
-
-   [x] improve the error handling so when fn error messages are passed back to cortex it also says to pause and report the error to the user
-
-   [x]
-   Help cortex learn how to create function templates.
-   Have claude review the code on function templates -- then generate a new function that tells
-   cortex how to test a function template (called test_function_template) , it should take the template_name, template_args, the function_name, and
-   function args, as well as a test_template_args.
-
-   It will then run the test_template with the provided args and report the result back to cortex (including the error if it errored). If it runs successfully the function template is also saved to CortexRAM and the id is reported back to Cortex
-
-   [x]
-   Next - claude should make another function called save_function_template, which will take the reference to a function template (explaining that it must be tested first and successful testing produces the referencable id) and actually stores it into the cortex table with type=function_template and with template=the_actual_template_object
-
-   [x]
-   After the above is done: coach cortex (via chat) on developing a template called create_user_log which takes a category parameter and then uses accumulate text to get a log and then computes the embedding of the text and saves everything into the logs table with { category, text, embedding }
-
-
-   [ ]
-   Next: actually need to load the function templates at init time and make them available!
-   - [ ] 1st pass - just create an init function
-   - [ ] 2nd pass - dynamic SYSTEM_PROMPT management ? may be overkill
-
-   [ ]
-   Next: ability to search surreal db with embeddings: -- consider coaching cortex using the MCP surreal tool and the query function, to make a function_template that can do this
-
-
-
-
-
-   UI updates -- top right (context usage bar green/red/ etc ) , last tool call (implement as small
-   widgets that can be placed)
-
-   Separate UI - show function call stack (including arugments)
-
-   Pattern -> Create a useObservability hook that collects all state and state updates into one place
-   Then build components which are view ontop of this!
-
  */
 
 
@@ -154,6 +117,33 @@ export async function tes(fn_path  : string[], fn_args : any[] ) {
 
 
 const functions = [
+
+
+
+    {
+        enabled: true,
+        description: "Connect to the bash websocket server. The bash websocket server exposes an API for running bash commands on machine.",
+        name: "connect_to_bash_server",
+        parameters: null,
+        fn: async (ops: any) => {
+            BASH_CLIENT = await bashr.connect_client();
+            return "done";
+        },
+        return_type: "string"
+    },
+
+    {
+        enabled: true,
+        description: "Runs a bash command using the bash server. Need to connect first. You can then provide any unix bash command to be executed, in order to accomplish the desired task. Please be careful and do not issue any dangerous commands that could harm the underlying system.",
+        name: "run_bash_command",
+        parameters: { command: "string" },
+        fn: async (ops: any) => {
+            return await BASH_CLIENT.runCommand(ops.params.command);
+        },
+        return_type: "string"
+    },
+
+    
     {
 	enabled : true ,
 	description : `Formats a string based on the provided template and arguments. Returns the string.
@@ -201,30 +191,26 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
    },
 
     {
-	enabled : true, 
+	enabled : true,
 	description : `
 	Compute vector embedding for a text input.
 
-	This function takes an input named text and computes the vector embedding of it
-	The result is stored in CortexRAM with a unique id, which you can use to reference it for future function invocations
-
-        The return value is a reference to the embedding which is automatically resolved in future calls 
+	This function takes an input named text and computes the vector embedding of it.
+	Returns the embedding as an array of numbers.
 
 	` ,
 	name        : "compute_embedding" ,
 	parameters  : { text : "string" }   ,
 	fn          : async (ops : any) => {
-	    let { get_var, set_var, log  } = ops.util ;
+	    let { log  } = ops.util ;
 	    let { text } = ops.params ;
-	    log(`Retrieved request to compute embedding of: ${text}`) ; 
+	    log(`Retrieved request to compute embedding of: ${text}`) ;
 	    let embedding = await tsw.common.apis.ailand.get_cloud_embedding(text) ;
 	    log(`Got embedding result`)
 	    debug.add("embedding" , embedding) ;
-	    //now we ---
-	    let id = await set_var(embedding)  ;
-	    return `@${id}`  ; 
+	    return embedding ;
 	} ,
-	return_type : "string"
+	return_type : "array"
     },
 
     {
@@ -290,19 +276,6 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 
 
     {
-	enabled : false, 
-	description : "use the javascript interpreter" ,
-	name        : "evaluate_javascript" ,
-	parameters  : { input : "string" }  ,
-	fn          : async (ops : any) => {
-	    let {input} = ops.params
-	    let result = eval(input)
-	    return result 
-	} ,
-	return_type : "any"
-    },
-
-    {
 	enabled : true, 	
 	description : `
 Displays code to the user interface. Use this when the user requests to see code.
@@ -361,40 +334,15 @@ swift
 
 
 
-
-
-    
-    {
-	enabled : true	, 
-	description : `
-The workspace is a toplevel nested object named workspace which exists within the javascript environment.
-You update the workspace by providing javascript code to this function.
-The code should directly provide the necessary manipulations to the workspace, and will be evaluated.
-After that, the user will automatically see the updated changes. 
-	`,
-	name        : "update_workspace" ,
-	parameters  : { code : "string" }  ,
-	fn          : async (ops : any) => {
-	    
-	    let {code } = ops.params ;
-	    let {event , log} = ops.util;
-	    
-	    log(`Running this code:`); log(code); 
-	    let result = window.eval(code)
-	    // update the workspace UI here
-	    event({'type' : 'workspace_update' })
-	    return result 
-	} ,
-	return_type : "any"
-    },
-
-    
     {
 	enabled : true	, 	
 	description : `
 Utility function that helps to accumulate a block of text from the user. Only call this function if you need to accumulate a block of text that will be passed to another function for input. Finishes accumulating text when the user says the word finished. When you call this function please give the user some helpful instructions, including the keyword to complete the accumulation (unless you have already told them this earlier in the conversation.
 
-Please note: A subfunction runs to accumulate the users text until they say finished and only then is it routed back to you. Thus when you get any text back from the user that is the completed accumulated text and you can assume the user is done. 
+Please note: A subfunction runs to accumulate the users text until they say finished and only then is it routed back to you. Thus when you get any text back from the user that is the completed accumulated text and you can assume the user is done.
+
+In order to retrieve the result you must RETURN the result of this function 
+
 ` , 
 	name        : "accumulate_text" ,
 	parameters  : {  user_instructions : "string" }  ,
@@ -478,30 +426,24 @@ Please note: A subfunction runs to accumulate the users text until they say fini
 	description : `
 	Universal gateway for accessing the database. This function lets you provide a SURREAL QL Query that will be run on the remote database.
 
-	There is a logs table that stores user logs (schemaless)
+	There is a logs table that stores user logs
 	There is a cortex table that you can use for your own purposes (long term memory, other use cases)
 
         Note: The query parameter can optionally include variable references using the $ syntax ($varname).
-              If you use variables in the query, you must pass the variable values as  additional parameters in the function_args array !
-
-        For example, the following would be a valid function call output to store a message:
-        {
-           function_name: "access_database_with_surreal_ql" ,
-           function_args: ["query" , "sql query with var... $msg", "msg" , "the message here" ...] 
-        }
-        
+              If you use variables in the query, you must pass the variable values in the variables fields (as a key value map) 
 
 	`, 
 	name        : "access_database_with_surreal_ql" ,
 	parameters  :  {
 	    query : "string" ,
+	    variables : "object" 
 	}  ,
 	fn          : async (ops : any) => {
-	    let {query} = ops.params ;
+	    let {query, variables} = ops.params ;
 	    let {log} = ops.util ;
 	    
 	    log(`Surreal QL: \n${query}`); 
-	    let response = await fbu.surreal_query({query, variables : ops.params }) as any; 
+	    let response = await fbu.surreal_query({query, variables }) as any; 
 	    log(`Got response`)
 	    log(response) 
 	    try {

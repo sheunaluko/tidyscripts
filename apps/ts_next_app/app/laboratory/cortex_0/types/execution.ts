@@ -5,6 +5,7 @@ export interface ExecutionSnapshot {
   status: 'success' | 'error';
   error?: string;
   duration: number;
+  result?: any;
   functionCalls: FunctionCallEvent[];
   variableAssignments: VariableAssignment[];
   sandboxLogs: SandboxLog[];

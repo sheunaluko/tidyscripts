@@ -73,18 +73,18 @@ type FunctionResult =  {
     events? : SandboxEvent[]  // Optional events for observability and control flow
 }
 
-type CallChainResult =  {
+type CodeExecutionResult =  {
     name : string,
-    error : boolean | string , 
+    error : boolean | string ,
     result  : FunctionReturnType
 } 
 
 
 /* UserInput */
 type UserInput = {
-    kind  : "text" | "CallChainResult"  ,
-    text : string | null , 
-    callChainResult : CallChainResult | null , 
+    kind  : "text" | "CodeExecutionResult"  ,
+    text : string | null ,
+    codeExecutionResult : CodeExecutionResult | null ,
 }
 
 
@@ -250,6 +250,7 @@ export class Cortex extends EventEmitter  {
     CortexRAM : { [k:string] : any } ;
 
     workspace? : { [k:string] : any } ; // Persistent workspace for sandbox executions
+    last_result: any = null; // Result from previous code execution
 
     promptManager : PromptManager ;
 
@@ -267,6 +268,7 @@ export class Cortex extends EventEmitter  {
 	this.function_input_ch = new Channel.Channel({name}) ;
 	this.prompt_history = [ ];
 	this.CortexRAM = {}
+	this.last_result = null;
 
 	let log = tsw.common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
@@ -510,20 +512,20 @@ The response will be validated against this structure.
 	let input : UserInput = {
 	    kind : "text" ,
 	    text  ,
-	    callChainResult : null 
+	    codeExecutionResult : null
 	}
-	let user_message = this._user_msg(JSON.stringify(input)) ; 
-	this.add_user_message(user_message) 
+	let user_message = this._user_msg(JSON.stringify(input)) ;
+	this.add_user_message(user_message)
     }
 
-    add_user_result_input(callChainResult : CallChainResult)  {
+    add_user_result_input(codeExecutionResult : CodeExecutionResult)  {
 	let input : UserInput = {
-	    kind : 'CallChainResult' ,
-	    callChainResult ,
-	    text : null 
+	    kind : 'CodeExecutionResult' ,
+	    codeExecutionResult ,
+	    text : null
 	}
 	let user_message = this._user_msg(JSON.stringify(input))
-	this.add_user_message(user_message) 
+	this.add_user_message(user_message)
     }
 
     add_cortex_output(output : CortexOutput ) {
@@ -829,6 +831,9 @@ The response will be validated against this structure.
 			    log: this.log,
 			    event: this.emit_event.bind(this),
 			    user_output: this.user_output,
+			    get_user_data: async () => {
+				return await this.function_input_ch.read();
+			    },
 			    get_var: this.get_var.bind(this),
 			    set_var: this.set_var.bind(this),
 			    set_var_with_id: this.set_var_with_id.bind(this),
@@ -863,6 +868,9 @@ The response will be validated against this structure.
 
 	// Add workspace reference - use persistent workspace from instance
 	context.workspace = this.workspace || {};
+
+	// Add last_result from previous execution (null on first run)
+	context.last_result = this.last_result;
 
 	return context;
     }
@@ -904,6 +912,10 @@ The response will be validated against this structure.
 
 		// Extract the actual user result
 		userResult = result.data.__userResult;
+
+		// Store for next execution's last_result
+		this.last_result = structuredClone(userResult);
+		this.log(`Stored last_result for next execution`);
 	    }
 
 	    return {
@@ -916,6 +928,11 @@ The response will be validated against this structure.
 	    const errorMsg = `Sandbox execution failed: ${error.message}`;
 	    this.log(errorMsg);
 	    this.log_event(errorMsg);
+
+	    // Clear last_result on error
+	    this.last_result = null;
+	    this.log(`Cleared last_result due to execution error`);
+
 	    return {
 		name: 'code_execution',
 		error: errorMsg,
@@ -989,7 +1006,8 @@ The response will be validated against this structure.
 	    type: 'code_execution_complete',
 	    status: result.error ? 'error' : 'success',
 	    error: result.error,
-	    duration: duration
+	    duration: duration,
+	    result: result.result
 	});
 
 	// Check if execution succeeded
@@ -1032,7 +1050,7 @@ The response will be validated against this structure.
 	} else if (loop === 0) {
 	    // Out of loops - add simulated message instructing LLM to respond
 	    this.log(`Loop limit reached without respond_to_user, adding instruction message`);
-	    const loopLimitMessage: CallChainResult = {
+	    const loopLimitMessage: CodeExecutionResult = {
 		name: "system_message",
 		error: false,
 		result: "Loop limit reached. You must now call respond_to_user with the current status of the task."

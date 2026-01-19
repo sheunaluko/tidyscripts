@@ -7,21 +7,43 @@ Want to retain existing architecture //archive it -- and shift to a different mo
 ? DSL for the ai to write DSL code that orchestrates the available functions
 --> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
 
-[x] implemented iframe executation with configurable contex
-[x] re-architect cortex to use the JS exec env (sandbox.ts)
 
 Todo
 
-[ ] dynamic function calling needs to be more debuggable - for example the run_dfn needs
+[ ] test the initialization flow 
+
+[ ] reflect on cortex_improvements.txt, which cortex just said to me ! wtf bro
+  - this actually ties in to this:
+   [ ] OBSERVABILITY interface for CORTEX SESSIONS (logged in user, etc) and RAI  
+
+
+[ ] user scoped RELATION architecture -- ?
+
+[ ] add delay from when the VAD cancels speech detection to when listening is triggered , so the user says STOP , verifies pause, then states query
+[ ] improve the ability to detect the first couple of words in SR 
+[ ] unable to resize grid widget to 1 width
+
+[ ] make the HTML window aware of dark mode vs light mode , or just generate theme neutral content
+  - [ ] i want to think more about the HTML widget , since it is proving to be WAAAAAY more impressive and useful than i thought it would be.
+  - [ ] this is a signal that i want to tune into 
+
+[x] bootstrap call chains that exist -> this was a very exciting and interesting process! lol wish I had recorded it
+
+
+[x] still trying to fix the dynamic function calls -- the architecture is overly complex at this point
+due to membrane funcitonality. Although it seems i am close to have it working without errors im getting nothing save to db although it looks like something is saved to db --- confusing! 
+    -> this bug was due to the access db function itself which had conflicting documentation and was expecting variables to be merged into params as apposed to {variables, query} 
+[x] implemented iframe executation with configurable contex
+[x] re-architect cortex to use the JS exec env (sandbox.ts)
+[x] fix the get_user_input function  (also should fire event? to be displayed in UI
+[x] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
+[x] improve the thoughts UI with a brain emoji to start the line of each thought
+[x] dynamic function calling needs to be more debuggable - for example the run_dfn needs
 to actually RETURN a result as well as an error etc -- right now just seeing nothing,
 including no ersult in the database 
+[x] add widget that enables paging through JS exec history (see prior code, fn calls)
+[x] default speed 1.5
 
-[ ] add widget that enables paging through JS exec history (see prior code, fn calls)
-[ ] improve the thoughts UI with a brain emoji to start the line of each thought
-[ ] default speed 1.5
-[ ] bootstrap call chains that exist 
-[ ] fix the get_user_input function  (also should fire event? to be displayed in UI
-[ ] fix the return values of the functions (dont need the @ pattern from the embedding computation anymore
 --- 
 
 [x] when function returns, should ?CAPTURE its value and append it to the function call U
@@ -30,7 +52,7 @@ including no ersult in the database
 
 [ ] create voice interface to claude code 
 [ ] Also check out PLAYRIGHT MCP server 
-[ ] OBSERVABILITY interface for CORTEX SESSIONS (logged in user, etc) and RAI  
+
 
 
 

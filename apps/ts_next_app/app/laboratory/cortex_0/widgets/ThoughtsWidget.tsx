@@ -42,7 +42,7 @@ const ThoughtsWidget: React.FC<ThoughtsWidgetProps> = ({
               color: 'success.light'
             }}
           >
-            {thought}
+            🧠 {thought}
           </Box>
         ))}
       </Box>

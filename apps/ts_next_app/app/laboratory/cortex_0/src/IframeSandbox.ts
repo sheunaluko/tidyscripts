@@ -588,6 +588,12 @@ export class IframeSandboxExecutor {
           // Load from DB (reference through allowedGlobals to go through membrane)
           const dfn = await allowedGlobals.load_dynamic_function({ name });
 
+          // Inject args into allowedGlobals so they're accessible through membrane
+          // This solves the 'with' statement shadowing issue where the membrane's has() trap
+          // returns true for all properties, causing function parameters to be shadowed
+          const argsKey = '__dynamic_fn_args_' + Math.random().toString(36).slice(2);
+          allowedGlobals[argsKey] = functionArgs;
+
           // Create function using AsyncFunction constructor
           let fn;
           try {
@@ -603,20 +609,37 @@ export class IframeSandboxExecutor {
               const functionMatch = trimmedCode.match(/^(?:async\\s+)?function\\s+(\\w+)/);
               const functionName = functionMatch ? functionMatch[1] : 'dynamicFn';
 
-              fn = new AsyncFunction('args', \`
-                \${dfn.code}
-                return await \${functionName}(args);
+              // Pass injected args to the function through membrane
+              fn = new AsyncFunction(\`
+                with (this) {
+                  \${dfn.code}
+                  return await \${functionName}(this.\${argsKey});
+                }
               \`);
             } else {
               // Code is a raw function body, use as-is
-              fn = new AsyncFunction('args', dfn.code);
+              // Bind the injected args to 'args' variable
+              fn = new AsyncFunction(\`
+                with (this) {
+                  const args = this.\${argsKey};
+                  \${dfn.code}
+                }
+              \`);
             }
           } catch (e) {
+            // Clean up on syntax error
+            delete allowedGlobals[argsKey];
             throw new Error(\`Syntax error in dynamic function '\${name}': \${e.message}\`);
           }
 
-          // Execute (runtime errors bubble naturally)
-          return await fn(functionArgs);
+          try {
+            // Execute with membrane context
+            const result = await fn.call(this);
+            return result;
+          } finally {
+            // Always clean up injected args
+            delete allowedGlobals[argsKey];
+          }
         };
     `
   }
