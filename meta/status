@@ -1,6 +1,5 @@
 Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0) 
 
-
 == CORTEX JS EXEC ENV UPGRADE == 
 Ok getting lots of bugs - inconsistent functionality.
 Want to retain existing architecture //archive it -- and shift to a different model

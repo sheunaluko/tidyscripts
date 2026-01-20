@@ -156,7 +156,8 @@ export async function generateNote(
   template: string,
   collectedText: string[],
   systemPrompt: string,
-  retries: number = 3
+  retries: number = 3,
+  insightsClient?: any
 ): Promise<string> {
   const provider = getProviderFromModel(model);
   const endpoint = getEndpointForProvider(provider);
@@ -176,7 +177,21 @@ export async function generateNote(
   const zodFormat = zodResponseFormat(NoteOutputSchema, 'NoteOutput');
   const { schema: jsonSchema, schema_name: schemaName } = extractJsonSchema(zodFormat);
 
+  // Start note generation event chain
+  let noteGenerationEventId: string | undefined;
+  if (insightsClient) {
+    try {
+      noteGenerationEventId = await insightsClient.startChain('note_generation', {
+        template_length: template.length,
+        collected_text_count: collectedText.length,
+      });
+    } catch (err) {
+      log(`Error starting insights chain: ${err}`);
+    }
+  }
+
   for (let attempt = 0; attempt < retries; attempt++) {
+    const startTime = Date.now();
     try {
       log(`Generating note with ${model} (attempt ${attempt + 1}/${retries})...`);
 
@@ -200,6 +215,7 @@ export async function generateNote(
       }
 
       const data = await response.json();
+      const latency = Date.now() - startTime;
       debug.add('note_generation_raw_response', data);
 
       // Parse the response based on API format (following cortex_0 pattern)
@@ -228,6 +244,36 @@ export async function generateNote(
         noteLength: validated.note.length,
       });
 
+      // Add successful LLM invocation event
+      if (insightsClient) {
+        try {
+          await insightsClient.addInChain('llm_invocation', {
+            model,
+            provider,
+            mode: 'structured',
+            prompt_tokens: data.usage?.prompt_tokens || 0,
+            completion_tokens: data.usage?.completion_tokens || 0,
+            latency_ms: latency,
+            status: 'success',
+            context: {
+              note_length: validated.note.length,
+              attempt: attempt + 1,
+            }
+          });
+        } catch (err) {
+          log(`Error adding LLM invocation event: ${err}`);
+        }
+      }
+
+      // End the chain
+      if (insightsClient && noteGenerationEventId) {
+        try {
+          insightsClient.endChain();
+        } catch (err) {
+          log(`Error ending insights chain: ${err}`);
+        }
+      }
+
       log('Note generated successfully');
       return validated.note;
     } catch (error) {
@@ -236,11 +282,40 @@ export async function generateNote(
 
       if (attempt === retries - 1) {
         debug.add('note_generation_failed', { error: String(error) });
+
+        // Add error event before throwing
+        if (insightsClient) {
+          try {
+            await insightsClient.addInChain('llm_invocation', {
+              model,
+              provider,
+              mode: 'structured',
+              prompt_tokens: 0,
+              completion_tokens: 0,
+              latency_ms: Date.now() - startTime,
+              status: 'error',
+              error: String(error),
+            });
+            insightsClient.endChain();
+          } catch (err) {
+            log(`Error adding error insights event: ${err}`);
+          }
+        }
+
         throw error;
       }
 
       // Exponential backoff
       await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+
+  // End chain if we reach this point
+  if (insightsClient && noteGenerationEventId) {
+    try {
+      insightsClient.endChain();
+    } catch (err) {
+      log(`Error ending insights chain: ${err}`);
     }
   }
 

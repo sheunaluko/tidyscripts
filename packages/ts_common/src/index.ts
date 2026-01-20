@@ -8,6 +8,7 @@ import * as apis from "./apis"
 import * as midi_encoder from "./midi_encoder"
 import * as dates from "./dates"
 import * as external from "./external"
+import * as insights from "./apis/insights"
 
 export * as tes from "./tes"
 export * as tobi from "./tobi"
@@ -45,7 +46,8 @@ export {
     apis,
     midi_encoder,
     dates ,
-    external 
+    external,
+    insights
 }
 
 

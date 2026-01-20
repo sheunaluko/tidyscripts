@@ -88,6 +88,7 @@ export function mergeWithCache(
  * @param models - Array of model names to test
  * @param systemPrompt - System prompt for note generation
  * @param onProgress - Callback for progress updates
+ * @param insightsClient - Optional InsightsClient instance for event tracking
  * @returns Array of model test results
  */
 export async function runParallelTest(
@@ -95,9 +96,24 @@ export async function runParallelTest(
   inputText: string,
   models: string[],
   systemPrompt: string,
-  onProgress: (result: ModelTestResult) => void
+  onProgress: (result: ModelTestResult) => void,
+  insightsClient?: any
 ): Promise<ModelTestResult[]> {
   log({ msg: 'Starting parallel test', models: models.length });
+
+  // Start test run chain
+  let testRunEventId: string | undefined;
+  if (insightsClient) {
+    try {
+      testRunEventId = await insightsClient.startChain('test_run', {
+        models_count: models.length,
+        template_length: template.length,
+        input_length: inputText.length,
+      });
+    } catch (err) {
+      log(`Error starting test run insights chain: ${err}`);
+    }
+  }
 
   const promises = models.map(async (model): Promise<ModelTestResult> => {
     const result: ModelTestResult = {
@@ -113,6 +129,18 @@ export async function runParallelTest(
     // Notify progress - starting
     onProgress({ ...result });
 
+    // Start model test chain
+    let modelTestEventId: string | undefined;
+    if (insightsClient) {
+      try {
+        modelTestEventId = await insightsClient.startChain('model_test', {
+          model,
+        });
+      } catch (err) {
+        log(`Error starting model test insights chain: ${err}`);
+      }
+    }
+
     try {
       // Call note generation with input wrapped in array
       const note = await generateNote(
@@ -120,7 +148,8 @@ export async function runParallelTest(
         template,
         [inputText], // Wrap in array as expected by generateNote
         systemPrompt,
-        3 // retries
+        3, // retries
+        insightsClient // Pass insights client to generateNote
       );
 
       result.status = 'success';
@@ -129,6 +158,19 @@ export async function runParallelTest(
       result.duration = result.endTime.getTime() - result.startTime!.getTime();
 
       log({ msg: 'Model test success', model, duration: result.duration });
+
+      // Add model test complete event
+      if (insightsClient && modelTestEventId) {
+        try {
+          await insightsClient.addInChain('model_test_complete', {
+            status: 'success',
+            duration_ms: result.duration,
+          });
+          insightsClient.endChain(); // End model test chain
+        } catch (err) {
+          log(`Error adding model test complete event: ${err}`);
+        }
+      }
 
       // Notify progress - success
       onProgress({ ...result });
@@ -141,6 +183,20 @@ export async function runParallelTest(
       result.duration = result.endTime.getTime() - result.startTime!.getTime();
 
       log({ msg: 'Model test error', model, error: result.error });
+
+      // Add model test error event
+      if (insightsClient && modelTestEventId) {
+        try {
+          await insightsClient.addInChain('model_test_complete', {
+            status: 'error',
+            error: result.error,
+            duration_ms: result.duration,
+          });
+          insightsClient.endChain(); // End model test chain
+        } catch (err) {
+          log(`Error adding model test error event: ${err}`);
+        }
+      }
 
       // Notify progress - error
       onProgress({ ...result });
@@ -162,6 +218,15 @@ export async function runParallelTest(
     success: finalResults.filter(r => r.status === 'success').length,
     error: finalResults.filter(r => r.status === 'error').length,
   });
+
+  // End test run chain
+  if (insightsClient && testRunEventId) {
+    try {
+      insightsClient.endChain();
+    } catch (err) {
+      log(`Error ending test run insights chain: ${err}`);
+    }
+  }
 
   return finalResults;
 }

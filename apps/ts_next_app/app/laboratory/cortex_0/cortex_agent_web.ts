@@ -45,7 +45,7 @@ export async function load_mcp_functions() {
 /**
  * Creates a Cortex agent with standard functions only
  */
-export function get_agent(modelName: string = "gpt-5-mini") {
+export function get_agent(modelName: string = "gpt-5-mini", insightsClient?: any) {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
@@ -62,7 +62,7 @@ export function get_agent(modelName: string = "gpt-5-mini") {
 
     let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
 
-    let ops   = { model , name, functions : enabled_functions, additional_system_msg  }
+    let ops   = { model , name, functions : enabled_functions, additional_system_msg, insights: insightsClient  }
     let coer    = new c.Cortex( ops ) ;
     //
     return coer ;
@@ -72,7 +72,7 @@ export function get_agent(modelName: string = "gpt-5-mini") {
  * Creates a Cortex agent with MCP functions included
  * Asynchronously loads functions from the MCP server
  */
-export async function get_agent_with_mcp(modelName: string = "gpt-5-mini") {
+export async function get_agent_with_mcp(modelName: string = "gpt-5-mini", insightsClient?: any) {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
@@ -81,9 +81,9 @@ export async function get_agent_with_mcp(modelName: string = "gpt-5-mini") {
 
 
     Before telling the user you do not know something, try searching your external knowledge
-    graph (called the matrix) by using the function retrieve_declarative_knowledge 
+    graph (called the matrix) by using the function retrieve_declarative_knowledge
 
-    Do not make any assumptions about what the KG  contains! 
+    Do not make any assumptions about what the KG  contains!
 
     `;
 
@@ -94,7 +94,7 @@ export async function get_agent_with_mcp(modelName: string = "gpt-5-mini") {
     let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
     let all_functions = [...enabled_functions, ...mcpFunctions];
 
-    let ops   = { model , name, functions : all_functions, additional_system_msg  }
+    let ops   = { model , name, functions : all_functions, additional_system_msg, insights: insightsClient  }
     let coer    = new c.Cortex( ops ) ;
     //
     return coer ;

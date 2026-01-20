@@ -87,7 +87,7 @@ const CodeExecutionWidget: React.FC<CodeExecutionWidgetProps> = ({
 
           <Chip
             label="Result="
-            color="white"
+            color="default"
             size="small"
           />
 	  

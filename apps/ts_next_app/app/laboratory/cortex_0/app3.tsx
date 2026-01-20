@@ -1,10 +1,11 @@
 'use client';
 import type { NextPage } from 'next'
 import {useEffect, useState, useRef, useCallback, useMemo } from 'react' ;
-import React from 'react' ; 
+import React from 'react' ;
 import styles from '../../../styles/Default.module.css'
 import  "./app.css"
 import * as tsw from "tidyscripts_web"  ;
+const { insights } = tsw.common;
 //import { ChakraProvider } from '@chakra-ui/react' ;
 import { alpha } from '@mui/system';
 import { theme } from "../../theme";
@@ -205,8 +206,37 @@ const  Component: NextPage = (props : any) => {
 
     const [workspace, set_workspace] = useState({}) ;
 
-    // Cortex agent hook - automatically re-initializes when model changes
-    const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(ai_model);
+    // InsightsClient for event tracking - initialized FIRST
+    const insightsClient = useRef<any>(null);
+    const [sessionId, setSessionId] = useState<string>("");
+    const [insightsReady, setInsightsReady] = useState(false);
+
+    // Initialize InsightsClient
+    useEffect(() => {
+        const sid = insights.generateSessionId();
+        setSessionId(sid);
+
+        insightsClient.current = new insights.InsightsClient({
+            app_name: 'cortex',
+            app_version: '3.0.0',
+            user_id: 'cortex_user',
+            session_id: sid,
+        });
+
+        // Expose for debugging
+        if (typeof window !== 'undefined') {
+            (window as any).insights = insightsClient.current;
+        }
+
+        log(`InsightsClient initialized with session ${sid}`);
+        setInsightsReady(true);
+    }, []);
+
+    // Cortex agent hook - automatically re-initializes when model changes or insights is ready
+    const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(
+        ai_model,
+        insightsReady ? insightsClient.current : undefined
+    );
 
     // Keep a ref to the latest COR to avoid stale closures in transcription_cb
     const CORRef = useRef(COR);
@@ -671,12 +701,24 @@ const  Component: NextPage = (props : any) => {
 	set_chat_history((prev) => [...prev, { role: "user", content }])
 
 	//add the user message to COR
-	COR.add_user_text_input(content) 
+	COR.add_user_text_input(content)
 
+	// Add user input event to insights
+	if (insightsClient.current) {
+	    insightsClient.current.addUserInput({
+		input_mode: mode,
+		input_length: content.length,
+		context: {
+		    chat_history_length: chat_history.length,
+		}
+	    }).catch((err: any) => {
+		log(`Error adding user input event: ${err}`);
+	    });
+	}
 
-	if (sound_feedback) { 
+	if (sound_feedback) {
 	    sounds.proceed()
-	} 
+	}
     };
 
 

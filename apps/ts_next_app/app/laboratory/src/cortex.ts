@@ -212,7 +212,8 @@ interface CortexOps {
     name  : string ,
     functions : Function[] ,
     additional_system_msg : string,
-    provider? : Provider  // optional, auto-detected from model if not provided
+    provider? : Provider,  // optional, auto-detected from model if not provided
+    insights? : any        // optional InsightsClient instance
 } 
 
 
@@ -253,12 +254,13 @@ export class Cortex extends EventEmitter  {
     last_result: any = null; // Result from previous code execution
 
     promptManager : PromptManager ;
+    insights? : any ; // InsightsClient instance for event tracking
 
     constructor(ops : CortexOps) {
 
 	super() ;
 
-	let { model, name, functions , additional_system_msg, provider } = ops  ;
+	let { model, name, functions , additional_system_msg, provider, insights } = ops  ;
 	this.model = model ;
 	this.name  = name ;
 	this.provider = provider ?? getProviderFromModel(model) ;
@@ -269,6 +271,7 @@ export class Cortex extends EventEmitter  {
 	this.prompt_history = [ ];
 	this.CortexRAM = {}
 	this.last_result = null;
+	this.insights = insights || null;
 
 	let log = tsw.common.logger.get_logger({'id' : `cortex:${name}` }); this.log = log;
 
@@ -951,19 +954,62 @@ The response will be validated against this structure.
 	   ---
 	*/
 
+	const llmStartTime = Date.now();
 	let jsonData = await fetchResponse.json()
+	const llmLatency = Date.now() - llmStartTime;
+
 	debug.add('model_json_response', jsonData) ;
 	this.prompt_history.push(jsonData) ;
 
 	// Handle error responses
 	if (jsonData.error) {
 	    this.log(`API Error: ${jsonData.error}`);
+
+	    // Add error event to insights
+	    if (this.insights) {
+		try {
+		    await this.insights.addLLMInvocation({
+			model: this.model,
+			provider: this.provider,
+			mode: 'code_generation',
+			prompt_tokens: 0,
+			completion_tokens: 0,
+			latency_ms: llmLatency,
+			status: 'error',
+			error: jsonData.error,
+		    });
+		} catch (err) {
+		    this.log(`Error adding insights event: ${err}`);
+		}
+	    }
+
 	    throw new Error(jsonData.error);
 	}
 
 	let {prompt_tokens, completion_tokens, total_tokens} = jsonData.usage || {};
 	if (total_tokens) {
 	    this.log_event(`Token Usage=${total_tokens}`) ;
+	}
+
+	// Add LLM invocation event to insights
+	if (this.insights) {
+	    try {
+		await this.insights.addLLMInvocation({
+		    model: this.model,
+		    provider: this.provider,
+		    mode: 'code_generation',
+		    prompt_tokens: prompt_tokens || 0,
+		    completion_tokens: completion_tokens || 0,
+		    latency_ms: llmLatency,
+		    status: 'success',
+		    context: {
+			loop: loop,
+			messages_count: this.messages.length,
+		    }
+		});
+	    } catch (err) {
+		this.log(`Error adding insights event: ${err}`);
+	    }
 	}
 
 	// New Responses API returns output_text instead of choices[0].message.parsed
@@ -1009,6 +1055,32 @@ The response will be validated against this structure.
 	    duration: duration,
 	    result: result.result
 	});
+
+	// Add execution event to insights
+	if (this.insights) {
+	    try {
+		// Count function calls and variable assignments from events
+		const functionCalls = result.events?.filter((e: any) => e.type === 'function_start')?.length || 0;
+		const variableAssignments = result.events?.filter((e: any) => e.type === 'variable_set')?.length || 0;
+		const logsCount = result.events?.filter((e: any) => e.type === 'log')?.length || 0;
+
+		await this.insights.addExecution({
+		    execution_type: 'code_sandbox',
+		    status: result.error ? 'error' : 'success',
+		    duration_ms: duration,
+		    error: result.error,
+		    function_calls: functionCalls,
+		    variables_assigned: variableAssignments,
+		    logs_count: logsCount,
+		    context: {
+			code_length: output.code.length,
+			thoughts: output.thoughts,
+		    }
+		});
+	    } catch (err) {
+		this.log(`Error adding execution insights event: ${err}`);
+	    }
+	}
 
 	// Check if execution succeeded
 	const executionFailed = result.error;
