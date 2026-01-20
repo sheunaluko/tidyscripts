@@ -8,7 +8,10 @@ import { ValidationTests } from './components/ValidationTests';
 import { ClientStateView } from './components/ClientStateView';
 import { DemoRunner } from './components/DemoRunner';
 import { LogExporter } from './components/LogExporter';
+import { DatabaseTestSuite } from './components/DatabaseTestSuite';
 import { logCollector } from './lib/logCollector';
+import { setupConsoleInterceptor } from './lib/consoleInterceptor';
+import { setupFetchInterceptor } from './lib/fetchInterceptor';
 
 export default function MeditationPage() {
   const insightsClient = useRef<any>(null);
@@ -22,6 +25,10 @@ export default function MeditationPage() {
   });
 
   useEffect(() => {
+    // Install interceptors BEFORE InsightsClient initialization
+    setupConsoleInterceptor();
+    setupFetchInterceptor();
+
     // Dynamic import to avoid SSR issues
     const initInsights = async () => {
       const tsw = await import('tidyscripts_web');
@@ -115,6 +122,11 @@ export default function MeditationPage() {
       </header>
 
       <ClientStateView state={clientState} onFlush={handleFlushBatch} />
+
+      <DatabaseTestSuite
+        client={insightsClient.current}
+        sessionId={clientState.sessionId}
+      />
 
       <DemoRunner
         client={insightsClient.current}

@@ -57,8 +57,8 @@ DEFINE FIELD trace_id ON insights_events TYPE option<string>;
 -- ============================================================================
 
 -- JSON object for app-specific data
-DEFINE FIELD payload ON insights_events TYPE object
-  ASSERT $value != NONE;
+-- FLEXIBLE allows any nested structure without schema definition
+DEFINE FIELD payload ON insights_events FLEXIBLE TYPE object;
 
 -- ============================================================================
 -- Metadata
@@ -71,9 +71,8 @@ DEFINE FIELD tags ON insights_events TYPE option<array>;
 DEFINE FIELD duration_ms ON insights_events TYPE option<int>;
 
 -- Client information (browser only)
-DEFINE FIELD client_info ON insights_events TYPE option<object>;
-DEFINE FIELD client_info.user_agent ON insights_events TYPE option<string>;
-DEFINE FIELD client_info.viewport_size ON insights_events TYPE option<string>;
+-- FLEXIBLE allows nested fields without explicit definition
+DEFINE FIELD client_info ON insights_events FLEXIBLE TYPE option<object>;
 
 -- ============================================================================
 -- Indexes for Common Query Patterns

@@ -1,12 +1,16 @@
+'use client';
+
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
-import React from 'react' ;
-import { Metadata } from 'next';
+import React, { useEffect } from 'react' ;
 
 import Head from 'next/head' ;
+
+import { getAuth } from '@/src/firebase';
+import * as tsw from "tidyscripts_web" ; 
 
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -23,17 +27,21 @@ import { Analytics } from '@vercel/analytics/react';
 import styles from "../styles/Layout.module.css" ; 
 import {ChakraProvider} from "@chakra-ui/react" 
 
-import ThemeContextProvider from "./ThemeContext" 
-import ThemeWrapper from "./ThemeWrapper" 
+import ThemeContextProvider from "./ThemeContext"
+import ThemeWrapper from "./ThemeWrapper"
 
-export const metadata: Metadata = {
-    title: 'Tidyscripts',
-    description : 'Robust Typescript Software' 
-};
 
 declare var window : any ;
 
 export default function RootLayout({children}: {children: React.ReactNode;}) {
+
+    // Expose getAuth to window for InsightsClient
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            (window as any).getAuth = getAuth;
+            (window as any).tsw = tsw;	    
+        }
+    }, []);
 
     let footer_v_padding="20px";
     let footer_h_padding="10px"; 

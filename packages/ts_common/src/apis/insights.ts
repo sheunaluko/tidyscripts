@@ -53,13 +53,30 @@ export function generateTraceId(): string {
 /**
  * Get client info (browser only)
  */
-function getClientInfo(): { user_agent: string; viewport_size: string } | undefined {
+function getClientInfo(): { user_agent: string; viewport_size: string; [key: string]: any } | undefined {
   if (!is_browser()) return undefined;
 
-  return {
+  const baseInfo: any = {
     user_agent: navigator.userAgent,
     viewport_size: `${window.innerWidth}x${window.innerHeight}`,
   };
+
+  // Add Firebase auth data if available
+  try {
+    if (typeof (window as any).getAuth === 'function') {
+      const auth = (window as any).getAuth();
+      if (auth?.currentUser) {
+        baseInfo.firebase_uid = auth.currentUser.uid || null;
+        baseInfo.firebase_email = auth.currentUser.email || null;
+        baseInfo.firebase_display_name = auth.currentUser.displayName || null;
+      }
+    }
+  } catch (error) {
+    // Silent failure - don't break event creation if auth fails
+    console.warn('[insights] Failed to capture Firebase auth data:', error);
+  }
+
+  return baseInfo;
 }
 
 /**

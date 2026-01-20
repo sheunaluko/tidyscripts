@@ -60,7 +60,14 @@ export default async function handler(
     });
   }
 
-  log(`Received ${events.length} events for storage`);
+  // Capture server logs for client-side visibility
+  const serverLogs: string[] = [];
+  const logWithCapture = (message: string) => {
+    log(message);
+    serverLogs.push(`[${new Date().toISOString()}] ${message}`);
+  };
+
+  logWithCapture(`Received ${events.length} events for storage`);
 
   let db: any = null;
   const errors: string[] = [];
@@ -84,7 +91,7 @@ export default async function handler(
       },
     });
 
-    log('Connected to SurrealDB');
+    logWithCapture('Connected to SurrealDB');
 
     // Process events in batches of 200 (SurrealDB recommended batch size)
     const batchSize = 200;
@@ -95,58 +102,89 @@ export default async function handler(
         // Insert events using deterministic IDs
         for (const event of batch) {
           try {
-            // Convert timestamp to datetime if it's a number
-            const eventData = {
-              ...event,
-              timestamp: typeof event.timestamp === 'number'
-                ? new Date(event.timestamp).toISOString()
-                : event.timestamp,
+            // Convert timestamp to JavaScript Date object
+            const timestamp = typeof event.timestamp === 'number'
+              ? new Date(event.timestamp)
+              : new Date(event.timestamp);
+
+            // Build query parameters - only include defined values
+            const params: any = {
+              event_id: event.event_id,
+              event_type: event.event_type,
+              app_name: event.app_name,
+              app_version: event.app_version,
+              user_id: event.user_id,
+              session_id: event.session_id,
+              timestamp: timestamp,
+              payload: event.payload || {},
             };
 
-            // Use deterministic ID: insights_events:event_id
-            await db.query(
-              `CREATE type::thing('insights_events', $event_id) CONTENT $data`,
-              {
-                event_id: event.event_id,
-                data: eventData,
-              }
-            );
+            // Add optional fields only if they exist
+            if (event.trace_id) params.trace_id = event.trace_id;
+            if (event.parent_event_id) params.parent_event_id = event.parent_event_id;
+            if (event.tags) params.tags = event.tags;
+            if (event.duration_ms !== undefined) params.duration_ms = event.duration_ms;
+            if (event.client_info) params.client_info = event.client_info;
+
+            // Build SET clause dynamically
+            const setFields = [
+              'event_id = $event_id',
+              'event_type = $event_type',
+              'app_name = $app_name',
+              'app_version = $app_version',
+              'user_id = $user_id',
+              'session_id = $session_id',
+              'timestamp = $timestamp',
+              'payload = $payload',
+            ];
+
+            if (params.trace_id) setFields.push('trace_id = $trace_id');
+            if (params.parent_event_id) setFields.push('parent_event_id = $parent_event_id');
+            if (params.tags) setFields.push('tags = $tags');
+            if (params.duration_ms !== undefined) setFields.push('duration_ms = $duration_ms');
+            if (params.client_info) setFields.push('client_info = $client_info');
+
+            const query = `CREATE type::thing('insights_events', $event_id) SET ${setFields.join(', ')}`;
+
+            await db.query(query, params);
 
             events_stored++;
           } catch (error: any) {
             const errorMsg = `Failed to store event ${event.event_id}: ${error.message}`;
-            log(errorMsg);
+            logWithCapture(errorMsg);
             errors.push(errorMsg);
           }
         }
 
-        log(`Stored batch ${i / batchSize + 1}: ${batch.length} events`);
+        logWithCapture(`Stored batch ${i / batchSize + 1}: ${batch.length} events`);
       } catch (error: any) {
         const errorMsg = `Batch insert failed: ${error.message}`;
-        log(errorMsg);
+        logWithCapture(errorMsg);
         errors.push(errorMsg);
       }
     }
 
-    log(`Successfully stored ${events_stored}/${events.length} events`);
+    logWithCapture(`Successfully stored ${events_stored}/${events.length} events`);
 
-    // Return response
+    // Return response with server logs
     const response = {
       success: events_stored > 0,
       events_received: events.length,
       events_stored,
       errors: errors.length > 0 ? errors : undefined,
+      server_logs: serverLogs,
     };
 
     res.status(200).json(response);
   } catch (error: any) {
-    log(`Error in insights batch endpoint: ${error.message}`);
+    logWithCapture(`Error in insights batch endpoint: ${error.message}`);
 
     res.status(500).json({
       success: false,
       events_received: events.length,
       events_stored,
       errors: [error.message],
+      server_logs: serverLogs,
     });
   } finally {
     // Close database connection

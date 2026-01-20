@@ -32,6 +32,13 @@ export default async function handler(
 
   const { event_type, session_id, trace_id, limit = 50 } = req.body;
 
+  // Capture server logs for client-side visibility
+  const serverLogs: string[] = [];
+  const logWithCapture = (message: string) => {
+    log(message);
+    serverLogs.push(`[${new Date().toISOString()}] ${message}`);
+  };
+
   let db: any = null;
 
   try {
@@ -52,7 +59,7 @@ export default async function handler(
       },
     });
 
-    log('Connected to SurrealDB for query');
+    logWithCapture('Connected to SurrealDB for query');
 
     // Build query
     let query = 'SELECT * FROM insights_events';
@@ -79,23 +86,25 @@ export default async function handler(
     query += ' ORDER BY timestamp DESC LIMIT $limit';
     params.limit = limit;
 
-    log(`Executing query: ${query}`);
-    log(`Params: ${JSON.stringify(params)}`);
+    logWithCapture(`Executing query: ${query}`);
+    logWithCapture(`Params: ${JSON.stringify(params)}`);
 
     const result = await db.query(query, params);
 
-    log(`Query returned ${result[0]?.length || 0} events`);
+    logWithCapture(`Query returned ${result[0]?.length || 0} events`);
 
     res.status(200).json({
       success: true,
-      events: result[0] || []
+      events: result[0] || [],
+      server_logs: serverLogs
     });
   } catch (error: any) {
-    log(`Query error: ${error.message}`);
+    logWithCapture(`Query error: ${error.message}`);
     res.status(500).json({
       success: false,
       error: error.message,
-      events: []
+      events: [],
+      server_logs: serverLogs
     });
   } finally {
     if (db) {

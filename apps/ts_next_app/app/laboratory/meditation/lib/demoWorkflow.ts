@@ -154,6 +154,39 @@ export async function runFullDemo(
     onEventCreated({ eventId: summaryId, type: 'custom_event', timestamp: new Date() });
     await delay(500);
 
+    // Step 8: Verify Database Storage
+    onStatusUpdate('🗄️ Verifying database storage...');
+    await delay(1000);
+
+    try {
+      const response = await fetch('/api/insights/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: client.getSessionId(),
+          limit: 50
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(`Database query failed: ${data.error}`);
+      }
+
+      if (data.events.length === 0) {
+        throw new Error('No events found in database - write verification failed!');
+      }
+
+      onStatusUpdate(`✅ Database verified: ${data.events.length} events stored`);
+      await delay(1000);
+
+    } catch (error: any) {
+      onStatusUpdate(`⚠️ Database verification failed: ${error.message}`);
+      console.error('[Meditation Demo] DB verification error:', error);
+      await delay(2000);
+    }
+
     onStatusUpdate('🎉 Demo workflow complete!');
     await delay(1000);
 

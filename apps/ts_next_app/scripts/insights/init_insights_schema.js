@@ -65,16 +65,14 @@ async function initSchema() {
 
     // Define flexible payload
     console.log('Defining payload field...');
-    await db.query('DEFINE FIELD payload ON insights_events TYPE object ASSERT $value != NONE');
-    console.log('✅ Payload field defined\n');
+    await db.query('DEFINE FIELD payload ON insights_events FLEXIBLE TYPE object');
+    console.log('✅ Payload field defined (FLEXIBLE for nested data)\n');
 
     // Define metadata fields
     console.log('Defining metadata fields...');
     await db.query('DEFINE FIELD tags ON insights_events TYPE option<array>');
     await db.query('DEFINE FIELD duration_ms ON insights_events TYPE option<int>');
-    await db.query('DEFINE FIELD client_info ON insights_events TYPE option<object>');
-    await db.query('DEFINE FIELD client_info.user_agent ON insights_events TYPE option<string>');
-    await db.query('DEFINE FIELD client_info.viewport_size ON insights_events TYPE option<string>');
+    await db.query('DEFINE FIELD client_info ON insights_events FLEXIBLE TYPE option<object>');
     console.log('✅ Metadata fields defined\n');
 
     // Create indexes

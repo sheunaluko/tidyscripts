@@ -36,6 +36,7 @@ export interface InsightsEvent {
   client_info?: {
     user_agent: string;
     viewport_size: string;
+    [key: string]: any; // Allow additional fields (e.g., Firebase auth data)
   };
 }
 
