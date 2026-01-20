@@ -12,6 +12,18 @@ Todo
 
 [ ] test the initialization flow
 
+[ ] SPEC // ARCH [x]
+--> realized that defining the enitre shape of the application from event based modeling of user interaction with built in telemetry to database storage and verification of telemetry data using SIMULATED user interaction event
+streams. This is the target. Either requires playwright OR -- an architecture that is runnable on server side
+--> workflow: AI doesnt not write any code -- instead models the UI events that occur , the app states , key function INPUTS/OUTPUTS
+    	      - ARCH is a system for specifying all of this and actually "type checking" it with dummy data and dummy events , all the way to generating "fake" UI flows (actually reflected in the UI and telemetry data on a "fake")
+	      	backend
+	      - ARCH utilizes PARAMETERS which are included as part of the telemetry data
+	      	  - a parameter is ANYTHING WHICH CAN BE OPTIMIZED VIA THE arch feedback loop
+		  - also a parameter should persist despite changes to the code implementation (unless even particular implementations are considered different parameters, which would allow the AI to optimizing the
+		    actual CODE for the application within the loop as well -- which seems necessary actually) 
+	      - the loop is closed when analysis on the telemetry workflow data leads to proposed parameter changes (this could even include prompts, configs, etc, ?Code) , and then re-running the app 
+
 [ ] reflect on cortex_improvements.txt, which cortex just said to me ! wtf bro
   - this actually ties in to this:
    [ ] OBSERVABILITY interface for CORTEX SESSIONS (logged in user, etc) and RAI  

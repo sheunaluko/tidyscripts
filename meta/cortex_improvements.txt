@@ -28,5 +28,5 @@ Vision and Audio Processing: The directory structure has components for 'AudioVi
 
 Task Orchestration: It might be useful to have a way to spawn 'sub-agents' or background workers for long-running tasks, so I don't have to wait for a result to keep talking to you.
 
-35;133;54M35;136;55M35;138;56M35;143;57M35;147;58M35;152;59M35;158;61M35;165;62M35;172;64M35;179;65M35;187;66M35;195;67M35;202;68M35;209;68M35;217;69M35;223;69M0;100;18M0;100;18mState Management Utilities: A way to 'snapshot' the current workspace or search through past last_result history semantically would help with long, complex projects.
+State Management Utilities: A way to 'snapshot' the current workspace or search through past last_result history semantically would help with long, complex projects.
 
