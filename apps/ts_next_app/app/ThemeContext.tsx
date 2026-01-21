@@ -11,17 +11,34 @@ const ThemeContext = createContext({
 
 export const useColorMode = () => useContext(ThemeContext);
 
+const THEME_STORAGE_KEY = 'theme-preference';
+
 export default function ThemeContextProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<PaletteMode>('light');
 
   const toggleColorMode = () => {
-    setMode((prevMode: PaletteMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    setMode((prevMode: PaletteMode) => {
+      const newMode = prevMode === 'light' ? 'dark' : 'light';
+      // Save to localStorage
+      localStorage.setItem(THEME_STORAGE_KEY, newMode);
+      return newMode;
+    });
   };
 
-    useEffect(() => {
-	const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-	setMode(prefersDark ? 'dark' : 'light');
-    }, []);
+  // Load theme preference on mount
+  useEffect(() => {
+    // Check localStorage first
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as PaletteMode | null;
+
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      // User has a saved preference - use it
+      setMode(savedTheme);
+    } else {
+      // No saved preference - detect from system
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setMode(prefersDark ? 'dark' : 'light');
+    }
+  }, []);
 
   const theme = useMemo(() => createTheme({
     palette: {

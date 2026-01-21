@@ -12,7 +12,8 @@ import * as ailand from "./ailand"
 
 import OpenAI from "openai" 
 
-export * as cache from "./cache" 
+export * as cache from "./cache"
+export * as reflections from "./reflections" 
 
 export {
     ailand, 

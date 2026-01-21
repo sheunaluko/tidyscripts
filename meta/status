@@ -1,24 +1,52 @@
-Currently working on cortex (inside apps/ts_next_app/app/laboratory/cortex_0) 
+Currently working on: Observability Infrastructure (InsightsClient + ReflectionsClient)
 
-== CORTEX JS EXEC ENV UPGRADE == 
-Ok getting lots of bugs - inconsistent functionality.
-Want to retain existing architecture //archive it -- and shift to a different model
-? DSL for the ai to write DSL code that orchestrates the available functions
---> or for ultimately flexibility -> why not just give it a javascript sandbox (using QuickJS in the browser??)
+Previous Work Summary:
+- Implemented cortex_0 voice agent with LLM integration, sandbox execution, and 12-widget UI (see apps/ts_next_app/app/laboratory/cortex_0)
+- Built comprehensive architecture documentation (cortex_architecture_information.md) covering agent loop, sandbox isolation, widget system, and execution history
+- Created InsightsClient for event tracking with batching, event chains, and SurrealDB persistence
+- Developed Meditation app as reference implementation for InsightsClient integration
+- Added insights_agent_guide.md (2,697 lines) for AI agent integration patterns
 
+Current Focus: ReflectionsClient Implementation
+Plan: meta/plans/reflections_client.md (CQRS read-side for Insights analytics)
 
 Todo
 
-[ ] test the initialization flow
-
-[ ] persist dark/light mode choice to LS  
-
-[ ] Observability
-   [x] InsightsClient (Telemetry like interface)
-   [x] Meditation App (Test Insights)
-   [ ] Add great documentation to Insights API so AI knows how to use it 
-   [ ] Integrate Insights API into cortex_0
-   [ ] Reflections Client (AI client that parses the Insights from the db)  in order to generate the insights 
+[x] Observability - Phase 1 Complete
+   [x] InsightsClient (Write-side: event capture with batching)
+   [x] Meditation App (Test implementation + reference)
+   [x] Insights API documentation (insights_agent_guide.md)
+   [x] Integrate InsightsClient into cortex_0 (with LLM/execution tracking)
+   [~] ReflectionsClient (Read-side: query and analytics) - IN PROGRESS
+       [x] Phase 1: Foundation (Week 1) - COMPLETED
+           [x] Created type definitions (types/reflections.ts)
+               - QueryFilter, QueryResult, SessionAnalysis, TraceAnalysis
+               - LLMAnalytics, PerformanceMetrics, ErrorAnalysis
+               - ReflectionsConfig with cache/threshold settings
+           [x] Implemented ReflectionsClient class (apis/reflections.ts)
+               - queryEvents() with cache integration (MemoryCache, 60s TTL)
+               - Convenience methods: getEventsBySession, getEventsByTrace, getEventsByType
+               - Factory pattern: createClient, getDefaultClient, setDefaultClient
+               - Silent failure mode, enable/disable, cache invalidation
+               - Stubs for Phase 3/4 methods (analyzeSession, analyzeLLMUsage, etc)
+           [x] Updated package exports (apis/index.ts, index.ts)
+           [x] Created test suite (reflections.test.ts)
+           [x] Created usage examples (reflections_example.ts)
+       [ ] Phase 2: Query Enhancement (Week 2) - NEXT
+           [ ] Create /api/insights/query_advanced endpoint
+               - Advanced filters: tags (OR/AND), time range, duration
+               - Pagination and sorting support
+               - Dynamic SurrealQL query building
+           [ ] Update ReflectionsClient to use advanced endpoint
+           [ ] Test complex multi-filter queries
+       [ ] Phase 3: Analysis Operations (Week 3)
+           [ ] Implement analyzeSession() - session metrics and statistics
+           [ ] Implement analyzeTrace() - event chain analysis with depth calculation
+           [ ] Add event chain tree building utilities
+       [ ] Phase 4: LLM & Performance Analytics (Week 4)
+           [ ] Implement analyzeLLMUsage() - token usage, costs, latency percentiles
+           [ ] Implement analyzePerformance() - slow operation detection, percentiles
+           [ ] Implement analyzeErrors() - error pattern analysis 
 
    [ ] Arch
      --> Built using Insights/Reflections 
@@ -36,19 +64,51 @@ Todo
 		    prompts, configs, etc, ?Code) , and then re-running the app
 
 
+
 [ ] user scoped RELATION architecture -- ?
+
+[ ] define metrics on the page:
+     - a measure of how fluiid the voice interactioin is updating  (simple FPS metric using performance.now and reauqestAnimationFrame)
+     - how much RAM?  heap/etc using performance
+     - token usage high jumps in token usage suggesting opportunity for optimizing context
+     - LLM latency 
+
+[ ] function call RETURN values polluting UI with embedding??
+[ ] need to discourage arbitrary logging to preserve context space
+[ ] ability to cancel running LLM -- and to send alternative message.
+  - implementation - the sandbox execution awaits Promise.all[ exec , user_cancel ]
+[ ] Fix the bug where it hears speech and sends it before im done speaking, then sends the rest (two calls)
+  before cortex has responded 
+
 
 [ ] add delay from when the VAD cancels speech detection to when listening is triggered , so the user says STOP , verifies pause, then states query
 [ ] improve the ability to detect the first couple of words in SR 
+
+[ ] function to reset cortex state/context
+[ ] download model information and create a feedback of context percent and cost based on token count
+
 [ ] unable to resize grid widget to 1 width
 
 [ ] make the HTML window aware of dark mode vs light mode , or just generate theme neutral content
   - [ ] i want to think more about the HTML widget , since it is proving to be WAAAAAY more impressive and useful than i thought it would be.
   - [ ] this is a signal that i want to tune into 
 
+[ ] 3d projection of vector embedding results -- can cortex use the ui libs? 
+[ ] create guards that automatically prevent context from getting overloadded
+
+[ ] console.log is taking up token usage
+
+
+Sandbox Errors
+ - [] parseInt not a function
+ - [] Array.isArray not a function
+ - hmmm ? how to approach this robust 
+
+
+
+[x] test the initialization flow
+[x] persist dark/light mode choice to LS  
 [x] bootstrap call chains that exist -> this was a very exciting and interesting process! lol wish I had recorded it
-
-
 [x] still trying to fix the dynamic function calls -- the architecture is overly complex at this point
 due to membrane funcitonality. Although it seems i am close to have it working without errors im getting nothing save to db although it looks like something is saved to db --- confusing! 
     -> this bug was due to the access db function itself which had conflicting documentation and was expecting variables to be merged into params as apposed to {variables, query} 

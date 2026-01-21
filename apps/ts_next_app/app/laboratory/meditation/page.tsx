@@ -6,22 +6,34 @@ import { EventMonitor } from './components/EventMonitor';
 import { DatabaseQuery } from './components/DatabaseQuery';
 import { ValidationTests } from './components/ValidationTests';
 import { ClientStateView } from './components/ClientStateView';
+import { ReflectionsStateView } from './components/ReflectionsStateView';
+import { ReflectionsExplorer } from './components/ReflectionsExplorer';
 import { DemoRunner } from './components/DemoRunner';
 import { LogExporter } from './components/LogExporter';
 import { DatabaseTestSuite } from './components/DatabaseTestSuite';
+import { ReflectionsTestSuite } from './components/ReflectionsTestSuite';
 import { logCollector } from './lib/logCollector';
 import { setupConsoleInterceptor } from './lib/consoleInterceptor';
 import { setupFetchInterceptor } from './lib/fetchInterceptor';
 
 export default function MeditationPage() {
   const insightsClient = useRef<any>(null);
+  const reflectionsClient = useRef<any>(null);
   const [events, setEvents] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState('generator');
+  const [activeTab, setActiveTab] = useState<'generator' | 'monitor' | 'database' | 'tests' | 'reflections'>('generator');
   const [clientState, setClientState] = useState({
     sessionId: '',
     batchSize: 0,
     chainDepth: 0,
     enabled: true
+  });
+  const [reflectionsState, setReflectionsState] = useState({
+    endpoint: '',
+    cacheEnabled: false,
+    cacheTtl: 0,
+    cacheHits: 0,
+    cacheMisses: 0,
+    totalQueries: 0
   });
 
   useEffect(() => {
@@ -32,7 +44,7 @@ export default function MeditationPage() {
     // Dynamic import to avoid SSR issues
     const initInsights = async () => {
       const tsw = await import('tidyscripts_web');
-      const { insights } = tsw.common;
+      const { insights, reflections } = tsw.common;
 
       // Initialize InsightsClient
       insightsClient.current = insights.createClient({
@@ -44,9 +56,20 @@ export default function MeditationPage() {
         batch_interval_ms: 5000,
       });
 
+      // Initialize ReflectionsClient
+      reflectionsClient.current = reflections.createClient({
+        enable_cache: true,
+        cache_ttl_ms: 60000,
+        verbose: true,
+        silent_failure: false
+      });
+
+      reflections.setDefaultClient(reflectionsClient.current);
+
       // Expose to window for debugging
       if (typeof window !== 'undefined') {
         (window as any).meditationInsights = insightsClient.current;
+        (window as any).meditationReflections = reflectionsClient.current;
       }
 
       setClientState({
@@ -56,12 +79,26 @@ export default function MeditationPage() {
         enabled: true
       });
 
+      setReflectionsState({
+        endpoint: reflectionsClient.current.config?.endpoint || '/api/insights/query',
+        cacheEnabled: reflectionsClient.current.config?.enable_cache || false,
+        cacheTtl: reflectionsClient.current.config?.cache_ttl_ms || 0,
+        cacheHits: 0,
+        cacheMisses: 0,
+        totalQueries: 0
+      });
+
       console.log('[Meditation] InsightsClient initialized:', {
         sessionId: insightsClient.current.getSessionId(),
         config: insightsClient.current.config
       });
 
+      console.log('[Meditation] ReflectionsClient initialized:', {
+        config: reflectionsClient.current.config
+      });
+
       logCollector.log('INFO', `InsightsClient initialized - Session: ${insightsClient.current.getSessionId()}`);
+      logCollector.log('INFO', 'ReflectionsClient initialized with cache enabled');
     };
 
     initInsights();
@@ -91,6 +128,29 @@ export default function MeditationPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Poll ReflectionsClient state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (reflectionsClient.current) {
+        const stats = reflectionsClient.current.getCacheStats?.() || {
+          enabled: false,
+          hits: 0,
+          misses: 0,
+          queries: 0
+        };
+
+        setReflectionsState(prev => ({
+          ...prev,
+          cacheHits: stats.hits || 0,
+          cacheMisses: stats.misses || 0,
+          totalQueries: stats.queries || 0
+        }));
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleEventCreated = (event: any) => {
     setEvents(prev => [event, ...prev].slice(0, 100)); // Keep last 100 events
 
@@ -114,6 +174,22 @@ export default function MeditationPage() {
     }
   };
 
+  const handleClearCache = async () => {
+    if (reflectionsClient.current) {
+      await reflectionsClient.current.clearCache();
+      console.log('[Meditation] ReflectionsClient cache cleared');
+      logCollector.log('ACTION', 'ReflectionsClient cache cleared');
+    }
+  };
+
+  const handleInvalidatePattern = async (pattern: string) => {
+    if (reflectionsClient.current) {
+      await reflectionsClient.current.invalidateCache(pattern);
+      console.log(`[Meditation] Cache invalidated for pattern: ${pattern}`);
+      logCollector.log('ACTION', `Cache invalidated: ${pattern}`);
+    }
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '20px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>
@@ -123,8 +199,19 @@ export default function MeditationPage() {
 
       <ClientStateView state={clientState} onFlush={handleFlushBatch} />
 
+      <ReflectionsStateView
+        state={reflectionsState}
+        onClearCache={handleClearCache}
+        onInvalidatePattern={handleInvalidatePattern}
+      />
+
       <DatabaseTestSuite
         client={insightsClient.current}
+        sessionId={clientState.sessionId}
+      />
+
+      <ReflectionsTestSuite
+        client={reflectionsClient.current}
         sessionId={clientState.sessionId}
       />
 
@@ -196,6 +283,19 @@ export default function MeditationPage() {
         >
           Validation Tests
         </button>
+        <button
+          style={{
+            padding: '10px 20px',
+            border: 'none',
+            borderBottom: activeTab === 'reflections' ? '3px solid #0070f3' : '3px solid transparent',
+            background: 'transparent',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'reflections' ? 'bold' : 'normal'
+          }}
+          onClick={() => setActiveTab('reflections')}
+        >
+          Reflections Explorer
+        </button>
       </nav>
 
       <main>
@@ -213,6 +313,12 @@ export default function MeditationPage() {
         )}
         {activeTab === 'tests' && (
           <ValidationTests client={insightsClient.current} />
+        )}
+        {activeTab === 'reflections' && (
+          <ReflectionsExplorer
+            client={reflectionsClient.current}
+            sessionId={clientState.sessionId}
+          />
         )}
       </main>
 

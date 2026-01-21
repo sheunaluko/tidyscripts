@@ -12,7 +12,6 @@ import { z } from "zod"
 // Bash client state
 var BASH_CLIENT: any = null;
 
-
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
 const {debug} =  common.util ;
@@ -598,7 +597,7 @@ Returns an array of function summaries with name, description, and params_schema
 	    log(`Listing all dynamic functions`);
 
 	    const query = `
-            SELECT name, description, params_schema
+            SELECT name, description, params_schema, id
             FROM cortex_dynamic_functions
         `;
 
