@@ -10,21 +10,22 @@ import * as tnlp from "./tnlp"
 import * as cryptography from "./cryptography"
 import * as ailand from "./ailand"
 
-import OpenAI from "openai" 
+import OpenAI from "openai"
 
 export * as cache from "./cache"
-export * as reflections from "./reflections" 
+export * as reflections from "./reflections"
+export * as cortex from "./cortex"
 
 export {
-    ailand, 
+    ailand,
     aidx,
     loinc,
     medications,
     langchain,
     OpenAI ,
-    amie, 
-    oai , 
+    amie,
+    oai ,
     data_generator,
     tnlp,
-    cryptography 
+    cryptography
 } 

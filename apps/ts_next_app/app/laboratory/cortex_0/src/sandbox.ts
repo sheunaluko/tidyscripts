@@ -9,25 +9,16 @@
  * @module sandbox
  */
 
-import { getExecutor, type SandboxLog, type SandboxEvent, DEFAULT_SANDBOX_TIMEOUT } from './IframeSandbox'
+import { getExecutor } from './IframeSandbox'
+import * as tsc from 'tidyscripts_common'
 
-/**
- * Log entry captured from sandbox
- */
-export type { SandboxLog, SandboxEvent }
+// Re-export types from common package
+export type { SandboxLog, SandboxEvent, SandboxResult, SandboxExecutor } from 'tidyscripts_common'
+const { DEFAULT_SANDBOX_TIMEOUT } = tsc.apis.cortex
+export { DEFAULT_SANDBOX_TIMEOUT }
 
-/**
- * Result of a sandboxed execution with observability
- */
-export interface SandboxResult<T = any> {
-  ok: boolean
-  data?: T
-  error?: string
-  executionId: string
-  logs: SandboxLog[]
-  events: SandboxEvent[]
-  duration?: number
-}
+// Import SandboxResult type for use in this file
+import type { SandboxResult } from 'tidyscripts_common'
 
 /**
  * Options for sandboxed execution
@@ -262,7 +253,5 @@ if (typeof window !== 'undefined') {
 }
 
 
-// Export everything for external use
-export {
-    getExecutor,
-}
+// Export getExecutor for external use
+export { getExecutor }

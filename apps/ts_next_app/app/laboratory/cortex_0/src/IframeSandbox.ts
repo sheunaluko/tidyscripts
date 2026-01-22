@@ -8,41 +8,13 @@
  * @module IframeSandbox
  */
 
-/**
- * Log entry captured from sandbox
- */
-export interface SandboxLog {
-  level: 'log' | 'error' | 'warn' | 'info'
-  args: any[]
-  timestamp: number
-}
+import type { SandboxExecutor, SandboxResult, SandboxLog, SandboxEvent } from 'tidyscripts_common'
+import * as tsc from 'tidyscripts_common'
+const { DEFAULT_SANDBOX_TIMEOUT } = tsc.apis.cortex
 
-/**
- * Event emitted during sandbox execution
- */
-export interface SandboxEvent {
-  type: string
-  data: any
-  timestamp: number
-}
-
-/**
- * Result of sandboxed iframe execution with observability
- */
-export interface IframeSandboxResult<T = any> {
-  ok: boolean
-  data?: T
-  error?: string
-  executionId: string
-  logs: SandboxLog[]
-  events: SandboxEvent[]
-  duration?: number
-}
-
-/**
- * Default execution timeout: 1 hour (3,600,000 milliseconds)
- */
-export const DEFAULT_SANDBOX_TIMEOUT = 60 * 60 * 1000;
+// Re-export types for backward compatibility
+export type { SandboxLog, SandboxEvent, SandboxResult }
+export { DEFAULT_SANDBOX_TIMEOUT }
 
 /**
  * Generate unique execution ID
@@ -58,7 +30,7 @@ function generateExecutionId(): string {
  * cross-origin communication, proxy membrane for controlled access,
  * and comprehensive observability tracking.
  */
-export class IframeSandboxExecutor {
+export class IframeSandboxExecutor implements SandboxExecutor {
   private iframe: HTMLIFrameElement | null = null
   private persistentIframe: HTMLIFrameElement | null = null
   private executionId: string | null = null
@@ -147,7 +119,7 @@ export class IframeSandboxExecutor {
     code: string,
     context: Record<string, any> = {},
     timeout: number = DEFAULT_SANDBOX_TIMEOUT
-  ): Promise<IframeSandboxResult> {
+  ): Promise<SandboxResult> {
     // Initialize if not already done
     if (!this.isInitialized) {
       await this.initializePersistent()

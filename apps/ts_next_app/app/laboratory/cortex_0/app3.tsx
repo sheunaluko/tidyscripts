@@ -220,12 +220,12 @@ const  Component: NextPage = (props : any) => {
 
 	    let a = window.getAuth();
 
-	    let user = "" ; 
+	    let user = "" ;
 	    try {
-		let {uid,email,displayName} = a.currentUser ; 
-		user = `${uid}|${email}|${displayName}` ; 
+		let {uid,email,displayName} = a.currentUser ;
+		user = `${uid}|${email}|${displayName}` ;
 	    } catch (e : any ) {
-		user = null ; 
+		user = "" ;
 	    }
 
             insightsClient.current = new insights.InsightsClient({

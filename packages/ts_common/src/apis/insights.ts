@@ -287,7 +287,7 @@ export class InsightsClient {
   }
 
   /**
-   * Flush the current batch to the API
+   * Flush the current batch to the API endpoint
    */
   async flushBatch(): Promise<void> {
     if (this.eventBatch.length === 0) {
@@ -299,28 +299,7 @@ export class InsightsClient {
     this.eventBatch = [];
 
     try {
-      log(`Flushing ${eventsToSend.length} events to ${this.config.endpoint}`);
-
-      const response = await fetch(this.config.endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ events: eventsToSend }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result: InsightsBatchResponse = await response.json();
-      log(
-        `Batch sent successfully: ${result.events_stored}/${result.events_received} stored`
-      );
-
-      if (result.errors && result.errors.length > 0) {
-        log(`Batch had errors: ${result.errors.join(", ")}`);
-      }
+      await this.flushViaAPI(eventsToSend);
     } catch (error) {
       // Silent failure - log but don't throw
       log(`Error flushing batch: ${error}`);
@@ -330,6 +309,34 @@ export class InsightsClient {
       if (this.eventBatch.length < this.config.batch_size * 2) {
         this.eventBatch.unshift(...eventsToSend);
       }
+    }
+  }
+
+  /**
+   * Flush via API endpoint
+   */
+  private async flushViaAPI(events: InsightsEvent[]): Promise<void> {
+    log(`Flushing ${events.length} events to ${this.config.endpoint}`);
+
+    const response = await fetch(this.config.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ events }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result: InsightsBatchResponse = await response.json();
+    log(
+      `Batch sent successfully: ${result.events_stored}/${result.events_received} stored`
+    );
+
+    if (result.errors && result.errors.length > 0) {
+      log(`Batch had errors: ${result.errors.join(", ")}`);
     }
   }
 

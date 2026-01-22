@@ -1,20 +1,19 @@
 'use client' ;
 
-import * as c from "../src/cortex"  ;
-//import jdoc from "../../../../docs/jdoc.json"
+import * as tsc from "tidyscripts_common"
+const { Cortex } = tsc.apis.cortex
+import { getExecutor } from "./src/sandbox"
 import * as fbu from "../../../src/firebase_utils"
-import * as fnu from "../src/fn_util"
 import * as tsw from "tidyscripts_web"
 import * as bashr from "../../../src/bashr/index";
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
-import { z } from "zod" 
+import { z } from "zod"
 
 // Bash client state
 var BASH_CLIENT: any = null;
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
-const {debug} =  common.util ;
 declare var window : any ;
 
 // MCP server configuration
@@ -61,8 +60,20 @@ export function get_agent(modelName: string = "gpt-5-mini", insightsClient?: any
 
     let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
 
-    let ops   = { model , name, functions : enabled_functions, additional_system_msg, insights: insightsClient  }
-    let coer    = new c.Cortex( ops ) ;
+    // Get web sandbox and utilities
+    const sandbox = getExecutor();
+    const utilities = {
+        get_embedding: tsw.common.apis.ailand.get_cloud_embedding,
+        sounds: {
+            error: tsw.util.sounds.error,
+            activated: tsw.util.sounds.input_ready,
+            ok: tsw.util.sounds.proceed,
+            success: tsw.util.sounds.success
+        }
+    };
+
+    let ops   = { model , name, functions : enabled_functions, additional_system_msg, insights: insightsClient, sandbox, utilities  }
+    let coer    = new Cortex( ops ) ;
     //
     return coer ;
 }
@@ -93,8 +104,20 @@ export async function get_agent_with_mcp(modelName: string = "gpt-5-mini", insig
     let enabled_functions = functions.filter( (f:any)=> (f.enabled == true) ) ;
     let all_functions = [...enabled_functions, ...mcpFunctions];
 
-    let ops   = { model , name, functions : all_functions, additional_system_msg, insights: insightsClient  }
-    let coer    = new c.Cortex( ops ) ;
+    // Get web sandbox and utilities
+    const sandbox = getExecutor();
+    const utilities = {
+        get_embedding: tsw.common.apis.ailand.get_cloud_embedding,
+        sounds: {
+            error: tsw.util.sounds.error,
+            activated: tsw.util.sounds.input_ready,
+            ok: tsw.util.sounds.proceed,
+            success: tsw.util.sounds.success
+        }
+    };
+
+    let ops   = { model , name, functions : all_functions, additional_system_msg, insights: insightsClient, sandbox, utilities  }
+    let coer    = new Cortex( ops ) ;
     //
     return coer ;
 }
@@ -206,7 +229,7 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
 	    log(`Retrieved request to compute embedding of: ${text}`) ;
 	    let embedding = await tsw.common.apis.ailand.get_cloud_embedding(text) ;
 	    log(`Got embedding result`)
-	    debug.add("embedding" , embedding) ;
+	    // debug.add("embedding" , embedding) ;  // Removed - debug system no longer used
 	    return embedding ;
 	} ,
 	return_type : "array"
