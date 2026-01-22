@@ -40,7 +40,24 @@ export function setupFetchInterceptor() {
             });
           }
 
-          // Log API call details
+          // Create a summary of the response (not the full body)
+          const responseSummary: any = {
+            status: response.status,
+            statusText: response.statusText,
+            duration_ms: duration
+          };
+
+          // Add summary based on endpoint type
+          if (url.includes('/batch')) {
+            responseSummary.events_stored = body.events_stored;
+            responseSummary.events_received = body.events_received;
+            responseSummary.errors_count = body.errors?.length || 0;
+          } else if (url.includes('/query')) {
+            responseSummary.events_count = body.events?.length || 0;
+            responseSummary.from_cache = body.from_cache || false;
+          }
+
+          // Log API call details with SUMMARY only (not full body)
           logCollector.addAPIResponse(
             url,
             {
@@ -48,12 +65,7 @@ export function setupFetchInterceptor() {
               body: config?.body ? JSON.parse(config.body as string) : null,
               timestamp: new Date().toISOString()
             },
-            {
-              status: response.status,
-              statusText: response.statusText,
-              body,
-              duration_ms: duration
-            }
+            responseSummary
           );
 
           logCollector.log('API', `${config?.method || 'GET'} ${url} → ${response.status} (${duration}ms)`);
@@ -62,15 +74,13 @@ export function setupFetchInterceptor() {
           if (url.includes('/batch')) {
             logCollector.log('API', `Batch: ${body.events_stored}/${body.events_received} events stored`);
             if (body.errors && body.errors.length > 0) {
-              body.errors.forEach((err: string) => {
-                logCollector.log('ERROR', `Batch error: ${err}`);
-              });
+              logCollector.log('ERROR', `Batch error count: ${body.errors.length}`);
             }
           }
 
           // Log query-specific details
           if (url.includes('/query')) {
-            logCollector.log('API', `Query returned ${body.events?.length || 0} events`);
+            logCollector.log('API', `Query returned ${body.events?.length || 0} events${body.from_cache ? ' (cached)' : ''}`);
           }
 
         } catch (jsonError) {

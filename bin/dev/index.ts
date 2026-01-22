@@ -13,6 +13,7 @@ export * as playwright from "./playwright"
 export * as tom from "./tom"
 import * as surreal from "./surreal"
 export * as matrix from "./matrix"
+export * as reflections from "./reflections"
 
 export * as mcp_tools from "./mcp/tools"
 

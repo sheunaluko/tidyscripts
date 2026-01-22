@@ -84,9 +84,9 @@ export const reflectionsTestScenarios = {
         return { passed: true, message: '⊘ getEventById: No events available to test' };
       }
 
-      const eventId = sessionEvents.events[0].eventId;
+      const eventId = sessionEvents.events[0].event_id; // Fixed: event_id not eventId
       const result = await client.getEventById(eventId);
-      const passed = result && result.eventId === eventId;
+      const passed = result && result.event_id === eventId;
       return {
         passed,
         message: passed
@@ -300,10 +300,11 @@ export const reflectionsTestScenarios = {
     }
   },
 
-  // Test 18: clearCache
+  // Test 18: clearCache (using invalidateCache with no pattern)
   async clearCache(client: any) {
     try {
-      await client.clearCache();
+      // invalidateCache() with no pattern clears all cache entries
+      await client.invalidateCache();
       const stats = client.getCacheStats();
       // After clearing, hits and misses should still be tracked (they're not reset)
       // but subsequent queries should be cache misses

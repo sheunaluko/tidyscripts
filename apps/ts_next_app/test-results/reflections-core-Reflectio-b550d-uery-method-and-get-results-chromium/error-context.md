@@ -1,0 +1,271 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - heading "🧘 Meditation - InsightsClient Observer" [level=1] [ref=e7]
+          - paragraph [ref=e8]: Testing and observability dashboard for InsightsClient
+        - generic [ref=e9]:
+          - generic [ref=e10]:
+            - generic [ref=e11]:
+              - generic [ref=e12]: Session ID
+              - generic [ref=e13]: Loading...
+            - generic [ref=e14]:
+              - generic [ref=e15]: Events in Batch
+              - generic [ref=e16]: "0"
+            - generic [ref=e17]:
+              - generic [ref=e18]: Chain Depth
+              - generic [ref=e19]: "0"
+            - generic [ref=e20]:
+              - generic [ref=e21]: Status
+              - generic [ref=e22]: ● Active
+          - button "Flush Batch Now" [ref=e24] [cursor=pointer]
+        - generic [ref=e25]:
+          - generic [ref=e26]: ReflectionsClient Cache Metrics
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic [ref=e29]:
+                - generic [ref=e30]: Cache Status
+                - generic [ref=e31]: ● Enabled
+              - generic [ref=e32]:
+                - generic [ref=e33]: Cache Hits
+                - generic [ref=e34]: "0"
+              - generic [ref=e35]:
+                - generic [ref=e36]: Cache Misses
+                - generic [ref=e37]: "0"
+              - generic [ref=e38]:
+                - generic [ref=e39]: Total Queries
+                - generic [ref=e40]: "0"
+              - generic [ref=e41]:
+                - generic [ref=e42]: Hit Rate
+                - generic [ref=e43]: 0.0%
+              - generic [ref=e44]:
+                - generic [ref=e45]: TTL
+                - generic [ref=e46]: 60000ms
+            - button "Clear Cache" [ref=e48] [cursor=pointer]
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]:
+              - heading "🗄️ Database Test Suite" [level=2] [ref=e52]
+              - paragraph [ref=e53]: Autonomous end-to-end database verification
+            - button "▶ Run DB Tests" [ref=e54] [cursor=pointer]
+          - generic [ref=e55]:
+            - generic [ref=e56]: "Tests Include:"
+            - list [ref=e57]:
+              - listitem [ref=e58]: Single event write/read verification
+              - listitem [ref=e59]: Event chain write/read with trace_id
+              - listitem [ref=e60]: Bulk operations (20 events)
+              - listitem [ref=e61]: Query filter testing (type, session, trace)
+              - listitem [ref=e62]: Timestamp ordering verification (DESC)
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - heading "🔍 ReflectionsClient Test Suite" [level=2] [ref=e66]
+              - paragraph [ref=e67]: Autonomous validation of all 19 ReflectionsClient methods
+            - button "▶ Run All Tests" [ref=e68] [cursor=pointer]
+          - generic [ref=e69]:
+            - generic [ref=e70]: "Test Coverage:"
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - generic [ref=e73]: Core Queries (5)
+                - list [ref=e74]:
+                  - listitem [ref=e75]: queryEvents
+                  - listitem [ref=e76]: getEventsBySession
+                  - listitem [ref=e77]: getEventsByTrace
+                  - listitem [ref=e78]: getEventsByType
+                  - listitem [ref=e79]: getEventById
+              - generic [ref=e80]:
+                - generic [ref=e81]: Exploration (11)
+                - list [ref=e82]:
+                  - listitem [ref=e83]: getEventTypes
+                  - listitem [ref=e84]: getEventTypeStats
+                  - listitem [ref=e85]: inspectPayloadSchema
+                  - listitem [ref=e86]: getSessions
+                  - listitem [ref=e87]: getTraces
+                  - listitem [ref=e88]: inspectSession
+                  - listitem [ref=e89]: inspectTrace
+                  - listitem [ref=e90]: getAllTags
+                  - listitem [ref=e91]: getTimeRange
+                  - listitem [ref=e92]: getDatabaseStats
+                  - listitem [ref=e93]: sampleEvents
+              - generic [ref=e94]:
+                - generic [ref=e95]: Cache/Utilities (3)
+                - list [ref=e96]:
+                  - listitem [ref=e97]: getCacheStats
+                  - listitem [ref=e98]: clearCache
+                  - listitem [ref=e99]: invalidateCache
+        - generic [ref=e100]:
+          - generic [ref=e101]:
+            - generic [ref=e102]:
+              - heading "🎬 Full Demo Workflow" [level=2] [ref=e103]
+              - paragraph [ref=e104]: Automated end-to-end test of all InsightsClient features
+            - button "▶ Start Demo" [ref=e105] [cursor=pointer]
+          - generic [ref=e106]:
+            - generic [ref=e107]: "Demo includes:"
+            - list [ref=e108]:
+              - listitem [ref=e109]: Basic event creation (user input, LLM invocation, execution)
+              - listitem [ref=e110]: Event chain workflow (parent-child relationships)
+              - listitem [ref=e111]: Bulk event generation (20 events)
+              - listitem [ref=e112]: Nested event chains (depth tracking)
+              - listitem [ref=e113]: Error scenario simulation
+              - listitem [ref=e114]: Batch flush to API
+              - listitem [ref=e115]: Summary event creation
+        - navigation [ref=e116]:
+          - button "Event Generator" [ref=e117] [cursor=pointer]
+          - button "Event Monitor (0)" [ref=e118] [cursor=pointer]
+          - button "Database Query" [ref=e119] [cursor=pointer]
+          - button "Validation Tests" [ref=e120] [cursor=pointer]
+          - button "Reflections Explorer" [ref=e121] [cursor=pointer]
+        - main [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e124]:
+              - heading "Reflections Explorer" [level=2] [ref=e125]
+              - paragraph [ref=e126]: Interactive testing for all 19 ReflectionsClient methods
+            - generic [ref=e127]:
+              - heading "Core Query Methods (5)" [level=3] [ref=e128]
+              - generic [ref=e130] [cursor=pointer]:
+                - generic [ref=e131]:
+                  - generic [ref=e132]: queryEvents()
+                  - text: Query events with flexible filtering
+                - generic [ref=e133]: ▶
+              - generic [ref=e135] [cursor=pointer]:
+                - generic [ref=e136]:
+                  - generic [ref=e137]: getEventsBySession()
+                  - text: Get all events for a specific session
+                - generic [ref=e138]: ▶
+              - generic [ref=e140] [cursor=pointer]:
+                - generic [ref=e141]:
+                  - generic [ref=e142]: getEventsByTrace()
+                  - text: Get all events in a trace chain
+                - generic [ref=e143]: ▶
+              - generic [ref=e145] [cursor=pointer]:
+                - generic [ref=e146]:
+                  - generic [ref=e147]: getEventsByType()
+                  - text: Get all events of a specific type
+                - generic [ref=e148]: ▶
+              - generic [ref=e150] [cursor=pointer]:
+                - generic [ref=e151]:
+                  - generic [ref=e152]: getEventById()
+                  - text: Get a single event by ID
+                - generic [ref=e153]: ▶
+            - generic [ref=e154]:
+              - heading "Exploration & Discovery Methods (11)" [level=3] [ref=e155]
+              - generic [ref=e157] [cursor=pointer]:
+                - generic [ref=e158]:
+                  - generic [ref=e159]: getEventTypes()
+                  - text: Get list of all event types in database
+                - generic [ref=e160]: ▶
+              - generic [ref=e162] [cursor=pointer]:
+                - generic [ref=e163]:
+                  - generic [ref=e164]: getEventTypeStats()
+                  - text: Get comprehensive statistics for all event types
+                - generic [ref=e165]: ▶
+              - generic [ref=e167] [cursor=pointer]:
+                - generic [ref=e168]:
+                  - generic [ref=e169]: inspectPayloadSchema()
+                  - text: Analyze payload schema for an event type
+                - generic [ref=e170]: ▶
+              - generic [ref=e172] [cursor=pointer]:
+                - generic [ref=e173]:
+                  - generic [ref=e174]: getSessions()
+                  - text: Get list of session IDs
+                - generic [ref=e175]: ▶
+              - generic [ref=e177] [cursor=pointer]:
+                - generic [ref=e178]:
+                  - generic [ref=e179]: getTraces()
+                  - text: Get list of trace IDs
+                - generic [ref=e180]: ▶
+              - generic [ref=e182] [cursor=pointer]:
+                - generic [ref=e183]:
+                  - generic [ref=e184]: inspectSession()
+                  - text: Get detailed session analysis and breakdown
+                - generic [ref=e185]: ▶
+              - generic [ref=e187] [cursor=pointer]:
+                - generic [ref=e188]:
+                  - generic [ref=e189]: inspectTrace()
+                  - text: Get detailed trace analysis with event chain structure
+                - generic [ref=e190]: ▶
+              - generic [ref=e192] [cursor=pointer]:
+                - generic [ref=e193]:
+                  - generic [ref=e194]: getAllTags()
+                  - text: Get list of all tags used across events
+                - generic [ref=e195]: ▶
+              - generic [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]:
+                  - generic [ref=e199]: getTimeRange()
+                  - text: Get time range of events in database
+                - generic [ref=e200]: ▶
+              - generic [ref=e202] [cursor=pointer]:
+                - generic [ref=e203]:
+                  - generic [ref=e204]: getDatabaseStats()
+                  - text: Get comprehensive database statistics
+                - generic [ref=e205]: ▶
+              - generic [ref=e207] [cursor=pointer]:
+                - generic [ref=e208]:
+                  - generic [ref=e209]: sampleEvents()
+                  - text: Get random sample of events (optionally filtered by type)
+                - generic [ref=e210]: ▶
+            - generic [ref=e211]:
+              - heading "Cache Management (3)" [level=3] [ref=e212]
+              - generic [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]:
+                  - generic [ref=e216]: getCacheStats()
+                  - text: Get cache performance statistics
+                - generic [ref=e217]: ▶
+              - generic [ref=e219] [cursor=pointer]:
+                - generic [ref=e220]:
+                  - generic [ref=e221]: clearCache()
+                  - text: Clear all cached queries
+                - generic [ref=e222]: ▶
+              - generic [ref=e224] [cursor=pointer]:
+                - generic [ref=e225]:
+                  - generic [ref=e226]: invalidateCache()
+                  - text: Invalidate cache entries matching a pattern
+                - generic [ref=e227]: ▶
+        - generic [ref=e228]:
+          - generic [ref=e230]:
+            - generic [ref=e231]: 📋 Log Exporter
+            - generic [ref=e232]: 58 items collected
+          - generic [ref=e233]:
+            - generic [ref=e234]:
+              - generic [ref=e235]:
+                - text: "Console:"
+                - strong [ref=e236]: "58"
+              - generic [ref=e237]:
+                - text: "Events:"
+                - strong [ref=e238]: "0"
+              - generic [ref=e239]:
+                - text: "Tests:"
+                - strong [ref=e240]: "0"
+              - generic [ref=e241]:
+                - text: "Queries:"
+                - strong [ref=e242]: "0"
+            - generic [ref=e243]:
+              - button "📋 Copy All Logs" [ref=e244] [cursor=pointer]
+              - button "💾 Download Logs" [ref=e245] [cursor=pointer]
+              - button "▶ Show Preview" [ref=e246] [cursor=pointer]
+              - button "🗑️ Clear Logs" [ref=e247] [cursor=pointer]
+    - generic [ref=e249]:
+      - generic [ref=e250]:
+        - paragraph [ref=e252]: Tidyscripts
+        - img "Tidyscripts Logo" [ref=e255]
+        - paragraph [ref=e257]: Copyright © 2026
+        - button "Log In" [ref=e259] [cursor=pointer]
+        - button "Home" [ref=e261] [cursor=pointer]
+        - button "Toggle light/dark theme" [ref=e263] [cursor=pointer]:
+          - img [ref=e264]
+        - button [ref=e268] [cursor=pointer]:
+          - img [ref=e269]
+      - generic [ref=e272]: Build v0.1.3 on Wed Jan 21 2026
+  - alert [ref=e273]
+  - generic:
+    - region "Notifications-top"
+    - region "Notifications-top-left"
+    - region "Notifications-top-right"
+    - region "Notifications-bottom-left"
+    - region "Notifications-bottom"
+    - region "Notifications-bottom-right"
+```

@@ -519,6 +519,8 @@ The response will be validated against this structure.
 	}
 	let user_message = this._user_msg(JSON.stringify(input)) ;
 	this.add_user_message(user_message)
+
+
     }
 
     add_user_result_input(codeExecutionResult : CodeExecutionResult)  {
@@ -991,26 +993,6 @@ The response will be validated against this structure.
 	    this.log_event(`Token Usage=${total_tokens}`) ;
 	}
 
-	// Add LLM invocation event to insights
-	if (this.insights) {
-	    try {
-		await this.insights.addLLMInvocation({
-		    model: this.model,
-		    provider: this.provider,
-		    mode: 'code_generation',
-		    prompt_tokens: prompt_tokens || 0,
-		    completion_tokens: completion_tokens || 0,
-		    latency_ms: llmLatency,
-		    status: 'success',
-		    context: {
-			loop: loop,
-			messages_count: this.messages.length,
-		    }
-		});
-	    } catch (err) {
-		this.log(`Error adding insights event: ${err}`);
-	    }
-	}
 
 	// New Responses API returns output_text instead of choices[0].message.parsed
 	let output: CodeOutput;
@@ -1031,6 +1013,30 @@ The response will be validated against this structure.
 
 	// Emit thoughts
 	this.emit_event({'type': 'thought', 'thought' : output.thoughts})
+
+
+	// Add LLM invocation event to insights
+	if (this.insights) {
+	    try {
+		await this.insights.addLLMInvocation({
+		    model: this.model,
+		    provider: this.provider,
+		    mode: 'code_generation',
+		    prompt_tokens: prompt_tokens || 0,
+		    completion_tokens: completion_tokens || 0,
+		    latency_ms: llmLatency,
+		    status: 'success',
+		    context: {
+			loop: loop,
+			messages_count: this.messages.length,
+			output , 			
+		    }
+		});
+	    } catch (err) {
+		this.log(`Error adding insights event: ${err}`);
+	    }
+	}
+	
 
 	// Emit code execution start event
 	this.emit_event({
@@ -1072,9 +1078,11 @@ The response will be validated against this structure.
 		    function_calls: functionCalls,
 		    variables_assigned: variableAssignments,
 		    logs_count: logsCount,
+
 		    context: {
 			code_length: output.code.length,
 			thoughts: output.thoughts,
+			code: output.code, 			
 		    }
 		});
 	    } catch (err) {

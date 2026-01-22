@@ -213,23 +213,36 @@ const  Component: NextPage = (props : any) => {
 
     // Initialize InsightsClient
     useEffect(() => {
-        const sid = insights.generateSessionId();
-        setSessionId(sid);
 
-        insightsClient.current = new insights.InsightsClient({
-            app_name: 'cortex',
-            app_version: '3.0.0',
-            user_id: 'cortex_user',
-            session_id: sid,
-        });
+	(async () => {
+            const sid = insights.generateSessionId();
+            setSessionId(sid);
 
-        // Expose for debugging
-        if (typeof window !== 'undefined') {
-            (window as any).insights = insightsClient.current;
-        }
+	    let a = window.getAuth();
 
-        log(`InsightsClient initialized with session ${sid}`);
-        setInsightsReady(true);
+	    let user = "" ; 
+	    try {
+		let {uid,email,displayName} = a.currentUser ; 
+		user = `${uid}|${email}|${displayName}` ; 
+	    } catch (e : any ) {
+		user = null ; 
+	    }
+
+            insightsClient.current = new insights.InsightsClient({
+		app_name: 'cortex',
+		app_version: '3.0.0',
+		user_id: user,
+		session_id: sid,
+            });
+
+            // Expose for debugging
+            if (typeof window !== 'undefined') {
+		(window as any).insights = insightsClient.current;
+            }
+
+            log(`InsightsClient initialized with session ${sid}`);
+            setInsightsReady(true);
+	})()
     }, []);
 
     // Cortex agent hook - automatically re-initializes when model changes or insights is ready
@@ -709,7 +722,7 @@ const  Component: NextPage = (props : any) => {
 		input_mode: mode,
 		input_length: content.length,
 		context: {
-		    chat_history_length: chat_history.length,
+		    content 
 		}
 	    }).catch((err: any) => {
 		log(`Error adding user input event: ${err}`);
