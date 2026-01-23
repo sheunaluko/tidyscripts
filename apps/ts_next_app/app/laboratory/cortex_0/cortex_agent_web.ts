@@ -342,7 +342,190 @@ swift
     {
 	enabled : true, 	
 	description : `
- Renders HTML to the user interface. Use this when the user requests to view rendered HTML. The parameter html is an html string that will be rendered. This must be an html string that contain the DOM content that should be rendered` , 
+Renders HTML to the user interface with support for interactive elements that can store data to workspace.
+
+## Purpose
+Renders arbitrary HTML with secure JavaScript execution. Use this to display rich content, interactive elements,
+visualizations, or any custom UI components. User interactions can store data to workspace and optionally
+trigger your next invocation automatically.
+
+## Parameters
+- html: An HTML string containing the content to render. May include inline JavaScript and CSS.
+
+## Interactive HTML - Bridge Functions
+
+Your HTML has access to two special bridge functions:
+
+### 1. store_in_workspace(data)
+Stores data to workspace without triggering the agent.
+
+**Usage:**
+- data: A plain JavaScript object containing key-value pairs to store
+- Data is immediately saved to COR.workspace
+- Values persist across agent iterations and are available in the workspace variable
+- Dangerous keys (__proto__, constructor, prototype) are automatically filtered for security
+
+### 2. complete_html_interaction(message)
+Stores data AND automatically triggers the agent.
+
+**Usage:**
+- message (optional): A custom message to send as user input. Defaults to "I'm done interacting with the HTML form"
+- Call this to immediately invoke the agent with a message
+- The agent will be invoked and can access any workspace data you've stored
+- Use this to create automatic workflows after user interaction
+
+### Example: Contact Form
+\`\`\`html
+<style>
+    body { font-family: system-ui; padding: 20px; }
+    input, button { padding: 8px; margin: 4px 0; display: block; width: 100%; }
+    button { background: #0066cc; color: white; border: none; cursor: pointer; }
+    button:disabled { background: #999; }
+</style>
+
+<form id="contactForm">
+    <label>Name:</label>
+    <input type="text" id="name" required>
+
+    <label>Email:</label>
+    <input type="email" id="email" required>
+
+    <label>Message:</label>
+    <textarea id="message" rows="4" style="width:100%; padding:8px;"></textarea>
+
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Store to workspace - will be available on next agent iteration
+    store_in_workspace({
+        contact_name: document.getElementById('name').value,
+        contact_email: document.getElementById('email').value,
+        contact_message: document.getElementById('message').value,
+        submitted_at: new Date().toISOString()
+    });
+
+    // Provide visual feedback
+    const button = this.querySelector('button');
+    button.textContent = 'Submitted ✓';
+    button.disabled = true;
+});
+</script>
+\`\`\`
+
+### Example: Multiple Choice Quiz
+\`\`\`html
+<style>
+    .question { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+    .option { margin: 8px 0; }
+    button { padding: 10px 20px; background: #0066cc; color: white; border: none; cursor: pointer; }
+</style>
+
+<div class="question">
+    <h3>Question 1: What is 2 + 2?</h3>
+    <label class="option"><input type="radio" name="q1" value="3"> 3</label>
+    <label class="option"><input type="radio" name="q1" value="4"> 4</label>
+    <label class="option"><input type="radio" name="q1" value="5"> 5</label>
+</div>
+
+<div class="question">
+    <h3>Question 2: What is the capital of France?</h3>
+    <label class="option"><input type="radio" name="q2" value="London"> London</label>
+    <label class="option"><input type="radio" name="q2" value="Paris"> Paris</label>
+    <label class="option"><input type="radio" name="q2" value="Berlin"> Berlin</label>
+</div>
+
+<button onclick="submitQuiz()">Submit Quiz</button>
+
+<script>
+function submitQuiz() {
+    const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+    const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+
+    if (!q1 || !q2) {
+        alert('Please answer all questions');
+        return;
+    }
+
+    store_in_workspace({
+        quiz_answers: { q1, q2 },
+        quiz_completed: true,
+        timestamp: Date.now()
+    });
+
+    document.querySelector('button').textContent = 'Quiz Submitted ✓';
+    document.querySelector('button').disabled = true;
+}
+</script>
+\`\`\`
+
+## Retrieving Form Data
+On your next iteration, access stored data via the workspace variable:
+
+\`\`\`javascript
+// After user submits contact form:
+console.log('User name:', workspace.contact_name);
+console.log('User email:', workspace.contact_email);
+
+// After user completes quiz:
+console.log('Quiz answers:', workspace.quiz_answers);
+console.log('Q1 answer:', workspace.quiz_answers.q1);
+\`\`\`
+
+## How Data Flow Works
+1. User fills form in sandboxed iframe
+2. JavaScript calls store_in_workspace(data)
+3. Data is sent via postMessage to parent window
+4. Parent validates and filters dangerous keys
+5. Data is merged into COR.workspace
+6. workspace_update event is emitted
+7. Data appears in WorkspaceWidget UI
+8. Your next iteration accesses it via workspace variable
+
+## Security Features
+- HTML runs in sandboxed iframe (no parent DOM access)
+- Dangerous keys filtered (__proto__, constructor, prototype)
+- Functions automatically stripped during postMessage serialization
+- No prototype pollution possible
+- No XSS vulnerability through innerHTML
+
+## Multi-Step Forms
+You can build multi-step forms that accumulate data across multiple submissions:
+
+\`\`\`javascript
+// Step 1: Collect username
+store_in_workspace({ username: 'john_doe' });
+
+// Step 2: Collect email (later submission)
+store_in_workspace({ email: 'john@example.com' });
+
+// Step 3: Collect preferences (later submission)
+store_in_workspace({ theme: 'dark', notifications: true });
+
+// All data accumulates in workspace:
+// { username: 'john_doe', email: 'john@example.com', theme: 'dark', notifications: true }
+\`\`\`
+
+## Best Practices
+- Always call e.preventDefault() on form submissions
+- Provide visual feedback after storing data (disable button, show checkmark)
+- Validate required fields before calling store_in_workspace()
+- Use descriptive key names (contact_name vs just name)
+- Add timestamps if tracking submission time matters
+- Never use alert() for feedback (use DOM updates instead)
+
+## Use Cases
+- Registration/signup forms
+- Surveys and questionnaires
+- Multi-step wizards
+- Settings/preferences configuration
+- Data collection forms
+- Interactive tutorials with checkpoints
+- Custom calculators with saveable results
+` , 
 	name        : "display_html" ,
 	parameters  : { html : "string" }, 
 	fn : async ( ops :any) => {

@@ -1,0 +1,62 @@
+I asked the ai to write an html widget and it produced
+this: 
+
+html_content = `
+<div style='padding: 20px; font-family: sans-serif;'>
+  <h3>Question: What is the capital of France?</h3>
+  <form id='quiz-form'>
+    <div style='margin-bottom: 10px;'>
+      <input type='radio' id='paris' name='city' value='Paris'>
+      <label for='paris'>Paris</label>
+    </div>
+    <div style='margin-bottom: 10px;'>
+      <input type='radio' id='london' name='city' value='London'>
+      <label for='london'>London</label>
+    </div>
+    <div style='margin-bottom: 10px;'>
+      <input type='radio' id='berlin' name='city' value='Berlin'>
+      <label for='berlin'>Berlin</label>
+    </div>
+    <div style='margin-bottom: 10px;'>
+      <input type='radio' id='madrid' name='city' value='Madrid'>
+      <label for='madrid'>Madrid</label>
+    </div>
+  </form>
+</div>
+<script>
+  document.getElementById('quiz-form').addEventListener('change', (event) => {
+    if (event.target.name === 'city') {
+      console.log('Selected option:', event.target.value);
+    }
+  });
+</script>
+`;
+
+await display_html({html: html_content});
+await respond_to_user({response: "I have updated the HTML with JavaScript. Selecting an option will now log the choice to the console."});
+
+
+------
+
+
+however there is a console error:
+
+[cortex]:: Got event: {"type":"code_execution_start","code":"html_content = `\n<div style='padding: 20px; font-family: sans-serif;'>\n  <h3>Question: What is the capital of France?</h3>\n  <form id='quiz-form'>\n    <div style='margin-bottom: 10px;'>\n      <input type='radio' id='paris' name='city' value='Paris'>\n      <label for='paris'>Paris</label>\n    </div>\n    <div style='margin-bottom: 10px;'>\n      <input type='radio' id='london' name='city' value='London'>\n      <label for='london'>London</label>\n    </div>\n    <div style='margin-bottom: 10px;'>\n      <input type='radio' id='berlin' name='city' value='Berlin'>\n      <label for='berlin'>Berlin</label>\n    </div>\n    <div style='margin-bottom: 10px;'>\n      <input type='radio' id='madrid' name='city' value='Madrid'>\n      <label for='madrid'>Madrid</label>\n    </div>\n  </form>\n</div>\n<script>\n  document.getElementById('quiz-form').addEventListener('change', (event) => {\n    if (event.target.name === 'city') {\n      console.log('Selected option:', event.target.value);\n    }\n  });\n</script>\n`;\n\nawait display_html({html: html_content});\nawait respond_to_user({response: \"I have updated the HTML with JavaScript. Selecting an option will now log the choice to the console.\"});","executionId":"exec_1769122264189"}
+index.js:2 [cortex]:: Got code execution start event
+index.js:2 [cortex:coer]:: Function running=true
+VM7 about:srcdoc:4  Uncaught SyntaxError: Invalid or unexpected token (at VM7 about:srcdoc:4:26)
+index.js:2 [insights]:: Flushing 1 events to /api/insights/batch
+index.js:2 [insights]:: Batch sent successfully: 1/1 stored
+index.js:2 [tivi]:: VAD detected speech start
+index.js:2 [tivi]:: Starting speech recognition (VAD-triggered)
+index.js:2 [tivi]:: Speech recognition started
+index.js:2 [tivi]:: Speech recognition ended
+
+
+
+Basically the console.log line is erroring.
+im noticing
+that any
+time
+i it includes javascript it seems- in the code - it causes an error
+

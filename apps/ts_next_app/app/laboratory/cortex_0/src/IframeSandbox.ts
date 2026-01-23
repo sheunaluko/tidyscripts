@@ -296,7 +296,8 @@ export class IframeSandboxExecutor implements SandboxExecutor {
     const contextCode = this.buildContextCode(context, executionId)
 
     // JSON.stringify the code to safely escape all special characters
-    const escapedCode = JSON.stringify(code)
+    // Also escape </script> tags to prevent premature script tag closing in HTML parser
+    const escapedCode = JSON.stringify(code).replace(/<\/script>/gi, '<\\/script>')
 
     return `<!DOCTYPE html>
 <html>

@@ -338,6 +338,35 @@ const  Component: NextPage = (props : any) => {
     const [selectedIndex, setSelectedIndex] = useState<number>(-1); // -1 means "latest"
     const [isPinned, setIsPinned] = useState<boolean>(false);
 
+
+
+    // Function to add a user's message to the chat
+    const add_user_message = (content: string) => {
+	// @ts-ignore
+	set_chat_history((prev) => [...prev, { role: "user", content }])
+
+	//add the user message to COR
+	COR.add_user_text_input(content)
+
+	// Add user input event to insights
+	if (insightsClient.current) {
+	    insightsClient.current.addUserInput({
+		input_mode: mode,
+		input_length: content.length,
+		context: {
+		    content 
+		}
+	    }).catch((err: any) => {
+		log(`Error adding user input event: ${err}`);
+	    });
+	}
+
+	if (sound_feedback) {
+	    sounds.proceed()
+	}
+    };
+
+    
     // Widget configuration hook
     const { widgets, visibleWidgets, toggleWidget, widgetLayout, saveLayout, resetLayout, applyPreset } = useWidgetConfig();
     /* E V E N T _ H A N D L I N G */
@@ -357,6 +386,49 @@ const  Component: NextPage = (props : any) => {
 	// Use workspace from event payload instead of window.workspace
 	set_workspace({ ...evt.workspace });
     }, []);
+
+    const handle_html_form_data = useCallback((evt: any) => {
+	log(`Got HTML form data event`);
+	const { data } = evt;
+
+	// Validate object type
+	if (!data || typeof data !== 'object' || Array.isArray(data)) {
+	    log(`Invalid data type, skipping`);
+	    return;
+	}
+
+	// Filter dangerous keys
+	const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+	const sanitizedData: Record<string, any> = {};
+
+	for (const [key, value] of Object.entries(data)) {
+	    if (dangerousKeys.includes(key)) {
+		log(`Filtered dangerous key: ${key}`);
+		continue;
+	    }
+	    if (typeof value === 'function') {
+		log(`Filtered function value for key: ${key}`);
+		continue;
+	    }
+	    sanitizedData[key] = value;
+	}
+
+	// Store in COR workspace and emit update
+	if (COR?.workspace) {
+	    Object.assign(COR.workspace, sanitizedData);
+	    COR.emit('event', { type: 'workspace_update', workspace: COR.workspace });
+	    log(`HTML form data stored: ${Object.keys(sanitizedData).length} keys`);
+	}
+    }, [COR]);
+
+    const handle_html_interaction_complete = useCallback((evt: any) => {
+	log(`Got HTML interaction complete event`);
+	const message = evt.message || "I'm done interacting with the HTML form";
+
+	// Add as user message to trigger LLM response
+	add_user_message(message);
+	log(`Added user message: ${message}`);
+    }, [add_user_message]);
 
     const handle_code_update = useCallback((evt : any) => {
 	log(`Got code update event`)
@@ -478,11 +550,13 @@ const  Component: NextPage = (props : any) => {
 	'log' : handle_log ,
 	'code_update' : handle_code_update ,
 	'html_update' : handle_html_update ,
+	'html_form_data': handle_html_form_data,
+	'html_interaction_complete': handle_html_interaction_complete,
 	'code_execution_start': handle_code_execution_start,
 	'code_execution_complete': handle_code_execution_complete,
 	'sandbox_log': handle_sandbox_log,
 	'sandbox_event': handle_sandbox_event,
-    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event]);
+    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_html_form_data, handle_html_interaction_complete, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event]);
     
     const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
@@ -577,7 +651,39 @@ const  Component: NextPage = (props : any) => {
 		}
 	    });
 	});
-    }, [chat_history, thought_history, log_history]); // Only scroll-related deps    
+    }, [chat_history, thought_history, log_history]); // Only scroll-related deps
+
+    // postMessage listener for HTML widget form submissions
+    useEffect(() => {
+	const handleMessage = (event: MessageEvent) => {
+	    // Validate origin: only accept messages from same origin (our iframe)
+	    // Iframes with srcdoc have origin 'null' when sandboxed without allow-same-origin
+	    if (event.origin !== window.location.origin && event.origin !== 'null') {
+		log(`Rejected postMessage from unauthorized origin: ${event.origin}`);
+		return;
+	    }
+
+	    if (event.data?.type === 'html_widget_data') {
+		handle_event({
+		    type: 'html_form_data',
+		    data: event.data.payload,
+		    timestamp: event.data.timestamp
+		});
+	    } else if (event.data?.type === 'html_interaction_complete') {
+		handle_event({
+		    type: 'html_interaction_complete',
+		    message: event.data.message,
+		    timestamp: event.data.timestamp
+		});
+	    }
+	};
+
+	window.addEventListener('message', handleMessage);
+
+	return () => {
+	    window.removeEventListener('message', handleMessage);
+	};
+    }, [handle_event]);
 
     useEffect(  ()=> {
 
@@ -707,32 +813,6 @@ const  Component: NextPage = (props : any) => {
 	if (Array.isArray(newValue)) return; // Handle single value only
 	setPlaybackRate(newValue);
     }
-
-    // Function to add a user's message to the chat
-    const add_user_message = (content: string) => {
-	// @ts-ignore
-	set_chat_history((prev) => [...prev, { role: "user", content }])
-
-	//add the user message to COR
-	COR.add_user_text_input(content)
-
-	// Add user input event to insights
-	if (insightsClient.current) {
-	    insightsClient.current.addUserInput({
-		input_mode: mode,
-		input_length: content.length,
-		context: {
-		    content 
-		}
-	    }).catch((err: any) => {
-		log(`Error adding user input event: ${err}`);
-	    });
-	}
-
-	if (sound_feedback) {
-	    sounds.proceed()
-	}
-    };
 
 
     // Function to add an AI's message to the chat
