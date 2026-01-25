@@ -65,6 +65,10 @@ Todo
 
 
 
+[ ] got lotus working -- but now need to build a proper UI for it to debug it 
+[ ] dolphin parser working 4 bit 
+
+
 [ ] user scoped RELATION architecture -- ?
 
 [ ] define metrics on the page:

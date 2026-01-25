@@ -12,6 +12,11 @@ import { NodeSandbox } from './node_sandbox'
 import { lotus_functions } from './functions'
 
 /**
+ * Logger for function calls (can be suppressed independently)
+ */
+const fn_log = tsc.logger.get_logger({ id: 'lotus:fn' })
+
+/**
  * Create a Lotus agent instance with local functions
  *
  * @param modelName - LLM model to use (default: gpt-4o-mini)
@@ -63,6 +68,15 @@ Your responses go to the terminal/console, so be concise and clear.
     apiBaseUrl
   })
 
+  // Register default function call logger (can be suppressed with tsc.logger.suppress('lotus:fn'))
+  agent.on('event', (evt: any) => {
+    if (evt.type === 'sandbox_event' && evt.eventType === 'function_start') {
+      const { name, args } = evt.data
+      const argsStr = args && args.length > 0 ? JSON.stringify(args[0]) : ''
+      fn_log(`${name}(${argsStr})`)
+    }
+  })
+
   return agent
 }
 
@@ -94,4 +108,43 @@ export function configure_lotus_embedding(
 ) {
   // Update utilities with embedding function
   ;(agent as any).utilities.get_embedding = embeddingFn
+}
+
+/**
+ * Suppress verbose Lotus agent logs for cleaner REPL output
+ * Suppresses cortex internals, sandbox logs, and function calls
+ * Only shows agent responses via chat() return value
+ *
+ * @param reason - Optional reason for suppression (for logging)
+ * @param includeFunctionCalls - If true, also suppresses function call logs (default: true)
+ *
+ * @example
+ * ```typescript
+ * // Suppress everything
+ * suppress_lotus_logs()
+ *
+ * // Suppress internals but keep function calls visible
+ * suppress_lotus_logs(undefined, false)
+ * ```
+ */
+export function suppress_lotus_logs(reason?: string, includeFunctionCalls: boolean = true) {
+  const msg = reason || 'User requested quiet mode'
+  tsc.logger.suppress('cortex:lotus', msg)
+  tsc.logger.suppress('cortex_base', msg)
+  tsc.logger.suppress('NodeSandbox', msg)
+
+  if (includeFunctionCalls) {
+    tsc.logger.suppress('lotus:fn', msg)
+  }
+}
+
+/**
+ * Re-enable verbose Lotus agent logs
+ * Shows all internal cortex processing details and function calls
+ */
+export function unsuppress_lotus_logs() {
+  tsc.logger.unsuppress('cortex:lotus')
+  tsc.logger.unsuppress('cortex_base')
+  tsc.logger.unsuppress('NodeSandbox')
+  tsc.logger.unsuppress('lotus:fn')
 }

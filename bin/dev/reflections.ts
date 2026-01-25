@@ -19,6 +19,7 @@ import * as errors from "./reflections/errors";
 import * as traces from "./reflections/traces";
 import * as performance from "./reflections/performance";
 import * as formatters from "./reflections/formatters";
+import * as exportUtil from "./reflections/export";
 
 const log = common.logger.get_logger({ id: 'reflections' });
 
@@ -87,7 +88,8 @@ export {
   errors,
   traces,
   performance,
-  formatters
+  formatters,
+  exportUtil
 };
 
 // Convenience exports (most commonly used functions)
@@ -144,6 +146,14 @@ export const {
   formatSessionList
 } = formatters;
 
+export const {
+  export_session_to_json,
+  export_session_to_file,
+  export_sessions_batch,
+  export_session_to_jsonl,
+  get_export_filename
+} = exportUtil;
+
 // Quick helpers for common workflows
 export async function quick_session_debug(app_name: string) {
   log(`Quick session debug for app: ${app_name}`);
@@ -199,6 +209,30 @@ export async function quick_token_analysis(session_id?: string, app_name?: strin
     usage,
     spikes
   };
+}
+
+/**
+ * Quick export workflow - find most recent session for app and export it
+ */
+export async function quick_export_latest_session(
+  app_name: string,
+  output_path?: string
+): Promise<string> {
+  log(`Quick export latest session for app: ${app_name}`);
+
+  const session = await sessions.get_most_recent_session_for_app(app_name);
+  if (!session) {
+    log(`No sessions found for app: ${app_name}`);
+    throw new Error(`No sessions found for app: ${app_name}`);
+  }
+
+  const filepath = await exportUtil.export_session_to_file(
+    session.session_id,
+    output_path
+  );
+
+  log(`Exported session ${session.session_id} to ${filepath}`);
+  return filepath;
 }
 
 // Helper to display formatted output in REPL

@@ -6,6 +6,7 @@ import styles from '../../../styles/Default.module.css'
 import  "./app.css"
 import * as tsw from "tidyscripts_web"  ;
 const { insights } = tsw.common;
+import { fps_monitor } from "../src";
 //import { ChakraProvider } from '@chakra-ui/react' ;
 import { alpha } from '@mui/system';
 import { theme } from "../../theme";
@@ -211,6 +212,10 @@ const  Component: NextPage = (props : any) => {
     const [sessionId, setSessionId] = useState<string>("");
     const [insightsReady, setInsightsReady] = useState(false);
 
+    // FPS Monitor for performance tracking
+    const fpsMonitor = useRef<any>(null);
+    const sessionStartTime = useRef<number>(Date.now());
+
     // Initialize InsightsClient
     useEffect(() => {
 
@@ -244,6 +249,18 @@ const  Component: NextPage = (props : any) => {
             setInsightsReady(true);
 	})()
     }, []);
+
+    // Initialize FPS Monitor after InsightsClient is ready
+    useEffect(() => {
+        if (insightsReady && typeof window !== 'undefined') {
+            fpsMonitor.current = new fps_monitor.FPSMonitor({
+                measurement_duration_ms: 1000,
+                rolling_window_size: 60,
+                include_diagnostics: true
+            });
+            log('FPS Monitor initialized');
+        }
+    }, [insightsReady]);
 
     // Cortex agent hook - automatically re-initializes when model changes or insights is ready
     const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(
@@ -819,26 +836,61 @@ const  Component: NextPage = (props : any) => {
     const add_ai_message = async (content: string) => {
 	// @ts-ignore
 	set_chat_history((prev) => [...prev, { role: "assistant", content }]);
-	if (sound_feedback) { 
+	if (sound_feedback) {
 	    sounds.proceed()
-	} 
+	}
 
 	set_last_ai_message(content) ;
 
-	
+
 	//here we need to actually speak the response too!
-	if (mode != "chat") { 
+	if (mode != "chat") {
 	    log(`generating audio response...`)
 	    log(`Using playbackRate to ${playbackRate}`)
 	    //first pause SR
 	    tivi.pauseSpeechRecognition() ;  // this will get retriggered based on VAD
-	    //then speak 
+	    //then speak
 	    await tivi.speak(content, playbackRate) ;
 	    log(`done`)
 	} else {
-	    log(`Skipping speech!`) 
-	} 
+	    log(`Skipping speech!`)
+	}
 
+	// Measure FPS after AI response (non-blocking)
+	if (insightsClient.current && fpsMonitor.current) {
+	    // Don't await - let it run in background
+	    fpsMonitor.current.measure(1000)
+		.then((snapshot: any) => {
+		    const stats = fpsMonitor.current.get_current_stats();
+		    const diagnostics = fpsMonitor.current.get_diagnostics();
+
+		    return insightsClient.current.addEvent('performance_metrics', {
+			// FPS metrics
+			fps_current: stats.fps_current,
+			fps_avg_1min: stats.fps_avg_1min,
+			fps_min_1min: stats.fps_min_1min,
+			fps_max_1min: stats.fps_max_1min,
+
+			// Context
+			trigger: 'post_ai_response',
+			mode: mode,  // 'voice' or 'chat'
+			response_length: content.length,
+			session_uptime_ms: Date.now() - sessionStartTime.current,
+
+			// Diagnostics
+			memory_mb: diagnostics?.memory_mb ?? null,
+			memory_limit_mb: diagnostics?.memory_limit_mb ?? null,
+			dom_nodes: diagnostics?.dom_nodes ?? 0,
+			visible_nodes: diagnostics?.visible_nodes ?? 0,
+		    }, {
+			tags: ['performance', 'fps', 'ai_response'],
+			duration_ms: 1000
+		    });
+		})
+		.catch((err: any) => {
+		    log(`FPS measurement failed: ${err}`);
+		});
+	}
 
     };
 

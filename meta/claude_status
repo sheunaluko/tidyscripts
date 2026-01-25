@@ -1,7 +1,7 @@
 CLAUDE CODE SESSION STATUS
 ==========================
-Last Updated: 2026-01-22
-Session: Cortex Refactor + Lotus Implementation
+Last Updated: 2026-01-24
+Session: FPS Metrics Integration (cortex_0)
 
 RECENT WORK COMPLETED
 =====================
@@ -258,6 +258,8 @@ Current Build (Database Integration):
 CURRENT STATE
 =============
 InsightsClient: ✅ PRODUCTION READY
+Cortex (Browser): ✅ WORKING after refactor
+Lotus (Node.js): ✅ WORKING (needs upgrades)
 Meditation App: ✅ Complete and fully functional:
   - Full demo workflow
   - Comprehensive log capture (console + fetch + server logs)
@@ -268,24 +270,27 @@ Database: ✅ Schema initialized and working
   - All 8 database tests passing
   - Events successfully written and retrieved
   - Payload fields now FULLY WORKING (nested objects persist correctly)
-Integration: ⏸️ Not yet integrated into Cortex or RAI (by design)
+Integration: 🔄 IN PROGRESS - Adding FPS metrics to cortex_0 via InsightsClient
 
 NEXT STEPS
 ==========
-1. Verify build: npm run build (from apps/ts_next_app)
-2. Start dev server: npm run dev
-3. Navigate to: http://localhost:3000/laboratory/meditation
-4. Initialize database schema if needed:
-   cd apps/ts_next_app/scripts/insights
-   node init_insights_schema.js
-5. Test new features:
-   a. Click "▶ Run DB Tests" to run autonomous database test suite
-   b. Run "▶ Start Demo" to test demo workflow (now includes DB verification)
-   c. Check Log Exporter for captured InsightsClient internal logs ([INSIGHTS_INTERNAL])
-   d. Verify API logs show request/response details ([API])
-   e. Confirm server logs appear in log output ([SERVER])
-6. Use Log Exporter to capture and share logs for debugging
-7. Once validated, consider integrating into Cortex/RAI (original plan phases 4-5)
+CURRENT WORK:
+1. Add FPS metrics to cortex_0 app via InsightsClient
+   - Track frame rate performance
+   - Capture FPS data in telemetry events
+   - Enable performance monitoring and optimization
+
+FUTURE WORK:
+2. Upgrade Lotus agent (performance, features)
+3. Create CLI interface for Lotus
+4. Add local model support (ollama, etc.)
+5. Enhanced sandbox security/isolation
+
+TESTING:
+- Verify build: npm run build (from apps/ts_next_app)
+- Start dev server: npm run dev
+- Navigate to: http://localhost:3000/laboratory/meditation
+- Test Cortex: http://localhost:3000/laboratory/cortex_0
 
 PLANS DIRECTORY
 ===============
@@ -1090,10 +1095,23 @@ Result:
 ✅ Provides regression protection for future changes
 ✅ Foundation for testing future features
 
+## 11. FPS Metrics Integration (cortex_0)
+Date: 2026-01-24
+Status: 🔄 IN PROGRESS
+
+Purpose: Add real-time FPS (frames per second) tracking to cortex_0 app using InsightsClient
+Goal: Enable performance monitoring and optimization of the Cortex UI
+
+Planned Implementation:
+- [ ] Track FPS metrics in cortex_0 UI
+- [ ] Integrate with InsightsClient for telemetry
+- [ ] Capture frame rate data in events
+- [ ] Enable performance analysis via Reflections
+
 ## 7. Cortex Refactor + Lotus Implementation
 Plan: meta/plans/lotus.md
 Date: 2026-01-22
-Status: ✅ COMPLETED
+Status: ✅ COMPLETED AND TESTED
 
 Purpose: Separate platform-agnostic Cortex logic from platform-specific implementations to enable both browser-based and Node.js-based AI agents.
 
@@ -1255,17 +1273,23 @@ const client = new tsn.apis.insights.InsightsClientNode(config)
 
 ### Testing Status
 
-⚠️ **Web Application NOT YET TESTED**
+✅ **Web Application TESTED AND WORKING**
 - Build passes ✅
 - TypeScript compilation passes ✅
 - Unit tests pass ✅
-- **Runtime testing needed**: Need to start dev server and test cortex_0 UI in browser
-- **Cannot confirm zero breaking changes until web app is tested**
+- **Runtime testing completed**: cortex_0 UI working in browser ✅
+- **Zero breaking changes confirmed** ✅
+
+✅ **Lotus Agent TESTED AND WORKING**
+- Node.js execution working ✅
+- VM sandbox functioning correctly ✅
+- ⚠️ Needs upgrades (performance, features, etc.)
 
 ### Next Steps
 
-- [ ] **PRIORITY**: Test web application (cortex_0) to verify no breaking changes
-- [ ] Test Lotus in Node.js environment
+- [x] Test web application (cortex_0) to verify no breaking changes
+- [x] Test Lotus in Node.js environment
+- [ ] Upgrade Lotus agent (performance, features)
 - [ ] Create CLI interface for Lotus
 - [ ] Add local model support (ollama, etc.)
 - [ ] Enhanced sandbox security/isolation
@@ -1277,5 +1301,6 @@ Result:
 ✅ Cortex successfully refactored to be platform-agnostic
 ✅ Lotus (Node.js local agent) fully implemented
 ✅ All packages building, all tests passing
-⚠️ **Web application runtime testing required before claiming production-ready**
+✅ **Web application runtime tested - WORKING**
+✅ **Lotus agent runtime tested - WORKING (needs upgrades)**
 ✅ Foundation for future local AI agent enhancements

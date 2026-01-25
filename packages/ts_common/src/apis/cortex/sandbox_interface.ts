@@ -34,6 +34,16 @@ export interface SandboxExecutor {
    * Destroy sandbox completely
    */
   destroy(): void
+
+  /**
+   * Setup real-time event stream listener (optional)
+   * Only implemented by sandboxes that support real-time streaming (e.g., IframeSandbox)
+   * NodeSandbox uses synchronous execution and doesn't implement this.
+   *
+   * @param handler - Callback to receive real-time log/event messages
+   * @returns Cleanup function to remove the listener
+   */
+  setupEventStream?(handler: (event: SandboxRuntimeEvent) => void): () => void
 }
 
 /**
@@ -65,6 +75,14 @@ export interface SandboxEvent {
   type: string
   data: any
   timestamp: number
+}
+
+/**
+ * Runtime event emitted during sandbox execution (for real-time streaming)
+ */
+export interface SandboxRuntimeEvent {
+  type: 'log' | 'event'
+  payload: SandboxLog | SandboxEvent
 }
 
 /**

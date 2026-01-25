@@ -26,3 +26,8 @@ This file tracks known issues and their documentation locations.
 [ Agentic ]
 
 1. Need to fix tidyscripts mcp server integration into cortex  
+
+
+
+[ API ]
+The pages/api/insights/query.ts file needs to be removed 

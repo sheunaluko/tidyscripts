@@ -30,6 +30,14 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+    // DISABLE THIS FUNCTION BY RETURNING 
+    res.status(200).json({
+	success: true,
+	message : "This API has been disable :)" 
+    });
+
+    
+
   const { event_type, session_id, trace_id, limit = 50 } = req.body;
 
   // Capture server logs for client-side visibility

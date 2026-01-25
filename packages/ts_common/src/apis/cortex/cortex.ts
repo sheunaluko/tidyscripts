@@ -417,9 +417,21 @@ The response will be validated against this structure.
 	this.log("Linking user output")
 	this.user_output  = fn
     }
-    
+
     /**
-     * Build the message array 
+     * Convenience method: Send a message and run LLM in one call
+     *
+     * @param text - The user's message
+     * @param maxLoops - Maximum function calling loops (default: 4)
+     * @returns Promise<string> - The LLM response
+     */
+    async chat(text: string, maxLoops: number = 4): Promise<string> {
+	this.add_user_text_input(text);
+	return await this.run_llm(maxLoops);
+    }
+
+    /**
+     * Build the message array
      */
     build_messages() { return [ this.system_msg , ...this.messages ]  } 
 
@@ -721,42 +733,6 @@ The response will be validated against this structure.
 	return filtered;
     }
 
-    /**
-     * Sets up real-time event listener for sandbox execution
-     * Returns cleanup function
-     */
-    private setup_realtime_event_listener(): () => void {
-	const handler = (event: MessageEvent) => {
-	    if (!event.data.executionId) return;
-
-	    const { type, payload } = event.data;
-
-	    switch (type) {
-		case 'log':
-		    // Emit immediately to UI
-		    this.emit_event({
-			type: 'sandbox_log',
-			level: payload.level,
-			args: payload.args,
-			timestamp: payload.timestamp
-		    });
-		    break;
-
-		case 'event':
-		    // Emit execution events immediately
-		    this.emit_event({
-			type: 'sandbox_event',
-			eventType: payload.type,
-			data: payload.data,
-			timestamp: payload.timestamp
-		    });
-		    break;
-	    }
-	};
-
-	window.addEventListener('message', handler);
-	return () => window.removeEventListener('message', handler);
-    }
 
     /**
      * Builds sandbox context with all cortex functions
@@ -826,8 +802,33 @@ The response will be validated against this structure.
     async run_code_output(output: CodeOutput): Promise<FunctionResult> {
 	const { code } = output;
 
-	// Setup real-time event listener BEFORE execution starts
-	const cleanup = this.setup_realtime_event_listener();
+	// Setup event stream if sandbox supports it (browser-only)
+	let cleanup: (() => void) | undefined;
+
+	if (this.sandbox.setupEventStream) {
+	    cleanup = this.sandbox.setupEventStream((event) => {
+		switch (event.type) {
+		    case 'log':
+			const logPayload = event.payload as SandboxLog;
+			this.emit_event({
+			    type: 'sandbox_log',
+			    level: logPayload.level,
+			    args: logPayload.args,
+			    timestamp: logPayload.timestamp
+			});
+			break;
+		    case 'event':
+			const eventPayload = event.payload as SandboxEvent;
+			this.emit_event({
+			    type: 'sandbox_event',
+			    eventType: eventPayload.type,
+			    data: eventPayload.data,
+			    timestamp: eventPayload.timestamp
+			});
+			break;
+		}
+	    });
+	}
 
 	try {
 	    // Build context with all cortex functions
@@ -881,8 +882,8 @@ The response will be validated against this structure.
 		events: []
 	    };
 	} finally {
-	    // Cleanup event listener
-	    cleanup();
+	    // Cleanup event listener if it was set up
+	    if (cleanup) cleanup();
 	}
     }
 
@@ -1032,13 +1033,14 @@ The response will be validated against this structure.
 	// Check if the LAST function call was respond_to_user
 	// This allows the agent to call respond_to_user for status updates, then continue working
 	let lastFunctionCallWasRespondToUser = false;
+	let lastFunctionCallEvent: any = null;
 	if (!executionFailed && result.events && result.events.length > 0) {
 		// Find the last function_start event
 		const functionStartEvents = result.events.filter((e: any) => e.type === 'function_start');
 		if (functionStartEvents.length > 0) {
-			const lastFunctionCall = functionStartEvents[functionStartEvents.length - 1];
-			lastFunctionCallWasRespondToUser = lastFunctionCall.data?.name === 'respond_to_user';
-			this.log(`Last function call: ${lastFunctionCall.data?.name}`);
+			lastFunctionCallEvent = functionStartEvents[functionStartEvents.length - 1];
+			lastFunctionCallWasRespondToUser = lastFunctionCallEvent.data?.name === 'respond_to_user';
+			this.log(`Last function call: ${lastFunctionCallEvent.data?.name}`);
 		}
 	}
 
@@ -1054,7 +1056,16 @@ The response will be validated against this structure.
 	const isComplete = !executionFailed && lastFunctionCallWasRespondToUser;
 
 	if (isComplete) {
-	    // User got response, conversation ends
+	    // Extract and return the user response text from the respond_to_user call
+	    if (lastFunctionCallEvent?.data?.args && lastFunctionCallEvent.data.args.length > 0) {
+		const firstArg = lastFunctionCallEvent.data.args[0];
+		// Handle both {response: "text"} and direct string formats
+		const responseText = typeof firstArg === 'object' && firstArg.response
+		    ? firstArg.response
+		    : firstArg;
+		return responseText;
+	    }
+	    // Fallback to "done" if we can't extract the response
 	    return "done";
 	}
 

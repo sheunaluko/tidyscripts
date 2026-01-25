@@ -58,7 +58,8 @@ export type {
   SandboxExecutor,
   SandboxResult,
   SandboxLog,
-  SandboxEvent
+  SandboxEvent,
+  SandboxRuntimeEvent
 } from "./apis/cortex/sandbox_interface"
 export type { Cortex } from "./apis/cortex/cortex"
 

@@ -35,6 +35,7 @@ export class IframeSandboxExecutor implements SandboxExecutor {
   private persistentIframe: HTMLIFrameElement | null = null
   private executionId: string | null = null
   private messageHandler: ((event: MessageEvent) => void) | null = null
+  private eventStreamHandler: ((event: MessageEvent) => void) | null = null
   private isInitialized: boolean = false
 
   /**
@@ -105,6 +106,34 @@ export class IframeSandboxExecutor implements SandboxExecutor {
     this.isInitialized = false
 
     console.log('[Sandbox] Persistent iframe destroyed')
+  }
+
+  /**
+   * Setup real-time event stream for logs and events
+   * This is separate from the execution coordination messageHandler
+   *
+   * @param handler - Callback to receive real-time log/event messages
+   * @returns Cleanup function to remove the listener
+   */
+  setupEventStream(handler: (event: { type: 'log' | 'event', payload: any }) => void): () => void {
+    this.eventStreamHandler = (event: MessageEvent) => {
+      if (!event.data.executionId) return;
+      const { type, payload } = event.data;
+
+      // Only handle log and event types (not success/error/functionCall)
+      if (type === 'log' || type === 'event') {
+        handler({ type, payload });
+      }
+    };
+
+    window.addEventListener('message', this.eventStreamHandler);
+
+    return () => {
+      if (this.eventStreamHandler) {
+        window.removeEventListener('message', this.eventStreamHandler);
+        this.eventStreamHandler = null;
+      }
+    };
   }
 
   /**

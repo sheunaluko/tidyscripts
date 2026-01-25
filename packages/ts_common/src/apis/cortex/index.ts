@@ -26,7 +26,8 @@ export type {
   SandboxExecutor,
   SandboxResult,
   SandboxLog,
-  SandboxEvent
+  SandboxEvent,
+  SandboxRuntimeEvent
 } from './sandbox_interface'
 export { DEFAULT_SANDBOX_TIMEOUT } from './sandbox_interface'
 
