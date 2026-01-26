@@ -69,6 +69,11 @@ Todo
 [ ] dolphin parser working 4 bit 
 
 
+[ ] ability to store an entire session and then re-load it, or switch llm
+providers in middle
+
+
+
 [ ] user scoped RELATION architecture -- ?
 
 [ ] define metrics on the page:

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
+import { List } from 'react-window';
 import WidgetItem from '../WidgetItem';
 
 interface LogWidgetProps {
@@ -17,13 +18,33 @@ const LogWidget: React.FC<LogWidgetProps> = ({
   onClose,
   logHistory
 }) => {
-  const widget_scroll_styles = {
-    overflowY: 'auto',
-    maxHeight: '95%',
-    scrollbarWidth: 'none',         // Firefox
-    '&::-webkit-scrollbar': {
-      display: 'none',              // Chrome, Safari
+  const listRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (listRef.current && logHistory.length > 0) {
+      listRef.current.scrollToRow({ index: logHistory.length - 1, align: 'end' });
     }
+  }, [logHistory.length]);
+
+  const LogRow = ({ index, style, logs }: { index: number; style: React.CSSProperties; logs: string[] }) => {
+    const log = logs[index];
+    return (
+      <Box
+        style={style}
+        sx={{
+          borderRadius: '8px',
+          color: (log.indexOf('ERROR') > -1) ? 'error.light' : 'info.light',
+          px: 1,
+          py: 0.5,
+          display: 'flex',
+          alignItems: 'flex-start',
+          wordBreak: 'break-word',
+          overflow: 'hidden'
+        }}
+      >
+        {log}
+      </Box>
+    );
   };
 
   return (
@@ -33,18 +54,19 @@ const LogWidget: React.FC<LogWidgetProps> = ({
       onFocus={onFocus}
       onClose={onClose}
     >
-      <Box id="log_display" sx={widget_scroll_styles}>
-        {logHistory.map((log, index) => (
-          <Box
-            key={index}
-            sx={{
-              borderRadius: '8px',
-              color: (log.indexOf('ERROR') > -1) ? 'error.light' : 'info.light',
-            }}
-          >
-            {log}
-          </Box>
-        ))}
+      <Box id="log_display">
+        <List
+          listRef={listRef}
+          rowComponent={LogRow}
+          rowCount={logHistory.length}
+          rowHeight={40}
+          rowProps={{ logs: logHistory } as any}
+          style={{
+            height: fullscreen ? window.innerHeight - 150 : 280,
+            width: '100%',
+            scrollbarWidth: 'none'
+          }}
+        />
       </Box>
     </WidgetItem>
   );

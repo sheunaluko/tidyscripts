@@ -33,6 +33,80 @@ Was having an error with the firebase lib
 => NOT WORKING: get_user_collection (there is a problem with resolving the collection reference to an array of documents
    - ?Fix - https://github.com/angular/angularfire/issues/3442 suggests that it may be fixed by downgrading the firebase version, which I could try
 
-=> Turned out that the problem was using firebase imported from tidyscripts_web. By directly importing into the ts_next_app itself; this seemed to resolved the error. 
+=> Turned out that the problem was using firebase imported from tidyscripts_web. By directly importing into the ts_next_app itself; this seemed to resolved the error.
+
+
+[ ] Sat Jan 25 2026 - Event Listener Memory Leak in Cortex Voice Agent
+PROBLEM: Severe memory leak after clicking start audio button. Event listeners accumulating to thousands, eventually causing browser lag/crashes.
+
+SYMPTOMS:
+- Event listener count grows from ~500 to 1000+ to 4000+ over time
+- Only happens AFTER clicking start audio button
+- Occurs on both cortex_0 page and component_viewer page (anywhere TIVI is used)
+- Event listeners are IDBRequest objects with 'success' and 'error' types
+- Target: firebaseLocalStorage IndexedDB ObjectStore
+
+INVESTIGATION:
+1. Initially suspected component re-render cascade
+   - Fixed: Memoized visibleWidgets array in useWidgetConfig.ts (stopped render cascade)
+   - Result: Render cascade stopped BUT event listeners still accumulating
+
+2. Investigated TIVI audio components, VAD, AudioWorklet, IframeSandbox
+   - Result: Not the source
+
+3. Discovered via event listener tracker that accumulating listeners were IDBRequest objects
+   - Source: Firebase IndexedDB persistence/polling mechanism
+   - Stack trace showed: firebaseLocalStorage → _poll → _withRetries → toPromise
+
+ROOT CAUSE:
+Firebase (v10.12.4) uses IndexedDB for auth state persistence and multi-tab sync. It polls IndexedDB to detect changes across tabs. The polling rate increases when Firebase detects "active tab" behavior based on event loop activity.
+
+When audio starts, useTivi.ts dispatches window.dispatchEvent('tidyscripts_web_mic') at 60 FPS (line 213-215). This high-frequency event loop activity triggers Firebase's "active tab" detection, causing it to poll IndexedDB aggressively (potentially 60x/sec instead of normal ~0.2x/sec). Each poll creates new IDBRequest objects with success/error listeners that are never cleaned up.
+
+CONFIRMATION TEST:
+- Commented out window.dispatchEvent in useTivi.ts startPowerMonitoring function
+- Result: Event listener leak STOPPED
+- Restored window.dispatchEvent
+- Result: Event listener leak RETURNED
+
+SOLUTION OPTIONS:
+1. Throttle window.dispatchEvent to 10 FPS (100ms) instead of 60 FPS
+2. Disable Firebase IndexedDB persistence (trade-off: lose offline support and multi-tab sync)
+3. Upgrade Firebase to v11+ (may have fixes for this issue)
+4. Use Firebase in-memory persistence mode
+5. IMPLEMENTED: Use refs instead of React state for rapidly changing values
+
+THE FIX (IMPLEMENTED & WORKING):
+Discovered that even after removing window.dispatchEvent, React state updates at 50 FPS (setAudioLevel/onAudioLevel callbacks) still triggered Firebase's aggressive polling.
+
+KEY INSIGHT: React state should NEVER track rapidly changing values like audio levels, sensor data, or animation frames. High-frequency setState calls create event loop activity that Firebase interprets as "active tab" behavior, triggering aggressive IndexedDB polling.
+
+ARCHITECTURAL CHANGE:
+Changed audio level from useState to useRef throughout the codebase:
+- Audio monitoring loop updates ref directly: audioLevelRef.current = rms
+- Visualization components read from ref in their own animation loops
+- Zero React state updates = Zero Firebase triggering
+- Audio visualization still updates smoothly at 60 FPS
+
+FILES MODIFIED:
+1. apps/ts_next_app/app/laboratory/cortex_0/hooks/useWidgetConfig.ts (added useMemo to visibleWidgets - fixed render cascade)
+2. apps/ts_next_app/app/laboratory/components/tivi/lib/useTivi.ts (changed audioLevel from useState to useRef, removed window.dispatchEvent, direct ref updates)
+3. apps/ts_next_app/app/laboratory/cortex_0/app3.tsx (removed audioLevel state, passes audioLevelRef)
+4. apps/ts_next_app/app/laboratory/cortex_0/components/TopBar.tsx (accepts audioLevelRef)
+5. apps/ts_next_app/app/laboratory/cortex_0/components/AudioVisualization.tsx (reads from audioLevelRef.current)
+6. apps/ts_next_app/app/laboratory/components/tivi/VizComponent.tsx (reads from audioLevelRef.current)
+7. apps/ts_next_app/app/laboratory/components/tivi/tivi.tsx (passes audioLevelRef)
+
+RESULT: ✅ WORKING - Memory leak completely eliminated, audio visualization smooth at 60 FPS
+
+LOCATION OF ISSUE:
+- apps/ts_next_app/app/laboratory/components/tivi/lib/useTivi.ts:213-215 (original window.dispatchEvent)
+- Firebase version: 10.12.4 (apps/ts_next_app/package.json:46)
+
+LESSONS LEARNED:
+- High-frequency React state updates can trigger unexpected side effects in external libraries
+- Use refs (not state) for values that change faster than 10 FPS
+- Firebase's "active tab" detection is sensitive to JavaScript event loop activity
+- Decouple animation loops from React's reconciliation system
 
 

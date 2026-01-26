@@ -253,7 +253,7 @@ export const Tivi: React.FC<TiviProps> = ({
 
             {/* Audio Level Visualization */}
             <Box>
-              <VizComponent audioLevel={voice.audioLevel} />
+              <VizComponent audioLevelRef={voice.audioLevelRef} />
             </Box>
           </Stack>
         </Box>

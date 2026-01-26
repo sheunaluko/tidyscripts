@@ -95,16 +95,43 @@ const HistoryWidget: React.FC<HistoryWidgetProps> = ({
     return index === getSelectedExecutionIndex();
   };
 
-  // Auto-scroll to selected item
+  // Auto-scroll to selected item within widget only (don't scroll the page)
   useEffect(() => {
     if (scrollContainerRef.current && executions.length > 0) {
+      const container = scrollContainerRef.current;
       const selectedIdx = getSelectedExecutionIndex();
-      const selectedElement = scrollContainerRef.current.children[selectedIdx] as HTMLElement;
+      const selectedElement = container.children[selectedIdx] as HTMLElement;
+
       if (selectedElement) {
-        selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Manually scroll within the container to avoid scrolling the whole page
+        if (layout === 'vertical') {
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = selectedElement.getBoundingClientRect();
+          const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
+
+          // Only scroll if element is not fully visible
+          if (elementRect.top < containerRect.top || elementRect.bottom > containerRect.bottom) {
+            container.scrollTo({
+              top: relativeTop - containerRect.height / 2 + elementRect.height / 2,
+              behavior: 'smooth'
+            });
+          }
+        } else {
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = selectedElement.getBoundingClientRect();
+          const relativeLeft = elementRect.left - containerRect.left + container.scrollLeft;
+
+          // Only scroll if element is not fully visible
+          if (elementRect.left < containerRect.left || elementRect.right > containerRect.right) {
+            container.scrollTo({
+              left: relativeLeft - containerRect.width / 2 + elementRect.width / 2,
+              behavior: 'smooth'
+            });
+          }
+        }
       }
     }
-  }, [selectedIndex, executions.length]);
+  }, [selectedIndex, executions.length, layout]);
 
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -346,4 +373,4 @@ const HistoryWidget: React.FC<HistoryWidgetProps> = ({
   );
 };
 
-export default HistoryWidget;
+export default React.memo(HistoryWidget);

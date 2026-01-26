@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 
 interface AudioVisualizationProps {
-  audioLevel: number;
+  audioLevelRef: React.MutableRefObject<number>;
   paused?: boolean;
   width?: number;
   height?: number;
@@ -14,7 +14,7 @@ interface AudioVisualizationProps {
 }
 
 const AudioVisualization: React.FC<AudioVisualizationProps> = ({
-  audioLevel,
+  audioLevelRef,
   paused = false,
   width = 300,
   height = 100,
@@ -62,6 +62,9 @@ const AudioVisualization: React.FC<AudioVisualizationProps> = ({
         ctx.fillRect(0, 0, width, height);
       }
 
+      // Read current audio level from ref (no React re-renders)
+      const audioLevel = audioLevelRef.current;
+
       // Generate particles based on audio level
       const sigma = audioLevel + 0.03;
       const particles = generateParticles(sigma);
@@ -91,7 +94,7 @@ const AudioVisualization: React.FC<AudioVisualizationProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [audioLevel, paused, width, height, backgroundColor, particleColor, generateParticles]);
+  }, [audioLevelRef, paused, width, height, backgroundColor, particleColor, generateParticles]);
 
   return (
     <Box display="flex" justifyContent="center" width="100%">

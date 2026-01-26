@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
+import { List, useDynamicRowHeight } from 'react-window';
 import WidgetItem from '../WidgetItem';
 
 interface ThoughtsWidgetProps {
@@ -17,13 +18,39 @@ const ThoughtsWidget: React.FC<ThoughtsWidgetProps> = ({
   onClose,
   thoughtHistory
 }) => {
-  const widget_scroll_styles = {
-    overflowY: 'auto',
-    maxHeight: '95%',
-    scrollbarWidth: 'none',         // Firefox
-    '&::-webkit-scrollbar': {
-      display: 'none',              // Chrome, Safari
+  const listRef = useRef<any>(null);
+
+  // Use dynamic row heights since thoughts vary in length
+  const rowHeight = useDynamicRowHeight({
+    defaultRowHeight: 45,
+    key: thoughtHistory.length
+  });
+
+  useEffect(() => {
+    if (listRef.current && thoughtHistory.length > 0) {
+      listRef.current.scrollToRow({ index: thoughtHistory.length - 1, align: 'end' });
     }
+  }, [thoughtHistory.length]);
+
+  const ThoughtRow = ({ index, style, thoughts }: { index: number; style: React.CSSProperties; thoughts: string[] }) => {
+    const thought = thoughts[index];
+    return (
+      <Box
+        style={style}
+        sx={{
+          borderRadius: '8px',
+          color: 'success.light',
+          px: 1,
+          py: 0.5,
+          display: 'flex',
+          alignItems: 'flex-start',
+          overflow: 'hidden'
+        }}
+      >
+        <Box component="span" sx={{ mr: 0.5, flexShrink: 0 }}>🧠</Box>
+        <Box component="span" sx={{ wordBreak: 'break-word' }}>{thought}</Box>
+      </Box>
+    );
   };
 
   return (
@@ -33,18 +60,19 @@ const ThoughtsWidget: React.FC<ThoughtsWidgetProps> = ({
       onFocus={onFocus}
       onClose={onClose}
     >
-      <Box id="thought_display" sx={widget_scroll_styles}>
-        {thoughtHistory.map((thought, index) => (
-          <Box
-            key={index}
-            sx={{
-              borderRadius: '8px',
-              color: 'success.light'
-            }}
-          >
-            🧠 {thought}
-          </Box>
-        ))}
+      <Box id="thought_display">
+        <List
+          listRef={listRef}
+          rowComponent={ThoughtRow}
+          rowCount={thoughtHistory.length}
+          rowHeight={rowHeight}
+          rowProps={{ thoughts: thoughtHistory } as any}
+          style={{
+            height: fullscreen ? window.innerHeight - 150 : 280,
+            width: '100%',
+            scrollbarWidth: 'none'
+          }}
+        />
       </Box>
     </WidgetItem>
   );

@@ -34,7 +34,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [audioLevel, setAudioLevel] = useState(0);
+  // Use ref instead of state to avoid triggering React reconciliation at 50 FPS
+  const audioLevelRef = useRef(0);
   const [isConnected, setIsConnected] = useState(false);
 
   // Refs
@@ -98,38 +99,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     };
   }, [onTranscription, verbose]);
 
-  // Listen for audio power events (for visualization)
-  useEffect(() => {
-    let lastUpdate = 0;
-
-
-    const handleAudioPower = (e: CustomEvent) => {
-      if (!isMountedRef.current) return;
-
-      const now = Date.now();
-      if (now - lastUpdate < THROTTLE_MS) return; // Throttle updates
-
-      lastUpdate = now;
-      const power = e.detail as number;
-      setAudioLevel(power);
-      onAudioLevel?.(power);
-      /*
-      //dispatch tivi event
-      window.dispatchEvent( new CustomEvent('tivi_audio_level',{
-      detail: {
-        level : power, 
-      }	      
-      });
-      */
-
-    };
-
-    window.addEventListener('tidyscripts_web_mic', handleAudioPower as EventListener);
-
-    return () => {
-      window.removeEventListener('tidyscripts_web_mic', handleAudioPower as EventListener);
-    };
-  }, [onAudioLevel]);
+  // Audio power updates now handled directly in startPowerMonitoring
+  // No need for window event listeners
 
   // Initialize speech recognition
   useEffect(() => {
@@ -196,6 +167,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   // Power monitoring function using VAD's analyser
   const startPowerMonitoring = useCallback((analyser: AnalyserNode) => {
     const dataArray = new Float32Array(analyser.fftSize);
+    let lastUpdate = 0;
+    const THROTTLE_MS = 20; // ~50 FPS for audio level updates
 
     function calculatePower() {
       if (!analyserRef.current || !isMountedRef.current) return;
@@ -209,17 +182,22 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       }
       const rms = Math.sqrt(sum / dataArray.length);
 
-      // Dispatch event for compatibility with existing viz
-      window.dispatchEvent(
-        new CustomEvent('tidyscripts_web_mic', { detail: rms })
-      );
+      // Update ref directly (no React state = no re-renders = no Firebase triggering)
+      audioLevelRef.current = rms;
+
+      // Optionally call callback for external consumers (throttled)
+      const now = Date.now();
+      if (now - lastUpdate >= THROTTLE_MS) {
+        lastUpdate = now;
+        onAudioLevel?.(rms);
+      }
 
       // Continue at 60 FPS
       animationFrameRef.current = requestAnimationFrame(calculatePower);
     }
 
     calculatePower();
-  }, []);
+  }, [onAudioLevel]);
 
   // Public API
   const startListening = useCallback(async () => {
@@ -383,7 +361,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     isConnected,
     transcription,
     interimResult,
-    audioLevel,
+    audioLevelRef, // Changed from audioLevel state to ref
     error,
 
     // Actions

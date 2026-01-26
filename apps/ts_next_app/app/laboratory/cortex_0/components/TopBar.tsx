@@ -58,7 +58,7 @@ interface TopBarProps {
   onOpenSettings: () => void;
 
   // Audio visualization
-  audioLevel: number;
+  audioLevelRef: React.MutableRefObject<number>;
 
   // Voice status
   voiceStatus: 'idle' | 'listening' | 'processing' | 'speaking';
@@ -79,7 +79,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   aiModel,
   onModelChange,
   onOpenSettings,
-  audioLevel,
+  audioLevelRef,
   voiceStatus,
   interimResult
 }) => {
@@ -216,7 +216,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {mode === 'voice' && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <AudioVisualization
-              audioLevel={audioLevel}
+              audioLevelRef={audioLevelRef}
               paused={!started}
               width={120}
               height={40}

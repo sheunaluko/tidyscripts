@@ -1,4 +1,8 @@
 'use client';
+
+// IMPORTANT: Import observer tracker FIRST before React
+import { observerTracker } from "./utils/observerTracker";
+
 import type { NextPage } from 'next'
 import {useEffect, useState, useRef, useCallback, useMemo } from 'react' ;
 import React from 'react' ;
@@ -7,6 +11,7 @@ import  "./app.css"
 import * as tsw from "tidyscripts_web"  ;
 const { insights } = tsw.common;
 import { fps_monitor } from "../src";
+import { eventListenerTracker } from "./utils/eventListenerTracker";
 //import { ChakraProvider } from '@chakra-ui/react' ;
 import { alpha } from '@mui/system';
 import { theme } from "../../theme";
@@ -82,7 +87,7 @@ import SandboxLogsWidget from "./widgets/SandboxLogsWidget"
 import HistoryWidget from "./widgets/HistoryWidget"
 
 // Import AudioVisualization component
-import AudioVisualization from "./components/AudioVisualization"
+// import AudioVisualization from "./components/AudioVisualization"
 
 // Import custom hooks
 import { useWidgetConfig } from "./hooks/useWidgetConfig"
@@ -276,18 +281,8 @@ const  Component: NextPage = (props : any) => {
 
     // Converted from global variables to React state
     const [globalPause, setGlobalPause] = useState(false);
-    const [audioLevel, setAudioLevel] = useState(0);
-
-
-
-    //initilize tivi
-
-    //create graph callback - now just updates audioLevel state
-    const handle_graph = useCallback((val : number) => {
-	if (!globalPause) {
-	    setAudioLevel(val);
-	}
-    }, [globalPause]);
+    // Audio level is now tracked in a ref inside useTivi (not React state)
+    // to avoid triggering Firebase's aggressive IndexedDB polling
 
     // Handler for tivi parameter changes
     const handleTiviParamsChange = useCallback((params: Partial<typeof tiviParams>) => {
@@ -296,7 +291,6 @@ const  Component: NextPage = (props : any) => {
 
     const tivi = useTivi({
 	verbose: tiviParams.verbose,
-	onAudioLevel: handle_graph,
         positiveSpeechThreshold: tiviParams.positiveSpeechThreshold,
         negativeSpeechThreshold: tiviParams.negativeSpeechThreshold,
         minSpeechMs: tiviParams.minSpeechMs,
@@ -358,7 +352,7 @@ const  Component: NextPage = (props : any) => {
 
 
     // Function to add a user's message to the chat
-    const add_user_message = (content: string) => {
+    const add_user_message = useCallback((content: string) => {
 	// @ts-ignore
 	set_chat_history((prev) => [...prev, { role: "user", content }])
 
@@ -371,7 +365,7 @@ const  Component: NextPage = (props : any) => {
 		input_mode: mode,
 		input_length: content.length,
 		context: {
-		    content 
+		    content
 		}
 	    }).catch((err: any) => {
 		log(`Error adding user input event: ${err}`);
@@ -381,7 +375,7 @@ const  Component: NextPage = (props : any) => {
 	if (sound_feedback) {
 	    sounds.proceed()
 	}
-    };
+    }, [COR, mode, sound_feedback]);
 
     
     // Widget configuration hook
@@ -781,30 +775,30 @@ const  Component: NextPage = (props : any) => {
      */
 
 
-    let transcription_cb = (async function(text : string , ) {
+    const transcription_cb = useCallback(async (text: string) => {
 
-	log(`tcb: ${text}`)	
+	log(`tcb: ${text}`)
 
 	/*
-           This is where I need to pass the transcript Dynamically either to: 
-	   - cortex_channel 
-	   - function_channel 
+           This is where I need to pass the transcript Dynamically either to:
+	   - cortex_channel
+	   - function_channel
 
-	   If a function is executing then we pass to function_channel 
-	   If not then we pass to cortex_channel 
+	   If a function is executing then we pass to function_channel
+	   If not then we pass to cortex_channel
 
 	 */
 
 	if (COR && COR.is_running_function) {
 	    log(`tcb: Cortex running function, will forward`)
 	    await COR.handle_function_input(text)
-	    
-	} else { 
-	    log(`tcb: No active cortex function`) 
+
+	} else {
+	    log(`tcb: No active cortex function`)
 	    add_user_message(text) ;
 	}
-	
-    }) ; 
+
+    }, [COR, add_user_message]); 
 
     //handle user chat message (instead of voice)
     const handleSend = async () => {
@@ -833,7 +827,7 @@ const  Component: NextPage = (props : any) => {
 
 
     // Function to add an AI's message to the chat
-    const add_ai_message = async (content: string) => {
+    const add_ai_message = useCallback(async (content: string) => {
 	// @ts-ignore
 	set_chat_history((prev) => [...prev, { role: "assistant", content }]);
 	if (sound_feedback) {
@@ -892,7 +886,7 @@ const  Component: NextPage = (props : any) => {
 		});
 	}
 
-    };
+    }, [sound_feedback, mode, playbackRate, tivi, insightsClient, fpsMonitor]);
 
     //function for getting AI response from the chat history and the ai_model
     let get_ai_response = async function() {
@@ -990,6 +984,272 @@ const  Component: NextPage = (props : any) => {
         }
     }, [chat_history]);
 
+    /*
+
+    // DEBUG: Track event listeners and DOM mutations
+    useEffect(() => {
+        // Start event listener tracking
+        eventListenerTracker.start();
+        log('[DEBUG] Event listener tracking started');
+
+        let nodeCount = 0;
+        let additionCount = 0;
+        let removalCount = 0;
+        const startTime = Date.now();
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                additionCount += mutation.addedNodes.length;
+                removalCount += mutation.removedNodes.length;
+
+                // Log significant additions
+                if (mutation.addedNodes.length > 10) {
+                    const target = mutation.target as Element;
+                    log(`[DOM-DEBUG] Large addition: ${mutation.addedNodes.length} nodes to ${target.tagName}.${target.className}`);
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Report every 5 seconds with event listener counts
+        const interval = setInterval(() => {
+            const elapsed = Math.round((Date.now() - startTime) / 1000);
+            const total = document.getElementsByTagName('*').length;
+            const listenerReport = eventListenerTracker.getReport();
+            const observerReport = observerTracker.getReport();
+            log(`[DOM-DEBUG] t=${elapsed}s | Total nodes: ${total} | +${additionCount} -${removalCount} | Net: ${additionCount - removalCount}`);
+            log(`[LISTENER-DEBUG] t=${elapsed}s | Total listeners: ${listenerReport.totalListeners} | By type:`, listenerReport.byType);
+            log(`[OBSERVER-DEBUG] t=${elapsed}s | Total observers: ${observerReport.total} | By type:`, observerReport.byType);
+
+            // Warn if observer count is growing
+            if (observerReport.total > 20) {
+                console.warn(`[LEAK WARNING] ${observerReport.total} observers detected!`);
+                observerTracker.printReport();
+            }
+
+            additionCount = 0;
+            removalCount = 0;
+        }, 5000);
+
+
+
+        // Expose debug functions globally
+        if (typeof window !== 'undefined') {
+            // Expose trackers
+            (window as any).listenerTracker = eventListenerTracker;
+            (window as any).observerTracker = observerTracker;
+
+            (window as any).cortex_dom_snapshot = () => {
+                const elements = document.getElementsByTagName('*');
+                const counts: { [key: string]: number } = {};
+                let totalNodes = elements.length;
+                let totalWithShadow = totalNodes;
+
+                for (let i = 0; i < elements.length; i++) {
+                    const el = elements[i];
+
+                    // Handle className properly (might be SVGAnimatedString)
+                    let className = '';
+                    if (typeof el.className === 'string') {
+                        className = el.className;
+                    } else if (el.className && typeof el.className === 'object' && 'baseVal' in el.className) {
+                        className = (el.className as any).baseVal;
+                    }
+
+                    const key = `${el.tagName}${className ? '.' + className.split(' ')[0] : ''}`;
+                    counts[key] = (counts[key] || 0) + 1;
+
+                    // Count shadow DOM nodes
+                    if (el.shadowRoot) {
+                        const shadowNodes = el.shadowRoot.querySelectorAll('*').length;
+                        totalWithShadow += shadowNodes;
+                        counts['[SHADOW-DOM]'] = (counts['[SHADOW-DOM]'] || 0) + shadowNodes;
+                    }
+                }
+
+                const sorted = Object.entries(counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 30);
+
+                console.log(`Total DOM nodes: ${totalNodes}`);
+                console.log(`Total with Shadow DOM: ${totalWithShadow}`);
+                console.log(`Chrome might also count: text nodes, comment nodes, attributes`);
+                console.table(sorted.map(([tag, count]) => ({ Element: tag, Count: count })));
+                return { totalNodes, totalWithShadow, elements: sorted };
+            };
+
+            // Count ALL node types (including text, comments)
+            (window as any).cortex_count_all_nodes = () => {
+                let count = 0;
+                const walk = (node: Node) => {
+                    count++;
+                    node.childNodes.forEach(child => walk(child));
+                    if ((node as any).shadowRoot) {
+                        walk((node as any).shadowRoot);
+                    }
+                };
+                walk(document.body);
+                console.log(`Total nodes (including text/comments): ${count}`);
+                return count;
+            };
+        }
+
+
+        return () => {
+            observer.disconnect();
+            clearInterval(interval);
+            if (typeof window !== 'undefined') {
+                delete (window as any).cortex_dom_snapshot;
+            }
+        };
+    }, []);
+
+		*/    
+
+    // Memoize renderWidget to prevent grid re-renders
+    const memoizedWidgetGrid = useMemo(() => {
+        log('[DEBUG] memoizedWidgetGrid recalculating');
+        const renderWidget = (widgetId: string) => {
+            switch (widgetId) {
+                case 'chat':
+                    return (
+                        <ChatWidget
+                            chatHistory={chat_history}
+                            onFocus={() => setFocusedWidget('chat')}
+                        />
+                    );
+                case 'chatInput':
+                    return (
+                        <ChatInputWidget
+                            onSubmit={(text) => transcription_cb(text)}
+                            onFocus={() => setFocusedWidget('chatInput')}
+                        />
+                    );
+                case 'workspace':
+                    return (
+                        <WorkspaceWidget
+                            workspace={workspace}
+                            onFocus={() => setFocusedWidget('workspace')}
+                        />
+                    );
+                case 'thoughts':
+                    return (
+                        <ThoughtsWidget
+                            thoughtHistory={thought_history}
+                            onFocus={() => setFocusedWidget('thoughts')}
+                        />
+                    );
+                case 'log':
+                    return (
+                        <LogWidget
+                            logHistory={log_history}
+                            onFocus={() => setFocusedWidget('log')}
+                        />
+                    );
+                case 'code':
+                    return (
+                        <CodeWidget
+                            codeParams={code_params}
+                            onChange={handle_code_change}
+                            onFocus={() => setFocusedWidget('code')}
+                        />
+                    );
+                case 'html':
+                    return (
+                        <HTMLWidget
+                            htmlDisplay={html_display}
+                            onFocus={() => setFocusedWidget('html')}
+                        />
+                    );
+                case 'codeExecution':
+                    return (
+                        <CodeExecutionWidget
+                            currentCode={currentExecution?.code || currentCode}
+                            executionId={currentExecution?.executionId || executionId}
+                            status={currentExecution?.status || executionStatus}
+                            error={currentExecution?.error || executionError}
+                            duration={currentExecution?.duration || executionDuration}
+                            result={currentExecution?.result !== undefined ? currentExecution.result : executionResult}
+                            onFocus={() => setFocusedWidget('codeExecution')}
+                        />
+                    );
+                case 'functionCalls':
+                    return (
+                        <FunctionCallsWidget
+                            calls={currentExecution?.functionCalls || functionCalls}
+                            onFocus={() => setFocusedWidget('functionCalls')}
+                        />
+                    );
+                case 'variableInspector':
+                    return (
+                        <VariableInspectorWidget
+                            variables={currentExecution?.variableAssignments || variableAssignments}
+                            onFocus={() => setFocusedWidget('variableInspector')}
+                        />
+                    );
+                case 'sandboxLogs':
+                    return (
+                        <SandboxLogsWidget
+                            logs={currentExecution?.sandboxLogs || sandboxLogs}
+                            onFocus={() => setFocusedWidget('sandboxLogs')}
+                        />
+                    );
+                case 'history':
+                    return (
+                        <HistoryWidget
+                            executions={executionHistory}
+                            selectedIndex={selectedIndex}
+                            isPinned={isPinned}
+                            onSelectExecution={handleHistoryItemClick}
+                            onTogglePin={() => setIsPinned(prev => !prev)}
+                            onFocus={() => setFocusedWidget('history')}
+                        />
+                    );
+                default:
+                    return null;
+            }
+        };
+
+        return (
+            <DraggableWidgetGrid
+                visibleWidgets={visibleWidgets}
+                initialLayout={widgetLayout}
+                onLayoutChange={saveLayout}
+                renderWidget={renderWidget}
+            />
+        );
+    }, [
+        chat_history,
+        thought_history,
+        log_history,
+        code_params,
+        html_display,
+        workspace,
+        currentExecution,
+        currentCode,
+        executionId,
+        executionStatus,
+        executionError,
+        executionDuration,
+        executionResult,
+        functionCalls,
+        variableAssignments,
+        sandboxLogs,
+        executionHistory,
+        selectedIndex,
+        isPinned,
+        visibleWidgets,
+        widgetLayout,
+        transcription_cb,
+        handle_code_change,
+        handleHistoryItemClick,
+        saveLayout
+    ]);
+
     // Note: Chat Mode JSX is inlined directly in the return statement to avoid component recreation issues
 
     return (
@@ -1009,7 +1269,7 @@ const  Component: NextPage = (props : any) => {
                 aiModel={ai_model}
                 onModelChange={(model) => set_ai_model(model)}
                 onOpenSettings={() => setSettingsOpen(true)}
-                audioLevel={audioLevel}
+                audioLevelRef={tivi.audioLevelRef}
                 voiceStatus={voiceStatus}
                 interimResult={interim_result}
             />
@@ -1272,118 +1532,7 @@ const  Component: NextPage = (props : any) => {
 
 	<Box flexDirection="column" display='flex' alignItems='start'  width="100%" paddingRight="20px">
 
-
-	{ !focusedWidget && (
-	      <DraggableWidgetGrid
-		  visibleWidgets={visibleWidgets}
-		  initialLayout={widgetLayout}
-		  onLayoutChange={saveLayout}
-		  renderWidget={(widgetId) => {
-		      // Render widget based on ID
-		      switch (widgetId) {
-			  case 'chat':
-			      return (
-				  <ChatWidget
-				      chatHistory={chat_history}
-				      onFocus={() => setFocusedWidget('chat')}
-				  />
-			      );
-			  case 'chatInput':
-			      return (
-				  <ChatInputWidget
-				      onSubmit={(text) => transcription_cb(text)}
-				      onFocus={() => setFocusedWidget('chatInput')}
-				  />
-			      );
-			  case 'workspace':
-			      return (
-				  <WorkspaceWidget
-				      workspace={workspace}
-				      onFocus={() => setFocusedWidget('workspace')}
-				  />
-			      );
-			  case 'thoughts':
-			      return (
-				  <ThoughtsWidget
-				      thoughtHistory={thought_history}
-				      onFocus={() => setFocusedWidget('thoughts')}
-				  />
-			      );
-			  case 'log':
-			      return (
-				  <LogWidget
-				      logHistory={log_history}
-				      onFocus={() => setFocusedWidget('log')}
-				  />
-			      );
-			  case 'code':
-			      return (
-				  <CodeWidget
-				      codeParams={code_params}
-				      onChange={handle_code_change}
-				      onFocus={() => setFocusedWidget('code')}
-				  />
-			      );
-			  case 'html':
-			      return (
-				  <HTMLWidget
-				      htmlDisplay={html_display}
-				      onFocus={() => setFocusedWidget('html')}
-				  />
-			      );
-			  case 'codeExecution':
-			      return (
-				  <CodeExecutionWidget
-				      currentCode={currentExecution?.code || currentCode}
-				      executionId={currentExecution?.executionId || executionId}
-				      status={currentExecution?.status || executionStatus}
-				      error={currentExecution?.error || executionError}
-				      duration={currentExecution?.duration || executionDuration}
-				      result={currentExecution?.result !== undefined ? currentExecution.result : executionResult}
-				      onFocus={() => setFocusedWidget('codeExecution')}
-				  />
-			      );
-			  case 'functionCalls':
-			      return (
-				  <FunctionCallsWidget
-				      calls={currentExecution?.functionCalls || functionCalls}
-				      onFocus={() => setFocusedWidget('functionCalls')}
-				  />
-			      );
-			  case 'variableInspector':
-			      return (
-				  <VariableInspectorWidget
-				      variables={currentExecution?.variableAssignments || variableAssignments}
-				      onFocus={() => setFocusedWidget('variableInspector')}
-				  />
-			      );
-			  case 'sandboxLogs':
-			      return (
-				  <SandboxLogsWidget
-				      logs={currentExecution?.sandboxLogs || sandboxLogs}
-				      onFocus={() => setFocusedWidget('sandboxLogs')}
-				  />
-			      );
-			  case 'history':
-			      return (
-				  <HistoryWidget
-				      executions={executionHistory}
-				      selectedIndex={selectedIndex}
-				      isPinned={isPinned}
-				      onSelectExecution={handleHistoryItemClick}
-				      onTogglePin={() => setIsPinned(prev => !prev)}
-				      onFocus={() => setFocusedWidget('history')}
-				  />
-			      );
-			  default:
-			      return null;
-		      }
-		  }}
-	      />
-	)} 
-
-	
-
+	{!focusedWidget && memoizedWidgetGrid}
 
 	</Box>
 

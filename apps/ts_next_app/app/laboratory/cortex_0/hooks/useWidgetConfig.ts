@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { WidgetGridConfig } from '../components/DraggableWidgetGrid';
 
 export interface WidgetConfig {
@@ -127,7 +127,9 @@ export function useWidgetConfig() {
     })));
   }, [saveLayout]);
 
-  const visibleWidgets = widgets.filter(w => w.visible).sort((a, b) => a.order - b.order);
+  const visibleWidgets = useMemo(() => {
+    return widgets.filter(w => w.visible).sort((a, b) => a.order - b.order);
+  }, [widgets]);
 
   return {
     widgets,

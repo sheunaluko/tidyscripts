@@ -11,7 +11,7 @@ declare var Bokeh: any;
 const log = tsw.common.logger.get_logger({ id: 'tivi-viz' });
 
 interface VizComponentProps {
-  audioLevel: number;
+  audioLevelRef: React.MutableRefObject<number>;
 }
 
 // Visualization parameters
@@ -91,7 +91,7 @@ function createVizPlot(paperColor: string) {
 /**
  * VizComponent - Audio level visualization using Bokeh
  */
-export const VizComponent: React.FC<VizComponentProps> = ({ audioLevel }) => {
+export const VizComponent: React.FC<VizComponentProps> = ({ audioLevelRef }) => {
   const theme = useTheme();
   const sourceRef = useRef<any>(null);
   const plotRef = useRef<any>(null);
@@ -152,21 +152,41 @@ export const VizComponent: React.FC<VizComponentProps> = ({ audioLevel }) => {
   }, [bokehReady, theme.palette.background.paper]);
 
 
-  // Update visualization based on audio level
+  // Update visualization by polling audioLevelRef (no React re-renders)
   useEffect(() => {
     if (!sourceRef.current) return;
 
-    try {
-      // Generate new gaussian data based on audio level
-      const spread = audioLevel + VIZ_S;
-      const new_data = x_y_gaussian(VIZ_N, spread, spread);
+    let animationFrameId: number;
 
-      // Stream new data to the plot
-      sourceRef.current.stream(new_data, VIZ_N);
-    } catch (error) {
-      // Silently ignore streaming errors (can happen during rapid updates)
-    }
-  }, [audioLevel]);
+    const updateVisualization = () => {
+      if (!sourceRef.current) return;
+
+      try {
+        // Read current audio level from ref
+        const audioLevel = audioLevelRef.current;
+
+        // Generate new gaussian data based on audio level
+        const spread = audioLevel + VIZ_S;
+        const new_data = x_y_gaussian(VIZ_N, spread, spread);
+
+        // Stream new data to the plot
+        sourceRef.current.stream(new_data, VIZ_N);
+      } catch (error) {
+        // Silently ignore streaming errors (can happen during rapid updates)
+      }
+
+      // Continue animation loop
+      animationFrameId = requestAnimationFrame(updateVisualization);
+    };
+
+    updateVisualization();
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [audioLevelRef]);
 
   return (
     <Box

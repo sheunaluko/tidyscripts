@@ -4,6 +4,10 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import ReactGridLayout, { useContainerWidth, verticalCompactor } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import * as tsw from "tidyscripts_web";
+
+const logger = tsw.common.logger;
+const log = logger.get_logger({ id: "cortex:DraggableWidgetGrid" });
 
 export interface WidgetGridConfig {
   i: string; // widget id
@@ -43,13 +47,32 @@ const DEFAULT_LAYOUT: { [key: string]: WidgetGridConfig } = {
 
 };
 
+let renderCount = 0;
+let lastWidth = 0;
+let widthChangeCount = 0;
+
 export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
   visibleWidgets,
   renderWidget,
   onLayoutChange,
   initialLayout
 }) => {
+  renderCount++;
   const { width, containerRef, mounted } = useContainerWidth();
+
+  // Track width changes
+  useEffect(() => {
+    if (width !== lastWidth) {
+      widthChangeCount++;
+      log(`[RESIZE] Grid width changed: ${lastWidth} → ${width} (change #${widthChangeCount})`);
+      lastWidth = width;
+    }
+  }, [width]);
+
+  // Log render frequency
+  useEffect(() => {
+    log(`[DEBUG] DraggableWidgetGrid render #${renderCount}, width: ${width}, mounted: ${mounted}`);
+  });
 
   // Determine current breakpoint
   const breakpoint = useMemo(() => {
@@ -99,6 +122,41 @@ export const DraggableWidgetGrid: React.FC<DraggableWidgetGridProps> = ({
     setLayout(updatedLayout);
     onLayoutChange(updatedLayout);
   }, [onLayoutChange, layout]);
+
+  // Monitor DOM mutations in the grid
+  useEffect(() => {
+    if (!containerRef || !containerRef.current) return;
+
+    let addCount = 0;
+    let removeCount = 0;
+    const startTime = Date.now();
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        addCount += mutation.addedNodes.length;
+        removeCount += mutation.removedNodes.length;
+      });
+    });
+
+    observer.observe(containerRef.current, {
+      childList: true,
+      subtree: true
+    });
+
+    const interval = setInterval(() => {
+      if (addCount > 0 || removeCount > 0) {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        log(`[DOM-LEAK] Grid mutations t=${elapsed}s: +${addCount} -${removeCount} = ${addCount - removeCount}`);
+        addCount = 0;
+        removeCount = 0;
+      }
+    }, 2000);
+
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, [containerRef, mounted]);
 
   return (
     // @ts-ignore - useContainerWidth ref type mismatch, works at runtime
