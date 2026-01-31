@@ -206,10 +206,31 @@ const  Component: NextPage = (props : any) => {
     const [tiviParams, setTiviParams] = useState({
         positiveSpeechThreshold: 0.8,
         negativeSpeechThreshold: 0.6,
-        minSpeechMs: 500,
+        minSpeechStartMs: 150,
         language: 'en-US',
         verbose: false
     });
+
+    // Load tiviParams from localStorage after mount (shared with tivi component)
+    useEffect(() => {
+        const stored = localStorage.getItem('tivi-vad-params');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                // Migrate and merge with defaults
+                setTiviParams(prev => ({
+                    ...prev,
+                    positiveSpeechThreshold: parsed.positiveSpeechThreshold ?? prev.positiveSpeechThreshold,
+                    negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? prev.negativeSpeechThreshold,
+                    minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? prev.minSpeechStartMs,
+                    verbose: parsed.verbose ?? prev.verbose,
+                    // Note: language is cortex-specific, don't load from shared storage
+                }));
+            } catch (e) {
+                console.error('[Cortex] Failed to parse tivi-vad-params:', e);
+            }
+        }
+    }, []);
 
     const [workspace, set_workspace] = useState({}) ;
 
@@ -285,16 +306,27 @@ const  Component: NextPage = (props : any) => {
     // Audio level is now tracked in a ref inside useTivi (not React state)
     // to avoid triggering Firebase's aggressive IndexedDB polling
 
-    // Handler for tivi parameter changes
+    // Handler for tivi parameter changes (saves to shared localStorage)
     const handleTiviParamsChange = useCallback((params: Partial<typeof tiviParams>) => {
-        setTiviParams(prev => ({ ...prev, ...params }));
+        setTiviParams(prev => {
+            const updated = { ...prev, ...params };
+            // Save to shared localStorage (exclude language - app-specific)
+            const toStore = {
+                positiveSpeechThreshold: updated.positiveSpeechThreshold,
+                negativeSpeechThreshold: updated.negativeSpeechThreshold,
+                minSpeechStartMs: updated.minSpeechStartMs,
+                verbose: updated.verbose,
+            };
+            localStorage.setItem('tivi-vad-params', JSON.stringify(toStore));
+            return updated;
+        });
     }, []);
 
     const tivi = useTivi({
 	verbose: tiviParams.verbose,
         positiveSpeechThreshold: tiviParams.positiveSpeechThreshold,
         negativeSpeechThreshold: tiviParams.negativeSpeechThreshold,
-        minSpeechMs: tiviParams.minSpeechMs,
+        minSpeechStartMs: tiviParams.minSpeechStartMs,
         language: tiviParams.language
     });
 
@@ -1285,6 +1317,7 @@ const  Component: NextPage = (props : any) => {
                 onClose={() => setSettingsOpen(false)}
                 tiviParams={tiviParams}
                 onTiviParamsChange={handleTiviParamsChange}
+                speechProbRef={tivi.speechProbRef}
             />
 
             {/* Render Chat Mode or Voice Mode */}

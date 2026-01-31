@@ -14,6 +14,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
+import { VADMonitor } from '../../components/tivi/VADMonitor';
 
 interface WidgetConfig {
   id: string;
@@ -25,7 +26,7 @@ interface WidgetConfig {
 interface TiviParams {
   positiveSpeechThreshold: number;
   negativeSpeechThreshold: number;
-  minSpeechMs: number;
+  minSpeechStartMs: number;
   language: string;
   verbose: boolean;
 }
@@ -39,6 +40,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   tiviParams?: TiviParams;
   onTiviParamsChange?: (params: Partial<TiviParams>) => void;
+  speechProbRef?: React.MutableRefObject<number>;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -49,7 +51,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   open,
   onClose,
   tiviParams,
-  onTiviParamsChange
+  onTiviParamsChange,
+  speechProbRef
 }) => {
   return (
     <Drawer
@@ -94,6 +97,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Voice Recognition Settings
             </Typography>
 
+            {/* VADMonitor - only runs when drawer is open */}
+            {speechProbRef && (
+              <Box sx={{ my: 2 }}>
+                <VADMonitor
+                  speechProbRef={speechProbRef}
+                  threshold={tiviParams.positiveSpeechThreshold}
+                  minSpeechStartMs={tiviParams.minSpeechStartMs}
+                  paused={!open}
+                  width={300}
+                  height={60}
+                />
+              </Box>
+            )}
+
             {/* Positive Speech Threshold */}
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="text.secondary">
@@ -132,20 +149,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               />
             </Box>
 
-            {/* Min Speech Duration */}
+            {/* Min Speech Start Duration */}
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                Minimum Speech Duration (ms)
+                Min Speech Start (ms)
               </Typography>
               <TextField
                 type="number"
-                value={tiviParams.minSpeechMs}
+                value={tiviParams.minSpeechStartMs}
                 onChange={(e) =>
-                  onTiviParamsChange({ minSpeechMs: parseInt(e.target.value) || 500 })
+                  onTiviParamsChange({ minSpeechStartMs: parseInt(e.target.value) || 150 })
                 }
                 size="small"
                 fullWidth
-                inputProps={{ min: 100, max: 5000, step: 100 }}
+                inputProps={{ min: 32, max: 500, step: 32 }}
               />
             </Box>
 

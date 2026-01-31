@@ -53,7 +53,7 @@ export async function enable_vad(options: {
   negativeSpeechThreshold?: number;
   redemptionMs?: number;
   preSpeechPadMs?: number;
-  minSpeechMs?: number;
+  minSpeechStartMs?: number;
 }): Promise<{
   vad: TSVAD;
   audioContext: AudioContext;
@@ -75,7 +75,7 @@ export async function enable_vad(options: {
     negativeSpeechThreshold: options.negativeSpeechThreshold ?? 0.6,
     redemptionMs: options.redemptionMs ?? 1400,
     preSpeechPadMs: options.preSpeechPadMs ?? 1000,
-    minSpeechMs: options.minSpeechMs ?? 400,
+    minSpeechStartMs: options.minSpeechStartMs ?? 150,
   });
 
   await vad.start();

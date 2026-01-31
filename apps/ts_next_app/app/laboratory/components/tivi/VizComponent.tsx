@@ -1,204 +1,120 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import * as tsw from 'tidyscripts_web';
-
-declare var window: any;
-declare var Bokeh: any;
-
-const log = tsw.common.logger.get_logger({ id: 'tivi-viz' });
 
 interface VizComponentProps {
   audioLevelRef: React.MutableRefObject<number>;
+  paused?: boolean;
+  width?: number;
+  height?: number;
+  particleColor?: string;
+  particleCount?: number;
 }
 
-// Visualization parameters
-const VIZ_N = 50; // Number of points
 const VIZ_S = 0.03; // Base spread
 
-/**
- * Generate gaussian-distributed x,y coordinates
- */
-function x_y_gaussian(n: number, sigma_x: number, sigma_y: number): { x: number[]; y: number[] } {
-  const x: number[] = [];
-  const y: number[] = [];
-
-  for (let i = 0; i < n; i++) {
-    // Generate two uniform random numbers between 0 and 1
-    const u1 = Math.random();
-    const u2 = Math.random();
-
-    // Use Box-Muller transform to obtain two independent standard normal random numbers
-    const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-    const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
-
-    // Scale by the specified standard deviations
-    x.push(z0 * sigma_x);
-    y.push(z1 * sigma_y);
-  }
-
-  return { x, y };
-}
-
-/**
- * Create a Bokeh scatter plot for visualization
- */
-function createVizPlot(paperColor: string) {
-  const x = [0];
-  const y = [0];
-  const source = new Bokeh.ColumnDataSource({ data: { x, y } });
-
-  const ops: any = {
-    width: 300,
-    height: 100,
-    outline_line_color: null,
-  };
-
-  ops.y_range = new Bokeh.Range1d({ start: -1, end: 1 });
-  ops.x_range = new Bokeh.Range1d({ start: -1, end: 1 });
-
-  const plot = new Bokeh.Plot(ops);
-
-  // Proper MUI theme mapping per Bokeh+MUI best practices:
-  plot.background_fill_color = paperColor;  // Main canvas background
-  plot.border_fill_color = null;            // Transparent - let container show through
-  plot.outline_line_color = null;           // No outline
-
-  // Collapse all external margins for seamless integration
-  plot.min_border_left = 0;
-  plot.min_border_right = 0;
-  plot.min_border_top = 0;
-  plot.min_border_bottom = 0;
-
-  plot.toolbar.logo = null;
-  plot.toolbar_location = null;
-
-  // Add circle glyph
-  const circle = new Bokeh.Circle({
-    x: { field: 'x' },
-    y: { field: 'y' },
-    line_color: '#34eb49',
-    fill_color: '#34eb49',
-    size: 6,
-  });
-  plot.add_glyph(circle, source);
-
-  return { plot, source };
-}
-
-/**
- * VizComponent - Audio level visualization using Bokeh
- */
-export const VizComponent: React.FC<VizComponentProps> = ({ audioLevelRef }) => {
+export const VizComponent: React.FC<VizComponentProps> = ({
+  audioLevelRef,
+  paused = false,
+  width = 300,
+  height = 100,
+  particleColor = '#34eb49',
+  particleCount = 50
+}) => {
   const theme = useTheme();
-  const sourceRef = useRef<any>(null);
-  const plotRef = useRef<any>(null);
-  const [bokehReady, setBokehReady] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = useRef<number>();
 
-  // Load Bokeh scripts once on mount
-  useEffect(() => {
-    async function loadBokeh() {
-      try {
-        log('Loading Bokeh scripts...');
-        if (!window.Bokeh) {
-          await tsw.apis.bokeh.load_bokeh_scripts();
-        }
-        if (window.Bokeh) {
-          setBokehReady(true);
-          log('Bokeh ready');
-        } else {
-          log('Bokeh failed to load');
-        }
-      } catch (error) {
-        console.error('[tivi-viz] Failed to load Bokeh:', error);
-      }
-    }
-    loadBokeh();
-  }, []);
+  const generateParticles = useCallback((sigma: number) => {
+    const particles: Array<{ x: number; y: number }> = [];
 
-  // Create/recreate plot when Bokeh is ready or theme changes
-  useEffect(() => {
-    if (!bokehReady) return;
+    for (let i = 0; i < particleCount; i++) {
+      // Box-Muller transform for Gaussian distribution
+      const u1 = Math.random();
+      const u2 = Math.random();
+      const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+      const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
 
-    async function createPlot() {
-      try {
-        log('Creating Bokeh plot with theme...');
-
-        // Clear previous plot if exists
-        const vizElement = document.getElementById('tivi-viz');
-        if (vizElement) {
-          vizElement.innerHTML = '';
-        }
-
-        // Create the plot with proper MUI theme colors
-        const paperColor = theme.palette.background.paper;
-        const { plot, source } = createVizPlot(paperColor);
-        sourceRef.current = source;
-        plotRef.current = plot;
-
-        // Render the plot
-        if (vizElement) {
-          window.Bokeh.Plotting.show(plot, vizElement);
-          log(`Visualization rendered with theme (paper: ${paperColor})`);
-        }
-      } catch (error) {
-        console.error('[tivi-viz] Failed to create plot:', error);
-      }
+      particles.push({ x: z0 * sigma, y: z1 * sigma });
     }
 
-    createPlot();
-  }, [bokehReady, theme.palette.background.paper]);
+    return particles;
+  }, [particleCount]);
 
-
-  // Update visualization by polling audioLevelRef (no React re-renders)
   useEffect(() => {
-    if (!sourceRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    let animationFrameId: number;
-
-    const updateVisualization = () => {
-      if (!sourceRef.current) return;
-
-      try {
-        // Read current audio level from ref
-        const audioLevel = audioLevelRef.current;
-
-        // Generate new gaussian data based on audio level
-        const spread = audioLevel + VIZ_S;
-        const new_data = x_y_gaussian(VIZ_N, spread, spread);
-
-        // Stream new data to the plot
-        sourceRef.current.stream(new_data, VIZ_N);
-      } catch (error) {
-        // Silently ignore streaming errors (can happen during rapid updates)
+    if (paused) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
+      return;
+    }
 
-      // Continue animation loop
-      animationFrameId = requestAnimationFrame(updateVisualization);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const backgroundColor = theme.palette.background.paper;
+
+    const render = () => {
+      // Clear canvas with theme background
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // Read current audio level from ref (no React re-renders)
+      const audioLevel = audioLevelRef.current;
+
+      // Generate particles based on audio level
+      const sigma = audioLevel + VIZ_S;
+      const particles = generateParticles(sigma);
+
+      // Draw particles
+      ctx.fillStyle = particleColor;
+      particles.forEach((p) => {
+        // Normalize from [-1, 1] to canvas coordinates
+        const x = (p.x + 1) * width / 2;
+        const y = (p.y + 1) * height / 2;
+
+        // Only draw particles within canvas bounds
+        if (x >= 0 && x <= width && y >= 0 && y <= height) {
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      });
+
+      animationFrameRef.current = requestAnimationFrame(render);
     };
 
-    updateVisualization();
+    render();
 
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [audioLevelRef]);
+  }, [audioLevelRef, paused, width, height, particleColor, generateParticles, theme.palette.background.paper]);
 
   return (
     <Box
-      id="tivi-viz"
       sx={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: 120,
+        minHeight: height + 20,
         background: theme.palette.background.paper,
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{ background: theme.palette.background.paper }}
+      />
+    </Box>
   );
 };
 

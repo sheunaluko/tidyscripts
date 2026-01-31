@@ -46,11 +46,11 @@ export interface UseTiviOptions {
   negativeSpeechThreshold?: number;
 
   /**
-   * Minimum speech duration in ms to trigger transcription
-   * Prevents false positives from short noises
-   * Default: 400
+   * Minimum consecutive ms above threshold before triggering speech-start
+   * Prevents false positives from brief spikes
+   * Default: 150
    */
-  minSpeechMs?: number;
+  minSpeechStartMs?: number;
 
   /**
    * Enable verbose logging for debugging
@@ -89,6 +89,11 @@ export interface UseTiviReturn {
    * Current audio power level (0-1) for visualization (as ref to avoid re-renders)
    */
   audioLevelRef: MutableRefObject<number>;
+
+  /**
+   * Current VAD speech probability (0-1) for visualization (as ref to avoid re-renders)
+   */
+  speechProbRef: MutableRefObject<number>;
 
   /**
    * Error message, if any

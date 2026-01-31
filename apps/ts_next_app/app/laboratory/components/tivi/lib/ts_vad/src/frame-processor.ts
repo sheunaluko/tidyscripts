@@ -26,11 +26,11 @@ function concatArrays(arrays: Float32Array[]): Float32Array {
 export class FrameProcessor {
   private redemptionFrames: number;
   private preSpeechPadFrames: number;
-  private minSpeechFrames: number;
+  private minSpeechStartFrames: number;
   private speaking: boolean = false;
   private audioBuffer: { frame: Float32Array; isSpeech: boolean }[] = [];
   private redemptionCounter: number = 0;
-  private speechFrameCount: number = 0;
+  private consecutiveSpeechFrames: number = 0;
   private active: boolean = false;
 
   constructor(
@@ -39,7 +39,7 @@ export class FrameProcessor {
   ) {
     this.redemptionFrames = Math.floor(options.redemptionMs / msPerFrame);
     this.preSpeechPadFrames = Math.floor(options.preSpeechPadMs / msPerFrame);
-    this.minSpeechFrames = Math.floor(options.minSpeechMs / msPerFrame);
+    this.minSpeechStartFrames = Math.floor(options.minSpeechStartMs / msPerFrame);
     this.reset();
   }
 
@@ -50,7 +50,7 @@ export class FrameProcessor {
     this.options = { ...this.options, ...update };
     this.redemptionFrames = Math.floor(this.options.redemptionMs / this.msPerFrame);
     this.preSpeechPadFrames = Math.floor(this.options.preSpeechPadMs / this.msPerFrame);
-    this.minSpeechFrames = Math.floor(this.options.minSpeechMs / this.msPerFrame);
+    this.minSpeechStartFrames = Math.floor(this.options.minSpeechStartMs / this.msPerFrame);
   }
 
   /**
@@ -60,7 +60,7 @@ export class FrameProcessor {
     this.speaking = false;
     this.audioBuffer = [];
     this.redemptionCounter = 0;
-    this.speechFrameCount = 0;
+    this.consecutiveSpeechFrames = 0;
   }
 
   /**
@@ -71,14 +71,8 @@ export class FrameProcessor {
     const events: FrameProcessorEvent[] = [];
 
     if (this.speaking) {
-      const speechFrameCount = this.audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? acc + 1 : acc;
-      }, 0);
-
-      if (speechFrameCount >= this.minSpeechFrames) {
-        const audio = concatArrays(this.audioBuffer.map((item) => item.frame));
-        events.push({ type: 'speech-end', audio });
-      }
+      const audio = concatArrays(this.audioBuffer.map((item) => item.frame));
+      events.push({ type: 'speech-end', audio });
     }
 
     this.reset();
@@ -116,12 +110,14 @@ export class FrameProcessor {
 
     // Update counters
     if (isSpeech) {
-      this.speechFrameCount++;
+      this.consecutiveSpeechFrames++;
       this.redemptionCounter = 0;
+    } else {
+      this.consecutiveSpeechFrames = 0;
     }
 
-    // Detect speech start
-    if (isSpeech && !this.speaking) {
+    // Detect speech start - requires minSpeechStartFrames consecutive frames above threshold
+    if (!this.speaking && this.consecutiveSpeechFrames >= this.minSpeechStartFrames) {
       this.speaking = true;
       events.push({ type: 'speech-start' });
     }
@@ -133,22 +129,13 @@ export class FrameProcessor {
       ++this.redemptionCounter >= this.redemptionFrames
     ) {
       this.redemptionCounter = 0;
-      this.speechFrameCount = 0;
       this.speaking = false;
 
       const audioBuffer = this.audioBuffer;
       this.audioBuffer = [];
 
-      // Check if speech segment meets minimum duration
-      const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? acc + 1 : acc;
-      }, 0);
-
-      if (speechFrameCount >= this.minSpeechFrames) {
-        const audio = concatArrays(audioBuffer.map((item) => item.frame));
-        events.push({ type: 'speech-end', audio });
-      }
-      // Note: Misfire event omitted - can add if needed
+      const audio = concatArrays(audioBuffer.map((item) => item.frame));
+      events.push({ type: 'speech-end', audio });
     }
 
     // Maintain pre-speech buffer when not speaking
@@ -156,7 +143,6 @@ export class FrameProcessor {
       while (this.audioBuffer.length > this.preSpeechPadFrames) {
         this.audioBuffer.shift();
       }
-      this.speechFrameCount = 0;
     }
 
     return events;

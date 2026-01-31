@@ -31,6 +31,7 @@ import type { TiviProps } from './lib';
 import * as tsw from 'tidyscripts_web';
 import { VizComponent } from './VizComponent';
 import { VoiceSelector } from './VoiceSelector';
+import { VADMonitor } from './VADMonitor';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
@@ -60,7 +61,7 @@ export const Tivi: React.FC<TiviProps> = ({
   onError,
   positiveSpeechThreshold: propPositiveThreshold,
   negativeSpeechThreshold: propNegativeThreshold,
-  minSpeechMs: propMinSpeechMs,
+  minSpeechStartMs: propMinSpeechStartMs,
   language,
 }) => {
   const theme = useTheme();
@@ -77,7 +78,7 @@ export const Tivi: React.FC<TiviProps> = ({
   const [vadParams, setVadParams] = useState({
     positiveSpeechThreshold: propPositiveThreshold ?? 0.7,
     negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
-    minSpeechMs: propMinSpeechMs ?? 400,
+    minSpeechStartMs: propMinSpeechStartMs ?? 150,
     verbose: false,
   });
 
@@ -88,7 +89,19 @@ export const Tivi: React.FC<TiviProps> = ({
       try {
         const parsed = JSON.parse(stored);
         log(`Loaded VAD params from localStorage: ${stored}`);
-        setVadParams(parsed);
+        // Migrate old minSpeechMs to minSpeechStartMs if needed
+        const migrated = {
+          positiveSpeechThreshold: parsed.positiveSpeechThreshold ?? 0.7,
+          negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? 0.45,
+          minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? 150,
+          verbose: parsed.verbose ?? false,
+        };
+        setVadParams(migrated);
+        // Save migrated params back to localStorage
+        if (!parsed.minSpeechStartMs && parsed.minSpeechMs) {
+          localStorage.setItem('tivi-vad-params', JSON.stringify(migrated));
+          log('Migrated localStorage: minSpeechMs -> minSpeechStartMs');
+        }
       } catch (error) {
         console.error('[Tivi] Failed to parse stored VAD params:', error);
       }
@@ -111,7 +124,7 @@ export const Tivi: React.FC<TiviProps> = ({
     const defaults = {
       positiveSpeechThreshold: 0.7,
       negativeSpeechThreshold: 0.45,
-      minSpeechMs: 400,
+      minSpeechStartMs: 150,
       verbose: false,
     };
     log('Restoring VAD defaults');
@@ -153,7 +166,7 @@ export const Tivi: React.FC<TiviProps> = ({
   const voice = useTivi({
     positiveSpeechThreshold: vadParams.positiveSpeechThreshold,
     negativeSpeechThreshold: vadParams.negativeSpeechThreshold,
-    minSpeechMs: vadParams.minSpeechMs,
+    minSpeechStartMs: vadParams.minSpeechStartMs,
     verbose: vadParams.verbose,
     language,
     onTranscription: handleTranscription,
@@ -253,7 +266,7 @@ export const Tivi: React.FC<TiviProps> = ({
 
             {/* Audio Level Visualization */}
             <Box>
-              <VizComponent audioLevelRef={voice.audioLevelRef} />
+              <VizComponent audioLevelRef={voice.audioLevelRef} paused={!voice.isListening} />
             </Box>
           </Stack>
         </Box>
@@ -304,6 +317,39 @@ export const Tivi: React.FC<TiviProps> = ({
             }}
           >
             <VoiceSelector />
+          </AccordionDetails>
+        </Accordion>
+
+        {/* VAD Monitor */}
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              background: alpha(theme.palette.background.default, 0.3),
+              '&:hover': {
+                background: alpha(theme.palette.background.default, 0.5),
+              },
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1}>
+              <MicIcon color="action" fontSize="small" />
+              <Typography variant="body2" fontWeight={500}>
+                VAD Monitor
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{
+              background: alpha(theme.palette.background.default, 0.1),
+              pt: 2,
+            }}
+          >
+            <VADMonitor
+              speechProbRef={voice.speechProbRef}
+              threshold={vadParams.positiveSpeechThreshold}
+              minSpeechStartMs={vadParams.minSpeechStartMs}
+              paused={!voice.isListening}
+            />
           </AccordionDetails>
         </Accordion>
 
@@ -453,20 +499,20 @@ export const Tivi: React.FC<TiviProps> = ({
                   />
                 </Box>
 
-                {/* Minimum Speech Duration */}
+                {/* Minimum Speech Start Duration */}
                 <Box>
                   <Typography variant="body2" gutterBottom>
-                    Min Speech Duration: {vadParams.minSpeechMs}ms
+                    Min Speech Start: {vadParams.minSpeechStartMs}ms
                   </Typography>
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                    Minimum duration to avoid false positives (misfires)
+                    Consecutive ms above threshold before triggering (prevents false starts)
                   </Typography>
                   <Slider
-                    value={vadParams.minSpeechMs}
-                    onChange={(_, value) => updateVadParam('minSpeechMs', value as number)}
-                    min={100}
-                    max={1500}
-                    step={100}
+                    value={vadParams.minSpeechStartMs}
+                    onChange={(_, value) => updateVadParam('minSpeechStartMs', value as number)}
+                    min={32}
+                    max={500}
+                    step={32}
                     marks
                     valueLabelDisplay="auto"
                     disabled={voice.isListening}
@@ -497,7 +543,7 @@ export const Tivi: React.FC<TiviProps> = ({
                   disabled={voice.isListening}
                   sx={{ mt: 1 }}
                 >
-                  Restore Defaults (0.7 / 0.45 / 400ms)
+                  Restore Defaults (0.7 / 0.45 / 150ms)
                 </Button>
 
                 <Alert severity="info" sx={{ mt: 2 }}>

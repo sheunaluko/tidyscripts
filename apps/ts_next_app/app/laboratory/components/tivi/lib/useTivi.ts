@@ -24,7 +24,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     language = 'en-US',
     positiveSpeechThreshold = 0.8,
     negativeSpeechThreshold = 0.6,
-    minSpeechMs = 500,
+    minSpeechStartMs = 150,
     verbose = false,
   } = options;
 
@@ -36,6 +36,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const [error, setError] = useState<string | null>(null);
   // Use ref instead of state to avoid triggering React reconciliation at 50 FPS
   const audioLevelRef = useRef(0);
+  const speechProbRef = useRef(0);
   const [isConnected, setIsConnected] = useState(false);
 
   // Refs
@@ -206,7 +207,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setError(null);
 
       // Log the VAD parameters being used
-      log(`Starting VAD with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeech=${minSpeechMs}ms`);
+      log(`Starting VAD with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeechStart=${minSpeechStartMs}ms`);
 
       // Enable VAD and get audio components
       const { vad, audioContext, analyserNode, stream } = await enable_vad({
@@ -262,8 +263,11 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         },
 
         onFrameProcessed: (prob, frame) => {
-          if (verbose && isMountedRef.current) {
-            log(`VAD probability: ${prob}`);
+          if (isMountedRef.current) {
+            speechProbRef.current = prob;
+            if (verbose) {
+              log(`VAD probability: ${prob}`);
+            }
           }
         },
 
@@ -278,7 +282,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         negativeSpeechThreshold,
         redemptionMs: 1400,
         preSpeechPadMs: 2000,
-        minSpeechMs,
+        minSpeechStartMs,
       });
 
       vadRef.current = vad;
@@ -300,7 +304,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setError(errorMsg);
       onError?.(err instanceof Error ? err : new Error(errorMsg));
     }
-  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechMs, startPowerMonitoring]);
+  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechStartMs, startPowerMonitoring]);
 
   const stopListening = useCallback(() => {
     log('Stopping listening...');
@@ -362,6 +366,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     transcription,
     interimResult,
     audioLevelRef, // Changed from audioLevel state to ref
+    speechProbRef, // VAD speech probability ref
     error,
 
     // Actions

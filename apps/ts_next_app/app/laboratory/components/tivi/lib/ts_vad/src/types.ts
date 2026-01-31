@@ -13,7 +13,7 @@ export interface TSVADOptions {
   negativeSpeechThreshold: number;
   redemptionMs: number;
   preSpeechPadMs: number;
-  minSpeechMs: number;
+  minSpeechStartMs: number;
 
   // Optional event handlers (alternative to using .on() method)
   onSpeechStart?: () => void;
@@ -28,7 +28,7 @@ export interface TSVADPartialOptions {
   negativeSpeechThreshold?: number;
   redemptionMs?: number;
   preSpeechPadMs?: number;
-  minSpeechMs?: number;
+  minSpeechStartMs?: number;
 }
 
 // Default configuration values
@@ -37,7 +37,7 @@ export const DEFAULT_OPTIONS: Omit<TSVADOptions, 'silero'> = {
   negativeSpeechThreshold: 0.45,
   redemptionMs: 1400,
   preSpeechPadMs: 800,
-  minSpeechMs: 400,
+  minSpeechStartMs: 150,
 };
 
 // Speech probability result from model
@@ -79,7 +79,7 @@ export interface FrameProcessorOptions {
   negativeSpeechThreshold: number;
   redemptionMs: number;
   preSpeechPadMs: number;
-  minSpeechMs: number;
+  minSpeechStartMs: number;
 }
 
 // Frame processor event types
