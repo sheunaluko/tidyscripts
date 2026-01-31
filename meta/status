@@ -12,6 +12,26 @@ Plan: meta/plans/reflections_client.md (CQRS read-side for Insights analytics)
 
 Todo
 
+[ ] SmartChats MVP
+   AUDIO 
+  - Add a debug panel showing Voice Activity Detection (VAD) parameters (the internals to udnerstand triggering) 
+  - Improve start/stop behavior: auto-listening mode unless the system is speaking then default to VAD 
+  - Implement debouncing to merge or cancel rapid back-to-back inputs
+  - Implement debouncing to merge or cancel rapid back-to-back inputs
+
+   DISPLAY
+  - fix the display of function calls (the react object inspector)
+
+   SYSTEM 
+  - Update the declarative knowledge base
+  - Refine the initialization sequence and return-handling logic
+     - Obtain clear examples from the Insights API
+
+   FREEDOM
+  - Add a paywall and deploy on SmartChats.AI
+   
+   
+
 [x] Observability - Phase 1 Complete
    [x] InsightsClient (Write-side: event capture with batching)
    [x] Meditation App (Test implementation + reference)
@@ -71,6 +91,7 @@ Todo
 
 [ ] ability to store an entire session and then re-load it, or switch llm
 providers in middle
+
 
 
 

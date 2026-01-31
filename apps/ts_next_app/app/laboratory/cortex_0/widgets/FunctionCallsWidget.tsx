@@ -3,7 +3,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Box, Chip, Typography, Divider, useTheme, CircularProgress } from '@mui/material';
 import { ObjectInspector } from 'react-inspector';
-import { List, useDynamicRowHeight } from 'react-window';
 import WidgetItem from '../WidgetItem';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -33,19 +32,26 @@ const FunctionCallsWidget: React.FC<FunctionCallsWidgetProps> = ({
   calls = []
 }) => {
   const theme = useTheme();
-  const listRef = useRef<any>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Use dynamic row heights since function calls vary in size
-  const rowHeight = useDynamicRowHeight({
-    defaultRowHeight: 200,
-    key: calls.length // Reset heights when calls change
-  });
-
+  // Auto-scroll to bottom when calls change
   useEffect(() => {
-    if (listRef.current && calls.length > 0) {
-      listRef.current.scrollToRow({ index: calls.length - 1, align: 'end' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
-  }, [calls.length]);
+  }, [calls]);
+
+  const widget_scroll_styles = {
+    overflowY: 'auto',
+    maxHeight: '95%',
+    scrollbarWidth: 'none',
+    '&::-webkit-scrollbar': {
+      display: 'none',
+    }
+  };
 
   const getStatusIcon = (status?: string) => {
     switch (status) {
@@ -71,129 +77,6 @@ const FunctionCallsWidget: React.FC<FunctionCallsWidgetProps> = ({
     });
   };
 
-  const FunctionCallRow = ({
-    index,
-    style,
-    calls: callsData,
-    getStatusIcon: getIconFn,
-    formatTime: formatTimeFn,
-    theme: themeData
-  }: {
-    index: number;
-    style: React.CSSProperties;
-    calls: FunctionCallEvent[];
-    getStatusIcon: (status?: string) => React.ReactNode;
-    formatTime: (timestamp: number) => string;
-    theme: any;
-  }) => {
-    const call = callsData[index];
-
-    return (
-      <Box
-        style={style}
-        sx={{
-          px: 1,
-          py: 1
-        }}
-      >
-        <Box
-          sx={{
-            p: 2,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-            bgcolor: call.status === 'error' ? 'error.dark' : 'background.paper'
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            {getIconFn(call.status)}
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontFamily: 'monospace',
-                fontWeight: 'bold',
-                color: call.status === 'error' ? 'error.contrastText' : 'primary.main'
-              }}
-            >
-              {call.name}
-            </Typography>
-            <Chip label={`#${index + 1}`} size="small" variant="outlined" />
-            {call.duration !== undefined && (
-              <Chip label={`${call.duration}ms`} size="small" color="success" />
-            )}
-          </Box>
-
-          <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>
-            {formatTimeFn(call.timestamp)}
-          </Typography>
-
-          <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1 }}>
-            Parameters:
-          </Typography>
-          <Box sx={{ ml: 1, mt: 0.5 }}>
-            <ObjectInspector
-              theme={themeData.palette.mode === "dark" ? "chromeDark" : "chromeLight"}
-              data={call.args[0] || {}}
-              expandLevel={1}
-            />
-          </Box>
-
-          {call.result !== undefined && !call.error && (
-            <>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1 }}>
-                Result:
-              </Typography>
-              <Box sx={{ ml: 1, mt: 0.5 }}>
-                <ObjectInspector
-                  theme={themeData.palette.mode === "dark" ? "chromeDark" : "chromeLight"}
-                  data={call.result}
-                  expandLevel={1}
-                />
-              </Box>
-            </>
-          )}
-
-          {call.error && (
-            <>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1, color: 'error.contrastText' }}>
-                Error:
-              </Typography>
-              <Box
-                sx={{
-                  ml: 1,
-                  mt: 0.5,
-                  p: 1,
-                  bgcolor: 'error.main',
-                  color: 'error.contrastText',
-                  borderRadius: 0.5,
-                  fontFamily: 'monospace',
-                  fontSize: '0.75rem'
-                }}
-              >
-                {call.error}
-              </Box>
-            </>
-          )}
-        </Box>
-      </Box>
-    );
-  };
-
-  if (calls.length === 0) {
-    return (
-      <WidgetItem
-        title="Function Calls"
-        fullscreen={fullscreen}
-        onFocus={onFocus}
-        onClose={onClose}
-      >
-        <Box sx={{ p: 2, color: 'text.secondary', fontStyle: 'italic' }}>
-          No function calls yet
-        </Box>
-      </WidgetItem>
-    );
-  }
-
   return (
     <WidgetItem
       title="Function Calls"
@@ -201,19 +84,114 @@ const FunctionCallsWidget: React.FC<FunctionCallsWidgetProps> = ({
       onFocus={onFocus}
       onClose={onClose}
     >
-      <Box id="function_calls_display">
-        <List
-          listRef={listRef}
-          rowComponent={FunctionCallRow}
-          rowCount={calls.length}
-          rowHeight={rowHeight}
-          rowProps={{ calls, getStatusIcon, formatTime, theme } as any}
-          style={{
-            height: fullscreen ? window.innerHeight - 150 : 280,
-            width: '100%',
-            scrollbarWidth: 'none'
-          }}
-        />
+      <Box id="function_calls_display" ref={scrollContainerRef} sx={widget_scroll_styles}>
+        {calls.length === 0 ? (
+          <Box sx={{ p: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+            No function calls yet
+          </Box>
+        ) : (
+          calls.map((call, index) => (
+            <Box
+              key={call.callId}
+              sx={{
+                mb: 2,
+                p: 2,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+                bgcolor: call.status === 'error' ? 'error.dark' : 'background.paper'
+              }}
+            >
+              {/* Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                {getStatusIcon(call.status)}
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
+                    color: call.status === 'error' ? 'error.contrastText' : 'primary.main'
+                  }}
+                >
+                  {call.name}
+                </Typography>
+                <Chip
+                  label={`#${index + 1}`}
+                  size="small"
+                  variant="outlined"
+                />
+                {call.duration !== undefined && (
+                  <Chip
+                    label={`${call.duration}ms`}
+                    size="small"
+                    color="success"
+                  />
+                )}
+              </Box>
+
+              {/* Timestamp */}
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', mb: 1, color: 'text.secondary' }}
+              >
+                {formatTime(call.timestamp)}
+              </Typography>
+
+              {/* Parameters */}
+              <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1 }}>
+                Parameters:
+              </Typography>
+              <Box sx={{ ml: 1, mt: 0.5 }}>
+                <ObjectInspector
+                  theme={theme.palette.mode === "dark" ? "chromeDark" : "chromeLight"}
+                  data={call.args[0] || {}}
+                  expandLevel={1}
+                />
+              </Box>
+
+              {/* Result */}
+              {call.result !== undefined && !call.error && (
+                <>
+                  <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1 }}>
+                    Result:
+                  </Typography>
+                  <Box sx={{ ml: 1, mt: 0.5 }}>
+                    <ObjectInspector
+                      theme={theme.palette.mode === "dark" ? "chromeDark" : "chromeLight"}
+                      data={call.result}
+                      expandLevel={1}
+                    />
+                  </Box>
+                </>
+              )}
+
+              {/* Error */}
+              {call.error && (
+                <>
+                  <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mt: 1, color: 'error.contrastText' }}>
+                    Error:
+                  </Typography>
+                  <Box
+                    sx={{
+                      ml: 1,
+                      mt: 0.5,
+                      p: 1,
+                      bgcolor: 'error.main',
+                      color: 'error.contrastText',
+                      borderRadius: 0.5,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {call.error}
+                  </Box>
+                </>
+              )}
+
+              {index < calls.length - 1 && <Divider sx={{ mt: 2 }} />}
+            </Box>
+          ))
+        )}
       </Box>
     </WidgetItem>
   );

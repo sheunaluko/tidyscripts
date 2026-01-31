@@ -252,7 +252,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <MenuItem value="gpt-4o">GPT-4o</MenuItem>
           <MenuItem value="gpt-4o-mini-2024-07-18">GPT-4o Mini</MenuItem>
-          <MenuItem value="o4-mini">O4-Mini</MenuItem>
+          <MenuItem value="o4-mini">o4-Mini</MenuItem>
           <MenuItem value="chatgpt-4o-latest">ChatGPT-4o</MenuItem>
           <MenuItem value="gemini-3-flash-preview">Gemini Flash</MenuItem>
         </Select>
