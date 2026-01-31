@@ -2,6 +2,8 @@
  * TypeScript type definitions for tivi component
  */
 
+import { MutableRefObject } from 'react';
+
 export interface UseTiviOptions {
   /**
    * Callback when speech is transcribed (final result)
@@ -84,9 +86,9 @@ export interface UseTiviReturn {
   interimResult: string;
 
   /**
-   * Current audio power level (0-1) for visualization
+   * Current audio power level (0-1) for visualization (as ref to avoid re-renders)
    */
-  audioLevel: number;
+  audioLevelRef: MutableRefObject<number>;
 
   /**
    * Error message, if any
