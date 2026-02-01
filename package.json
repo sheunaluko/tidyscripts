@@ -25,6 +25,7 @@
     "turbo": "^2.3.4",
     "typedoc": "^0.25.7"
   },
+  "license": "PolyForm-Noncommercial-1.0.0", 
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
     "@vercel/analytics": "^1.1.2",

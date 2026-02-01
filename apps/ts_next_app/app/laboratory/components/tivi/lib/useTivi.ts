@@ -26,6 +26,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     negativeSpeechThreshold = 0.6,
     minSpeechStartMs = 150,
     verbose = false,
+    mode = 'guarded',
+    powerThreshold = 0.01,
   } = options;
 
   // State
@@ -47,6 +49,19 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const recognitionActiveRef = useRef(false);
   const isMountedRef = useRef(true);
   const pauseRecognitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const modeRef = useRef(mode);
+  const isSpeakingRef = useRef(false);
+  const isListeningRef = useRef(false);
+  const powerThresholdRef = useRef(powerThreshold);
+
+  // Keep refs in sync with props/state
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    powerThresholdRef.current = powerThreshold;
+  }, [powerThreshold]);
 
   // Track mounted state and pre-load TTS voices
   useEffect(() => {
@@ -150,6 +165,16 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         onEnd: () => {
           if (!isMountedRef.current) return;
           log('Speech recognition ended');
+
+          // Continuous mode: auto-restart recognition
+          if (modeRef.current === 'continuous' && !isSpeakingRef.current && isListeningRef.current) {
+            log('Continuous mode: restarting recognition');
+            setTimeout(() => {
+              if (isMountedRef.current && recognitionRef.current && !isSpeakingRef.current && isListeningRef.current) {
+                recognitionRef.current.start();
+              }
+            }, 100);
+          }
         }
       });
 
@@ -186,6 +211,14 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       // Update ref directly (no React state = no re-renders = no Firebase triggering)
       audioLevelRef.current = rms;
 
+      // Responsive mode: trigger recognition when power exceeds threshold
+      if (modeRef.current === 'responsive' && !isSpeakingRef.current && isListeningRef.current) {
+        if (rms > powerThresholdRef.current && recognitionRef.current && !recognitionRef.current.isRunning()) {
+          log('Power threshold exceeded, starting recognition');
+          recognitionRef.current.start();
+        }
+      }
+
       // Optionally call callback for external consumers (throttled)
       const now = Date.now();
       if (now - lastUpdate >= THROTTLE_MS) {
@@ -203,11 +236,11 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   // Public API
   const startListening = useCallback(async () => {
     try {
-      log('Starting listening...');
+      log(`Starting listening in '${mode}' mode...`);
       setError(null);
 
       // Log the VAD parameters being used
-      log(`Starting VAD with params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeechStart=${minSpeechStartMs}ms`);
+      log(`VAD params: pos=${positiveSpeechThreshold}, neg=${negativeSpeechThreshold}, minSpeechStart=${minSpeechStartMs}ms`);
 
       // Enable VAD and get audio components
       const { vad, audioContext, analyserNode, stream } = await enable_vad({
@@ -222,7 +255,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
             log('Cancelled pending recognition pause (user speaking again)');
           }
 
-          // If TTS is speaking, interrupt it
+          // If TTS is speaking, interrupt it (all modes)
           if (tts.isSpeaking()) {
             log('Interrupting TTS');
             tts.cancelSpeech();
@@ -236,10 +269,12 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
             return;
           }
 
-          // If TTS is NOT speaking AND speech recognition is not active, start it
-          if (recognitionRef.current && !recognitionRef.current.isRunning()) {
-            log('Starting speech recognition (VAD-triggered)');
-            recognitionRef.current.start();
+          // Guarded mode only: Start recognition on VAD speech detection
+          if (modeRef.current === 'guarded') {
+            if (recognitionRef.current && !recognitionRef.current.isRunning()) {
+              log('Starting speech recognition (VAD-triggered, guarded mode)');
+              recognitionRef.current.start();
+            }
           }
         },
 
@@ -247,19 +282,22 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
           if (!isMountedRef.current) return;
           log(`VAD detected speech end, audio length: ${audio.length}`);
 
-          // Clear any existing timeout first
-          if (pauseRecognitionTimeoutRef.current) {
-            clearTimeout(pauseRecognitionTimeoutRef.current);
-          }
-
-          // Wait 2 seconds, then pause speech recognition
-          pauseRecognitionTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current && recognitionRef.current?.isRunning()) {
-              log('Pausing speech recognition after speech end');
-              recognitionRef.current.pause();
-              pauseRecognitionTimeoutRef.current = null;
+          // Guarded mode only: Pause recognition after delay
+          if (modeRef.current === 'guarded') {
+            // Clear any existing timeout first
+            if (pauseRecognitionTimeoutRef.current) {
+              clearTimeout(pauseRecognitionTimeoutRef.current);
             }
-          }, 2000);
+
+            // Wait 2 seconds, then pause speech recognition
+            pauseRecognitionTimeoutRef.current = setTimeout(() => {
+              if (isMountedRef.current && recognitionRef.current?.isRunning()) {
+                log('Pausing speech recognition after speech end (guarded mode)');
+                recognitionRef.current.pause();
+                pauseRecognitionTimeoutRef.current = null;
+              }
+            }, 2000);
+          }
         },
 
         onFrameProcessed: (prob, frame) => {
@@ -288,12 +326,27 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       vadRef.current = vad;
       analyserRef.current = analyserNode;
       setIsConnected(true);
+      isListeningRef.current = true;
 
       // Start power monitoring using VAD's analyser
       startPowerMonitoring(analyserNode);
 
-      // Don't start speech recognition here - let VAD trigger it
-      // Speech recognition will be started on VAD onSpeechStart
+      // Mode-specific initialization
+      if (mode === 'guarded') {
+        // Guarded mode: VAD runs continuously, triggers recognition
+        log('Guarded mode: VAD will trigger recognition');
+      } else if (mode === 'responsive') {
+        // Responsive mode: Pause VAD (only used during TTS), power monitoring triggers recognition
+        log('Responsive mode: Power monitoring will trigger recognition');
+        vad.pause();
+      } else if (mode === 'continuous') {
+        // Continuous mode: Pause VAD (only used during TTS), start recognition immediately
+        log('Continuous mode: Starting recognition immediately');
+        vad.pause();
+        if (recognitionRef.current) {
+          recognitionRef.current.start();
+        }
+      }
 
       setIsListening(true);
       log('Listening started');
@@ -304,10 +357,12 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setError(errorMsg);
       onError?.(err instanceof Error ? err : new Error(errorMsg));
     }
-  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechStartMs, startPowerMonitoring]);
+  }, [onError, onInterrupt, language, verbose, positiveSpeechThreshold, negativeSpeechThreshold, minSpeechStartMs, mode, startPowerMonitoring]);
 
   const stopListening = useCallback(() => {
     log('Stopping listening...');
+
+    isListeningRef.current = false;
 
     // Stop power monitoring
     if (animationFrameRef.current) {
@@ -335,10 +390,38 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
 
   const speak = useCallback(async (text: string, rate: number = 1.0) => {
     setIsSpeaking(true);
+    isSpeakingRef.current = true;
+
+    // Pause recognition during TTS
+    recognitionRef.current?.pause();
+
+    // For responsive/continuous modes: Resume VAD for interrupt detection
+    if (modeRef.current !== 'guarded' && vadRef.current) {
+      log('Starting VAD for TTS interrupt detection');
+      vadRef.current.start();
+    }
+
     try {
       await tts.speakWithRate(text, rate);
     } finally {
       setIsSpeaking(false);
+      isSpeakingRef.current = false;
+
+      // For responsive/continuous modes: Pause VAD again
+      if (modeRef.current !== 'guarded' && vadRef.current) {
+        log('Pausing VAD after TTS');
+        vadRef.current.pause();
+      }
+
+      // Resume recognition based on mode
+      if (isListeningRef.current && recognitionRef.current) {
+        if (modeRef.current === 'continuous') {
+          log('Continuous mode: Restarting recognition after TTS');
+          recognitionRef.current.start();
+        }
+        // Responsive mode: Let power monitoring trigger recognition
+        // Guarded mode: Let VAD trigger recognition
+      }
     }
   }, []);
 
@@ -368,13 +451,14 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     audioLevelRef, // Changed from audioLevel state to ref
     speechProbRef, // VAD speech probability ref
     error,
+    mode, // Current recognition mode
 
     // Actions
     startListening,
     stopListening,
     speak,
     clearTranscription,
-    cancelSpeech ,
+    cancelSpeech,
     pauseSpeechRecognition
   };
 }

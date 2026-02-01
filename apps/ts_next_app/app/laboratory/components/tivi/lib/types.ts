@@ -4,6 +4,14 @@
 
 import { MutableRefObject } from 'react';
 
+/**
+ * Recognition modes for TIVI:
+ * - 'guarded': VAD triggers recognition (may miss first word, but filters noise)
+ * - 'responsive': Power threshold triggers recognition (fast, low latency)
+ * - 'continuous': Recognition auto-restarts (always listening, uses more resources)
+ */
+export type TiviMode = 'guarded' | 'responsive' | 'continuous';
+
 export interface UseTiviOptions {
   /**
    * Callback when speech is transcribed (final result)
@@ -57,6 +65,19 @@ export interface UseTiviOptions {
    * Default: false
    */
   verbose?: boolean;
+
+  /**
+   * Recognition mode
+   * Default: 'guarded'
+   */
+  mode?: TiviMode;
+
+  /**
+   * Audio power threshold for 'responsive' mode (0-1)
+   * Recognition starts when audio power exceeds this level
+   * Default: 0.01
+   */
+  powerThreshold?: number;
 }
 
 export interface UseTiviReturn {
@@ -99,6 +120,11 @@ export interface UseTiviReturn {
    * Error message, if any
    */
   error: string | null;
+
+  /**
+   * Current recognition mode
+   */
+  mode: TiviMode;
 
   /**
    * Start listening for speech

@@ -18,6 +18,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MicIcon from '@mui/icons-material/Mic';
@@ -27,7 +29,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useTivi } from './lib';
-import type { TiviProps } from './lib';
+import type { TiviProps, TiviMode } from './lib';
 import * as tsw from 'tidyscripts_web';
 import { VizComponent } from './VizComponent';
 import { VoiceSelector } from './VoiceSelector';
@@ -80,6 +82,8 @@ export const Tivi: React.FC<TiviProps> = ({
     negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
     minSpeechStartMs: propMinSpeechStartMs ?? 150,
     verbose: false,
+    mode: 'guarded' as TiviMode,
+    powerThreshold: 0.01,
   });
 
   // Load from localStorage after mount (client-side only)
@@ -95,6 +99,8 @@ export const Tivi: React.FC<TiviProps> = ({
           negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? 0.45,
           minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? 150,
           verbose: parsed.verbose ?? false,
+          mode: parsed.mode ?? 'guarded',
+          powerThreshold: parsed.powerThreshold ?? 0.01,
         };
         setVadParams(migrated);
         // Save migrated params back to localStorage
@@ -109,7 +115,7 @@ export const Tivi: React.FC<TiviProps> = ({
   }, []);
 
   // Update VAD parameter and save to localStorage
-  const updateVadParam = useCallback((key: keyof typeof vadParams, value: number | boolean) => {
+  const updateVadParam = useCallback((key: keyof typeof vadParams, value: number | boolean | TiviMode) => {
     setVadParams((prev) => {
       const updated = { ...prev, [key]: value };
       const stringified = JSON.stringify(updated);
@@ -126,6 +132,8 @@ export const Tivi: React.FC<TiviProps> = ({
       negativeSpeechThreshold: 0.45,
       minSpeechStartMs: 150,
       verbose: false,
+      mode: 'guarded' as TiviMode,
+      powerThreshold: 0.01,
     };
     log('Restoring VAD defaults');
     localStorage.setItem('tivi-vad-params', JSON.stringify(defaults));
@@ -168,6 +176,8 @@ export const Tivi: React.FC<TiviProps> = ({
     negativeSpeechThreshold: vadParams.negativeSpeechThreshold,
     minSpeechStartMs: vadParams.minSpeechStartMs,
     verbose: vadParams.verbose,
+    mode: vadParams.mode,
+    powerThreshold: vadParams.powerThreshold,
     language,
     onTranscription: handleTranscription,
     onInterrupt: handleInterrupt,
@@ -454,6 +464,45 @@ export const Tivi: React.FC<TiviProps> = ({
                 <Typography variant="subtitle2" color="primary">
                   Voice Activity Detection Parameters
                 </Typography>
+
+                {/* Recognition Mode */}
+                <Box>
+                  <Typography variant="body2" gutterBottom>
+                    Recognition Mode: {vadParams.mode}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                    guarded = VAD-triggered | responsive = power-triggered | continuous = always on
+                  </Typography>
+                  <Select
+                    value={vadParams.mode}
+                    onChange={(e) => updateVadParam('mode', e.target.value as TiviMode)}
+                    size="small"
+                    fullWidth
+                    disabled={voice.isListening}
+                  >
+                    <MenuItem value="guarded">Guarded (VAD-triggered)</MenuItem>
+                    <MenuItem value="responsive">Responsive (power-triggered)</MenuItem>
+                    <MenuItem value="continuous">Continuous (always listening)</MenuItem>
+                  </Select>
+                </Box>
+
+                {/* Power Threshold (only for responsive mode) */}
+                {vadParams.mode === 'responsive' && (
+                  <Box>
+                    <Typography variant="body2" gutterBottom>
+                      Power Threshold: {vadParams.powerThreshold.toFixed(3)}
+                    </Typography>
+                    <Slider
+                      value={vadParams.powerThreshold}
+                      onChange={(_, value) => updateVadParam('powerThreshold', value as number)}
+                      min={0.001}
+                      max={0.1}
+                      step={0.001}
+                      valueLabelDisplay="auto"
+                      disabled={voice.isListening}
+                    />
+                  </Box>
+                )}
 
                 {/* Positive Speech Threshold */}
                 <Box>
