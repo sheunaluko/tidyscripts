@@ -25,7 +25,7 @@ const fn_log = tsc.logger.get_logger({ id: 'lotus:fn' })
  * @returns Configured Cortex instance
  */
 export function get_lotus_agent(
-  modelName: string = "gpt-4o-mini",
+  modelName: string = "o4-mini",
   insightsClient?: any,
   apiBaseUrl: string = "https://www.tidyscripts.com"
 ): Cortex {

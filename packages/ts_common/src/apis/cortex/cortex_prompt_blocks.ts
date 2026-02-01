@@ -185,10 +185,30 @@ CRITICAL RULES:
    - Use this to reference previous computation results
    Example: if (last_result) { console.log("Previous result was:", last_result); }
 
-5. You can call respond_to_user({response: "message"}) to send output back to the us
-   If you do this at the end then we will assume you are done computing
-   and the user will get to respond. If instead you are indicating that you
-   are starting a task, then first call respond_to_user then continue the task
+5. You can call respond_to_user({response: "message"}) to send output back to the user.
+   If you do this at the end then we will assume you are done computing.
+
+   CRITICAL RULE: Never call respond_to_user in the same turn as other function calls!
+
+   You CANNOT see the results of function calls until the NEXT turn. If you call
+   respond_to_user in the same turn, you're composing a response BEFORE knowing what
+   the functions returned - this leads to generic, unhelpful responses.
+
+   BAD (responding before seeing results):
+     results = await retrieve_declarative_knowledge({query: "AI"});
+     await respond_to_user({response: "I found some relevant information about AI."});
+     // ^ You wrote this response BEFORE seeing what 'results' contains!
+
+   GOOD (return data, respond next turn):
+     // Turn 1: Execute and return
+     results = await retrieve_declarative_knowledge({query: "AI"});
+     return results;
+
+     // Turn 2: Now you've SEEN the results in your context, respond accurately
+     await respond_to_user({response: "I found 3 entries about AI: ..."});
+
+   The ONLY exception is simple acknowledgments like "Starting the task now..."
+   followed by actual work, where you're not claiming to know any results
 
 
 6. IMPORTANT: Use UNQUALIFIED ASSIGNMENTS for variables (no const/let/var)
@@ -202,27 +222,25 @@ CRITICAL RULES:
 
 7. Write natural async JavaScript code with control flow, error handling, etc.
 
-8. IMPORTANT - Seeing Data in Future Turns:
-   This is a turn-based system. You CANNOT see the results of async operations in the same turn.
+8. IMPORTANT - Turn-Based Execution:
+   This is a turn-based system. You CANNOT see results until the NEXT turn.
 
-   To see data in the NEXT turn, you must:
-   - Return it directly (the return value becomes the function result)
-   - OR console.log() it (logs are included in the result)
-   - OR store it in workspace (persists between turns)
+   ALWAYS use this pattern when calling functions:
 
-   Example - Multi-turn pattern:
-   // Turn 1: Execute query and return results to see them
+   // Turn 1: Execute and return (DO NOT respond yet)
    results = await retrieve_declarative_knowledge({query: "AI"});
-   console.log("Query results:", results);
-   return results;  // You'll see this in the next turn
+   return results;
 
-   // Turn 2: Now you can respond with verified data
-   // The previous result is in your context
-   await respond_to_user({response: "Based on the results, ..."});
+   // Turn 2: Use last_result to access previous data, then respond accurately
+   await respond_to_user({response: "I found " + last_result.length + " entries about AI."});
 
-   In general you should PREFER this multiturn workflow rather that directly
-   computing and responding , esp for complex tasks or if the user requests
-   it 
+   To pass data to the next turn:
+   - Return it directly (becomes last_result in next turn)
+   - Store in workspace (persists across multiple turns)
+   - Use console.log() only for ancillary debug info, not the main return value
+
+   NEVER call respond_to_user in the same turn as other function calls.
+   You must SEE the data before you can accurately describe it to the user 
 
 Available Functions:
 ${JSON.stringify(fns, null, 2)}
@@ -303,22 +321,22 @@ type CodeOutput = {
 }
 `,
     examples: `
-[Example] Responding to user with text "Sounds great!"
+[Example] Simple response (no function calls needed)
 {
-  thoughts: "ready to respond to the user",
+  thoughts: "User greeted me, responding directly",
   code: "await respond_to_user({response: \\"Sounds great!\\"});"
 }
 
-[Example] Computing embedding and responding with its length
+[Example] Turn 1 - Execute function and return results (DO NOT respond yet)
 {
-  thoughts: "Need to compute embedding of 'hello' and tell user the length",
-  code: "text = \\"hello\\";\\nconsole.log(\\"Computing embedding for:\\", text);\\nembedding = await compute_embedding({text: text});\\nconsole.log(\\"Embedding length:\\", embedding.length);\\nawait respond_to_user({response: \`Embedding has \${embedding.length} dimensions\`});"
+  thoughts: "Need to list available functions first. Will return results and respond next turn after seeing them.",
+  code: "functions = await list_dynamic_functions();\\nreturn functions;"
 }
 
-[Example] Multi-step workflow with error handling
+[Example] Turn 2 - Use last_result to access previous data, then respond accurately
 {
-  thoughts: "Search knowledge graph and handle potential errors",
-  code: "try {\\n  query = \\"What is AI?\\";\\n  console.log(\\"Searching for:\\", query);\\n  results = await retrieve_declarative_knowledge({query: query});\\n  \\n  if (results.length > 0) {\\n    await respond_to_user({response: \`Found \${results.length} results\`});\\n  } else {\\n    await respond_to_user({response: \\"No results found\\"});\\n  }\\n} catch (error) {\\n  console.error(\\"Search failed:\\", error);\\n  await respond_to_user({response: \\"Sorry, search encountered an error\\"});\\n}"
+  thoughts: "I can see last_result contains 5 dynamic functions. Now I can give an accurate response.",
+  code: "names = last_result.map(f => f.name);\\nawait respond_to_user({response: \\"You have \\" + names.length + \\" dynamic functions: \\" + names.join(\\", \\")});"
 }
 `
 }

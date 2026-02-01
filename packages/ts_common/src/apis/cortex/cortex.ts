@@ -1019,7 +1019,8 @@ The response will be validated against this structure.
 		    context: {
 			code_length: output.code.length,
 			thoughts: output.thoughts,
-			code: output.code, 			
+			code: output.code,
+			result , //the actual execution result 
 		    }
 		});
 	    } catch (err) {
