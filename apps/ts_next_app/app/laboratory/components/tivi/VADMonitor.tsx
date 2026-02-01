@@ -6,7 +6,10 @@ import { useTheme, alpha } from '@mui/material/styles';
 
 interface VADMonitorProps {
   speechProbRef: React.MutableRefObject<number>;
+  audioLevelRef?: React.MutableRefObject<number>;
   threshold: number;
+  powerThreshold?: number;
+  powerScale?: number; // Scale factor for power values (default 10)
   minSpeechStartMs: number;
   paused?: boolean;
   width?: number;
@@ -16,7 +19,10 @@ interface VADMonitorProps {
 
 export const VADMonitor: React.FC<VADMonitorProps> = ({
   speechProbRef,
+  audioLevelRef,
   threshold,
+  powerThreshold,
+  powerScale = 10, // Scale factor for power values
   minSpeechStartMs,
   paused = false,
   width = 300,
@@ -27,6 +33,7 @@ export const VADMonitor: React.FC<VADMonitorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
   const historyRef = useRef<number[]>([]);
+  const powerHistoryRef = useRef<number[]>([]);
   const currentValueRef = useRef<number>(0);
 
   useEffect(() => {
@@ -49,14 +56,21 @@ export const VADMonitor: React.FC<VADMonitorProps> = ({
     const gridColor = alpha(theme.palette.divider, 0.2);
 
     const render = () => {
-      // Get current probability and add to history
+      // Get current probability and power level (scaled)
       const prob = speechProbRef.current;
+      const power = Math.min((audioLevelRef?.current ?? 0) * powerScale, 1); // Scale and clamp to 0-1
       currentValueRef.current = prob;
-      historyRef.current.push(prob);
 
-      // Keep history at fixed length
+      // Add to histories
+      historyRef.current.push(prob);
+      powerHistoryRef.current.push(power);
+
+      // Keep histories at fixed length
       while (historyRef.current.length > historyLength) {
         historyRef.current.shift();
+      }
+      while (powerHistoryRef.current.length > historyLength) {
+        powerHistoryRef.current.shift();
       }
 
       // Clear canvas
@@ -105,6 +119,39 @@ export const VADMonitor: React.FC<VADMonitorProps> = ({
       });
 
       ctx.stroke();
+
+      // Draw power level line (if audioLevelRef provided)
+      if (audioLevelRef) {
+        ctx.strokeStyle = theme.palette.info.main;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+
+        const powerHistory = powerHistoryRef.current;
+        powerHistory.forEach((value, i) => {
+          const x = i * step;
+          const y = height - value * height;
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      }
+
+      // Draw power threshold line (for responsive mode) - scaled
+      if (powerThreshold !== undefined) {
+        ctx.strokeStyle = theme.palette.error.light;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        const scaledPowerThreshold = Math.min(powerThreshold * powerScale, 1);
+        const powerThresholdY = height - scaledPowerThreshold * height;
+        ctx.beginPath();
+        ctx.moveTo(0, powerThresholdY);
+        ctx.lineTo(width, powerThresholdY);
+        ctx.stroke();
+      }
 
       // Draw window start indicator line
       const totalTimeMs = 3000; // 3 seconds of history
@@ -156,7 +203,7 @@ export const VADMonitor: React.FC<VADMonitorProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [speechProbRef, threshold, minSpeechStartMs, paused, width, height, historyLength, theme]);
+  }, [speechProbRef, audioLevelRef, threshold, powerThreshold, powerScale, minSpeechStartMs, paused, width, height, historyLength, theme]);
 
   return (
     <Box>
@@ -190,6 +237,34 @@ export const VADMonitor: React.FC<VADMonitorProps> = ({
               Window: {minSpeechStartMs}ms
             </Typography>
           </Box>
+          {audioLevelRef && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                sx={{
+                  width: 12,
+                  height: 3,
+                  backgroundColor: theme.palette.info.main,
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Power
+              </Typography>
+            </Box>
+          )}
+          {powerThreshold !== undefined && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                sx={{
+                  width: 12,
+                  height: 3,
+                  backgroundColor: theme.palette.error.light,
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Pwr: {powerThreshold.toFixed(3)}
+              </Typography>
+            </Box>
+          )}
         </Stack>
       </Stack>
       <Box

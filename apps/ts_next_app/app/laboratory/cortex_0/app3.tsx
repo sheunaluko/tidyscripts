@@ -208,7 +208,9 @@ const  Component: NextPage = (props : any) => {
         negativeSpeechThreshold: 0.6,
         minSpeechStartMs: 150,
         language: 'en-US',
-        verbose: false
+        verbose: false,
+        mode: 'guarded' as 'guarded' | 'responsive' | 'continuous',
+        powerThreshold: 0.01,
     });
 
     // Load tiviParams from localStorage after mount (shared with tivi component)
@@ -224,6 +226,8 @@ const  Component: NextPage = (props : any) => {
                     negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? prev.negativeSpeechThreshold,
                     minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? prev.minSpeechStartMs,
                     verbose: parsed.verbose ?? prev.verbose,
+                    mode: parsed.mode ?? prev.mode,
+                    powerThreshold: parsed.powerThreshold ?? prev.powerThreshold,
                     // Note: language is cortex-specific, don't load from shared storage
                 }));
             } catch (e) {
@@ -316,6 +320,8 @@ const  Component: NextPage = (props : any) => {
                 negativeSpeechThreshold: updated.negativeSpeechThreshold,
                 minSpeechStartMs: updated.minSpeechStartMs,
                 verbose: updated.verbose,
+                mode: updated.mode,
+                powerThreshold: updated.powerThreshold,
             };
             localStorage.setItem('tivi-vad-params', JSON.stringify(toStore));
             return updated;
@@ -327,7 +333,9 @@ const  Component: NextPage = (props : any) => {
         positiveSpeechThreshold: tiviParams.positiveSpeechThreshold,
         negativeSpeechThreshold: tiviParams.negativeSpeechThreshold,
         minSpeechStartMs: tiviParams.minSpeechStartMs,
-        language: tiviParams.language
+        language: tiviParams.language,
+        mode: tiviParams.mode,
+        powerThreshold: tiviParams.powerThreshold,
     });
 
     // Update voice status based on current state
@@ -1318,6 +1326,7 @@ const  Component: NextPage = (props : any) => {
                 tiviParams={tiviParams}
                 onTiviParamsChange={handleTiviParamsChange}
                 speechProbRef={tivi.speechProbRef}
+                audioLevelRef={tivi.audioLevelRef}
             />
 
             {/* Render Chat Mode or Voice Mode */}

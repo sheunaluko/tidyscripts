@@ -99,7 +99,7 @@ export const Tivi: React.FC<TiviProps> = ({
           negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? 0.45,
           minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? 150,
           verbose: parsed.verbose ?? false,
-          mode: parsed.mode ?? 'guarded',
+          mode: (parsed.mode ?? 'guarded') as TiviMode,
           powerThreshold: parsed.powerThreshold ?? 0.01,
         };
         setVadParams(migrated);
@@ -356,7 +356,9 @@ export const Tivi: React.FC<TiviProps> = ({
           >
             <VADMonitor
               speechProbRef={voice.speechProbRef}
+              audioLevelRef={voice.audioLevelRef}
               threshold={vadParams.positiveSpeechThreshold}
+              powerThreshold={vadParams.mode === 'responsive' ? vadParams.powerThreshold : undefined}
               minSpeechStartMs={vadParams.minSpeechStartMs}
               paused={!voice.isListening}
             />

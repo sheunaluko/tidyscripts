@@ -29,6 +29,8 @@ interface TiviParams {
   minSpeechStartMs: number;
   language: string;
   verbose: boolean;
+  mode: 'guarded' | 'responsive' | 'continuous';
+  powerThreshold: number;
 }
 
 interface SettingsPanelProps {
@@ -41,6 +43,7 @@ interface SettingsPanelProps {
   tiviParams?: TiviParams;
   onTiviParamsChange?: (params: Partial<TiviParams>) => void;
   speechProbRef?: React.MutableRefObject<number>;
+  audioLevelRef?: React.MutableRefObject<number>;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -52,7 +55,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onClose,
   tiviParams,
   onTiviParamsChange,
-  speechProbRef
+  speechProbRef,
+  audioLevelRef
 }) => {
   return (
     <Drawer
@@ -102,11 +106,49 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Box sx={{ my: 2 }}>
                 <VADMonitor
                   speechProbRef={speechProbRef}
+                  audioLevelRef={audioLevelRef}
                   threshold={tiviParams.positiveSpeechThreshold}
+                  powerThreshold={tiviParams.mode === 'responsive' ? tiviParams.powerThreshold : undefined}
                   minSpeechStartMs={tiviParams.minSpeechStartMs}
                   paused={!open}
                   width={300}
                   height={60}
+                />
+              </Box>
+            )}
+
+            {/* Recognition Mode */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                Recognition Mode
+              </Typography>
+              <Select
+                value={tiviParams.mode}
+                onChange={(e) => onTiviParamsChange({ mode: e.target.value as TiviParams['mode'] })}
+                size="small"
+                fullWidth
+              >
+                <MenuItem value="guarded">Guarded (VAD-triggered)</MenuItem>
+                <MenuItem value="responsive">Responsive (power-triggered)</MenuItem>
+                <MenuItem value="continuous">Continuous</MenuItem>
+              </Select>
+            </Box>
+
+            {/* Power Threshold - only show for responsive mode */}
+            {tiviParams.mode === 'responsive' && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Power Threshold: {tiviParams.powerThreshold.toFixed(3)}
+                </Typography>
+                <Slider
+                  value={tiviParams.powerThreshold}
+                  min={0.001}
+                  max={0.1}
+                  step={0.001}
+                  onChange={(_, value) => onTiviParamsChange({ powerThreshold: value as number })}
+                  valueLabelDisplay="auto"
+                  size="small"
+                  sx={{ mt: 1 }}
                 />
               </Box>
             )}

@@ -41,6 +41,7 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
   private frameProcessor: FrameProcessor;
   private options: TSVADOptions;
   private state: TSVADState = 'stopped';
+  private processingPaused = false;
 
   // Audio nodes
   private audioContext: AudioContext | null = null;
@@ -264,10 +265,43 @@ export class TSVAD extends EventEmitter<TSVADEventMap> {
   }
 
   /**
+   * Pause frame processing without disconnecting audio pipeline.
+   * Audio still flows to analyser (for power monitoring), but model doesn't run.
+   */
+  pauseProcessing(): void {
+    if (this.processingPaused) return;
+
+    this.processingPaused = true;
+
+    // Sync frameProcessor state and emit any pending speech-end
+    const events = this.frameProcessor.pause();
+    for (const event of events) {
+      if (event.type === 'speech-end') {
+        this.emit('speech-end', event.audio);
+      }
+    }
+  }
+
+  /**
+   * Resume frame processing.
+   */
+  resumeProcessing(): void {
+    if (!this.processingPaused) return;
+
+    this.processingPaused = false;
+    this.frameProcessor.resume();
+  }
+
+  /**
    * Handle messages from the audio worklet
    */
   private handleWorkletMessage(message: WorkletMessage): void {
     if (message.type !== MessageType.AudioFrame || !message.data) {
+      return;
+    }
+
+    // Skip processing if paused - audio still flows to analyser
+    if (this.processingPaused) {
       return;
     }
 

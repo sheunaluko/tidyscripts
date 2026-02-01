@@ -14,21 +14,21 @@ Todo
 
 [ ] SmartChats MVP
    AUDIO 
-  - Add a debug panel showing Voice Activity Detection (VAD) parameters (the internals to udnerstand triggering) 
-  - Improve start/stop behavior: auto-listening mode unless the system is speaking then default to VAD 
-  - Implement debouncing to merge or cancel rapid back-to-back inputs
-  - Implement debouncing to merge or cancel rapid back-to-back inputs
+  - [x] Add a debug panel showing Voice Activity Detection (VAD) parameters (the internals to udnerstand triggering) 
+  - [x] Improve start/stop behavior: auto-listening mode unless the system is speaking then default to VAD 
+  - [ ] Implement debouncing to merge or cancel rapid back-to-back inputs
+
 
    DISPLAY
-  - fix the display of function calls (the react object inspector)
+  - [ ] fix the display of function calls (the react object inspector) -- just needs to DEFAULT TO BE CLOSED 
 
    SYSTEM 
-  - Update the declarative knowledge base
-  - Refine the initialization sequence and return-handling logic
-     - Obtain clear examples from the Insights API
+  - [ ] Update the declarative knowledge base
+  - [ ] Refine the initialization sequence and return-handling logic
+     - [ ] Obtain clear examples from the Insights API
 
    FREEDOM
-  - Add a paywall and deploy on SmartChats.AI
+  - [ ] Add a paywall and deploy on SmartChats.AI - target date -> mid february (valentines day) 
    
    
 

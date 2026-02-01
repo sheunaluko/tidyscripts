@@ -45,7 +45,7 @@ export const ComponentViewerClient = () => {
           onInterrupt={() => console.log('TTS Interrupted!')}
           positiveSpeechThreshold={0.3}
           negativeSpeechThreshold={0.25}
-          minSpeechMs={400}
+          minSpeechStartMs={400}
         />
       ),
       code: `<Tivi
@@ -80,9 +80,9 @@ export const ComponentViewerClient = () => {
           description: 'VAD silence detection threshold (0-1). Default: 0.25',
         },
         {
-          name: 'minSpeechMs',
+          name: 'minSpeechStartMs',
           type: 'number',
-          description: 'Minimum speech duration in ms. Default: 400',
+          description: 'Minimum consecutive ms above threshold before triggering speech-start. Default: 150',
         },
         {
           name: 'language',

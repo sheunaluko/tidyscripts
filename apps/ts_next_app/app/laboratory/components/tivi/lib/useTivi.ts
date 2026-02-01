@@ -336,13 +336,13 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         // Guarded mode: VAD runs continuously, triggers recognition
         log('Guarded mode: VAD will trigger recognition');
       } else if (mode === 'responsive') {
-        // Responsive mode: Pause VAD (only used during TTS), power monitoring triggers recognition
+        // Responsive mode: Pause VAD processing (only used during TTS), power monitoring triggers recognition
         log('Responsive mode: Power monitoring will trigger recognition');
-        vad.pause();
+        vad.pauseProcessing();
       } else if (mode === 'continuous') {
-        // Continuous mode: Pause VAD (only used during TTS), start recognition immediately
+        // Continuous mode: Pause VAD processing (only used during TTS), start recognition immediately
         log('Continuous mode: Starting recognition immediately');
-        vad.pause();
+        vad.pauseProcessing();
         if (recognitionRef.current) {
           recognitionRef.current.start();
         }
@@ -395,10 +395,10 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     // Pause recognition during TTS
     recognitionRef.current?.pause();
 
-    // For responsive/continuous modes: Resume VAD for interrupt detection
+    // For responsive/continuous modes: Resume VAD processing for interrupt detection
     if (modeRef.current !== 'guarded' && vadRef.current) {
-      log('Starting VAD for TTS interrupt detection');
-      vadRef.current.start();
+      log('Resuming VAD processing for TTS interrupt detection');
+      vadRef.current.resumeProcessing();
     }
 
     try {
@@ -407,10 +407,10 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setIsSpeaking(false);
       isSpeakingRef.current = false;
 
-      // For responsive/continuous modes: Pause VAD again
+      // For responsive/continuous modes: Pause VAD processing again
       if (modeRef.current !== 'guarded' && vadRef.current) {
-        log('Pausing VAD after TTS');
-        vadRef.current.pause();
+        log('Pausing VAD processing after TTS');
+        vadRef.current.pauseProcessing();
       }
 
       // Resume recognition based on mode
