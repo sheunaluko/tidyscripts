@@ -48,8 +48,25 @@ export type {
   IOMessage,
   IOMessages,
   CortexOps,
-  CortexUtilities
+  CortexUtilities,
+  TokenBreakdown,
+  ContextStatus,
+  UsageStats
 } from './types'
+
+// Model registry
+export { getModelInfo, getRegisteredModels, MODEL_REGISTRY } from './model_registry'
+export type { ModelInfo } from './model_registry'
+
+// Token counting
+export {
+  countTokens,
+  countTokensEstimate,
+  countMessageTokens,
+  getTokenBreakdown,
+  calculateDrift,
+  suggestRatioAdjustment
+} from './token_counter'
 
 // Channel for async communication
 export { Channel } from './channel'

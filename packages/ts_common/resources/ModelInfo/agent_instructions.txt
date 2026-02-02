@@ -1,0 +1,1 @@
+Read the pdfs and update the entries for input token cost, input token limit (context limit), output token cost , output token limit in the model_registry.ts file in this directory

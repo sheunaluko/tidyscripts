@@ -6,16 +6,18 @@ layout {
         }
     }
     tab name="dev" focus=true {
-        pane size="50%" {
-            command "npm"
-	    args "run dev" 
-        }
-        pane split_direction="horizontal" {
-            pane {
-                command "/home/oluwa/dev/tidyscripts/apps/firebase/dev"
+        pane split_direction="vertical" {
+            pane size="50%" {
+                command "npm"
+                args "run" "dev"
             }
-            pane {
-                command "/home/oluwa/dev/tidyscripts/bin/tes"
+            pane split_direction="horizontal" {
+                pane {
+                    command "/home/oluwa/dev/tidyscripts/apps/firebase/dev"
+                }
+                pane {
+                    command "/home/oluwa/dev/tidyscripts/bin/tes"
+                }
             }
         }
     }

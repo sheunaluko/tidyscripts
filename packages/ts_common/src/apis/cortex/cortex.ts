@@ -32,8 +32,15 @@ import type {
   IOMessage,
   IOMessages,
   CortexOps,
-  UserInput
+  UserInput,
+  ContextStatus,
+  TokenBreakdown,
+  UsageStats
 } from './types'
+
+// Import token counting and model registry
+import { getTokenBreakdown, calculateDrift } from './token_counter'
+import { getModelInfo } from './model_registry'
 
 const log = logger.get_logger({ id: 'cortex_base' }) 
 
@@ -45,13 +52,6 @@ const log = logger.get_logger({ id: 'cortex_base' })
    
  */
 
-
-/* Provider helpers */
-function getProviderFromModel(model: string): Provider {
-    if (model.startsWith('claude-')) return 'anthropic';
-    if (model.startsWith('gemini-')) return 'gemini';
-    return 'openai';
-}
 
 function getEndpointForProvider(provider: Provider): string {
     switch (provider) {
@@ -193,6 +193,15 @@ export class Cortex extends EventEmitter  {
     apiBaseUrl: string ; // API base URL for LLM calls
     utilities: any ; // Platform-specific utilities (embedding, sounds, etc.)
 
+    // Usage tracking
+    usage: UsageStats = {
+	promptTokens: 0,
+	completionTokens: 0,
+	totalTokens: 0,
+	costUsd: 0,
+	callCount: 0
+    }
+
     constructor(ops : CortexOps) {
 
 	super() ;
@@ -200,7 +209,7 @@ export class Cortex extends EventEmitter  {
 	let { model, name, functions , additional_system_msg, provider, insights, sandbox, apiBaseUrl, utilities } = ops  ;
 	this.model = model ;
 	this.name  = name ;
-	this.provider = provider ?? getProviderFromModel(model) ;
+	this.provider = provider ?? getModelInfo(model).provider ;
 	this.functions = functions ;
 	this.messages = [ ] ;
 	this.is_running_function = false;
@@ -257,6 +266,89 @@ export class Cortex extends EventEmitter  {
 	log(`Initialized: model=${model}, provider=${this.provider}`)
 	log("Done")
 
+    }
+
+    /**
+     * Get current context status including token usage breakdown
+     */
+    getContextStatus(): ContextStatus {
+	const messages = this.build_messages()
+	const modelInfo = getModelInfo(this.model, this.provider)
+	const breakdown = getTokenBreakdown(messages, this.provider)
+
+	const totalUsed = breakdown.total
+	const remaining = Math.max(0, modelInfo.contextWindow - totalUsed)
+	const usagePercent = (totalUsed / modelInfo.contextWindow) * 100
+
+	return {
+	    model: this.model,
+	    provider: this.provider,
+	    contextWindow: modelInfo.contextWindow,
+	    maxOutputTokens: modelInfo.maxOutputTokens,
+	    breakdown,
+	    totalUsed,
+	    remaining,
+	    usagePercent: Math.round(usagePercent * 10) / 10, // 1 decimal place
+	    isApproachingLimit: usagePercent > 80,
+	    isAtLimit: usagePercent > 95,
+	    messageCount: this.messages.length,
+	    countMethod: 'estimate'
+	}
+    }
+
+    /**
+     * Emit context status event
+     */
+    private emitContextStatus(): void {
+	const status = this.getContextStatus()
+	this.emit_event({ type: 'context_status', status })
+    }
+
+    /**
+     * Update usage stats after an LLM call
+     */
+    private updateUsage(promptTokens: number, completionTokens: number): void {
+	this.usage.promptTokens += promptTokens
+	this.usage.completionTokens += completionTokens
+	this.usage.totalTokens += promptTokens + completionTokens
+	this.usage.callCount++
+
+	// Calculate cost using model_registry pricing
+	const modelInfo = getModelInfo(this.model, this.provider)
+	const inputCost = (promptTokens / 1_000_000) * modelInfo.inputPricePer1M
+	const outputCost = (completionTokens / 1_000_000) * modelInfo.outputPricePer1M
+	const callCost = inputCost + outputCost
+	this.usage.costUsd += callCost
+
+	// Emit usage update event
+	this.emit_event({
+	    type: 'usage_update',
+	    call: { promptTokens, completionTokens, costUsd: callCost },
+	    cumulative: { ...this.usage }
+	})
+
+	this.log(`Usage: +${promptTokens}/${completionTokens} tokens, +$${callCost.toFixed(6)} | Total: ${this.usage.totalTokens} tokens, $${this.usage.costUsd.toFixed(6)}`)
+    }
+
+    /**
+     * Get current usage stats
+     */
+    getUsage(): UsageStats {
+	return { ...this.usage }
+    }
+
+    /**
+     * Reset usage stats
+     */
+    resetUsage(): void {
+	this.usage = {
+	    promptTokens: 0,
+	    completionTokens: 0,
+	    totalTokens: 0,
+	    costUsd: 0,
+	    callCount: 0
+	}
+	this.log('Usage stats reset')
     }
 
     async set_var(v : any )  {
@@ -329,9 +421,17 @@ export class Cortex extends EventEmitter  {
 	    throw new Error(`Structured completion failed: ${jsonData.error.message || jsonData.error}`)
 	}
 
-	const { prompt_tokens, completion_tokens, total_tokens } = jsonData.usage || {}
+	// Handle both old (prompt_tokens/completion_tokens) and new (input_tokens/output_tokens) API formats
+	const usage = jsonData.usage || {}
+	const prompt_tokens = usage.prompt_tokens ?? usage.input_tokens
+	const completion_tokens = usage.completion_tokens ?? usage.output_tokens
+	const total_tokens = usage.total_tokens
+
 	if (total_tokens) {
 	    this.log_event(`Structured completion tokens: ${total_tokens}`)
+	}
+	if (prompt_tokens && completion_tokens) {
+	    this.updateUsage(prompt_tokens, completion_tokens)
 	}
 
 	// New Responses API returns output_text
@@ -501,6 +601,16 @@ The response will be validated against this structure.
 	let messages = this.build_messages() ;
 	let model = this.model ;
 
+	// Emit context status before LLM call
+	const contextStatus = this.getContextStatus()
+	this.emitContextStatus()
+
+	if (contextStatus.isAtLimit) {
+	    this.log_event(`WARNING: Context at ${contextStatus.usagePercent}% capacity (${contextStatus.totalUsed}/${contextStatus.contextWindow} tokens)`)
+	} else if (contextStatus.isApproachingLimit) {
+	    this.log_event(`Context approaching limit: ${contextStatus.usagePercent}% (${contextStatus.totalUsed}/${contextStatus.contextWindow} tokens)`)
+	}
+
 	/* Use provider-based endpoint */
 	const endpoint = getEndpointForProvider(this.provider);
 	let args = {
@@ -510,7 +620,7 @@ The response will be validated against this structure.
 	    schema_name: CodeOutputSchemaName
 	};
 
-	this.log(`[LLM Call] model=${this.model}, provider=${this.provider}, endpoint=${endpoint}`);
+	this.log(`[LLM Call] model=${this.model}, provider=${this.provider}, endpoint=${endpoint}, estimated_tokens=${contextStatus.totalUsed}`);
 	this.log_event(`Provider: ${this.provider} | Model: ${this.model}`);
 
 	let result = await fetch(`${this.apiBaseUrl}${endpoint}`, {
@@ -767,6 +877,7 @@ The response will be validated against this structure.
 			    rerun_llm_with_output_format: this.rerun_llm_with_output_format.bind(this),
 			    build_system_message: buildPrompt,
 			    cortex_functions: this.functions,
+			    get_context_status: this.getContextStatus.bind(this),
 			    feedback: this.utilities.sounds || {
 				error: () => {},
 				activated: () => {},
@@ -925,11 +1036,29 @@ The response will be validated against this structure.
 	    throw new Error(jsonData.error);
 	}
 
-	let {prompt_tokens, completion_tokens, total_tokens} = jsonData.usage || {};
+	// Handle both old (prompt_tokens/completion_tokens) and new (input_tokens/output_tokens) API formats
+	const usage = jsonData.usage || {};
+	const prompt_tokens = usage.prompt_tokens ?? usage.input_tokens;
+	const completion_tokens = usage.completion_tokens ?? usage.output_tokens;
+	const total_tokens = usage.total_tokens;
+
 	if (total_tokens) {
 	    this.log_event(`Token Usage=${total_tokens}`) ;
 	}
 
+	// Check estimation drift against actual token count
+	if (prompt_tokens) {
+	    const contextStatus = this.getContextStatus()
+	    const drift = calculateDrift(contextStatus.totalUsed, prompt_tokens)
+	    if (drift > 0.15) {
+		this.log(`Token estimate drift: ${(drift * 100).toFixed(1)}% (estimated=${contextStatus.totalUsed}, actual=${prompt_tokens})`)
+	    }
+	}
+
+	// Update usage stats
+	if (prompt_tokens && completion_tokens) {
+	    this.updateUsage(prompt_tokens, completion_tokens)
+	}
 
 	// New Responses API returns output_text instead of choices[0].message.parsed
 	let output: CodeOutput;
@@ -966,8 +1095,9 @@ The response will be validated against this structure.
 		    context: {
 			loop: loop,
 			messages_count: this.messages.length,
-			output , 			
-		    }
+			output,
+		    },
+		    usage: this.getUsage()
 		});
 	    } catch (err) {
 		this.log(`Error adding insights event: ${err}`);

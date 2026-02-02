@@ -1,4 +1,3 @@
-Currently working on: Observability Infrastructure (InsightsClient + ReflectionsClient)
 
 Previous Work Summary:
 - Implemented cortex_0 voice agent with LLM integration, sandbox execution, and 12-widget UI (see apps/ts_next_app/app/laboratory/cortex_0)
@@ -7,8 +6,6 @@ Previous Work Summary:
 - Developed Meditation app as reference implementation for InsightsClient integration
 - Added insights_agent_guide.md (2,697 lines) for AI agent integration patterns
 
-Current Focus: ReflectionsClient Implementation
-Plan: meta/plans/reflections_client.md (CQRS read-side for Insights analytics)
 
 Todo
 
@@ -16,21 +13,31 @@ Todo
    AUDIO 
   - [x] Add a debug panel showing Voice Activity Detection (VAD) parameters (the internals to udnerstand triggering) 
   - [x] Improve start/stop behavior: auto-listening mode unless the system is speaking then default to VAD 
-  - [ ] Implement debouncing to merge or cancel rapid back-to-back inputs
+  - [x] Implement debouncing to merge or cancel rapid back-to-back inputs
 
 
    DISPLAY
-  - [ ] fix the display of function calls (the react object inspector) -- just needs to DEFAULT TO BE CLOSED 
+  - [x] DEFERRED - fix the display of function calls (the react object inspector) -- just needs to DEFAULT TO BE CLOSED
+  - [ ] Default execution history to horizontal 
 
    SYSTEM 
   - [ ] Update the declarative knowledge base
+        - have built in relations + a misc  OR
+	- just put relation type inside metadata on relation (not ideal for complex queries) 
+	
   - [ ] Refine the initialization sequence and return-handling logic
      - [ ] Obtain clear examples from the Insights API
+  - [x] token counting
+  - [ ] parse errors in code execution to determine the needed javascript globals (Array, Date, etc) 
+  - [ ] update model selector to reflect model registry
+  - [ ] do not allow model or audio settings changes while running 
 
    FREEDOM
   - [ ] Add a paywall and deploy on SmartChats.AI - target date -> mid february (valentines day) 
    
-   
+
+
+
 
 [x] Observability - Phase 1 Complete
    [x] InsightsClient (Write-side: event capture with batching)
@@ -86,10 +93,12 @@ Todo
 
 
 [ ] got lotus working -- but now need to build a proper UI for it to debug it
-    	- [ ] need to build token manager
+    	- [ ] need to build token manager (OR -- need to have automatic storage to workspace ) 
 	
 [x] dolphin parser working 4 bit 
 
+
+[ ] Web interface where I can remotely control claude sessions 
 
 [ ] ability to store an entire session and then re-load it, or switch llm
 providers in middle

@@ -1,1 +1,2 @@
+#!/bin/bash
 ./bin/tsnode ./bin/dev/run_tes.ts

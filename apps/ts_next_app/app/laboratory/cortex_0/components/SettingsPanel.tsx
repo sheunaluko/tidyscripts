@@ -44,6 +44,10 @@ interface SettingsPanelProps {
   onTiviParamsChange?: (params: Partial<TiviParams>) => void;
   speechProbRef?: React.MutableRefObject<number>;
   audioLevelRef?: React.MutableRefObject<number>;
+  speechCooldownMs?: number;
+  onSpeechCooldownChange?: (ms: number) => void;
+  playbackRate?: number;
+  onPlaybackRateChange?: (rate: number) => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -56,7 +60,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   tiviParams,
   onTiviParamsChange,
   speechProbRef,
-  audioLevelRef
+  audioLevelRef,
+  speechCooldownMs,
+  onSpeechCooldownChange,
+  playbackRate,
+  onPlaybackRateChange
 }) => {
   return (
     <Drawer
@@ -208,6 +216,49 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               />
             </Box>
 
+            {/* Speech Cooldown */}
+            {speechCooldownMs !== undefined && onSpeechCooldownChange && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Speech Cooldown: {(speechCooldownMs / 1000).toFixed(1)}s
+                </Typography>
+                <Slider
+                  value={speechCooldownMs}
+                  min={0}
+                  max={5000}
+                  step={250}
+                  onChange={(_, value) => onSpeechCooldownChange(value as number)}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(v) => `${(v / 1000).toFixed(1)}s`}
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  Ignore speech within this time of last utterance
+                </Typography>
+              </Box>
+            )}
+
+            {/* Playback Speed */}
+            {playbackRate !== undefined && onPlaybackRateChange && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Playback Speed: {playbackRate.toFixed(1)}x
+                </Typography>
+                <Slider
+                  value={playbackRate}
+                  min={0.5}
+                  max={2.0}
+                  step={0.1}
+                  onChange={(_, value) => onPlaybackRateChange(value as number)}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(v) => `${v}x`}
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            )}
+
             {/* Language */}
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
@@ -245,6 +296,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 label={<Typography variant="caption">Verbose Logging</Typography>}
               />
             </Box>
+
           </Box>
         </>
       )}

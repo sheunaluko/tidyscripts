@@ -8,7 +8,6 @@ import {
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
-  Slider,
   FormControlLabel,
   Switch,
   Select,
@@ -42,10 +41,6 @@ interface TopBarProps {
   transcribe: boolean;
   onTranscribeToggle: () => void;
 
-  // Playback
-  playbackRate: number;
-  onPlaybackRateChange: (rate: number) => void;
-
   // Speech
   isSpeaking: boolean;
   onCancelSpeech: () => void;
@@ -63,6 +58,13 @@ interface TopBarProps {
   // Voice status
   voiceStatus: 'idle' | 'listening' | 'processing' | 'speaking';
   interimResult?: string;
+
+  // Context usage (optional - only shown when available)
+  contextUsage?: {
+    usagePercent: number
+    totalUsed: number
+    contextWindow: number
+  } | null;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -72,8 +74,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onStartStop,
   transcribe,
   onTranscribeToggle,
-  playbackRate,
-  onPlaybackRateChange,
   isSpeaking,
   onCancelSpeech,
   aiModel,
@@ -81,7 +81,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenSettings,
   audioLevelRef,
   voiceStatus,
-  interimResult
+  interimResult,
+  contextUsage
 }) => {
   const theme = useTheme();
 
@@ -166,27 +167,6 @@ export const TopBar: React.FC<TopBarProps> = ({
               />
             </Tooltip>
 
-            {/* Playback Rate */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 150 }}>
-              <Typography variant="caption" color="text.secondary">
-                Speed
-              </Typography>
-              <Slider
-                value={playbackRate}
-                min={0.5}
-                max={2.0}
-                step={0.1}
-                onChange={(e, val) => onPlaybackRateChange(val as number)}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(val) => `${val}x`}
-                size="small"
-                sx={{ width: 80 }}
-              />
-              <Typography variant="caption" sx={{ minWidth: 35 }}>
-                {playbackRate.toFixed(1)}x
-              </Typography>
-            </Box>
-
             {/* Pause Speech Button */}
             {isSpeaking && (
               <Tooltip title="Stop speaking">
@@ -241,6 +221,27 @@ export const TopBar: React.FC<TopBarProps> = ({
               inline={true}
             />
           </Box>
+        )}
+
+        {/* Context Usage Display */}
+        {contextUsage && (
+          <Tooltip title={`${contextUsage.totalUsed.toLocaleString()} / ${contextUsage.contextWindow.toLocaleString()} tokens`}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: contextUsage.usagePercent < 33
+                    ? '#4caf50'  // green
+                    : contextUsage.usagePercent < 66
+                      ? '#ff9800'  // yellow/orange
+                      : '#f44336'  // red
+                }}
+              >
+                {contextUsage.usagePercent.toFixed(0)}%
+              </Typography>
+            </Box>
+          </Tooltip>
         )}
 
         {/* Model Selector */}

@@ -173,6 +173,10 @@ const  Component: NextPage = (props : any) => {
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
     const audioCleanupRef = useRef<(() => void) | null>(null); //cleanup function for audio listeners
 
+    // Speech cooldown: ignore transcriptions within X seconds of the last processed one
+    const [speechCooldownMs, setSpeechCooldownMs] = useState(2000);
+    const lastTranscriptionTimeRef = useRef<number>(0);
+
     let init_chat_history = [
 	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
     ]
@@ -237,6 +241,13 @@ const  Component: NextPage = (props : any) => {
     }, []);
 
     const [workspace, set_workspace] = useState({}) ;
+
+    // Context usage from Cortex events
+    const [contextUsage, setContextUsage] = useState<{
+        usagePercent: number
+        totalUsed: number
+        contextWindow: number
+    } | null>(null);
 
     // InsightsClient for event tracking - initialized FIRST
     const insightsClient = useRef<any>(null);
@@ -494,6 +505,12 @@ const  Component: NextPage = (props : any) => {
 	set_html_display(evt.html)
     }, []);
 
+    const handle_context_status = useCallback((evt: any) => {
+	const { usagePercent, totalUsed, contextWindow } = evt.status
+	log(`Context: ${usagePercent.toFixed(1)}% (${totalUsed}/${contextWindow} tokens)`)
+	setContextUsage({ usagePercent, totalUsed, contextWindow })
+    }, []);
+
     // New event handlers for sandbox observability
     const handle_code_execution_start = useCallback((evt: any) => {
 	log(`Got code execution start event`)
@@ -608,12 +625,17 @@ const  Component: NextPage = (props : any) => {
 	'code_execution_complete': handle_code_execution_complete,
 	'sandbox_log': handle_sandbox_log,
 	'sandbox_event': handle_sandbox_event,
-    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_html_form_data, handle_html_interaction_complete, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event]);
+	'context_status': handle_context_status,
+    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_html_form_data, handle_html_interaction_complete, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event, handle_context_status]);
     
     const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
 	let fn = event_dic[evt.type] ;
-	fn(evt)
+	if (fn) {
+	    fn(evt)
+	} else {
+	    log(`No handler for event type: ${evt.type}`)
+	}
     }, [event_dic]);
 
     /* E F F E C T S */
@@ -820,6 +842,15 @@ const  Component: NextPage = (props : any) => {
 
 	log(`tcb: ${text}`)
 
+	// Check speech cooldown - ignore if within cooldown period of last processed transcription
+	const now = Date.now();
+	const timeSinceLast = now - lastTranscriptionTimeRef.current;
+	if (timeSinceLast < speechCooldownMs) {
+	    log(`tcb: Ignoring - within cooldown (${timeSinceLast}ms < ${speechCooldownMs}ms)`)
+	    return;
+	}
+	lastTranscriptionTimeRef.current = now;
+
 	/*
            This is where I need to pass the transcript Dynamically either to:
 	   - cortex_channel
@@ -839,7 +870,7 @@ const  Component: NextPage = (props : any) => {
 	    add_user_message(text) ;
 	}
 
-    }, [COR, add_user_message]); 
+    }, [COR, add_user_message, speechCooldownMs]); 
 
     //handle user chat message (instead of voice)
     const handleSend = async () => {
@@ -1303,8 +1334,6 @@ const  Component: NextPage = (props : any) => {
                 onStartStop={handle_start_stop}
                 transcribe={transcribe}
                 onTranscribeToggle={handleTranscribeToggle}
-                playbackRate={playbackRate}
-                onPlaybackRateChange={(rate) => setPlaybackRate(rate)}
                 isSpeaking={tivi.isSpeaking}
                 onCancelSpeech={() => tivi.cancelSpeech()}
                 aiModel={ai_model}
@@ -1313,6 +1342,7 @@ const  Component: NextPage = (props : any) => {
                 audioLevelRef={tivi.audioLevelRef}
                 voiceStatus={voiceStatus}
                 interimResult={interim_result}
+                contextUsage={contextUsage}
             />
 
             {/* Settings Panel */}
@@ -1327,6 +1357,10 @@ const  Component: NextPage = (props : any) => {
                 onTiviParamsChange={handleTiviParamsChange}
                 speechProbRef={tivi.speechProbRef}
                 audioLevelRef={tivi.audioLevelRef}
+                speechCooldownMs={speechCooldownMs}
+                onSpeechCooldownChange={setSpeechCooldownMs}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={setPlaybackRate}
             />
 
             {/* Render Chat Mode or Voice Mode */}

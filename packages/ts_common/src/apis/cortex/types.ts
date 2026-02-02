@@ -104,3 +104,41 @@ export interface CortexOps {
   apiBaseUrl?: string      // Optional API base URL (default: browser origin or production)
   utilities?: CortexUtilities  // Optional platform-specific utilities
 }
+
+/* Usage tracking types */
+export interface UsageStats {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  costUsd: number
+  callCount: number
+}
+
+/* Token and context status types */
+export interface TokenBreakdown {
+  systemMessage: number
+  userMessages: number
+  assistantMessages: number
+  total: number
+}
+
+export interface ContextStatus {
+  model: string
+  provider: Provider
+  contextWindow: number
+  maxOutputTokens: number
+
+  // Current usage
+  breakdown: TokenBreakdown
+  totalUsed: number
+  remaining: number
+  usagePercent: number
+
+  // Thresholds
+  isApproachingLimit: boolean  // >80%
+  isAtLimit: boolean           // >95%
+
+  // Metadata
+  messageCount: number
+  countMethod: 'estimate'
+}
