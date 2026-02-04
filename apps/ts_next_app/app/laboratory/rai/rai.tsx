@@ -14,16 +14,15 @@ import { Settings } from './components/Settings/Settings';
 import { TestInterface } from './components/TestInterface';
 import { useRaiStore } from './store/useRaiStore';
 import { useHashRouter } from './hooks/useHashRouter';
+import { InsightsProvider } from './context/InsightsContext';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
-const { insights } = tsw.common;
 
 declare var window: any;
 
-const RAI: React.FC = () => {
+const RAIContent: React.FC = () => {
   const { currentView, loadTemplates, loadSettings, loadTestHistory, loadDotPhrases } = useRaiStore();
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const insightsClient = React.useRef<any>(null);
 
   // Initialize hash router
   useHashRouter();
@@ -31,17 +30,6 @@ const RAI: React.FC = () => {
   useEffect(() => {
     // Initialize the app
     log('RAI app initializing...');
-
-    // Initialize InsightsClient
-    const sessionId = insights.generateSessionId();
-    insightsClient.current = new insights.InsightsClient({
-      app_name: 'rai',
-      app_version: '1.0.0',
-      user_id: 'rai_user',
-      session_id: sessionId,
-    });
-
-    log(`InsightsClient initialized with session ${sessionId}`);
 
     // Suppress verbose logs
     tsw.common.logger.suppress('MainLayout', 'Too verbose for RAI app');
@@ -65,7 +53,6 @@ const RAI: React.FC = () => {
       tsw,
       raiStore: useRaiStore,
       getRaiState: () => useRaiStore.getState(),
-      insights: insightsClient.current,
     });
 
     log('RAI app initialized');
@@ -141,6 +128,15 @@ const RAI: React.FC = () => {
         </Box>
       </Container>
     </MainLayout>
+  );
+};
+
+// Main RAI component wrapped with InsightsProvider
+const RAI: React.FC = () => {
+  return (
+    <InsightsProvider appName="rai" appVersion="2.0.0">
+      <RAIContent />
+    </InsightsProvider>
   );
 };
 

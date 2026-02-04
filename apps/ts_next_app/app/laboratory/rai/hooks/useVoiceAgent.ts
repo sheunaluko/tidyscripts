@@ -1,278 +1,266 @@
-// useVoiceAgent Hook - Voice agent management
+/**
+ * useVoiceAgent Hook - Voice agent management using Tivi and RAI Agent
+ *
+ * This hook integrates:
+ * - Tivi for voice input (VAD + speech recognition) and output (TTS)
+ * - RAI Agent (Cortex-based) for LLM-powered conversation
+ */
 
-import { useCallback, useRef, useEffect } from 'react';
-import { RealtimeSession } from '@openai/agents/realtime';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
-import { createRealtimeAgent, getEphemeralKey, generateInstructions } from '../lib/voiceAgent';
+import { useTivi } from '../../components/tivi/lib/index';
+import { useRaiAgent } from './useRaiAgent';
+import type { Cortex } from 'tidyscripts_common/src/apis/cortex/cortex';
 
-const log = tsw.common.logger.get_logger({ id: 'rai' });
+const log = tsw.common.logger.get_logger({ id: 'rai_voice' });
 const debug = tsw.common.util.debug;
 
 declare var window: any;
 
-export function useVoiceAgent() {
+interface UseVoiceAgentOptions {
+  insightsClient?: any;
+}
+
+export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
+  const { insightsClient } = options;
+
   const {
     selectedTemplate,
-    addInformationText,
-    updateInformationText,
-    deleteInformationEntry,
-    collectedInformation,
-    setInformationComplete,
-    setCurrentView,
     voiceAgentConnected,
     setVoiceAgentConnected,
     addTranscriptEntry,
-    addToolCallThought,
     settings,
   } = useRaiStore();
 
-  const sessionRef = useRef<RealtimeSession | null>(null);
-  const agentRef = useRef<any>(null);
-  const processedItemIds = useRef<Set<string>>(new Set());
+  // Track if voice session is active
+  const [isSessionActive, setIsSessionActive] = useState(false);
 
-  // Expose WebRTC objects to global scope for debugging
+  // Track processing state to prevent duplicate processing
+  const isProcessingRef = useRef(false);
+  const lastTranscriptionTimeRef = useRef<number>(0);
+  const speechCooldownMs = 1500; // Ignore transcriptions within this time of last processed
+
+  // Agent ref to access from callbacks
+  const agentRef = useRef<Cortex | null>(null);
+
+  // Initialize RAI agent
+  const { agent, isLoading: agentLoading, error: agentError, reinitialize: reinitializeAgent } = useRaiAgent({
+    model: settings.agentModel || settings.aiModel,
+    insightsClient,
+    onComplete: () => {
+      log('Information collection complete, stopping voice agent');
+      // Stop listening when complete
+      tivi.stopListening();
+      setIsSessionActive(false);
+      setVoiceAgentConnected(false);
+    }
+  });
+
+  // Keep agent ref updated
+  useEffect(() => {
+    agentRef.current = agent;
+  }, [agent]);
+
+  // Calculate Tivi parameters from settings
+  const tiviMode = settings.tiviMode || 'guarded';
+  const positiveSpeechThreshold = settings.vadThreshold < 0.5 ? 0.8 : settings.vadThreshold;
+  const negativeSpeechThreshold = positiveSpeechThreshold - 0.2;
+
+  // Initialize Tivi for voice I/O
+  const tivi = useTivi({
+    mode: tiviMode as 'guarded' | 'responsive' | 'continuous',
+    positiveSpeechThreshold,
+    negativeSpeechThreshold,
+    minSpeechStartMs: 150,
+    language: 'en-US',
+    verbose: false,
+    powerThreshold: 0.01,
+    onError: (error) => {
+      log(`Tivi error: ${error.message}`);
+      debug.add('tivi_error', { error: error.message });
+    },
+    onInterrupt: () => {
+      log('User interrupted TTS');
+      debug.add('tts_interrupted', { timestamp: new Date().toISOString() });
+    },
+  });
+
+  // Handle transcription from Tivi
+  const handleTranscription = useCallback(async (text: string) => {
+    if (!text || !text.trim()) return;
+
+    // Check cooldown
+    const now = Date.now();
+    if (now - lastTranscriptionTimeRef.current < speechCooldownMs) {
+      log(`Ignoring transcription (cooldown): ${text}`);
+      return;
+    }
+
+    // Check if already processing
+    if (isProcessingRef.current) {
+      log(`Ignoring transcription (processing): ${text}`);
+      return;
+    }
+
+    lastTranscriptionTimeRef.current = now;
+    isProcessingRef.current = true;
+
+    log(`Processing transcription: ${text}`);
+    debug.add('voice_transcription', { text, timestamp: now });
+
+    // Add user message to transcript
+    addTranscriptEntry({
+      speaker: 'user',
+      text,
+      timestamp: new Date(),
+    });
+
+    // Send to agent
+    const currentAgent = agentRef.current;
+    if (currentAgent) {
+      try {
+        // Pause speech recognition while processing
+        tivi.pauseSpeechRecognition();
+
+        // Add user input to agent
+        currentAgent.add_user_text_input(text);
+
+        // Run LLM to get response
+        log('Running LLM...');
+        const response = await currentAgent.run_llm(4); // max 4 tool calls per turn
+
+        // The agent should have called respond_to_user tool which adds to transcript
+        // and returns the text to speak
+        if (response && typeof response === 'string') {
+          log(`Agent response: ${response}`);
+
+          // Speak the response
+          await tivi.speak(response, settings.playbackRate || 1.5);
+        }
+
+      } catch (error) {
+        log(`Agent error: ${error}`);
+        debug.add('agent_error', { error: String(error) });
+
+        // Speak error message
+        await tivi.speak('Sorry, I encountered an error. Please try again.', 1.5);
+      }
+    } else {
+      log('No agent available');
+    }
+
+    isProcessingRef.current = false;
+  }, [addTranscriptEntry, settings.playbackRate, tivi]);
+
+  // Listen for transcription events
+  useEffect(() => {
+    if (!isSessionActive) return;
+
+    const handleResult = (e: CustomEvent) => {
+      const text = e.detail;
+      if (text && text.trim()) {
+        handleTranscription(text);
+      }
+    };
+
+    window.addEventListener('tidyscripts_web_speech_recognition_result', handleResult as EventListener);
+
+    return () => {
+      window.removeEventListener('tidyscripts_web_speech_recognition_result', handleResult as EventListener);
+    };
+  }, [isSessionActive, handleTranscription]);
+
+  // Expose debug objects to window
   useEffect(() => {
     window.voiceAgentDebug = {
-      session: sessionRef.current,
       agent: agentRef.current,
-      get pc() {
-        return (sessionRef.current as any)?.pc || null;
-      },
-      get dc() {
-        return (sessionRef.current as any)?.dc || null;
-      },
-      get stream() {
-        return (sessionRef.current as any)?.stream || null;
-      },
-      stopAgent,
+      tivi,
       startAgent,
+      stopAgent,
+      isSessionActive,
+      agentLoading,
+      agentError,
     };
   });
 
-  // Note: Agent instructions are now static - no dynamic updates based on collectedInformation
-  // The agent learns about items through conversation messages (tool responses and user messages)
-
+  // Start voice agent
   const startAgent = useCallback(async () => {
     try {
       log('Starting voice agent...');
       debug.add('voice_agent_start_requested', { template: selectedTemplate?.id });
 
-      // Add immediate feedback
+      // Add system message
       addTranscriptEntry({
         speaker: 'system',
-        text: 'Retrieving authentication token...',
+        text: 'Initializing voice agent...',
         timestamp: new Date(),
       });
 
-      // Get ephemeral key
-      const apiKey = await getEphemeralKey();
-
-      // Create agent with store bindings
-      const agent = createRealtimeAgent(selectedTemplate, {
-        addInformationText,
-        updateInformationText,
-        deleteInformationEntry,
-        collectedInformation,
-        setInformationComplete,
-        setCurrentView,
-        addToolCallThought,
-        closeSession: async () => {
-          // Close session without UI updates (navigating to note generator)
-          if (sessionRef.current) {
-            await sessionRef.current.close();
-            log('Session closed via information_complete tool');
-          }
-          sessionRef.current = null;
-          agentRef.current = null;
-          setVoiceAgentConnected(false);
-        },
-      });
-      agentRef.current = agent;
-
-      // Create session with agent and configuration
-      const sessionConfig = {
-        model: 'gpt-realtime',
-        config: {
-          inputAudioFormat: 'pcm16',
-          outputAudioFormat: 'pcm16',
-          inputAudioTranscription: {
-            model: 'whisper-1',
-            prompt: '[silence] Only transcribe clear, actual speech. If there is background noise, silence, or unclear audio, return empty. Do not guess or generate text.',
-          },
-          turnDetection: {
-            type: 'server_vad',
-            threshold: settings.vadThreshold,
-            prefixPaddingMs: 300,
-            silenceDurationMs: settings.vadSilenceDurationMs,
-          },
-        },
-      };
-
-      // Debug: Log audio initialization parameters
-      debug.add('voice_agent_audio_config', {
-        vadThreshold: settings.vadThreshold,
-        vadSilenceDurationMs: settings.vadSilenceDurationMs,
-        whisperPrompt: sessionConfig.config.inputAudioTranscription.prompt,
-        inputAudioFormat: sessionConfig.config.inputAudioFormat,
-        outputAudioFormat: sessionConfig.config.outputAudioFormat,
-        timestamp: new Date().toISOString(),
-      });
-
-      const session = new RealtimeSession(agent, sessionConfig);
-      sessionRef.current = session;
-
-      // Add connection status message
-      addTranscriptEntry({
-        speaker: 'system',
-        text: 'Connecting to voice agent...',
-        timestamp: new Date(),
-      });
-
-      // Connect the session with API key
-      await session.connect({ apiKey });
-      log('Voice agent session connected');
-      debug.add('voice_agent_connected', { timestamp: new Date() });
-
-      // Listen for transport events (includes session.updated confirmation)
-      session.on('transport_event', (event: any) => {
-        // Session update confirmation
-        if (event.type === 'session.updated') {
-          log('✅ Session update confirmed by server!');
-          log(`New instructions length: ${event.session?.instructions?.length || 0} chars`);
-
-          debug.add('session_updated_confirmed', {
-            timestamp: new Date().toISOString(),
-            instructionsLength: event.session?.instructions?.length || 0,
-            hasInstructions: !!event.session?.instructions,
-            fullEvent: event,
-          });
-        }
-
-        // Error handling
-        if (event.type === 'error') {
-          log(`❌ Transport error: ${event.error?.message || 'Unknown error'}`);
-          debug.add('transport_error', {
-            timestamp: new Date().toISOString(),
-            error: event.error,
-          });
-        }
-      });
-
-      // Listen to all transport events (raw Realtime API events)
-      session.transport.on('*', (event: any) => {
-        // Handle user text input (when text is sent directly)
-        if (event.type === 'conversation.item.added') {
-          const item = event.item;
-
-          // Handle user text messages (not audio)
-          if (item.role === 'user' && item.type === 'message') {
-            const content = item.content?.[0];
-
-            // Only handle input_text here (audio transcripts come later)
-            if (content?.type === 'input_text' && content.text) {
-              const itemKey = `user_text_${item.id}`;
-              if (!processedItemIds.current.has(itemKey)) {
-                processedItemIds.current.add(itemKey);
-                addTranscriptEntry({
-                  speaker: 'user',
-                  text: content.text,
-                  timestamp: new Date(),
-                });
-                log(`✅ User text: ${content.text}`);
-              }
-            }
-          }
-        }
-
-        // Handle user audio transcription completion
-        if (event.type === 'conversation.item.input_audio_transcription.completed') {
-          const transcript = event.transcript;
-          if (transcript && transcript.trim()) {
-            const itemKey = `user_audio_${event.item_id}`;
-            if (!processedItemIds.current.has(itemKey)) {
-              processedItemIds.current.add(itemKey);
-              addTranscriptEntry({
-                speaker: 'user',
-                text: transcript,
-                timestamp: new Date(),
-              });
-              log(`✅ User audio transcript: ${transcript}`);
-            }
-          }
-        }
-
-        // Handle assistant audio transcription completion
-        if (event.type === 'response.output_audio_transcript.done') {
-          const transcript = event.transcript;
-          if (transcript && transcript.trim()) {
-            const itemKey = `assistant_audio_${event.item_id}_${event.content_index}`;
-            if (!processedItemIds.current.has(itemKey)) {
-              processedItemIds.current.add(itemKey);
-              addTranscriptEntry({
-                speaker: 'agent',
-                text: transcript,
-                timestamp: new Date(),
-              });
-              log(`✅ Assistant audio transcript: ${transcript}`);
-            }
-          }
-        }
-
-        // Handle function calls (from response.done)
-        if (event.type === 'response.done') {
-          debug.add('response_done', {
-            timestamp: new Date().toISOString(),
-            response: event.response,
-          });
-
-          // Check for function calls in output
-          const outputs = event.response.output || [];
-          outputs.forEach((item: any) => {
-            if (item.type === 'function_call') {
-              const itemKey = `function_${item.id}`;
-              if (!processedItemIds.current.has(itemKey)) {
-                processedItemIds.current.add(itemKey);
-                const functionName = item.name;
-                addTranscriptEntry({
-                  speaker: 'system',
-                  text: `Calling function: ${functionName}`,
-                  timestamp: new Date(),
-                });
-                log(`✅ Function call: ${functionName}`);
-              }
-            }
-          });
-        }
-      });
-
-      setVoiceAgentConnected(true);
-      addTranscriptEntry({
-        speaker: 'system',
-        text: 'Connected to voice agent. Ready for input.',
-        timestamp: new Date(),
-      });
-
-	// Automatically send "start" message to trigger agent greeting
-	const init_msg = "Initialize"  ; 
-      try {
-        session.transport.sendMessage(init_msg, {});
-        log('Sent automatic start message to agent');
+      // Wait for agent to be ready
+      if (agentLoading) {
         addTranscriptEntry({
-          speaker: 'user',
-          text: init_msg,
+          speaker: 'system',
+          text: 'Waiting for agent to initialize...',
           timestamp: new Date(),
         });
-      } catch (sendError) {
-        log('Error sending start message:');
-        log(sendError);
+
+        // Poll for agent ready (max 10 seconds)
+        let waitTime = 0;
+        while (agentLoading && waitTime < 10000) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitTime += 100;
+        }
       }
 
+      if (agentError) {
+        throw agentError;
+      }
+
+      if (!agentRef.current) {
+        throw new Error('Agent failed to initialize');
+      }
+
+      // Start Tivi listening
+      await tivi.startListening();
+
+      setIsSessionActive(true);
+      setVoiceAgentConnected(true);
+
+      addTranscriptEntry({
+        speaker: 'system',
+        text: 'Voice agent connected. Ready for input.',
+        timestamp: new Date(),
+      });
+
+      log('Voice agent started');
+      debug.add('voice_agent_connected', { timestamp: new Date().toISOString() });
+
+      // Send initial greeting to agent
+      setTimeout(async () => {
+        const currentAgent = agentRef.current;
+        if (currentAgent && isSessionActive) {
+          try {
+            currentAgent.add_user_text_input('Initialize');
+
+            const response = await currentAgent.run_llm(4);
+
+            if (response && typeof response === 'string') {
+              await tivi.speak(response, settings.playbackRate || 1.5);
+            }
+          } catch (error) {
+            log(`Initial greeting error: ${error}`);
+          }
+        }
+      }, 500);
+
     } catch (error) {
-      log('Error starting voice agent:');
-      log(error);
-      debug.add('voice_agent_start_error', error);
+      log(`Error starting voice agent: ${error}`);
+      debug.add('voice_agent_start_error', { error: String(error) });
+
+      setIsSessionActive(false);
       setVoiceAgentConnected(false);
+
       addTranscriptEntry({
         speaker: 'system',
         text: `Failed to start: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -281,34 +269,26 @@ export function useVoiceAgent() {
     }
   }, [
     selectedTemplate,
-    addInformationText,
-    updateInformationText,
-    deleteInformationEntry,
-    collectedInformation,
-    setInformationComplete,
-    setCurrentView,
+    agentLoading,
+    agentError,
     setVoiceAgentConnected,
     addTranscriptEntry,
-    addToolCallThought,
-    settings,
+    settings.playbackRate,
+    tivi,
+    isSessionActive,
   ]);
 
+  // Stop voice agent
   const stopAgent = useCallback(async () => {
     try {
       log('Stopping voice agent...');
-      debug.add('voice_agent_stop_requested', { timestamp: new Date() });
+      debug.add('voice_agent_stop_requested', { timestamp: new Date().toISOString() });
 
-      // Properly close the session
-      if (sessionRef.current) {
-        await sessionRef.current.close();
-        log('Session closed');
-      }
+      // Stop Tivi
+      tivi.stopListening();
+      tivi.cancelSpeech();
 
-      // Clear refs
-      sessionRef.current = null;
-      agentRef.current = null;
-      processedItemIds.current.clear();
-
+      setIsSessionActive(false);
       setVoiceAgentConnected(false);
 
       addTranscriptEntry({
@@ -318,22 +298,36 @@ export function useVoiceAgent() {
       });
 
       log('Voice agent stopped');
-    } catch (error) {
-      log('Error stopping voice agent:');
-      log(error);
-      debug.add('voice_agent_stop_error', error);
 
-      // Force cleanup even on error
-      sessionRef.current = null;
-      agentRef.current = null;
-      processedItemIds.current.clear();
+    } catch (error) {
+      log(`Error stopping voice agent: ${error}`);
+      debug.add('voice_agent_stop_error', { error: String(error) });
+
+      // Force cleanup
+      setIsSessionActive(false);
       setVoiceAgentConnected(false);
     }
-  }, [setVoiceAgentConnected, addTranscriptEntry]);
+  }, [setVoiceAgentConnected, addTranscriptEntry, tivi]);
 
   return {
     startAgent,
     stopAgent,
     connected: voiceAgentConnected,
+    isSessionActive,
+    agentLoading,
+    agentError,
+    reinitializeAgent,
+    // Tivi state for UI
+    tivi: {
+      isListening: tivi.isListening,
+      isSpeaking: tivi.isSpeaking,
+      isConnected: tivi.isConnected,
+      interimResult: tivi.interimResult,
+      audioLevelRef: tivi.audioLevelRef,
+      speechProbRef: tivi.speechProbRef,
+      cancelSpeech: tivi.cancelSpeech,
+    },
   };
 }
+
+export default useVoiceAgent;

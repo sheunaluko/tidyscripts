@@ -21,14 +21,17 @@ export interface ParsedRoute {
 // App Settings
 export interface AppSettings {
   inputMode: 'voice' | 'text';
-  aiModel: string;
+  aiModel: string;                    // Model for note generation
+  agentModel: string;                 // Model for voice agent conversation
   autostartAgent: boolean;
   autostartGeneration: boolean;
   showDefaultTemplates: boolean;
   advancedFeaturesEnabled: boolean;
   vadThreshold: number;
   vadSilenceDurationMs: number;
-  useUnstructuredMode?: boolean; // Toggle between structured/unstructured LLM calls
+  useUnstructuredMode?: boolean;      // Toggle between structured/unstructured LLM calls
+  tiviMode: 'guarded' | 'responsive' | 'continuous';  // Voice recognition mode
+  playbackRate: number;               // TTS playback rate (1.0 = normal)
 }
 
 // Note Template

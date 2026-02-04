@@ -92,13 +92,40 @@ export const Settings: React.FC = () => {
         <Divider sx={{ my: 3 }} />
 
         {/* AI Model Selection */}
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          AI Models
+        </Typography>
+
         <FormControl fullWidth sx={{ mb: 3 }}>
           <FormLabel component="legend" sx={{ mb: 1 }}>
-            AI Model for Note Generation
+            Note Generation Model
           </FormLabel>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            Used for generating the final clinical note from collected information
+          </Typography>
           <Select
             value={settings.aiModel}
             onChange={(e) => updateSettings({ aiModel: e.target.value })}
+            size="small"
+          >
+            {SUPPORTED_MODELS.map((model) => (
+              <MenuItem key={model} value={model}>
+                {model}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <FormLabel component="legend" sx={{ mb: 1 }}>
+            Voice Agent Model
+          </FormLabel>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            Used for conversation during information collection. Faster models work better for real-time interaction.
+          </Typography>
+          <Select
+            value={settings.agentModel || settings.aiModel}
+            onChange={(e) => updateSettings({ agentModel: e.target.value })}
             size="small"
           >
             {SUPPORTED_MODELS.map((model) => (
@@ -193,64 +220,91 @@ export const Settings: React.FC = () => {
 
         {/* Voice Agent Audio Controls */}
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Voice Agent Audio Controls
+          Voice Agent Settings
         </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 3 }}>
-              Note: Changes require restarting the voice agent to take effect
-            </Typography>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 3 }}>
+          Note: Changes require restarting the voice agent to take effect
+        </Typography>
 
-            <Box sx={{ mb: 3 }}>
-              <FormLabel component="legend" sx={{ mb: 1 }}>
-                Sensitivity: {settings.vadThreshold.toFixed(2)}
-              </FormLabel>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                Lower values reduce false detections from background noise
-              </Typography>
-	      
-              <Slider
-                  value={settings.vadThreshold}
-		  sx={{margin: "5px"}}
-                onChange={(_, value) => updateSettings({ vadThreshold: value as number })}
-                min={0.0}
-                max={0.5}
-                step={0.05}
-                marks={[
-                  { value: 0.1, label: '0.1' },
-                  { value: 0.2, label: '0.2' },		  		  
-                  { value: 0.3, label: '0.3' },
-                  { value: 0.4, label: '0.4' },		  		  
-                  { value: 0.5, label: '0.5' },
-                ]}
-                valueLabelDisplay="auto"
-              />
-            </Box>
+        {/* Voice Recognition Mode */}
+        <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
+          <FormLabel component="legend">Voice Recognition Mode</FormLabel>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            Controls how the voice agent detects and processes speech
+          </Typography>
+          <RadioGroup
+            value={settings.tiviMode || 'guarded'}
+            onChange={(e) => updateSettings({ tiviMode: e.target.value as 'guarded' | 'responsive' | 'continuous' })}
+          >
+            <FormControlLabel
+              value="guarded"
+              control={<Radio />}
+              label="Guarded (VAD-triggered, filters noise well)"
+            />
+            <FormControlLabel
+              value="responsive"
+              control={<Radio />}
+              label="Responsive (Power-triggered, fast response)"
+            />
+            <FormControlLabel
+              value="continuous"
+              control={<Radio />}
+              label="Continuous (Always listening)"
+            />
+          </RadioGroup>
+        </FormControl>
 
-            <Box sx={{ mb: 3 }}>
-              <FormLabel component="legend" sx={{ mb: 1 }}>
-                Silence Duration: {settings.vadSilenceDurationMs}ms
-              </FormLabel>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                How long to wait for silence before processing speech. Increase to allow for longer pauses while speaking.
-              </Typography>
+        <Box sx={{ mb: 3 }}>
+          <FormLabel component="legend" sx={{ mb: 1 }}>
+            VAD Sensitivity: {settings.vadThreshold.toFixed(2)}
+          </FormLabel>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            Higher values require clearer speech. Lower values are more sensitive to quiet speech but may pick up noise.
+          </Typography>
 
-	      
-              <Slider
-                value={settings.vadSilenceDurationMs}
-                onChange={(_, value) => updateSettings({ vadSilenceDurationMs: value as number })}
-                  min={200}
-		  sx={{margin:"5px"}}
-                max={2000}
-                step={50}
-                marks={[
-                  { value: 200, label: '200ms' },
-                  { value: 500, label: '500ms' },
-                  { value: 750, label: '750ms (Default)' },
-                  { value: 1000, label: '1s' },
-                  { value: 2000, label: '2s' },
-                ]}
-                valueLabelDisplay="auto"
-              />
-            </Box>
+          <Slider
+            value={settings.vadThreshold}
+            sx={{margin: "5px"}}
+            onChange={(_, value) => updateSettings({ vadThreshold: value as number })}
+            min={0.5}
+            max={1.0}
+            step={0.05}
+            marks={[
+              { value: 0.5, label: '0.5 (Sensitive)' },
+              { value: 0.7, label: '0.7' },
+              { value: 0.8, label: '0.8 (Default)' },
+              { value: 0.9, label: '0.9' },
+              { value: 1.0, label: '1.0 (Strict)' },
+            ]}
+            valueLabelDisplay="auto"
+          />
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <FormLabel component="legend" sx={{ mb: 1 }}>
+            TTS Playback Rate: {(settings.playbackRate || 1.5).toFixed(1)}x
+          </FormLabel>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            Speed of voice agent responses. Higher values speak faster.
+          </Typography>
+
+          <Slider
+            value={settings.playbackRate || 1.5}
+            sx={{margin: "5px"}}
+            onChange={(_, value) => updateSettings({ playbackRate: value as number })}
+            min={0.5}
+            max={2.5}
+            step={0.1}
+            marks={[
+              { value: 0.5, label: '0.5x' },
+              { value: 1.0, label: '1.0x' },
+              { value: 1.5, label: '1.5x (Default)' },
+              { value: 2.0, label: '2.0x' },
+              { value: 2.5, label: '2.5x' },
+            ]}
+            valueLabelDisplay="auto"
+          />
+        </Box>
 
         <Divider sx={{ my: 3 }} />
 
@@ -267,7 +321,7 @@ export const Settings: React.FC = () => {
           <DialogContent sx={{ minWidth: 300  }}>
 
 	      <br />
-	      
+
           <TextField
             fullWidth
               type="password"

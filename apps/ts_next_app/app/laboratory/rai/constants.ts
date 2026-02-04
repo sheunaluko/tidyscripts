@@ -1,6 +1,7 @@
 // RAI App Constants
 
 import { AppSettings } from './types';
+import { getRegisteredModels } from 'tidyscripts_common/src/apis/cortex/model_registry';
 
 // Theme Configuration
 export const THEME_CONFIG = {
@@ -34,29 +35,23 @@ export const THEME_CONFIG = {
   },
 };
 
-// Supported AI Models
-export const SUPPORTED_MODELS = [
-  'gemini-3-pro-preview',
-  'gemini-3-flash-preview',
-  'gpt-5.2',
-  'gpt-5-mini',
-  'gpt-5-nano',
-  'claude-sonnet-4-5',
-  'claude-haiku-4-5',
-  'claude-opus-4-5',
-];
+// Supported AI Models - from model registry
+export const SUPPORTED_MODELS = getRegisteredModels();
 
 // Default Settings
 export const DEFAULT_SETTINGS: AppSettings = {
   inputMode: 'voice',
-  aiModel: 'gpt-5.2',
+  aiModel: 'gpt-5.2',                 // Model for note generation
+  agentModel: 'gpt-5-mini',           // Model for voice agent (faster for conversation)
   autostartAgent: false,
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
-  vadThreshold: 0.05,
-  vadSilenceDurationMs: 750,
+  vadThreshold: 0.8,                  // VAD positive speech threshold (0.0-1.0)
+  vadSilenceDurationMs: 750,          // Legacy: not used with Tivi
   useUnstructuredMode: false,
+  tiviMode: 'guarded',                // Voice recognition mode: guarded, responsive, continuous
+  playbackRate: 1.5,                  // TTS playback rate
 };
 
 // Advanced Features Password Hash (SHA-256)
