@@ -48,6 +48,7 @@ interface SettingsPanelProps {
   onSpeechCooldownChange?: (ms: number) => void;
   playbackRate?: number;
   onPlaybackRateChange?: (rate: number) => void;
+  isListening?: boolean;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -64,7 +65,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   speechCooldownMs,
   onSpeechCooldownChange,
   playbackRate,
-  onPlaybackRateChange
+  onPlaybackRateChange,
+  isListening = false
 }) => {
   return (
     <Drawer
@@ -109,6 +111,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Voice Recognition Settings
             </Typography>
 
+            {isListening && (
+              <Typography variant="caption" color="warning.main" sx={{ display: 'block', mb: 2 }}>
+                Stop listening to change voice settings
+              </Typography>
+            )}
+
             {/* VADMonitor - only runs when drawer is open */}
             {speechProbRef && (
               <Box sx={{ my: 2 }}>
@@ -135,6 +143,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onChange={(e) => onTiviParamsChange({ mode: e.target.value as TiviParams['mode'] })}
                 size="small"
                 fullWidth
+                disabled={isListening}
               >
                 <MenuItem value="guarded">Guarded (VAD-triggered)</MenuItem>
                 <MenuItem value="responsive">Responsive (power-triggered)</MenuItem>
@@ -156,6 +165,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   onChange={(_, value) => onTiviParamsChange({ powerThreshold: value as number })}
                   valueLabelDisplay="auto"
                   size="small"
+                  disabled={isListening}
                   sx={{ mt: 1 }}
                 />
               </Box>
@@ -176,6 +186,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 }
                 valueLabelDisplay="auto"
                 size="small"
+                disabled={isListening}
                 sx={{ mt: 1 }}
               />
             </Box>
@@ -195,6 +206,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 }
                 valueLabelDisplay="auto"
                 size="small"
+                disabled={isListening}
                 sx={{ mt: 1 }}
               />
             </Box>
@@ -212,6 +224,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 }
                 size="small"
                 fullWidth
+                disabled={isListening}
                 inputProps={{ min: 32, max: 500, step: 32 }}
               />
             </Box>
@@ -231,6 +244,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   valueLabelDisplay="auto"
                   valueLabelFormat={(v) => `${(v / 1000).toFixed(1)}s`}
                   size="small"
+                  disabled={isListening}
                   sx={{ mt: 1 }}
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
@@ -254,6 +268,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   valueLabelDisplay="auto"
                   valueLabelFormat={(v) => `${v}x`}
                   size="small"
+                  disabled={isListening}
                   sx={{ mt: 1 }}
                 />
               </Box>
@@ -269,6 +284,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onChange={(e) => onTiviParamsChange({ language: e.target.value })}
                 size="small"
                 fullWidth
+                disabled={isListening}
               >
                 <MenuItem value="en-US">English (US)</MenuItem>
                 <MenuItem value="en-GB">English (UK)</MenuItem>
@@ -291,6 +307,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     size="small"
                     checked={tiviParams.verbose}
                     onChange={(e) => onTiviParamsChange({ verbose: e.target.checked })}
+                    disabled={isListening}
                   />
                 }
                 label={<Typography variant="caption">Verbose Logging</Typography>}
@@ -301,48 +318,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </>
       )}
 
-      {onApplyPreset && (
-        <>
-          <Divider sx={{ my: 2 }} />
-
-          {/* Layout Presets */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Layout Presets
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={1} mt={2}>
-              <Button
-                variant="outlined"
-                onClick={() => onApplyPreset('focus')}
-                fullWidth
-              >
-                Focus Mode
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => onApplyPreset('development')}
-                fullWidth
-              >
-                Development
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => onApplyPreset('debug')}
-                fullWidth
-              >
-                Debug View
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => onApplyPreset('minimal')}
-                fullWidth
-              >
-                Minimal
-              </Button>
-            </Box>
-          </Box>
-        </>
-      )}
 
       {onResetLayout && (
         <>

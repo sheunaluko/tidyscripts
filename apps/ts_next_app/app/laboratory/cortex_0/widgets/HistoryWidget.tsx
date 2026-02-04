@@ -44,7 +44,7 @@ const HistoryWidget: React.FC<HistoryWidgetProps> = ({
   onTogglePin
 }) => {
   const theme = useTheme();
-  const [layout, setLayout] = useState<'vertical' | 'horizontal'>('vertical');
+  const [layout, setLayout] = useState<'vertical' | 'horizontal'>('horizontal');
 
   // Load itemSize from localStorage on mount
   const [itemSize, setItemSize] = useState<number>(() => {

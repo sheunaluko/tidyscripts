@@ -393,7 +393,13 @@ export class IframeSandboxExecutor implements SandboxExecutor {
             if (target.hasOwnProperty(prop)) {
               const value = target[prop]
 
-              // Wrap functions to track calls
+              // Don't wrap built-in constructors/objects - they need their static methods
+              // (e.g., Array.isArray, Object.keys, Date.now, Map, Set, etc.)
+              if (BUILTIN_PASSTHROUGH.has(String(prop))) {
+                return value
+              }
+
+              // Wrap user-provided functions to track calls
               if (typeof value === 'function') {
                 return function(...args) {
                   const callId = Math.random().toString(36)
@@ -555,10 +561,23 @@ export class IframeSandboxExecutor implements SandboxExecutor {
       .join(',\n        ')
 
     return `
+        // Built-in constructors/objects that should NOT be wrapped by the proxy
+        // (wrapping them loses their static methods like Array.isArray, Object.keys, Date.now, etc.)
+        const BUILTIN_PASSTHROUGH = new Set([
+          'Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'RegExp', 'Error',
+          'Promise', 'Map', 'Set', 'WeakMap', 'WeakSet', 'Symbol', 'Proxy', 'Reflect',
+          'JSON', 'Math', 'Intl', 'console',
+          'ArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray',
+          'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array',
+          'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array',
+          'TextEncoder', 'TextDecoder', 'URL', 'URLSearchParams',
+          'BigInt'
+        ])
+
         // Create allowlist of exposed globals
         const allowedGlobals = {
           ${contextSection ? contextSection + ',\n\n' : ''}
-          // Safe built-ins
+          // Safe built-ins - constructors and utility objects
           console: {
             log: console.log,
             error: console.error,
@@ -570,17 +589,78 @@ export class IframeSandboxExecutor implements SandboxExecutor {
           Array: Array,
           Object: Object,
           String: String,
-          eval  : eval,   // adding eval (^.^)
+          eval: eval,
           Number: Number,
           Boolean: Boolean,
           Date: Date,
           RegExp: RegExp,
           Error: Error,
+          TypeError: TypeError,
+          RangeError: RangeError,
+          SyntaxError: SyntaxError,
+          ReferenceError: ReferenceError,
           Promise: Promise,
+
+          // Collections
+          Map: Map,
+          Set: Set,
+          WeakMap: WeakMap,
+          WeakSet: WeakSet,
+
+          // Symbols and reflection
+          Symbol: Symbol,
+          Proxy: Proxy,
+          Reflect: Reflect,
+
+          // Typed arrays and binary data
+          ArrayBuffer: ArrayBuffer,
+          DataView: DataView,
+          Int8Array: Int8Array,
+          Uint8Array: Uint8Array,
+          Uint8ClampedArray: Uint8ClampedArray,
+          Int16Array: Int16Array,
+          Uint16Array: Uint16Array,
+          Int32Array: Int32Array,
+          Uint32Array: Uint32Array,
+          Float32Array: Float32Array,
+          Float64Array: Float64Array,
+          BigInt64Array: typeof BigInt64Array !== 'undefined' ? BigInt64Array : undefined,
+          BigUint64Array: typeof BigUint64Array !== 'undefined' ? BigUint64Array : undefined,
+
+          // Text encoding
+          TextEncoder: typeof TextEncoder !== 'undefined' ? TextEncoder : undefined,
+          TextDecoder: typeof TextDecoder !== 'undefined' ? TextDecoder : undefined,
+
+          // URL handling
+          URL: typeof URL !== 'undefined' ? URL : undefined,
+          URLSearchParams: typeof URLSearchParams !== 'undefined' ? URLSearchParams : undefined,
+
+          // Global values
+          Infinity: Infinity,
+          NaN: NaN,
+          undefined: undefined,
+
+          // Global functions
+          isFinite: isFinite,
+          isNaN: isNaN,
+          parseFloat: parseFloat,
+          parseInt: parseInt,
+          encodeURI: encodeURI,
+          encodeURIComponent: encodeURIComponent,
+          decodeURI: decodeURI,
+          decodeURIComponent: decodeURIComponent,
+
+          // BigInt
+          BigInt: typeof BigInt !== 'undefined' ? BigInt : undefined,
+
+          // Timers
           setTimeout: setTimeout,
           setInterval: setInterval,
           clearTimeout: clearTimeout,
           clearInterval: clearInterval,
+
+          // Intl for formatting
+          Intl: typeof Intl !== 'undefined' ? Intl : undefined,
         }
 
         // Sandbox helper: run_dynamic_function (defined after allowedGlobals so it can reference it)

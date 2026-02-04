@@ -8,9 +8,16 @@ import * as tsw from "tidyscripts_web"
 import * as bashr from "../../../src/bashr/index";
 import { create_cortex_functions_from_mcp_server } from "./mcp_adapter" ;
 import { z } from "zod"
+import * as graph_utils from "./graph_utils"
+import { test_graph_utils, clear_graph_utils_test } from "./test_graph_utils"
 
 // Bash client state
 var BASH_CLIENT: any = null;
+
+// Attach graph_utils to window for debugging
+if (typeof window !== 'undefined') {
+    (window as any).graph_utils = { ...graph_utils, test_graph_utils, clear_graph_utils_test };
+}
 
 const vi = tsw.util.voice_interface ;
 const {common} = tsw;
@@ -250,47 +257,72 @@ Example: format_string("Hello {name}!", {name: "World"}) => "Hello World!"`,
     },
 
     {
-	enabled : true, 
+	enabled : true,
 	description : `
- 	   Stores declarative knowledge to your knowledge graph. The knowledge graph is called the Matrix. 
-	   Use this function to persist relational / conceptual / declarative knowledge into your knowledge graph
-	   memory.
+	   Stores FACTUAL RELATIONSHIPS to your knowledge graph as entity-relation-entity triples.
 
-	   This is great for storing relationships between entities like city -> in -> state
-	   or shay  is -> human
+	   USE THIS FOR: Facts, relationships between things, ontological knowledge
+	   - "X created Y", "A is_a B", "P lives_in Q"
+	   - Permanent facts that won't change
+	   - Things you want to recall via semantic search later
 
-	   Provide the knowledge in simple narrative/textual form, with clearly idenfitied identies
-	   And relationships, and it will be converted and saved for you. 
+	   DO NOT USE FOR: User logs, conversation history, temporal events, raw text
+	   - Use access_database_with_surreal_ql with the 'logs' or 'cortex' table instead
+
+	   Provide an array of triples: [subject, relation, object]
+
+	   Examples:
+	   - ["shay", "created", "tidyscripts"]
+	   - ["san_francisco", "is_in", "california"]
+	   - ["aspirin", "treats", "headache"]
+
+	   The function automatically:
+	   - Normalizes IDs (lowercase, underscores)
+	   - Computes embeddings for semantic search
+	   - Deduplicates (won't re-insert existing items)
 	   ` ,
 	name        : "store_declarative_knowledge" ,
-	parameters  : { knowledge : "string" }  ,
+	parameters  : { triples : "array" }  ,
 	fn          : async (ops : any) => {
-	    let {knowledge} = ops.params ;
-	    let result = await common.tes.localhost.dev.matrix._add_knowledge(knowledge);
+	    let {triples} = ops.params ;
+	    let {log} = ops.util ;
+	    log(`Storing ${triples.length} knowledge triples`) ;
+	    let result = await graph_utils.store_knowledge(triples);
+	    log(`Store result: ${JSON.stringify(result)}`) ;
 	    return result
 	} ,
 	return_type : "any"
     },
 
     {
-	enabled : true, 
+	enabled : true,
 	description : `
- 	   Retrievs declarative knowledge from your knowledge graph. The knowledge graph is called the Matrix. 
+	   Searches your knowledge graph for FACTS and RELATIONSHIPS using semantic similarity.
 
-	   Use this function to query the Matrix for potentially relevant information regarding an entity 
-           or entity of interest 
+	   USE THIS FOR: Finding stored facts, relationships, ontological knowledge
+	   - "who created tidyscripts" -> finds shay->created->tidyscripts
+	   - "what treats headaches" -> finds aspirin->treats->headache
+	   - Any conceptual/relational query
 
-	   Provide the query in simple narrative/textual form 
+	   DO NOT USE FOR: User history, logs, conversation records
+	   - Use access_database_with_surreal_ql with the 'logs' table instead
 
-           Use this to search if you think you do not know something, to try get an answer before telling the user
-           you do no know! 
+	   Returns entities and relations ranked by semantic similarity to your query.
+	   Lower distance = more relevant.
+
+	   IMPORTANT: Search this before telling the user you don't know something!
 	   ` ,
 	name        : "retrieve_declarative_knowledge" ,
-	parameters  : { query : "string" }  ,
+	parameters  : { query : "string", limit : "number" }  ,
 	fn          : async (ops : any) => {
-	    let {query} = ops.params ;
-	    let result = await common.tes.localhost.dev.matrix._search_for_knowledge(query, {limit : 20});
-	    return result
+	    let {query, limit} = ops.params ;
+	    let {log} = ops.util ;
+	    limit = limit || 10 ;
+	    log(`Searching knowledge graph for: "${query}"`) ;
+	    let result = await graph_utils.search_knowledge(query, { limit });
+	    let formatted = graph_utils.format_search_results(result) ;
+	    log(`Search complete`) ;
+	    return formatted
 	} ,
 	return_type : "any"
     },

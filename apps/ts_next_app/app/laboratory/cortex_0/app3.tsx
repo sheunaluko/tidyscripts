@@ -1343,6 +1343,7 @@ const  Component: NextPage = (props : any) => {
                 voiceStatus={voiceStatus}
                 interimResult={interim_result}
                 contextUsage={contextUsage}
+                conversationStarted={executionHistory.length > 0}
             />
 
             {/* Settings Panel */}
@@ -1361,6 +1362,7 @@ const  Component: NextPage = (props : any) => {
                 onSpeechCooldownChange={setSpeechCooldownMs}
                 playbackRate={playbackRate}
                 onPlaybackRateChange={setPlaybackRate}
+                isListening={tivi.isListening}
             />
 
             {/* Render Chat Mode or Voice Mode */}

@@ -19,6 +19,7 @@ export type SectionName =
     | 'cortexRAM'
     | 'callChains'
     | 'dynamicFunctions'
+    | 'knowledgeGraph'
     | 'returnIndices'
     | 'responseGuidance'
     | 'functions'
@@ -139,8 +140,47 @@ If a script concludes with respond_to_user but does not return a value, last_res
 Workspace: Use for long-term state that needs to survive multiple turns without manual passing.
 Last Result: Use for sequential function outputs where the immediate next turn depends on the current turn's findings.
 
-IMPORTANT: if you encounter an error with code execution PLEASE STOP EXECUTION AND NOTIFY the user rather than trying to re-run the code 
+IMPORTANT: if you encounter an error with code execution PLEASE STOP EXECUTION AND NOTIFY the user rather than trying to re-run the code
 
+`,
+
+    knowledgeGraph: `${header('KNOWLEDGE GRAPH VS DATABASE')}
+You have two types of data storage available:
+
+1. KNOWLEDGE GRAPH (user_entities + user_relations)
+   - For: Facts, relationships, ontological knowledge
+   - Structure: Entity-Relation-Entity triples (e.g., "shay created tidyscripts")
+   - Functions:
+     * store_declarative_knowledge({triples: [["A", "rel", "B"], ...]})
+     * retrieve_declarative_knowledge({query: "...", limit: 10})
+
+   USE FOR:
+   - Permanent facts: "Paris is_in France"
+   - Relationships: "Einstein developed relativity"
+   - Concepts: "Aspirin treats headache"
+   - Structured relational knowledge
+
+2. DATABASE TABLES (logs, cortex, custom tables)
+   - For: Events, history, user data, raw records
+   - Structure: Arbitrary JSON documents
+   - Functions:
+     * access_database_with_surreal_ql({query, variables})
+     * Dynamic functions that query specific tables
+
+   USE FOR:
+   - User activity logs
+   - Conversation history
+   - Temporal events with timestamps
+   - Unstructured data storage
+   - Custom application data
+
+DECISION GUIDE:
+- Is it a fact/relationship between entities? -> Knowledge Graph
+- Is it an event/log/record/document? -> Database table
+- Does it fit Subject-Relation-Object structure? -> Knowledge Graph
+- Is it freeform data with custom fields? -> Database table
+
+IMPORTANT: Before telling the user you don't know something, ALWAYS search the knowledge graph first using retrieve_declarative_knowledge!
 `,
 
     returnIndices: `${header('RETURN INDICES')}
@@ -378,7 +418,8 @@ export const LEGACY_CORTEX_SECTIONS: SectionName[] = [
 export const DEFAULT_CORTEX_SECTIONS: SectionName[] = [
     'intro',
     'codeGeneration',
-    'dynamicFunctions', 
+    'dynamicFunctions',
+    'knowledgeGraph',
     'outputFormat',
     'responseGuidance'
 ]

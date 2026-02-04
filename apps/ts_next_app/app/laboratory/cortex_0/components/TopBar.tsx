@@ -27,6 +27,9 @@ import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import { useTheme } from '@mui/material/styles';
 import AudioVisualization from './AudioVisualization';
 import { VoiceStatusIndicator } from './VoiceStatusIndicator';
+import * as tsc from 'tidyscripts_common';
+
+const { MODEL_REGISTRY } = tsc.apis.cortex;
 
 interface TopBarProps {
   // Mode
@@ -65,6 +68,9 @@ interface TopBarProps {
     totalUsed: number
     contextWindow: number
   } | null;
+
+  // Disable model changes
+  conversationStarted?: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -82,7 +88,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   audioLevelRef,
   voiceStatus,
   interimResult,
-  contextUsage
+  contextUsage,
+  conversationStarted = false
 }) => {
   const theme = useTheme();
 
@@ -161,7 +168,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 }
                 label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <GraphicEqIcon fontSize="small" />
-                  <Typography variant="body2">Listen</Typography>
+                  <Typography variant="body2">Transcribe</Typography>
                 </Box>}
                 sx={{ ml: 1, mr: 1 }}
               />
@@ -245,18 +252,23 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
 
         {/* Model Selector */}
-        <Select
-          value={aiModel}
-          onChange={(e) => onModelChange(e.target.value)}
-          size="small"
-          sx={{ minWidth: 150, height: 40 }}
-        >
-          <MenuItem value="gpt-4o">GPT-4o</MenuItem>
-          <MenuItem value="gpt-4o-mini-2024-07-18">GPT-4o Mini</MenuItem>
-          <MenuItem value="o4-mini">o4-Mini</MenuItem>
-          <MenuItem value="chatgpt-4o-latest">ChatGPT-4o</MenuItem>
-          <MenuItem value="gemini-3-flash-preview">Gemini Flash</MenuItem>
-        </Select>
+        <Tooltip title={(started || conversationStarted) ? "Cannot change model after conversation started" : "Select AI model"}>
+          <span>
+            <Select
+              value={aiModel}
+              onChange={(e) => onModelChange(e.target.value)}
+              size="small"
+              disabled={started || conversationStarted}
+              sx={{ minWidth: 180, height: 40 }}
+            >
+              {Object.entries(MODEL_REGISTRY).map(([key, info]) => (
+                <MenuItem key={key} value={key}>
+                  {key}
+                </MenuItem>
+              ))}
+            </Select>
+          </span>
+        </Tooltip>
 
         {/* Settings Button */}
         <Tooltip title="Settings & Widget Controls">
