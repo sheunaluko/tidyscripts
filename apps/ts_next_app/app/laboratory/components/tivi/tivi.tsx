@@ -31,9 +31,12 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { useTivi } from './lib';
 import type { TiviProps, TiviMode } from './lib';
 import * as tsw from 'tidyscripts_web';
+import TuneIcon from '@mui/icons-material/Tune';
 import { VizComponent } from './VizComponent';
 import { VoiceSelector } from './VoiceSelector';
 import { VADMonitor } from './VADMonitor';
+import { useCalibration } from './lib/useCalibration';
+import { Phase1Viz, Phase2Viz } from './CalibrationViz';
 
 const log = tsw.common.logger.get_logger({ id: 'tivi' });
 
@@ -189,6 +192,10 @@ export const Tivi: React.FC<TiviProps> = ({
     onError: handleError,
   });
 
+  // Calibration hook
+  const calibration = useCalibration(voice, vadParams, updateVadParam);
+  const isCalibrating = calibration.phase !== 'idle';
+
   /**
    * Test TTS function
    */
@@ -293,150 +300,328 @@ export const Tivi: React.FC<TiviProps> = ({
             startIcon={voice.isListening ? <MicOffIcon /> : <MicIcon />}
             onClick={voice.isListening ? voice.stopListening : voice.startListening}
             fullWidth
+            disabled={isCalibrating}
           >
             {voice.isListening ? 'Stop Listening' : 'Start Listening'}
           </Button>
 
+          <Button
+            variant="outlined"
+            startIcon={<TuneIcon />}
+            onClick={calibration.startCalibration}
+            disabled={isCalibrating || voice.isSpeaking}
+          >
+            Calibrate
+          </Button>
+
           <IconButton
             onClick={voice.clearTranscription}
-            disabled={!voice.transcription}
+            disabled={!voice.transcription || isCalibrating}
             color="default"
           >
             <DeleteIcon />
           </IconButton>
         </Box>
 
-        {/* Voice Selector */}
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{
-              background: alpha(theme.palette.background.default, 0.3),
-              '&:hover': {
-                background: alpha(theme.palette.background.default, 0.5),
-              },
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={1}>
-              <VolumeUpIcon color="action" />
-              <Typography variant="body2" fontWeight={500}>
-                Voice Selector
-              </Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails
-            sx={{
-              background: alpha(theme.palette.background.default, 0.1),
-              pt: 2,
-            }}
-          >
-            <VoiceSelector />
-          </AccordionDetails>
-        </Accordion>
-
-        {/* VAD Monitor */}
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{
-              background: alpha(theme.palette.background.default, 0.3),
-              '&:hover': {
-                background: alpha(theme.palette.background.default, 0.5),
-              },
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={1}>
-              <MicIcon color="action" fontSize="small" />
-              <Typography variant="body2" fontWeight={500}>
-                VAD Monitor
-              </Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails
-            sx={{
-              background: alpha(theme.palette.background.default, 0.1),
-              pt: 2,
-            }}
-          >
-            <VADMonitor
-              speechProbRef={voice.speechProbRef}
-              audioLevelRef={voice.audioLevelRef}
-              threshold={vadParams.positiveSpeechThreshold}
-              powerThreshold={vadParams.mode === 'responsive' ? vadParams.powerThreshold : undefined}
-              minSpeechStartMs={vadParams.minSpeechStartMs}
-              paused={!voice.isListening}
-            />
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Test TTS Controls */}
-        <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            Test TTS (for testing interruption)
-          </Typography>
-          <Stack spacing={1}>
-            <TextField
-              fullWidth
-              size="small"
-              multiline
-              rows={2}
-              value={testTTSText}
-              onChange={(e) => setTestTTSText(e.target.value)}
-              placeholder="Enter text to speak..."
-            />
-            <Button
-              variant="outlined"
-              startIcon={<VolumeUpIcon />}
-              onClick={handleTestTTS}
-              disabled={!testTTSText.trim()}
+        {/* VAD Monitor — always visible during calibration, otherwise in accordion */}
+        {isCalibrating ? (
+          <VADMonitor
+            speechProbRef={voice.speechProbRef}
+            audioLevelRef={voice.audioLevelRef}
+            threshold={vadParams.positiveSpeechThreshold}
+            powerThreshold={vadParams.mode === 'responsive' ? vadParams.powerThreshold : undefined}
+            minSpeechStartMs={vadParams.minSpeechStartMs}
+            paused={!voice.isListening}
+          />
+        ) : (
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                background: alpha(theme.palette.background.default, 0.3),
+                '&:hover': {
+                  background: alpha(theme.palette.background.default, 0.5),
+                },
+              }}
             >
-              Test TTS (Speak while this is playing to interrupt)
-            </Button>
-          </Stack>
-        </Box>
+              <Box display="flex" alignItems="center" gap={1}>
+                <MicIcon color="action" fontSize="small" />
+                <Typography variant="body2" fontWeight={500}>
+                  VAD Monitor
+                </Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{
+                background: alpha(theme.palette.background.default, 0.1),
+                pt: 2,
+              }}
+            >
+              <VADMonitor
+                speechProbRef={voice.speechProbRef}
+                audioLevelRef={voice.audioLevelRef}
+                threshold={vadParams.positiveSpeechThreshold}
+                powerThreshold={vadParams.mode === 'responsive' ? vadParams.powerThreshold : undefined}
+                minSpeechStartMs={vadParams.minSpeechStartMs}
+                paused={!voice.isListening}
+              />
+            </AccordionDetails>
+          </Accordion>
+        )}
 
-        {/* Transcription Display */}
-        <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            Transcription
-          </Typography>
+        {/* Calibration Flow */}
+        {isCalibrating && (
           <Box
             sx={{
-              minHeight: 150,
-              maxHeight: 300,
-              overflowY: 'auto',
               p: 2,
-              background: alpha(theme.palette.background.default, 0.5),
+              background: alpha(theme.palette.background.paper, 0.8),
               borderRadius: 1,
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
             }}
           >
-            {voice.transcription || voice.interimResult ? (
-              <>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  {voice.transcription}
-                </Typography>
-                {voice.interimResult && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: alpha(theme.palette.text.primary, 0.5),
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {voice.interimResult}
+            <Stack spacing={2}>
+              {/* Phase 1: Collect speech */}
+              {calibration.phase === 'phase1' && (
+                <>
+                  <Typography variant="subtitle2" color="primary">
+                    Calibration — Step 1: Speech Profile
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Wait a moment, then speak 1-2 full sentences naturally. Press Done when finished.
+                  </Typography>
+                  <Box display="flex" gap={2}>
+                    <Button variant="contained" onClick={calibration.finishPhase1} fullWidth>
+                      Done
+                    </Button>
+                    <Button variant="outlined" color="error" onClick={calibration.cancelCalibration}>
+                      Cancel
+                    </Button>
+                  </Box>
+                </>
+              )}
+
+              {/* Phase 1 Summary */}
+              {calibration.phase === 'phase1-summary' && calibration.phase1Results && (
+                <>
+                  <Typography variant="subtitle2" color="primary">
+                    Calibration — Step 1 Results
+                  </Typography>
+                  {calibration.phase1Results.noSpeechDetected ? (
+                    <>
+                      <Alert severity="warning">
+                        <Typography variant="body2">
+                          No speech detected. Make sure to speak 1-2 full sentences before pressing Done.
+                        </Typography>
+                      </Alert>
+                      <Box display="flex" gap={2}>
+                        <Button variant="contained" onClick={calibration.startCalibration} fullWidth>
+                          Try Again
+                        </Button>
+                        <Button variant="outlined" color="error" onClick={calibration.cancelCalibration}>
+                          Cancel
+                        </Button>
+                      </Box>
+                    </>
+                  ) : (
+                    <>
+                      <Phase1Viz results={calibration.phase1Results} />
+                      <Stack direction="row" spacing={2}>
+                        <Chip
+                          label={`Speech Threshold: ${calibration.phase1Results.positiveSpeechThreshold.toFixed(2)}`}
+                          color="warning"
+                          size="small"
+                        />
+                        <Chip
+                          label={`Silence Threshold: ${calibration.phase1Results.negativeSpeechThreshold.toFixed(2)}`}
+                          size="small"
+                        />
+                        <Chip
+                          label={`Ambient Ceiling: ${calibration.phase1Results.ambientCeiling.toFixed(2)}`}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </Stack>
+                      <Box display="flex" gap={2}>
+                        <Button variant="contained" onClick={calibration.startPhase2} fullWidth>
+                          Next — Test TTS Echo
+                        </Button>
+                        <Button variant="outlined" color="error" onClick={calibration.cancelCalibration}>
+                          Cancel
+                        </Button>
+                      </Box>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Phase 2: TTS Leakage */}
+              {calibration.phase === 'phase2' && (
+                <>
+                  <Typography variant="subtitle2" color="primary">
+                    Calibration — Step 2: TTS Echo Test
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Playing test audio. Measuring echo cancellation quality...
+                  </Typography>
+                  <Box display="flex" gap={2}>
+                    <Button variant="outlined" color="error" onClick={calibration.cancelCalibration}>
+                      Cancel
+                    </Button>
+                  </Box>
+                </>
+              )}
+
+              {/* Phase 2 Summary */}
+              {calibration.phase === 'phase2-summary' && calibration.phase2Results && (
+                <>
+                  <Typography variant="subtitle2" color="primary">
+                    Calibration — Step 2 Results
+                  </Typography>
+                  <Phase2Viz results={calibration.phase2Results} />
+                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                    <Chip
+                      label={`Min Speech Start: ${calibration.phase2Results.minSpeechStartMs}ms`}
+                      color="info"
+                      size="small"
+                    />
+                    {calibration.phase2Results.spikes.length > 0 && (
+                      <Chip
+                        label={`Max Leakage Spike: ${Math.round(calibration.phase2Results.maxSpikeDuration)}ms`}
+                        color="error"
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                    {calibration.phase2Results.spikes.length === 0 && (
+                      <Chip
+                        label="No leakage detected"
+                        color="success"
+                        size="small"
+                      />
+                    )}
+                  </Stack>
+                  {calibration.phase2Results.recommendDisableInterruption && (
+                    <Alert severity="warning">
+                      <Typography variant="body2">
+                        TTS leakage is significant (spikes &gt; 500ms). Recommend disabling voice interruption for best experience.
+                      </Typography>
+                    </Alert>
+                  )}
+                  <Box display="flex" gap={2}>
+                    <Button variant="contained" color="primary" onClick={calibration.applyResults} fullWidth>
+                      Apply Settings
+                    </Button>
+                    <Button variant="outlined" color="error" onClick={calibration.cancelCalibration}>
+                      Cancel
+                    </Button>
+                  </Box>
+                </>
+              )}
+            </Stack>
+          </Box>
+        )}
+
+        {/* Normal UI — hidden during calibration */}
+        {!isCalibrating && (
+          <>
+            {/* Voice Selector */}
+            <Accordion>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  background: alpha(theme.palette.background.default, 0.3),
+                  '&:hover': {
+                    background: alpha(theme.palette.background.default, 0.5),
+                  },
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1}>
+                  <VolumeUpIcon color="action" />
+                  <Typography variant="body2" fontWeight={500}>
+                    Voice Selector
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails
+                sx={{
+                  background: alpha(theme.palette.background.default, 0.1),
+                  pt: 2,
+                }}
+              >
+                <VoiceSelector />
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Test TTS Controls */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Test TTS (for testing interruption)
+              </Typography>
+              <Stack spacing={1}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={2}
+                  value={testTTSText}
+                  onChange={(e) => setTestTTSText(e.target.value)}
+                  placeholder="Enter text to speak..."
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={<VolumeUpIcon />}
+                  onClick={handleTestTTS}
+                  disabled={!testTTSText.trim()}
+                >
+                  Test TTS (Speak while this is playing to interrupt)
+                </Button>
+              </Stack>
+            </Box>
+
+            {/* Transcription Display */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Transcription
+              </Typography>
+              <Box
+                sx={{
+                  minHeight: 150,
+                  maxHeight: 300,
+                  overflowY: 'auto',
+                  p: 2,
+                  background: alpha(theme.palette.background.default, 0.5),
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                }}
+              >
+                {voice.transcription || voice.interimResult ? (
+                  <>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                      {voice.transcription}
+                    </Typography>
+                    {voice.interimResult && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: alpha(theme.palette.text.primary, 0.5),
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        {voice.interimResult}
+                      </Typography>
+                    )}
+                  </>
+                ) : (
+                  <Typography color="text.secondary" variant="body2">
+                    {voice.isListening
+                      ? 'Speak to see transcription...'
+                      : 'Click "Start Listening" to begin'}
                   </Typography>
                 )}
-              </>
-            ) : (
-              <Typography color="text.secondary" variant="body2">
-                {voice.isListening
-                  ? 'Speak to see transcription...'
-                  : 'Click "Start Listening" to begin'}
-              </Typography>
-            )}
-          </Box>
-        </Box>
+              </Box>
+            </Box>
+          </>
+        )}
 
         {/* Error Display */}
         {voice.error && (

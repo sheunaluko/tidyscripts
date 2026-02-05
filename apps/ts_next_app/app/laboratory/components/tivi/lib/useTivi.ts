@@ -447,6 +447,20 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         }
     },[]);
 
+  const resumeVADProcessing = useCallback(() => {
+    if (vadRef.current) {
+      log('Resuming VAD processing (external request)');
+      vadRef.current.resumeProcessing();
+    }
+  }, []);
+
+  const pauseVADProcessing = useCallback(() => {
+    if (vadRef.current) {
+      log('Pausing VAD processing (external request)');
+      vadRef.current.pauseProcessing();
+    }
+  }, []);
+
   return {
     // State
     isListening,
@@ -466,6 +480,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     speak,
     clearTranscription,
     cancelSpeech,
-    pauseSpeechRecognition
+    pauseSpeechRecognition,
+    resumeVADProcessing,
+    pauseVADProcessing
   };
 }

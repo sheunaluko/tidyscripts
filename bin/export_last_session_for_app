@@ -1,0 +1,1 @@
+./bin/tsnode ./bin/export_last_session_for_app.ts "$@"

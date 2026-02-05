@@ -171,6 +171,16 @@ export interface UseTiviReturn {
    * Pause speech recognition
    */
   pauseSpeechRecognition: () => void;
+
+  /**
+   * Resume VAD frame processing (for calibration in responsive/continuous modes)
+   */
+  resumeVADProcessing: () => void;
+
+  /**
+   * Pause VAD frame processing
+   */
+  pauseVADProcessing: () => void;
 }
 
 export interface TiviProps extends UseTiviOptions {
