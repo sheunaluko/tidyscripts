@@ -213,8 +213,9 @@ const  Component: NextPage = (props : any) => {
         minSpeechStartMs: 150,
         language: 'en-US',
         verbose: false,
-        mode: 'guarded' as 'guarded' | 'responsive' | 'continuous',
+        mode: 'responsive' as 'guarded' | 'responsive' | 'continuous',
         powerThreshold: 0.01,
+        enableInterruption: true,
     });
 
     // Load tiviParams from localStorage after mount (shared with tivi component)
@@ -232,6 +233,7 @@ const  Component: NextPage = (props : any) => {
                     verbose: parsed.verbose ?? prev.verbose,
                     mode: parsed.mode ?? prev.mode,
                     powerThreshold: parsed.powerThreshold ?? prev.powerThreshold,
+                    enableInterruption: parsed.enableInterruption ?? prev.enableInterruption,
                     // Note: language is cortex-specific, don't load from shared storage
                 }));
             } catch (e) {
@@ -333,6 +335,7 @@ const  Component: NextPage = (props : any) => {
                 verbose: updated.verbose,
                 mode: updated.mode,
                 powerThreshold: updated.powerThreshold,
+                enableInterruption: updated.enableInterruption,
             };
             localStorage.setItem('tivi-vad-params', JSON.stringify(toStore));
             return updated;
@@ -347,6 +350,7 @@ const  Component: NextPage = (props : any) => {
         language: tiviParams.language,
         mode: tiviParams.mode,
         powerThreshold: tiviParams.powerThreshold,
+        enableInterruption: tiviParams.enableInterruption,
     });
 
     // Update voice status based on current state

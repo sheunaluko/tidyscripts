@@ -9,6 +9,8 @@ import { MutableRefObject } from 'react';
  * - 'guarded': VAD triggers recognition (may miss first word, but filters noise)
  * - 'responsive': Power threshold triggers recognition (fast, low latency)
  * - 'continuous': Recognition auto-restarts (always listening, uses more resources)
+ *
+ * Interruption (VAD cancelling TTS on speech) is controlled separately via enableInterruption.
  */
 export type TiviMode = 'guarded' | 'responsive' | 'continuous';
 
@@ -68,7 +70,7 @@ export interface UseTiviOptions {
 
   /**
    * Recognition mode
-   * Default: 'guarded'
+   * Default: 'responsive'
    */
   mode?: TiviMode;
 
@@ -78,6 +80,13 @@ export interface UseTiviOptions {
    * Default: 0.01
    */
   powerThreshold?: number;
+
+  /**
+   * Whether VAD can interrupt TTS when speech is detected.
+   * When false, TTS always plays to completion regardless of mode.
+   * Default: true
+   */
+  enableInterruption?: boolean;
 }
 
 export interface UseTiviReturn {
@@ -125,6 +134,11 @@ export interface UseTiviReturn {
    * Current recognition mode
    */
   mode: TiviMode;
+
+  /**
+   * Whether TTS interruption is enabled
+   */
+  enableInterruption: boolean;
 
   /**
    * Start listening for speech

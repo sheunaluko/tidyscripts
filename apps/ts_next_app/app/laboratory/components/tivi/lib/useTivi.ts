@@ -26,8 +26,9 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     negativeSpeechThreshold = 0.6,
     minSpeechStartMs = 150,
     verbose = false,
-    mode = 'guarded',
+    mode = 'responsive',
     powerThreshold = 0.01,
+    enableInterruption = true,
   } = options;
 
   // State
@@ -53,6 +54,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   const isSpeakingRef = useRef(false);
   const isListeningRef = useRef(false);
   const powerThresholdRef = useRef(powerThreshold);
+  const enableInterruptionRef = useRef(enableInterruption);
 
   // Keep refs in sync with props/state
   useEffect(() => {
@@ -62,6 +64,10 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
   useEffect(() => {
     powerThresholdRef.current = powerThreshold;
   }, [powerThreshold]);
+
+  useEffect(() => {
+    enableInterruptionRef.current = enableInterruption;
+  }, [enableInterruption]);
 
   // Track mounted state and pre-load TTS voices
   useEffect(() => {
@@ -255,8 +261,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
             log('Cancelled pending recognition pause (user speaking again)');
           }
 
-          // If TTS is speaking, interrupt it (all modes)
-          if (tts.isSpeaking()) {
+          // If TTS is speaking and interruption is enabled, interrupt it
+          if (tts.isSpeaking() && enableInterruptionRef.current) {
             log('Interrupting TTS');
             tts.cancelSpeech();
             onInterrupt?.();
@@ -395,8 +401,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     // Pause recognition during TTS
     recognitionRef.current?.pause();
 
-    // For responsive/continuous modes: Resume VAD processing for interrupt detection
-    if (modeRef.current !== 'guarded' && vadRef.current) {
+    // For responsive/continuous modes: Resume VAD processing for interrupt detection (only if interruption enabled)
+    if (enableInterruptionRef.current && modeRef.current !== 'guarded' && vadRef.current) {
       log('Resuming VAD processing for TTS interrupt detection');
       vadRef.current.resumeProcessing();
     }
@@ -407,8 +413,8 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       setIsSpeaking(false);
       isSpeakingRef.current = false;
 
-      // For responsive/continuous modes: Pause VAD processing again
-      if (modeRef.current !== 'guarded' && vadRef.current) {
+      // For responsive/continuous modes: Pause VAD processing again (only if we resumed it)
+      if (enableInterruptionRef.current && modeRef.current !== 'guarded' && vadRef.current) {
         log('Pausing VAD processing after TTS');
         vadRef.current.pauseProcessing();
       }
@@ -452,6 +458,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     speechProbRef, // VAD speech probability ref
     error,
     mode, // Current recognition mode
+    enableInterruption, // Whether TTS interruption is enabled
 
     // Actions
     startListening,

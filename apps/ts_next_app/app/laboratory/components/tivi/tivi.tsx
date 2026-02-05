@@ -82,8 +82,9 @@ export const Tivi: React.FC<TiviProps> = ({
     negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
     minSpeechStartMs: propMinSpeechStartMs ?? 150,
     verbose: false,
-    mode: 'guarded' as TiviMode,
+    mode: 'responsive' as TiviMode,
     powerThreshold: 0.01,
+    enableInterruption: true,
   });
 
   // Load from localStorage after mount (client-side only)
@@ -99,8 +100,9 @@ export const Tivi: React.FC<TiviProps> = ({
           negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? 0.45,
           minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? 150,
           verbose: parsed.verbose ?? false,
-          mode: (parsed.mode ?? 'guarded') as TiviMode,
+          mode: (parsed.mode ?? 'responsive') as TiviMode,
           powerThreshold: parsed.powerThreshold ?? 0.01,
+          enableInterruption: parsed.enableInterruption ?? true,
         };
         setVadParams(migrated);
         // Save migrated params back to localStorage
@@ -132,8 +134,9 @@ export const Tivi: React.FC<TiviProps> = ({
       negativeSpeechThreshold: 0.45,
       minSpeechStartMs: 150,
       verbose: false,
-      mode: 'guarded' as TiviMode,
+      mode: 'responsive' as TiviMode,
       powerThreshold: 0.01,
+      enableInterruption: true,
     };
     log('Restoring VAD defaults');
     localStorage.setItem('tivi-vad-params', JSON.stringify(defaults));
@@ -178,6 +181,7 @@ export const Tivi: React.FC<TiviProps> = ({
     verbose: vadParams.verbose,
     mode: vadParams.mode,
     powerThreshold: vadParams.powerThreshold,
+    enableInterruption: vadParams.enableInterruption,
     language,
     onTranscription: handleTranscription,
     onInterrupt: handleInterrupt,
@@ -487,6 +491,22 @@ export const Tivi: React.FC<TiviProps> = ({
                     <MenuItem value="continuous">Continuous (always listening)</MenuItem>
                   </Select>
                 </Box>
+
+                {/* Enable Voice Interruption Toggle */}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={vadParams.enableInterruption}
+                      onChange={(e) => updateVadParam('enableInterruption', e.target.checked)}
+                      disabled={voice.isListening}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      Enable Voice Interruption
+                    </Typography>
+                  }
+                />
 
                 {/* Power Threshold (only for responsive mode) */}
                 {vadParams.mode === 'responsive' && (

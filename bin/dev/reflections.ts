@@ -248,4 +248,9 @@ export function display(data: any, format?: 'json' | 'summary' | 'table') {
   }
 }
 
+
+export var export_last_session_for_app = quick_export_latest_session ; //alias 
+
+
+
 log("Reflections REPL utilities loaded");
