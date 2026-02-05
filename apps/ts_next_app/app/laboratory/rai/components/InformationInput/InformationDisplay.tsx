@@ -19,9 +19,14 @@ import {
 } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useInsights } from '../../context/InsightsContext';
 
 export const InformationDisplay: React.FC = () => {
   const { collectedInformation, updateInformationText, deleteInformationEntry } = useRaiStore();
+  const { client: insightsClient } = useInsights();
+  const trackEvent = (type: string, payload: Record<string, any>) => {
+    try { insightsClient?.addEvent(type, payload); } catch (_) {}
+  };
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -37,10 +42,12 @@ export const InformationDisplay: React.FC = () => {
       // Find the index before update
       const index = collectedInformation.findIndex((e) => e.id === editingId);
       const itemNumber = index + 1;
+      const originalText = collectedInformation[index]?.text || '';
       const newText = editingText.trim();
 
       // Update in store
       updateInformationText(editingId, newText);
+      trackEvent('information_entry_edited', { entryIndex: itemNumber, newText, originalText });
 
       // Generate renumbered list (after update)
       const renumberedList = collectedInformation
@@ -81,7 +88,10 @@ export const InformationDisplay: React.FC = () => {
       const itemNumber = index + 1;
 
       // Delete from store
+      const deletedText = collectedInformation[index]?.text || '';
       deleteInformationEntry(deletingId);
+      const remainingCount = collectedInformation.length - 1;
+      trackEvent('information_entry_deleted', { entryIndex: itemNumber, deletedText, remainingCount });
 
       // Generate renumbered list (after deletion)
       const renumberedList = collectedInformation

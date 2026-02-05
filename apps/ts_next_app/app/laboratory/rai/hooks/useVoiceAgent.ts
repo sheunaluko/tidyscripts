@@ -1,17 +1,18 @@
 /**
- * useVoiceAgent Hook - Voice agent management using Tivi and RAI Agent
+ * useVoiceAgent Hook - Simplified voice workflow
  *
- * This hook integrates:
- * - Tivi for voice input (VAD + speech recognition) and output (TTS)
- * - RAI Agent (Cortex-based) for LLM-powered conversation
+ * Direct transcription + keyword detection:
+ * - Tivi runs in continuous mode for speech recognition
+ * - Transcriptions are added directly to information list (no agent)
+ * - Exact "finished" keyword triggers template review
+ * - Single LLM call for review, not a full agent loop
  */
 
 import { useCallback, useRef, useEffect, useState } from 'react';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
 import { useTivi } from '../../components/tivi/lib/index';
-import { useRaiAgent } from './useRaiAgent';
-import type { Cortex } from 'tidyscripts_common/src/apis/cortex/cortex';
+import { reviewTemplate } from '../lib/rai_agent_web';
 
 const log = tsw.common.logger.get_logger({ id: 'rai_voice' });
 const debug = tsw.common.util.debug;
@@ -25,77 +26,177 @@ interface UseVoiceAgentOptions {
 export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   const { insightsClient } = options;
 
+  // Insights ref for use in callbacks
+  const insightsRef = useRef<any>(insightsClient);
+  useEffect(() => { insightsRef.current = insightsClient; }, [insightsClient]);
+
+  // Safe insights tracking — never throws
+  const trackEvent = useCallback((eventType: string, payload: Record<string, any>) => {
+    try { insightsRef.current?.addEvent(eventType, payload); } catch (_) {}
+  }, []);
+
   const {
     selectedTemplate,
     voiceAgentConnected,
     setVoiceAgentConnected,
     addTranscriptEntry,
+    addInformationText,
+    collectedInformation,
+    setInformationComplete,
+    setCurrentView,
+    setReviewPending,
+    setReviewMessage,
     settings,
   } = useRaiStore();
 
   // Track if voice session is active
   const [isSessionActive, setIsSessionActive] = useState(false);
 
-  // Track processing state to prevent duplicate processing
+  // Skip review flag — set after a review returns user_message
+  const skipReviewRef = useRef(false);
+
+  // Track processing state
   const isProcessingRef = useRef(false);
-  const lastTranscriptionTimeRef = useRef<number>(0);
-  const speechCooldownMs = 1500; // Ignore transcriptions within this time of last processed
 
-  // Agent ref to access from callbacks
-  const agentRef = useRef<Cortex | null>(null);
+  // Stable callback refs
+  const handleTiviError = useCallback((error: Error) => {
+    log(`Tivi error: ${error.message}`);
+    debug.add('tivi_error', { error: error.message });
+  }, []);
 
-  // Initialize RAI agent
-  const { agent, isLoading: agentLoading, error: agentError, reinitialize: reinitializeAgent } = useRaiAgent({
-    model: settings.agentModel || settings.aiModel,
-    insightsClient,
-    onComplete: () => {
-      log('Information collection complete, stopping voice agent');
-      // Stop listening when complete
-      tivi.stopListening();
-      setIsSessionActive(false);
-      setVoiceAgentConnected(false);
-    }
-  });
+  const handleTiviInterrupt = useCallback(() => {
+    log('User interrupted TTS');
+    debug.add('tts_interrupted', { timestamp: new Date().toISOString() });
+  }, []);
 
-  // Keep agent ref updated
-  useEffect(() => {
-    agentRef.current = agent;
-  }, [agent]);
-
-  // Calculate Tivi parameters from settings
-  const tiviMode = settings.tiviMode || 'guarded';
-  const positiveSpeechThreshold = settings.vadThreshold < 0.5 ? 0.8 : settings.vadThreshold;
-  const negativeSpeechThreshold = positiveSpeechThreshold - 0.2;
-
-  // Initialize Tivi for voice I/O
+  // Initialize Tivi — always continuous mode for this workflow
   const tivi = useTivi({
-    mode: tiviMode as 'guarded' | 'responsive' | 'continuous',
-    positiveSpeechThreshold,
-    negativeSpeechThreshold,
+    mode: 'continuous',
+    positiveSpeechThreshold: 0.8,
+    negativeSpeechThreshold: 0.6,
     minSpeechStartMs: 150,
     language: 'en-US',
     verbose: false,
     powerThreshold: 0.01,
-    onError: (error) => {
-      log(`Tivi error: ${error.message}`);
-      debug.add('tivi_error', { error: error.message });
-    },
-    onInterrupt: () => {
-      log('User interrupted TTS');
-      debug.add('tts_interrupted', { timestamp: new Date().toISOString() });
-    },
+    onError: handleTiviError,
+    onInterrupt: handleTiviInterrupt,
   });
+
+  // Refs for access in callbacks
+  const collectedInformationRef = useRef(collectedInformation);
+  const selectedTemplateRef = useRef(selectedTemplate);
+  useEffect(() => { collectedInformationRef.current = collectedInformation; }, [collectedInformation]);
+  useEffect(() => { selectedTemplateRef.current = selectedTemplate; }, [selectedTemplate]);
+
+  // Review and complete — single LLM call
+  const reviewAndComplete = useCallback(async () => {
+    setReviewPending(true);
+    setReviewMessage(null);
+
+    addTranscriptEntry({
+      speaker: 'system',
+      text: 'Reviewing collected information...',
+      timestamp: new Date(),
+    });
+
+    try {
+      const result = await reviewTemplate(
+        selectedTemplateRef.current,
+        collectedInformationRef.current,
+        settings.agentModel || settings.aiModel,
+        insightsRef.current
+      );
+
+      if (result.action === 'proceed') {
+        addTranscriptEntry({
+          speaker: 'system',
+          text: 'Review passed. Generating note...',
+          timestamp: new Date(),
+        });
+        setInformationComplete(true);
+        setCurrentView('note_generator');
+        // Stop listening
+        tivi.stopListening();
+        setIsSessionActive(false);
+        setVoiceAgentConnected(false);
+      } else {
+        // user_message — speak feedback and set skip flag
+        const feedback = result.message || 'Some information may be missing.';
+        const fullMessage = `${feedback}. Say finished again to generate the note anyways.`;
+
+        setReviewMessage(feedback);
+        skipReviewRef.current = true;
+
+        addTranscriptEntry({
+          speaker: 'agent',
+          text: fullMessage,
+          timestamp: new Date(),
+        });
+
+        await tivi.speak(fullMessage, settings.playbackRate || 1.5);
+      }
+    } catch (error) {
+      log(`Review error: ${error}`);
+      // On error, proceed anyway
+      addTranscriptEntry({
+        speaker: 'system',
+        text: 'Review encountered an error. Proceeding to note generation...',
+        timestamp: new Date(),
+      });
+      setInformationComplete(true);
+      setCurrentView('note_generator');
+      tivi.stopListening();
+      setIsSessionActive(false);
+      setVoiceAgentConnected(false);
+    } finally {
+      setReviewPending(false);
+    }
+  }, [
+    addTranscriptEntry,
+    setInformationComplete,
+    setCurrentView,
+    setVoiceAgentConnected,
+    setReviewPending,
+    setReviewMessage,
+    settings.agentModel,
+    settings.aiModel,
+    settings.playbackRate,
+    tivi,
+  ]);
+
+  // Handle "finished" keyword
+  const handleFinishedKeyword = useCallback(async () => {
+    trackEvent('voice_finished_keyword', { skipReview: skipReviewRef.current });
+
+    if (skipReviewRef.current) {
+      // Second "finished" — skip review, proceed directly
+      log('Second "finished" detected — skipping review');
+      addTranscriptEntry({
+        speaker: 'system',
+        text: 'Proceeding to note generation...',
+        timestamp: new Date(),
+      });
+      setInformationComplete(true);
+      setCurrentView('note_generator');
+      tivi.stopListening();
+      setIsSessionActive(false);
+      setVoiceAgentConnected(false);
+    } else {
+      await reviewAndComplete();
+    }
+  }, [
+    addTranscriptEntry,
+    setInformationComplete,
+    setCurrentView,
+    setVoiceAgentConnected,
+    tivi,
+    reviewAndComplete,
+    trackEvent,
+  ]);
 
   // Handle transcription from Tivi
   const handleTranscription = useCallback(async (text: string) => {
     if (!text || !text.trim()) return;
-
-    // Check cooldown
-    const now = Date.now();
-    if (now - lastTranscriptionTimeRef.current < speechCooldownMs) {
-      log(`Ignoring transcription (cooldown): ${text}`);
-      return;
-    }
 
     // Check if already processing
     if (isProcessingRef.current) {
@@ -103,55 +204,32 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       return;
     }
 
-    lastTranscriptionTimeRef.current = now;
     isProcessingRef.current = true;
+    const trimmed = text.trim();
 
-    log(`Processing transcription: ${text}`);
-    debug.add('voice_transcription', { text, timestamp: now });
+    log(`Processing transcription: ${trimmed}`);
+    debug.add('voice_transcription', { text: trimmed, timestamp: Date.now() });
 
     // Add user message to transcript
     addTranscriptEntry({
       speaker: 'user',
-      text,
+      text: trimmed,
       timestamp: new Date(),
     });
 
-    // Send to agent
-    const currentAgent = agentRef.current;
-    if (currentAgent) {
-      try {
-        // Pause speech recognition while processing
-        tivi.pauseSpeechRecognition();
+    // Track each speech input
+    trackEvent('voice_transcription', { text: trimmed, charLength: trimmed.length });
 
-        // Add user input to agent
-        currentAgent.add_user_text_input(text);
-
-        // Run LLM to get response
-        log('Running LLM...');
-        const response = await currentAgent.run_llm(4); // max 4 tool calls per turn
-
-        // The agent should have called respond_to_user tool which adds to transcript
-        // and returns the text to speak
-        if (response && typeof response === 'string') {
-          log(`Agent response: ${response}`);
-
-          // Speak the response
-          await tivi.speak(response, settings.playbackRate || 1.5);
-        }
-
-      } catch (error) {
-        log(`Agent error: ${error}`);
-        debug.add('agent_error', { error: String(error) });
-
-        // Speak error message
-        await tivi.speak('Sorry, I encountered an error. Please try again.', 1.5);
-      }
+    // Check for exact "finished" keyword
+    if (trimmed.toLowerCase() === 'finished' || trimmed.toLowerCase() === 'finished.') {
+      await handleFinishedKeyword();
     } else {
-      log('No agent available');
+      // Direct transcription → add to information list
+      addInformationText(trimmed);
     }
 
     isProcessingRef.current = false;
-  }, [addTranscriptEntry, settings.playbackRate, tivi]);
+  }, [addTranscriptEntry, addInformationText, handleFinishedKeyword, trackEvent]);
 
   // Listen for transcription events
   useEffect(() => {
@@ -174,89 +252,49 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   // Expose debug objects to window
   useEffect(() => {
     window.voiceAgentDebug = {
-      agent: agentRef.current,
       tivi,
       startAgent,
       stopAgent,
       isSessionActive,
-      agentLoading,
-      agentError,
     };
   });
 
-  // Start voice agent
+  // Start voice agent — just starts Tivi, no agent init
   const startAgent = useCallback(async () => {
     try {
-      log('Starting voice agent...');
+      log('Starting voice agent (direct transcription mode)...');
       debug.add('voice_agent_start_requested', { template: selectedTemplate?.id });
 
-      // Add system message
+      // Reset skip review flag
+      skipReviewRef.current = false;
+
       addTranscriptEntry({
         speaker: 'system',
-        text: 'Initializing voice agent...',
+        text: 'Starting voice input...',
         timestamp: new Date(),
       });
-
-      // Wait for agent to be ready
-      if (agentLoading) {
-        addTranscriptEntry({
-          speaker: 'system',
-          text: 'Waiting for agent to initialize...',
-          timestamp: new Date(),
-        });
-
-        // Poll for agent ready (max 10 seconds)
-        let waitTime = 0;
-        while (agentLoading && waitTime < 10000) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          waitTime += 100;
-        }
-      }
-
-      if (agentError) {
-        throw agentError;
-      }
-
-      if (!agentRef.current) {
-        throw new Error('Agent failed to initialize');
-      }
 
       // Start Tivi listening
       await tivi.startListening();
 
       setIsSessionActive(true);
       setVoiceAgentConnected(true);
+      setReviewMessage(null);
 
       addTranscriptEntry({
         speaker: 'system',
-        text: 'Voice agent connected. Ready for input.',
+        text: 'Voice input active. Speak naturally — say "finished" when done.',
         timestamp: new Date(),
       });
 
-      log('Voice agent started');
+      log('Voice agent started (continuous mode)');
       debug.add('voice_agent_connected', { timestamp: new Date().toISOString() });
-
-      // Send initial greeting to agent
-      setTimeout(async () => {
-        const currentAgent = agentRef.current;
-        if (currentAgent && isSessionActive) {
-          try {
-            currentAgent.add_user_text_input('Initialize');
-
-            const response = await currentAgent.run_llm(4);
-
-            if (response && typeof response === 'string') {
-              await tivi.speak(response, settings.playbackRate || 1.5);
-            }
-          } catch (error) {
-            log(`Initial greeting error: ${error}`);
-          }
-        }
-      }, 500);
+      trackEvent('voice_session_started', { templateId: selectedTemplate?.id, mode: 'continuous' });
 
     } catch (error) {
       log(`Error starting voice agent: ${error}`);
       debug.add('voice_agent_start_error', { error: String(error) });
+      trackEvent('voice_session_started', { error: String(error), status: 'error' });
 
       setIsSessionActive(false);
       setVoiceAgentConnected(false);
@@ -269,13 +307,11 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
   }, [
     selectedTemplate,
-    agentLoading,
-    agentError,
     setVoiceAgentConnected,
     addTranscriptEntry,
-    settings.playbackRate,
+    setReviewMessage,
     tivi,
-    isSessionActive,
+    trackEvent,
   ]);
 
   // Stop voice agent
@@ -293,11 +329,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       addTranscriptEntry({
         speaker: 'system',
-        text: 'Voice agent stopped',
+        text: 'Voice input stopped.',
         timestamp: new Date(),
       });
 
       log('Voice agent stopped');
+      trackEvent('voice_session_ended', { transcriptionCount: collectedInformationRef.current.length });
 
     } catch (error) {
       log(`Error stopping voice agent: ${error}`);
@@ -307,16 +344,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       setIsSessionActive(false);
       setVoiceAgentConnected(false);
     }
-  }, [setVoiceAgentConnected, addTranscriptEntry, tivi]);
+  }, [setVoiceAgentConnected, addTranscriptEntry, tivi, trackEvent]);
 
   return {
     startAgent,
     stopAgent,
     connected: voiceAgentConnected,
     isSessionActive,
-    agentLoading,
-    agentError,
-    reinitializeAgent,
     // Tivi state for UI
     tivi: {
       isListening: tivi.isListening,

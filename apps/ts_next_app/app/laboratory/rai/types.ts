@@ -168,6 +168,12 @@ export interface RaiState {
   addToolCallThought: (thought: ToolCallThought) => void;
   clearToolCallThoughts: () => void;
 
+  // Review State (for "finished" keyword review flow)
+  reviewPending: boolean;
+  setReviewPending: (pending: boolean) => void;
+  reviewMessage: string | null;
+  setReviewMessage: (message: string | null) => void;
+
   // Note Generation
   generatedNote: string | null;
   noteGenerationLoading: boolean;

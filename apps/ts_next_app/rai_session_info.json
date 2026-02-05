@@ -1,0 +1,876 @@
+{
+  "session_id": "ses_ml9x2khq8ughkt0",
+  "metadata": {
+    "app_name": "rai",
+    "user_id": "rai_user",
+    "start_time": "2026-02-05T20:38:35.766Z",
+    "end_time": "2026-02-05T20:39:23.589Z",
+    "duration_ms": 47823,
+    "event_count": 12,
+    "export_timestamp": "2026-02-05T20:45:09.088Z",
+    "exporter_version": "1.0.0"
+  },
+  "summary": {
+    "event_types": {
+      "llm_invocation": 6,
+      "execution": 6
+    },
+    "total_tokens": 22911,
+    "total_prompt_tokens": 20195,
+    "total_completion_tokens": 2716,
+    "llm_invocations": 6,
+    "error_count": 0,
+    "trace_count": 0,
+    "avg_llm_latency_ms": 25,
+    "total_cost_estimate_usd": 0.76881
+  },
+  "timeline": [
+    {
+      "timestamp": 1770323915766,
+      "event_id": "evt_ml9x5fquscqe061",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 481,
+        "context": {
+          "loop": 4,
+          "messages_count": 2,
+          "output": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "thoughts": "Session start: send brief greeting and readiness prompt. Will use respond_to_user to speak to the physician."
+          }
+        },
+        "latency_ms": 11,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3139,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 1,
+          "completionTokens": 481,
+          "costUsd": 0.00174675,
+          "promptTokens": 3139,
+          "totalTokens": 3620
+        }
+      },
+      "tags": [],
+      "duration_ms": 11
+    },
+    {
+      "timestamp": 1770323915769,
+      "event_id": "evt_ml9x5fqxh1wabsb",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+          "code_length": 87,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "Session start: send brief greeting and readiness prompt. Will use respond_to_user to speak to the physician."
+        },
+        "duration_ms": 1,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 1
+    },
+    {
+      "timestamp": 1770323923000,
+      "event_id": "evt_ml9x5lbs8nhpzvg",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 358,
+        "context": {
+          "loop": 3,
+          "messages_count": 4,
+          "output": {
+            "code": "await respond_to_user({response: \"I can hear you. Ready for input. Say 'finished' when done.\"});",
+            "thoughts": "Confirming audio and readiness; respond directly to the physician using respond_to_user."
+          }
+        },
+        "latency_ms": 47,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3227,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 2,
+          "completionTokens": 839,
+          "costUsd": 0.0032695,
+          "promptTokens": 6366,
+          "totalTokens": 7205
+        }
+      },
+      "tags": [],
+      "duration_ms": 47
+    },
+    {
+      "timestamp": 1770323923003,
+      "event_id": "evt_ml9x5lbvx8mhhv6",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "await respond_to_user({response: \"I can hear you. Ready for input. Say 'finished' when done.\"});",
+          "code_length": 96,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "Confirming audio and readiness; respond directly to the physician using respond_to_user."
+        },
+        "duration_ms": 1,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 1
+    },
+    {
+      "timestamp": 1770323933659,
+      "event_id": "evt_ml9x5tjvs6dpd74",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 543,
+        "context": {
+          "loop": 2,
+          "messages_count": 6,
+          "output": {
+            "code": "console.log(\"Awaiting clinician input\");",
+            "thoughts": "No new clinical information provided. Waiting for clinician input; will record any clinical details they give using add_patient_information and acknowledge with 'noted' or 'got it'."
+          }
+        },
+        "latency_ms": 46,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3313,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 3,
+          "completionTokens": 1382,
+          "costUsd": 0.00518375,
+          "promptTokens": 9679,
+          "totalTokens": 11061
+        }
+      },
+      "tags": [],
+      "duration_ms": 46
+    },
+    {
+      "timestamp": 1770323933660,
+      "event_id": "evt_ml9x5tjw79bst53",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "console.log(\"Awaiting clinician input\");",
+          "code_length": 40,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "No new clinical information provided. Waiting for clinician input; will record any clinical details they give using add_patient_information and acknowledge with 'noted' or 'got it'."
+        },
+        "duration_ms": 1,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 1
+    },
+    {
+      "timestamp": 1770323944316,
+      "event_id": "evt_ml9x61rwifxvvbk",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 549,
+        "context": {
+          "loop": 1,
+          "messages_count": 8,
+          "output": {
+            "code": "console.log(\"Waiting for clinician input\");",
+            "thoughts": "No new clinical information provided. Waiting for clinician input; will record any details using add_patient_information and acknowledge with 'noted' or 'got it'."
+          }
+        },
+        "latency_ms": 22,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3402,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 4,
+          "completionTokens": 1931,
+          "costUsd": 0.00713225,
+          "promptTokens": 13081,
+          "totalTokens": 15012
+        }
+      },
+      "tags": [],
+      "duration_ms": 22
+    },
+    {
+      "timestamp": 1770323944323,
+      "event_id": "evt_ml9x61s3lb5lbub",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "console.log(\"Waiting for clinician input\");",
+          "code_length": 43,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "No new clinical information provided. Waiting for clinician input; will record any details using add_patient_information and acknowledge with 'noted' or 'got it'."
+        },
+        "duration_ms": 2,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 2
+    },
+    {
+      "timestamp": 1770323958611,
+      "event_id": "evt_ml9x6csz0ohf79j",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 528,
+        "context": {
+          "loop": 0,
+          "messages_count": 10,
+          "output": {
+            "code": "console.log(\"Awaiting clinician input\");",
+            "thoughts": "No new clinical information received. Waiting for clinician to provide details; will record each item with add_patient_information and acknowledge with 'noted' or 'got it'."
+          }
+        },
+        "latency_ms": 21,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3488,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 5,
+          "completionTokens": 2459,
+          "costUsd": 0.009060249999999999,
+          "promptTokens": 16569,
+          "totalTokens": 19028
+        }
+      },
+      "tags": [],
+      "duration_ms": 21
+    },
+    {
+      "timestamp": 1770323958613,
+      "event_id": "evt_ml9x6ct1g71o1q8",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "console.log(\"Awaiting clinician input\");",
+          "code_length": 40,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "No new clinical information received. Waiting for clinician to provide details; will record each item with add_patient_information and acknowledge with 'noted' or 'got it'."
+        },
+        "duration_ms": 0,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": []
+    },
+    {
+      "timestamp": 1770323963586,
+      "event_id": "evt_ml9x6gn6jl6u6et",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 257,
+        "context": {
+          "loop": -1,
+          "messages_count": 13,
+          "output": {
+            "code": "await respond_to_user({response: \"Ready for input. Say 'finished' when done.\"});",
+            "thoughts": "Loop limit reached; send current status to clinician using respond_to_user only."
+          }
+        },
+        "latency_ms": 2,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3626,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 6,
+          "completionTokens": 2716,
+          "costUsd": 0.010480749999999999,
+          "promptTokens": 20195,
+          "totalTokens": 22911
+        }
+      },
+      "tags": [],
+      "duration_ms": 2
+    },
+    {
+      "timestamp": 1770323963589,
+      "event_id": "evt_ml9x6gn91i64kfm",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "await respond_to_user({response: \"Ready for input. Say 'finished' when done.\"});",
+          "code_length": 80,
+          "result": {
+            "error": false,
+            "events": [],
+            "name": "code_execution",
+            "result": null
+          },
+          "thoughts": "Loop limit reached; send current status to clinician using respond_to_user only."
+        },
+        "duration_ms": 1,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 0,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 1
+    }
+  ],
+  "events_by_type": {
+    "llm_invocation": [
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 11,
+        "event_id": "evt_ml9x5fquscqe061",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x5fquscqe061",
+        "payload": {
+          "completion_tokens": 481,
+          "context": {
+            "loop": 4,
+            "messages_count": 2,
+            "output": {
+              "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+              "thoughts": "Session start: send brief greeting and readiness prompt. Will use respond_to_user to speak to the physician."
+            }
+          },
+          "latency_ms": 11,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3139,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 1,
+            "completionTokens": 481,
+            "costUsd": 0.00174675,
+            "promptTokens": 3139,
+            "totalTokens": 3620
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:35.766Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 47,
+        "event_id": "evt_ml9x5lbs8nhpzvg",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x5lbs8nhpzvg",
+        "payload": {
+          "completion_tokens": 358,
+          "context": {
+            "loop": 3,
+            "messages_count": 4,
+            "output": {
+              "code": "await respond_to_user({response: \"I can hear you. Ready for input. Say 'finished' when done.\"});",
+              "thoughts": "Confirming audio and readiness; respond directly to the physician using respond_to_user."
+            }
+          },
+          "latency_ms": 47,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3227,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 2,
+            "completionTokens": 839,
+            "costUsd": 0.0032695,
+            "promptTokens": 6366,
+            "totalTokens": 7205
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:43.000Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 46,
+        "event_id": "evt_ml9x5tjvs6dpd74",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x5tjvs6dpd74",
+        "payload": {
+          "completion_tokens": 543,
+          "context": {
+            "loop": 2,
+            "messages_count": 6,
+            "output": {
+              "code": "console.log(\"Awaiting clinician input\");",
+              "thoughts": "No new clinical information provided. Waiting for clinician input; will record any clinical details they give using add_patient_information and acknowledge with 'noted' or 'got it'."
+            }
+          },
+          "latency_ms": 46,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3313,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 3,
+            "completionTokens": 1382,
+            "costUsd": 0.00518375,
+            "promptTokens": 9679,
+            "totalTokens": 11061
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:53.659Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 22,
+        "event_id": "evt_ml9x61rwifxvvbk",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x61rwifxvvbk",
+        "payload": {
+          "completion_tokens": 549,
+          "context": {
+            "loop": 1,
+            "messages_count": 8,
+            "output": {
+              "code": "console.log(\"Waiting for clinician input\");",
+              "thoughts": "No new clinical information provided. Waiting for clinician input; will record any details using add_patient_information and acknowledge with 'noted' or 'got it'."
+            }
+          },
+          "latency_ms": 22,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3402,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 4,
+            "completionTokens": 1931,
+            "costUsd": 0.00713225,
+            "promptTokens": 13081,
+            "totalTokens": 15012
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:04.316Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 21,
+        "event_id": "evt_ml9x6csz0ohf79j",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x6csz0ohf79j",
+        "payload": {
+          "completion_tokens": 528,
+          "context": {
+            "loop": 0,
+            "messages_count": 10,
+            "output": {
+              "code": "console.log(\"Awaiting clinician input\");",
+              "thoughts": "No new clinical information received. Waiting for clinician to provide details; will record each item with add_patient_information and acknowledge with 'noted' or 'got it'."
+            }
+          },
+          "latency_ms": 21,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3488,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 5,
+            "completionTokens": 2459,
+            "costUsd": 0.009060249999999999,
+            "promptTokens": 16569,
+            "totalTokens": 19028
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:18.611Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 2,
+        "event_id": "evt_ml9x6gn6jl6u6et",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9x6gn6jl6u6et",
+        "payload": {
+          "completion_tokens": 257,
+          "context": {
+            "loop": -1,
+            "messages_count": 13,
+            "output": {
+              "code": "await respond_to_user({response: \"Ready for input. Say 'finished' when done.\"});",
+              "thoughts": "Loop limit reached; send current status to clinician using respond_to_user only."
+            }
+          },
+          "latency_ms": 2,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3626,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 6,
+            "completionTokens": 2716,
+            "costUsd": 0.010480749999999999,
+            "promptTokens": 20195,
+            "totalTokens": 22911
+          }
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:23.586Z",
+        "user_id": "rai_user"
+      }
+    ],
+    "execution": [
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 1,
+        "event_id": "evt_ml9x5fqxh1wabsb",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x5fqxh1wabsb",
+        "payload": {
+          "context": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "code_length": 87,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "Session start: send brief greeting and readiness prompt. Will use respond_to_user to speak to the physician."
+          },
+          "duration_ms": 1,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:35.769Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 1,
+        "event_id": "evt_ml9x5lbvx8mhhv6",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x5lbvx8mhhv6",
+        "payload": {
+          "context": {
+            "code": "await respond_to_user({response: \"I can hear you. Ready for input. Say 'finished' when done.\"});",
+            "code_length": 96,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "Confirming audio and readiness; respond directly to the physician using respond_to_user."
+          },
+          "duration_ms": 1,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:43.003Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 1,
+        "event_id": "evt_ml9x5tjw79bst53",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x5tjw79bst53",
+        "payload": {
+          "context": {
+            "code": "console.log(\"Awaiting clinician input\");",
+            "code_length": 40,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "No new clinical information provided. Waiting for clinician input; will record any clinical details they give using add_patient_information and acknowledge with 'noted' or 'got it'."
+          },
+          "duration_ms": 1,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:38:53.660Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 2,
+        "event_id": "evt_ml9x61s3lb5lbub",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x61s3lb5lbub",
+        "payload": {
+          "context": {
+            "code": "console.log(\"Waiting for clinician input\");",
+            "code_length": 43,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "No new clinical information provided. Waiting for clinician input; will record any details using add_patient_information and acknowledge with 'noted' or 'got it'."
+          },
+          "duration_ms": 2,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:04.323Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 0,
+        "event_id": "evt_ml9x6ct1g71o1q8",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x6ct1g71o1q8",
+        "payload": {
+          "context": {
+            "code": "console.log(\"Awaiting clinician input\");",
+            "code_length": 40,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "No new clinical information received. Waiting for clinician to provide details; will record each item with add_patient_information and acknowledge with 'noted' or 'got it'."
+          },
+          "duration_ms": 0,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:18.613Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 1,
+        "event_id": "evt_ml9x6gn91i64kfm",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9x6gn91i64kfm",
+        "payload": {
+          "context": {
+            "code": "await respond_to_user({response: \"Ready for input. Say 'finished' when done.\"});",
+            "code_length": 80,
+            "result": {
+              "error": false,
+              "events": [],
+              "name": "code_execution",
+              "result": null
+            },
+            "thoughts": "Loop limit reached; send current status to clinician using respond_to_user only."
+          },
+          "duration_ms": 1,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 0,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9x2khq8ughkt0",
+        "tags": [],
+        "timestamp": "2026-02-05T20:39:23.589Z",
+        "user_id": "rai_user"
+      }
+    ]
+  },
+  "traces": [],
+  "errors": []
+}

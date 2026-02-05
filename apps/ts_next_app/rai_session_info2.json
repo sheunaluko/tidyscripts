@@ -1,0 +1,460 @@
+{
+  "session_id": "ses_ml9y4tb24i1lgu3",
+  "metadata": {
+    "app_name": "rai",
+    "user_id": "rai_user",
+    "start_time": "2026-02-05T21:08:09.805Z",
+    "end_time": "2026-02-05T21:08:12.546Z",
+    "duration_ms": 2741,
+    "event_count": 4,
+    "export_timestamp": "2026-02-05T21:19:18.575Z",
+    "exporter_version": "1.0.0"
+  },
+  "summary": {
+    "event_types": {
+      "llm_invocation": 2,
+      "execution": 2
+    },
+    "total_tokens": 7105,
+    "total_prompt_tokens": 6297,
+    "total_completion_tokens": 808,
+    "llm_invocations": 2,
+    "error_count": 0,
+    "trace_count": 0,
+    "avg_llm_latency_ms": 44,
+    "total_cost_estimate_usd": 0.23739
+  },
+  "timeline": [
+    {
+      "timestamp": 1770325689805,
+      "event_id": "evt_ml9y7glp4ngy19c",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 280,
+        "context": {
+          "loop": 4,
+          "messages_count": 3,
+          "output": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "thoughts": "Greet the physician and prompt for input; use respond_to_user to send the spoken message."
+          }
+        },
+        "latency_ms": 0,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3135,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 1,
+          "completionTokens": 280,
+          "costUsd": 0.00134375,
+          "promptTokens": 3135,
+          "totalTokens": 3415
+        }
+      },
+      "tags": []
+    },
+    {
+      "timestamp": 1770325690046,
+      "event_id": "evt_ml9y7gse0p8weil",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+          "code_length": 87,
+          "result": {
+            "error": false,
+            "events": [
+              {
+                "data": {
+                  "property": "respond_to_user"
+                },
+                "timestamp": 1770325689889,
+                "type": "property_access"
+              },
+              {
+                "data": {
+                  "args": [
+                    {
+                      "response": "Hello. Ready for input. Say 'finished' when done."
+                    }
+                  ],
+                  "callId": "0.c5u21z26rs",
+                  "name": "respond_to_user"
+                },
+                "timestamp": 1770325689890,
+                "type": "function_start"
+              },
+              {
+                "data": {
+                  "callId": "0.c5u21z26rs",
+                  "duration": 108,
+                  "name": "respond_to_user"
+                },
+                "timestamp": 1770325689998,
+                "type": "function_end"
+              },
+              {
+                "data": {
+                  "property": "workspace"
+                },
+                "timestamp": 1770325689999,
+                "type": "property_access"
+              }
+            ],
+            "name": "code_execution"
+          },
+          "thoughts": "Greet the physician and prompt for input; use respond_to_user to send the spoken message."
+        },
+        "duration_ms": 239,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 1,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 239
+    },
+    {
+      "timestamp": 1770325692428,
+      "event_id": "evt_ml9y7imkj7uyg5l",
+      "event_type": "llm_invocation",
+      "payload": {
+        "completion_tokens": 528,
+        "context": {
+          "loop": 4,
+          "messages_count": 5,
+          "output": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "thoughts": "Session start: greeting the physician and prompting for input."
+          }
+        },
+        "latency_ms": 44,
+        "mode": "code_generation",
+        "model": "gpt-5-mini",
+        "prompt_tokens": 3162,
+        "provider": "openai",
+        "status": "success",
+        "usage": {
+          "callCount": 2,
+          "completionTokens": 808,
+          "costUsd": 0.00319025,
+          "promptTokens": 6297,
+          "totalTokens": 7105
+        }
+      },
+      "tags": [],
+      "duration_ms": 44
+    },
+    {
+      "timestamp": 1770325692546,
+      "event_id": "evt_ml9y7ipuhjkii64",
+      "event_type": "execution",
+      "payload": {
+        "context": {
+          "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+          "code_length": 87,
+          "result": {
+            "error": false,
+            "events": [
+              {
+                "data": {
+                  "property": "respond_to_user"
+                },
+                "timestamp": 1770325692468,
+                "type": "property_access"
+              },
+              {
+                "data": {
+                  "args": [
+                    {
+                      "response": "Hello. Ready for input. Say 'finished' when done."
+                    }
+                  ],
+                  "callId": "0.l6ni6tz596j",
+                  "name": "respond_to_user"
+                },
+                "timestamp": 1770325692468,
+                "type": "function_start"
+              },
+              {
+                "data": {
+                  "callId": "0.l6ni6tz596j",
+                  "duration": 61,
+                  "name": "respond_to_user"
+                },
+                "timestamp": 1770325692529,
+                "type": "function_end"
+              },
+              {
+                "data": {
+                  "property": "workspace"
+                },
+                "timestamp": 1770325692529,
+                "type": "property_access"
+              }
+            ],
+            "name": "code_execution"
+          },
+          "thoughts": "Session start: greeting the physician and prompting for input."
+        },
+        "duration_ms": 117,
+        "error": false,
+        "execution_type": "code_sandbox",
+        "function_calls": 1,
+        "logs_count": 0,
+        "status": "success",
+        "variables_assigned": 0
+      },
+      "tags": [],
+      "duration_ms": 117
+    }
+  ],
+  "events_by_type": {
+    "llm_invocation": [
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 0,
+        "event_id": "evt_ml9y7glp4ngy19c",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9y7glp4ngy19c",
+        "payload": {
+          "completion_tokens": 280,
+          "context": {
+            "loop": 4,
+            "messages_count": 3,
+            "output": {
+              "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+              "thoughts": "Greet the physician and prompt for input; use respond_to_user to send the spoken message."
+            }
+          },
+          "latency_ms": 0,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3135,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 1,
+            "completionTokens": 280,
+            "costUsd": 0.00134375,
+            "promptTokens": 3135,
+            "totalTokens": 3415
+          }
+        },
+        "session_id": "ses_ml9y4tb24i1lgu3",
+        "tags": [],
+        "timestamp": "2026-02-05T21:08:09.805Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 44,
+        "event_id": "evt_ml9y7imkj7uyg5l",
+        "event_type": "llm_invocation",
+        "id": "insights_events:evt_ml9y7imkj7uyg5l",
+        "payload": {
+          "completion_tokens": 528,
+          "context": {
+            "loop": 4,
+            "messages_count": 5,
+            "output": {
+              "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+              "thoughts": "Session start: greeting the physician and prompting for input."
+            }
+          },
+          "latency_ms": 44,
+          "mode": "code_generation",
+          "model": "gpt-5-mini",
+          "prompt_tokens": 3162,
+          "provider": "openai",
+          "status": "success",
+          "usage": {
+            "callCount": 2,
+            "completionTokens": 808,
+            "costUsd": 0.00319025,
+            "promptTokens": 6297,
+            "totalTokens": 7105
+          }
+        },
+        "session_id": "ses_ml9y4tb24i1lgu3",
+        "tags": [],
+        "timestamp": "2026-02-05T21:08:12.428Z",
+        "user_id": "rai_user"
+      }
+    ],
+    "execution": [
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 239,
+        "event_id": "evt_ml9y7gse0p8weil",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9y7gse0p8weil",
+        "payload": {
+          "context": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "code_length": 87,
+            "result": {
+              "error": false,
+              "events": [
+                {
+                  "data": {
+                    "property": "respond_to_user"
+                  },
+                  "timestamp": 1770325689889,
+                  "type": "property_access"
+                },
+                {
+                  "data": {
+                    "args": [
+                      {
+                        "response": "Hello. Ready for input. Say 'finished' when done."
+                      }
+                    ],
+                    "callId": "0.c5u21z26rs",
+                    "name": "respond_to_user"
+                  },
+                  "timestamp": 1770325689890,
+                  "type": "function_start"
+                },
+                {
+                  "data": {
+                    "callId": "0.c5u21z26rs",
+                    "duration": 108,
+                    "name": "respond_to_user"
+                  },
+                  "timestamp": 1770325689998,
+                  "type": "function_end"
+                },
+                {
+                  "data": {
+                    "property": "workspace"
+                  },
+                  "timestamp": 1770325689999,
+                  "type": "property_access"
+                }
+              ],
+              "name": "code_execution"
+            },
+            "thoughts": "Greet the physician and prompt for input; use respond_to_user to send the spoken message."
+          },
+          "duration_ms": 239,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 1,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9y4tb24i1lgu3",
+        "tags": [],
+        "timestamp": "2026-02-05T21:08:10.046Z",
+        "user_id": "rai_user"
+      },
+      {
+        "app_name": "rai",
+        "app_version": "2.0.0",
+        "client_info": {
+          "firebase_display_name": "Sheun Aluko",
+          "firebase_email": "alukosheun@gmail.com",
+          "firebase_uid": "E9drnNZa3SdsVsHNrLFsU6pcml32",
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+          "viewport_size": "1480x1053"
+        },
+        "duration_ms": 117,
+        "event_id": "evt_ml9y7ipuhjkii64",
+        "event_type": "execution",
+        "id": "insights_events:evt_ml9y7ipuhjkii64",
+        "payload": {
+          "context": {
+            "code": "await respond_to_user({response: \"Hello. Ready for input. Say 'finished' when done.\"});",
+            "code_length": 87,
+            "result": {
+              "error": false,
+              "events": [
+                {
+                  "data": {
+                    "property": "respond_to_user"
+                  },
+                  "timestamp": 1770325692468,
+                  "type": "property_access"
+                },
+                {
+                  "data": {
+                    "args": [
+                      {
+                        "response": "Hello. Ready for input. Say 'finished' when done."
+                      }
+                    ],
+                    "callId": "0.l6ni6tz596j",
+                    "name": "respond_to_user"
+                  },
+                  "timestamp": 1770325692468,
+                  "type": "function_start"
+                },
+                {
+                  "data": {
+                    "callId": "0.l6ni6tz596j",
+                    "duration": 61,
+                    "name": "respond_to_user"
+                  },
+                  "timestamp": 1770325692529,
+                  "type": "function_end"
+                },
+                {
+                  "data": {
+                    "property": "workspace"
+                  },
+                  "timestamp": 1770325692529,
+                  "type": "property_access"
+                }
+              ],
+              "name": "code_execution"
+            },
+            "thoughts": "Session start: greeting the physician and prompting for input."
+          },
+          "duration_ms": 117,
+          "error": false,
+          "execution_type": "code_sandbox",
+          "function_calls": 1,
+          "logs_count": 0,
+          "status": "success",
+          "variables_assigned": 0
+        },
+        "session_id": "ses_ml9y4tb24i1lgu3",
+        "tags": [],
+        "timestamp": "2026-02-05T21:08:12.546Z",
+        "user_id": "rai_user"
+      }
+    ]
+  },
+  "traces": [],
+  "errors": []
+}

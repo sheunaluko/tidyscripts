@@ -1,4 +1,4 @@
-// VoiceMode Component - Voice agent interface
+// VoiceMode Component - Simplified voice input interface (direct transcription)
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -23,10 +23,10 @@ export const VoiceMode: React.FC = () => {
   const { client: insightsClient } = useInsights();
 
   // Initialize voice agent with insights
-  const { startAgent, stopAgent, connected, tivi, agentLoading, agentError } = useVoiceAgent({
+  const { startAgent, stopAgent, connected, tivi } = useVoiceAgent({
     insightsClient,
   });
-  const { voiceAgentTranscript, settings } = useRaiStore();
+  const { voiceAgentTranscript, settings, reviewPending, reviewMessage } = useRaiStore();
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -116,7 +116,7 @@ export const VoiceMode: React.FC = () => {
       case 'user':
         return 'You';
       case 'agent':
-        return 'Agent';
+        return 'Assistant';
       case 'system':
         return 'System';
       default:
@@ -183,10 +183,11 @@ export const VoiceMode: React.FC = () => {
           />
         )}
 
-        {agentLoading && (
+        {reviewPending && (
           <Chip
             icon={<CircularProgress size={12} />}
-            label="Loading Agent..."
+            label="Reviewing..."
+            color="warning"
             size="small"
           />
         )}
@@ -211,11 +212,11 @@ export const VoiceMode: React.FC = () => {
         </Box>
       )}
 
-      {/* Agent error display */}
-      {agentError && (
-        <Paper sx={{ p: 2, mb: 2, bgcolor: 'error.dark', color: 'error.contrastText' }}>
+      {/* Review message display */}
+      {reviewMessage && (
+        <Paper sx={{ p: 1.5, mb: 2, bgcolor: 'warning.dark', color: 'warning.contrastText' }}>
           <Typography variant="body2">
-            Agent Error: {agentError.message}
+            {reviewMessage} — Say &ldquo;finished&rdquo; again to generate the note anyways.
           </Typography>
         </Paper>
       )}
@@ -249,7 +250,6 @@ export const VoiceMode: React.FC = () => {
           startIcon={connected ? <MicOff /> : <Mic />}
           onClick={handleToggle}
           size="large"
-          disabled={agentLoading}
         >
           {connected ? 'STOP' : 'START'}
         </Button>
@@ -294,9 +294,9 @@ export const VoiceMode: React.FC = () => {
             )}
             {connected && (
               <>
-                <CircularProgress sx={{ mb: 2 }} />
+                <Mic sx={{ fontSize: 64, mb: 2, opacity: 0.5, color: 'primary.main' }} />
                 <Typography variant="body1">
-                  Initializing voice agent...
+                  Listening... speak naturally
                 </Typography>
               </>
             )}

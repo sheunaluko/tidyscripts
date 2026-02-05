@@ -9,6 +9,8 @@ import * as tsw from 'tidyscripts_web';
 import { Cortex } from 'tidyscripts_common/src/apis/cortex/cortex';
 import type { Function as CortexFunction, CortexOps } from 'tidyscripts_common/src/apis/cortex/types';
 import type { NoteTemplate, InformationEntry } from '../types';
+import { getExecutor } from '../../cortex_0/src/IframeSandbox';
+import { createStructuredClient } from './llmClient';
 
 const log = tsw.common.logger.get_logger({ id: 'rai_agent' });
 const debug = tsw.common.util.debug;
@@ -56,8 +58,8 @@ function createRaiFunctions(
     },
     return_type: 'string',
     enabled: true,
-    fn: async (params: any) => {
-      const { information, thoughts, suggestedVariable } = params;
+    fn: async (ops: any) => {
+      const { information, thoughts, suggestedVariable } = ops.params;
       log('Tool called: add_patient_information');
       debug.add('voice_tool_add_info', { information, thoughts, suggestedVariable });
 
@@ -97,8 +99,8 @@ function createRaiFunctions(
     },
     return_type: 'string',
     enabled: true,
-    fn: async (params: any) => {
-      const { thoughts } = params;
+    fn: async (ops: any) => {
+      const { thoughts } = ops.params;
       log('Tool called: review_template');
       debug.add('voice_tool_review', { thoughts });
 
@@ -159,8 +161,8 @@ ${collectedList || 'No information collected yet'}`;
     },
     return_type: 'string',
     enabled: true,
-    fn: async (params: any) => {
-      const { confirmation, thoughts } = params;
+    fn: async (ops: any) => {
+      const { confirmation, thoughts } = ops.params;
       log('Tool called: information_complete');
       debug.add('voice_tool_complete', { confirmation, thoughts });
 
@@ -205,8 +207,8 @@ ${collectedList || 'No information collected yet'}`;
     },
     return_type: 'string',
     enabled: true,
-    fn: async (params: any) => {
-      const { response } = params;
+    fn: async (ops: any) => {
+      const { response } = ops.params;
       log(`respond_to_user: ${response}`);
 
       // Add to transcript
@@ -269,29 +271,8 @@ When the physician indicates they are finished (says "finished", "done", "that's
 Keep all responses brief and professional. You don't need to extract structured data - just collect what the physician says naturally and use the tools to record it.`;
 }
 
-// Minimal sandbox executor for RAI (no code execution needed)
-// Implements SandboxExecutor interface
-const raiSandbox = {
-  execute: async (code: string, context?: Record<string, any>, timeout?: number) => {
-    log('RAI sandbox execute called (no-op)');
-    return {
-      ok: true,
-      data: null,
-      executionId: `rai-${Date.now()}`,
-      logs: [],
-      events: [],
-    };
-  },
-  initializePersistent: async () => {
-    log('RAI sandbox initializePersistent called (no-op)');
-  },
-  reset: async () => {
-    log('RAI sandbox reset called (no-op)');
-  },
-  destroy: () => {
-    log('RAI sandbox destroy called (no-op)');
-  },
-};
+// Use IframeSandbox for actual code execution (tool calls are generated as JS code by Cortex)
+const raiSandbox = getExecutor();
 
 /**
  * Create and return an RAI agent instance
@@ -359,4 +340,120 @@ export function updateAgentInstructions(
   // Note: Cortex doesn't have a direct method to update system message,
   // but the functions already have access to the store which has current data
   log('Agent instructions context updated');
+}
+
+// ============================================================================
+// STANDALONE REVIEW FUNCTION (for simplified voice flow)
+// ============================================================================
+
+export interface ReviewResult {
+  action: 'proceed' | 'user_message';
+  message?: string;
+}
+
+/**
+ * Review collected information against template requirements.
+ * Makes a single structured LLM call to check if @END_TEMPLATE
+ * requirements are satisfied.
+ *
+ * If no @END_TEMPLATE marker exists in the template, returns { action: 'proceed' }.
+ */
+export async function reviewTemplate(
+  template: NoteTemplate | null,
+  collectedInformation: InformationEntry[],
+  model: string = 'gpt-5-mini',
+  insightsClient?: any
+): Promise<ReviewResult> {
+  // No template or no @END_TEMPLATE marker → proceed directly
+  if (!template) {
+    return { action: 'proceed' };
+  }
+
+  if (!template.template.includes('@END_TEMPLATE')) {
+    log('No @END_TEMPLATE marker found, proceeding directly');
+    return { action: 'proceed' };
+  }
+
+  // Extract the text after @END_TEMPLATE
+  const endMarkerIndex = template.template.indexOf('@END_TEMPLATE');
+  const instructionsAfterMarker = template.template.substring(
+    endMarkerIndex + '@END_TEMPLATE'.length
+  ).trim();
+
+  if (!instructionsAfterMarker) {
+    log('@END_TEMPLATE marker found but no instructions after it');
+    return { action: 'proceed' };
+  }
+
+  // Build collected information list
+  const collectedList = collectedInformation
+    .map((e, idx) => `${idx + 1}. "${e.text}"`)
+    .join('\n');
+
+  const systemPrompt = `You are a medical assistant reviewing collected patient information before generating a clinical note. You must determine if the collected information satisfies the requirements specified in the template instructions.
+
+Respond with a JSON object: { "action": "proceed" } if requirements are met, or { "action": "user_message", "message": "<brief message about what's missing>" } if not.
+
+Keep any user_message very brief (one sentence max) — it will be spoken aloud.`;
+
+  const userPrompt = `TEMPLATE: ${template.title}
+
+INSTRUCTIONS AFTER @END_TEMPLATE (requirements to check):
+${instructionsAfterMarker}
+
+COLLECTED INFORMATION:
+${collectedList || 'No information collected yet'}
+
+Are the requirements in the instructions satisfied by the collected information? Respond with the appropriate JSON action.`;
+
+  const startTime = Date.now();
+  try {
+    const client = createStructuredClient();
+    const result = await client.sendStructured<ReviewResult>({
+      model,
+      input: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      schema: {
+        type: 'object',
+        properties: {
+          action: {
+            type: 'string',
+            enum: ['proceed', 'user_message'],
+          },
+          message: {
+            type: 'string',
+          },
+        },
+        required: ['action', 'message'],
+        additionalProperties: false,
+      },
+      schema_name: 'review_result',
+    }, 2); // 2 retries
+
+    const latency = Date.now() - startTime;
+    log(`Review result: ${JSON.stringify(result)} (${latency}ms)`);
+
+    try {
+      insightsClient?.addEvent('voice_review_llm', {
+        model, action: result.action, message: result.message,
+        latency_ms: latency, status: 'success',
+      });
+    } catch (_) {}
+
+    return result;
+  } catch (error) {
+    const latency = Date.now() - startTime;
+    log(`Review LLM call failed (${latency}ms): ${error}`);
+
+    try {
+      insightsClient?.addEvent('voice_review_llm', {
+        model, error: String(error), latency_ms: latency, status: 'error',
+      }, { tags: ['error'] });
+    } catch (_) {}
+
+    // On error, proceed anyway rather than blocking the user
+    return { action: 'proceed' };
+  }
 }
