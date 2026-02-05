@@ -78,18 +78,22 @@ async function run_tests(): Promise<string> {
         ];
 
         const parsed = graph_utils.parse_triples(triples);
-        const entityCount = parsed.entityIds.size;
+        const entityCount = parsed.entityNames.size;
         const relationCount = parsed.relations.size;
 
-        const passed = entityCount === 4 && relationCount === 3; // 4 unique entities, 3 unique relations
+        // Check relation structure
+        const firstRelation = [...parsed.relations.values()][0];
+        const hasCorrectStructure = !!(firstRelation.name && firstRelation.sourceName && firstRelation.targetName && firstRelation.kind);
+
+        const passed = entityCount === 4 && relationCount === 3 && hasCorrectStructure; // 4 unique entities, 3 unique relations
 
         results.push({ name: "parse_triples", passed, output: { entityCount, relationCount } });
         output_lines.push(`[${passed ? "PASS" : "FAIL"}] parse_triples`);
         output_lines.push(`  Input: ${triples.length} triples (1 duplicate)`);
         output_lines.push(`  Entities: ${entityCount} (expected 4)`);
         output_lines.push(`  Relations: ${relationCount} (expected 3)`);
-        output_lines.push(`  Entity IDs: ${[...parsed.entityIds].join(", ")}`);
-        output_lines.push(`  Relation IDs: ${[...parsed.relations.keys()].join(", ")}`);
+        output_lines.push(`  Entity names: ${[...parsed.entityNames].join(", ")}`);
+        output_lines.push(`  Relation names: ${[...parsed.relations.keys()].join(", ")}`);
         output_lines.push("");
     } catch (e: any) {
         results.push({ name: "parse_triples", passed: false, output: null, error: e.message });
@@ -100,23 +104,23 @@ async function run_tests(): Promise<string> {
     // Test 4: build_insert_query (structure only, no DB)
     try {
         const entities = [
-            { id: "test_entity_1", embedding: [0.1, 0.2, 0.3] },
-            { id: "test_entity_2", embedding: [0.4, 0.5, 0.6] },
+            { name: "test_entity_1", embedding: [0.1, 0.2, 0.3] },
+            { name: "test_entity_2", embedding: [0.4, 0.5, 0.6] },
         ];
         const relations = [
-            { id: "test_entity_1_knows_test_entity_2", sourceId: "test_entity_1", targetId: "test_entity_2", kind: "knows", embedding: [0.7, 0.8, 0.9] },
+            { name: "test_entity_1_knows_test_entity_2", sourceName: "test_entity_1", targetName: "test_entity_2", kind: "knows", embedding: [0.7, 0.8, 0.9] },
         ];
 
         const query = graph_utils.build_insert_query(entities, relations);
-        const hasEntities = query.includes('type::thing("user_entities", "test_entity_1")');
-        const hasRelations = query.includes('type::thing("user_entities", "test_entity_1")') && query.includes('kind: "knows"');
-        const passed = hasEntities && hasRelations;
+        const hasEntityContent = query.includes('CREATE user_entities CONTENT') && query.includes('name: "test_entity_1"');
+        const hasRelationContent = query.includes('RELATE') && query.includes('name: "test_entity_1_knows_test_entity_2"') && query.includes('kind: "knows"');
+        const passed = hasEntityContent && hasRelationContent;
 
         results.push({ name: "build_insert_query", passed, output: query.substring(0, 200) + "..." });
         output_lines.push(`[${passed ? "PASS" : "FAIL"}] build_insert_query`);
         output_lines.push(`  Generated query length: ${query.length} chars`);
-        output_lines.push(`  Has entity statements: ${hasEntities}`);
-        output_lines.push(`  Has relation statements: ${hasRelations}`);
+        output_lines.push(`  Has entity CONTENT with name: ${hasEntityContent}`);
+        output_lines.push(`  Has relation CONTENT with name: ${hasRelationContent}`);
         output_lines.push(`  Preview: ${query.substring(0, 100)}...`);
         output_lines.push("");
     } catch (e: any) {
@@ -236,38 +240,36 @@ export async function clear_graph_utils_test(): Promise<string> {
     output_lines.push("Clearing graph_utils test data...");
     output_lines.push("");
 
-    // Test entity IDs created by the test suite
-    const test_entity_ids = [
+    // Test entity names created by the test suite
+    const test_entity_names = [
         "test_graph_utils",
         "test_suite",
         "claude"
     ];
 
-    // Test relation IDs
-    const test_relation_ids = [
+    // Test relation names
+    const test_relation_names = [
         "test_graph_utils_is_a_test_suite",
         "test_graph_utils_created_by_claude"
     ];
 
     try {
-        // Delete test entities
-        const deleteEntitiesQuery = test_entity_ids
-            .map(id => `DELETE type::thing("user_entities", "${id}")`)
-            .join(';\n') + ';';
-
-        await fbu.surreal_query({ query: deleteEntitiesQuery });
-        output_lines.push(`Deleted ${test_entity_ids.length} test entities`);
-        test_entity_ids.forEach(id => output_lines.push(`  - ${id}`));
+        // Delete test entities by name
+        await fbu.surreal_query({
+            query: `DELETE FROM user_entities WHERE name IN $names`,
+            variables: { names: test_entity_names }
+        });
+        output_lines.push(`Deleted test entities with names:`);
+        test_entity_names.forEach(name => output_lines.push(`  - ${name}`));
         output_lines.push("");
 
-        // Delete test relations
-        const deleteRelationsQuery = test_relation_ids
-            .map(id => `DELETE user_relations WHERE id = "${id}"`)
-            .join(';\n') + ';';
-
-        await fbu.surreal_query({ query: deleteRelationsQuery });
-        output_lines.push(`Deleted ${test_relation_ids.length} test relations`);
-        test_relation_ids.forEach(id => output_lines.push(`  - ${id}`));
+        // Delete test relations by name
+        await fbu.surreal_query({
+            query: `DELETE FROM user_relations WHERE name IN $names`,
+            variables: { names: test_relation_names }
+        });
+        output_lines.push(`Deleted test relations with names:`);
+        test_relation_names.forEach(name => output_lines.push(`  - ${name}`));
         output_lines.push("");
 
         output_lines.push("Done!");

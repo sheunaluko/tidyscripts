@@ -48,45 +48,45 @@ export function relation_embedding_text(sourceId: string, kind: string, targetId
 export type Triple = [string, string, string]; // [subject, relation, object]
 
 export type RelationInfo = {
-    id: string;
-    sourceId: string;
-    targetId: string;
-    kind: string;
+    name: string;       // composite key: "shay_created_tidyscripts"
+    sourceName: string; // "shay"
+    targetName: string; // "tidyscripts"
+    kind: string;       // "created"
 };
 
 export type ParsedTriples = {
-    entityIds: Set<string>;
+    entityNames: Set<string>;
     relations: Map<string, RelationInfo>;
 };
 
 /**
- * Parse triples into entity IDs and relation map
+ * Parse triples into entity names and relation map
  * Deduplicates automatically
  */
 export function parse_triples(triples: Triple[]): ParsedTriples {
     log(`Parsing ${triples.length} triples`);
 
-    const entityIds = new Set<string>();
+    const entityNames = new Set<string>();
     const relations = new Map<string, RelationInfo>();
 
     for (const [source, relationKind, target] of triples) {
-        const sourceId = normalize_id(source);
-        const targetId = normalize_id(target);
+        const sourceName = normalize_id(source);
+        const targetName = normalize_id(target);
         const kind = normalize_id(relationKind);
-        const relationId = generate_relation_id(sourceId, kind, targetId);
+        const relationName = generate_relation_id(sourceName, kind, targetName);
 
-        entityIds.add(sourceId);
-        entityIds.add(targetId);
+        entityNames.add(sourceName);
+        entityNames.add(targetName);
 
-        if (!relations.has(relationId)) {
-            relations.set(relationId, { id: relationId, sourceId, targetId, kind });
+        if (!relations.has(relationName)) {
+            relations.set(relationName, { name: relationName, sourceName, targetName, kind });
         }
     }
 
-    log(`Parsed: ${entityIds.size} unique entities, ${relations.size} unique relations`);
-    debug.add('parsed_triples', { entityIds: [...entityIds], relations: [...relations.values()] });
+    log(`Parsed: ${entityNames.size} unique entities, ${relations.size} unique relations`);
+    debug.add('parsed_triples', { entityNames: [...entityNames], relations: [...relations.values()] });
 
-    return { entityIds, relations };
+    return { entityNames, relations };
 }
 
 // ============================================================
@@ -94,35 +94,28 @@ export function parse_triples(triples: Triple[]): ParsedTriples {
 // ============================================================
 
 /**
- * Check which entity IDs already exist in the database
+ * Check which entity names already exist in the database
  */
-export async function check_existing_entities(entityIds: string[]): Promise<Set<string>> {
-    if (entityIds.length === 0) return new Set();
+export async function check_existing_entities(entityNames: string[]): Promise<Set<string>> {
+    if (entityNames.length === 0) return new Set();
 
-    log(`Checking ${entityIds.length} entity IDs for existence`);
+    log(`Checking ${entityNames.length} entity names for existence`);
 
     try {
         const result = await fbu.surreal_query({
-            query: `SELECT VALUE id FROM user_entities WHERE id IN $ids`,
-            variables: { ids: entityIds.map(id => `user_entities:${id}`) }
+            query: `SELECT VALUE name FROM user_entities WHERE name IN $names`,
+            variables: { names: entityNames }
         }) as any;
 
         const resultData = result?.data?.result?.result?.[0]?.result || [];
-        const existingIds = new Set<string>(
-            resultData.map((r: any) => {
-                if (typeof r === 'string') {
-                    return r.replace('user_entities:', '');
-                } else if (r?.id) {
-                    return String(r.id);
-                }
-                return String(r);
-            })
+        const existingNames = new Set<string>(
+            resultData.map((r: any) => String(r))
         );
 
-        log(`Found ${existingIds.size} existing entities`);
-        debug.add('existing_entities', [...existingIds]);
+        log(`Found ${existingNames.size} existing entities`);
+        debug.add('existing_entities', [...existingNames]);
 
-        return existingIds;
+        return existingNames;
     } catch (error: any) {
         log(`Error checking existing entities: ${error.message}`);
         throw error;
@@ -130,35 +123,28 @@ export async function check_existing_entities(entityIds: string[]): Promise<Set<
 }
 
 /**
- * Check which relation IDs already exist in the database
+ * Check which relation names already exist in the database
  */
-export async function check_existing_relations(relationIds: string[]): Promise<Set<string>> {
-    if (relationIds.length === 0) return new Set();
+export async function check_existing_relations(relationNames: string[]): Promise<Set<string>> {
+    if (relationNames.length === 0) return new Set();
 
-    log(`Checking ${relationIds.length} relation IDs for existence`);
+    log(`Checking ${relationNames.length} relation names for existence`);
 
     try {
         const result = await fbu.surreal_query({
-            query: `SELECT VALUE id FROM user_relations WHERE id IN $ids`,
-            variables: { ids: relationIds.map(id => `user_relations:${id}`) }
+            query: `SELECT VALUE name FROM user_relations WHERE name IN $names`,
+            variables: { names: relationNames }
         }) as any;
 
         const resultData = result?.data?.result?.result?.[0]?.result || [];
-        const existingIds = new Set<string>(
-            resultData.map((r: any) => {
-                if (typeof r === 'string') {
-                    return r.replace('user_relations:', '');
-                } else if (r?.id) {
-                    return String(r.id);
-                }
-                return String(r);
-            })
+        const existingNames = new Set<string>(
+            resultData.map((r: any) => String(r))
         );
 
-        log(`Found ${existingIds.size} existing relations`);
-        debug.add('existing_relations', [...existingIds]);
+        log(`Found ${existingNames.size} existing relations`);
+        debug.add('existing_relations', [...existingNames]);
 
-        return existingIds;
+        return existingNames;
     } catch (error: any) {
         log(`Error checking existing relations: ${error.message}`);
         throw error;
@@ -198,22 +184,22 @@ export async function compute_embeddings(texts: string[]): Promise<number[][]> {
  * Build a single SurrealQL query to insert all entities and relations
  */
 export function build_insert_query(
-    entities: { id: string; embedding: number[] }[],
-    relations: { id: string; sourceId: string; targetId: string; kind: string; embedding: number[] }[]
+    entities: { name: string; embedding: number[] }[],
+    relations: { name: string; sourceName: string; targetName: string; kind: string; embedding: number[] }[]
 ): string {
     const statements: string[] = [];
 
-    // Entity inserts
+    // Entity inserts with auto-generated ID and name field
     for (const e of entities) {
         statements.push(
-            `CREATE type::thing("user_entities", "${e.id}") CONTENT { embedding: [${e.embedding.join(',')}] }`
+            `CREATE user_entities CONTENT { name: "${e.name}", embedding: [${e.embedding.join(',')}] }`
         );
     }
 
-    // Relation inserts using RELATE syntax for RELATION type tables
+    // Relation inserts using RELATE syntax with subqueries to find entities by name
     for (const r of relations) {
         statements.push(
-            `RELATE user_entities:${r.sourceId}->user_relations->user_entities:${r.targetId} CONTENT { id: "${r.id}", kind: "${r.kind}", embedding: [${r.embedding.join(',')}] }`
+            `RELATE (SELECT VALUE id FROM user_entities WHERE name = "${r.sourceName}" LIMIT 1)->user_relations->(SELECT VALUE id FROM user_entities WHERE name = "${r.targetName}" LIMIT 1) CONTENT { name: "${r.name}", sourceName: "${r.sourceName}", targetName: "${r.targetName}", kind: "${r.kind}", embedding: [${r.embedding.join(',')}] }`
         );
     }
 
@@ -247,36 +233,39 @@ export async function store_knowledge(triples: Triple[]): Promise<StoreKnowledge
     debug.add('store_knowledge_input', triples);
 
     // 1. Parse triples
-    const { entityIds, relations } = parse_triples(triples);
-    const entityIdList = [...entityIds];
+    const { entityNames, relations } = parse_triples(triples);
+    const entityNameList = [...entityNames];
     const relationList = [...relations.values()];
 
-    // 2. Check existing in parallel
-    const [existingEntityIds, existingRelationIds] = await Promise.all([
-        check_existing_entities(entityIdList),
-        check_existing_relations(relationList.map(r => r.id))
+    // 2. Build relation names for dedup check
+    const relationNameList = relationList.map(r => r.name);
+
+    // 3. Check existing in parallel
+    const [existingEntityNames, existingRelationNames] = await Promise.all([
+        check_existing_entities(entityNameList),
+        check_existing_relations(relationNameList)
     ]);
 
-    // 3. Filter to new only
-    const newEntityIds = entityIdList.filter(id => !existingEntityIds.has(id));
-    const newRelations = relationList.filter(r => !existingRelationIds.has(r.id));
+    // 4. Filter to new only
+    const newEntityNames = entityNameList.filter(name => !existingEntityNames.has(name));
+    const newRelations = relationList.filter(r => !existingRelationNames.has(r.name));
 
-    log(`New items: ${newEntityIds.length} entities, ${newRelations.length} relations`);
-    log(`Existing items: ${existingEntityIds.size} entities, ${existingRelationIds.size} relations`);
+    log(`New items: ${newEntityNames.length} entities, ${newRelations.length} relations`);
+    log(`Existing items: ${existingEntityNames.size} entities, ${existingRelationNames.size} relations`);
 
-    // 4. Compute embeddings for new items only
+    // 5. Compute embeddings for new items only
     const textsToEmbed = [
-        ...newEntityIds,
-        ...newRelations.map(r => relation_embedding_text(r.sourceId, r.kind, r.targetId))
+        ...newEntityNames,
+        ...newRelations.map(r => relation_embedding_text(r.sourceName, r.kind, r.targetName))
     ];
 
     const allEmbeddings = await compute_embeddings(textsToEmbed);
-    const entityEmbeddings = allEmbeddings.slice(0, newEntityIds.length);
-    const relationEmbeddings = allEmbeddings.slice(newEntityIds.length);
+    const entityEmbeddings = allEmbeddings.slice(0, newEntityNames.length);
+    const relationEmbeddings = allEmbeddings.slice(newEntityNames.length);
 
-    // 5. Build data for insert
-    const entitiesToInsert = newEntityIds.map((id, i) => ({
-        id,
+    // 6. Build data for insert
+    const entitiesToInsert = newEntityNames.map((name, i) => ({
+        name,
         embedding: entityEmbeddings[i]
     }));
 
@@ -285,7 +274,7 @@ export async function store_knowledge(triples: Triple[]): Promise<StoreKnowledge
         embedding: relationEmbeddings[i]
     }));
 
-    // 6. Insert all in single query
+    // 7. Insert all in single query
     if (entitiesToInsert.length > 0 || relationsToInsert.length > 0) {
         const query = build_insert_query(entitiesToInsert, relationsToInsert);
 
@@ -302,8 +291,8 @@ export async function store_knowledge(triples: Triple[]): Promise<StoreKnowledge
     }
 
     const result: StoreKnowledgeResult = {
-        entities: { new: newEntityIds.length, existing: existingEntityIds.size },
-        relations: { new: newRelations.length, existing: existingRelationIds.size }
+        entities: { new: newEntityNames.length, existing: existingEntityNames.size },
+        relations: { new: newRelations.length, existing: existingRelationNames.size }
     };
 
     log(`store_knowledge complete`);
@@ -339,14 +328,14 @@ export async function search_knowledge(
     // Search entities and relations in parallel using KNN syntax
     const [entityResult, relationResult] = await Promise.all([
         fbu.surreal_query({
-            query: `SELECT id, vector::distance::knn() AS distance
+            query: `SELECT id, name, vector::distance::knn() AS distance
                     FROM user_entities
                     WHERE embedding <|${limit},${effort}|> $e
                     ORDER BY distance ASC`,
             variables: { e: queryEmbedding }
         }),
         fbu.surreal_query({
-            query: `SELECT id, kind, in, out, vector::distance::knn() AS distance
+            query: `SELECT id, name, sourceName, targetName, kind, vector::distance::knn() AS distance
                     FROM user_relations
                     WHERE embedding <|${limit},${effort}|> $e
                     ORDER BY distance ASC`,
@@ -381,9 +370,9 @@ export function format_search_results(results: SearchKnowledgeResult): string {
     if (results.entities.length > 0) {
         lines.push('Entities:');
         for (const e of results.entities) {
-            const id = typeof e.id === 'string' ? e.id.replace('user_entities:', '') : e.id?.id || e.id;
+            const name = e.name || '?';
             const dist = e.distance?.toFixed(4) || '?';
-            lines.push(`  - ${id} (distance: ${dist})`);
+            lines.push(`  - ${name} (distance: ${dist})`);
         }
         lines.push('');
     }
@@ -391,8 +380,8 @@ export function format_search_results(results: SearchKnowledgeResult): string {
     if (results.relations.length > 0) {
         lines.push('Relations:');
         for (const r of results.relations) {
-            const source = typeof r.in === 'string' ? r.in.replace('user_entities:', '') : r.in?.id || '?';
-            const target = typeof r.out === 'string' ? r.out.replace('user_entities:', '') : r.out?.id || '?';
+            const source = r.sourceName || '?';
+            const target = r.targetName || '?';
             const kind = r.kind || '?';
             const dist = r.distance?.toFixed(4) || '?';
             lines.push(`  - ${source} --[${kind}]--> ${target} (distance: ${dist})`);

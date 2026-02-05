@@ -29,7 +29,13 @@ Todo
   - [x] token counting
   - [x] parse errors in code execution to determine the needed javascript globals (Array, Date, etc) 
   - [x] update model selector to reflect model registry
-  - [x] do not allow model or audio settings changes while running 
+  - [x] do not allow model or audio settings changes while running
+  - [ ] fix CurrentUser issue (need to scope record id to user so it can be duplicated)
+     - auto calibrate
+     - mode that disables listening while speaking
+  - [ ] change deafulat audui mode to responsive
+
+  - [ ] CONSIDER: streaming repsonse from smartchat
 
    FREEDOM
   - [ ] Add a paywall and deploy on SmartChats.AI - target date -> mid february (valentines day) 
