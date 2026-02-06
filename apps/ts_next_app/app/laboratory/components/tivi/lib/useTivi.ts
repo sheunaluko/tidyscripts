@@ -345,10 +345,12 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
         // Responsive mode: Pause VAD processing (only used during TTS), power monitoring triggers recognition
         log('Responsive mode: Power monitoring will trigger recognition');
         vad.pauseProcessing();
+        speechProbRef.current = 0;
       } else if (mode === 'continuous') {
         // Continuous mode: Pause VAD processing (only used during TTS), start recognition immediately
         log('Continuous mode: Starting recognition immediately');
         vad.pauseProcessing();
+        speechProbRef.current = 0;
         if (recognitionRef.current) {
           recognitionRef.current.start();
         }
@@ -380,6 +382,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
     // Stop and clean up VAD
     vadRef.current?.stop();
     vadRef.current = null;
+    speechProbRef.current = 0;
     setIsConnected(false);
 
     // Stop speech recognition
@@ -417,6 +420,7 @@ export function useTivi(options: UseTiviOptions): UseTiviReturn {
       if (enableInterruptionRef.current && modeRef.current !== 'guarded' && vadRef.current) {
         log('Pausing VAD processing after TTS');
         vadRef.current.pauseProcessing();
+        speechProbRef.current = 0;
       }
 
       // Resume recognition based on mode

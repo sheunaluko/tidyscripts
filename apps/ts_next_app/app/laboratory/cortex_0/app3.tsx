@@ -1001,6 +1001,7 @@ const  Component: NextPage = (props : any) => {
 	    log(`Stopping audio`)
 	    setGlobalPause(true)
 	    set_started(false)
+	    tivi.stopListening()
 	    // Cleanup event listeners
 	    if (audioCleanupRef.current) {
 		audioCleanupRef.current();
@@ -1360,6 +1361,7 @@ const  Component: NextPage = (props : any) => {
                 onClose={() => setSettingsOpen(false)}
                 tiviParams={tiviParams}
                 onTiviParamsChange={handleTiviParamsChange}
+                tivi={tivi}
                 speechProbRef={tivi.speechProbRef}
                 audioLevelRef={tivi.audioLevelRef}
                 speechCooldownMs={speechCooldownMs}

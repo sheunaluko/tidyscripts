@@ -36,9 +36,11 @@ const VoiceItem = React.memo<{
     <Box
       sx={{
         display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
         p: 2,
+        gap: 1,
         borderBottom: showBorder ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
         background: isSelected ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
         '&:hover': {
@@ -50,7 +52,7 @@ const VoiceItem = React.memo<{
       }}
     >
       {/* Voice Info */}
-      <Box sx={{ flex: 1, minWidth: 0, mr: 2 }}>
+      <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography
             variant="body2"
@@ -83,8 +85,8 @@ const VoiceItem = React.memo<{
         </Stack>
       </Box>
 
-      {/* Action Buttons */}
-      <Stack direction="row" spacing={1}>
+      {/* Action Buttons — wraps to new row on narrow containers */}
+      <Stack direction="row" spacing={1} sx={{ flex: '0 0 auto' }}>
         <Button
           size="small"
           variant="outlined"

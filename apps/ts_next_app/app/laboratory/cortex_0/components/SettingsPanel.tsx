@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Drawer,
   Box,
@@ -13,8 +13,13 @@ import {
   TextField,
   Select,
   MenuItem,
+  Collapse,
 } from '@mui/material';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { VADMonitor } from '../../components/tivi/VADMonitor';
+import { CalibrationPanel } from '../../components/tivi/CalibrationPanel';
+import { VoiceSelector } from '../../components/tivi/VoiceSelector';
+import type { UseTiviReturn } from '../../components/tivi/lib';
 
 interface WidgetConfig {
   id: string;
@@ -43,6 +48,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   tiviParams?: TiviParams;
   onTiviParamsChange?: (params: Partial<TiviParams>) => void;
+  tivi?: UseTiviReturn;
   speechProbRef?: React.MutableRefObject<number>;
   audioLevelRef?: React.MutableRefObject<number>;
   speechCooldownMs?: number;
@@ -51,6 +57,28 @@ interface SettingsPanelProps {
   onPlaybackRateChange?: (rate: number) => void;
   isListening?: boolean;
 }
+
+const VoiceSelectorToggle: React.FC = () => {
+  const [showVoices, setShowVoices] = useState(false);
+  return (
+    <Box sx={{ mb: '15px' }}>
+      <Button
+        variant="outlined"
+        size="small"
+        fullWidth
+        startIcon={<VolumeUpIcon />}
+        onClick={() => setShowVoices(prev => !prev)}
+      >
+        {showVoices ? 'Hide Voice Selection' : 'Select Voice'}
+      </Button>
+      <Collapse in={showVoices}>
+        <Box sx={{ mt: 1 }}>
+          <VoiceSelector />
+        </Box>
+      </Collapse>
+    </Box>
+  );
+};
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   widgets,
@@ -61,6 +89,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onClose,
   tiviParams,
   onTiviParamsChange,
+  tivi,
   speechProbRef,
   audioLevelRef,
   speechCooldownMs,
@@ -107,6 +136,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               />
             </Box>
           )}
+
+          {/* Calibration */}
+          {tivi && onTiviParamsChange && (
+            <Box sx={{ mt: 2, mb: '15px' }}>
+              <CalibrationPanel
+                tivi={tivi}
+                vadParams={tiviParams}
+                updateVadParam={(key, value) => onTiviParamsChange({ [key]: value })}
+                disabled={tivi.isSpeaking}
+              />
+            </Box>
+          )}
+
+          {/* Voice Selector — toggle */}
+          <VoiceSelectorToggle />
 
           {/* Recognition Mode */}
           <Box sx={{ mt: 2 }}>
@@ -303,6 +347,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               label={<Typography variant="caption">Verbose Logging</Typography>}
             />
           </Box>
+
         </Box>
       )}
 

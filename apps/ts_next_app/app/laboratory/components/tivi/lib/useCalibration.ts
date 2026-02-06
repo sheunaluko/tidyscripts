@@ -2,6 +2,14 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { UseTiviReturn, TiviMode } from './types';
+import * as tsw from 'tidyscripts_web';
+
+const dlog = tsw.common.logger.get_logger({ id: 'ts_debug' });
+
+// Expose logger to browser console for easy log export
+if (typeof window !== 'undefined') {
+  (window as any).tslog = tsw.common.logger;
+}
 
 // -- Types --
 
@@ -112,24 +120,39 @@ function analyzePhase1(data: ProbSample[]): Phase1Results {
     noSpeechDetected: true,
   };
 
-  if (data.length === 0) return defaults;
+  if (data.length === 0) {
+    dlog('analyzePhase1: no data');
+    return defaults;
+  }
 
   const probs = data.map((d) => d.prob);
+  const probMin = Math.min(...probs);
+  const probMax = Math.max(...probs);
+  const probMean = probs.reduce((a, b) => a + b, 0) / probs.length;
+  dlog('analyzePhase1: samples=', probs.length, 'min=', probMin.toFixed(4), 'max=', probMax.toFixed(4), 'mean=', probMean.toFixed(4));
 
   // Find optimal split via Otsu's method
   const splitPoint = otsuThreshold(probs);
+  dlog('analyzePhase1: otsu splitPoint=', splitPoint.toFixed(4));
 
   // Separate into clusters
   const ambientValues = probs.filter((p) => p <= splitPoint);
   const speechValues = probs.filter((p) => p > splitPoint);
+  dlog('analyzePhase1: ambientCount=', ambientValues.length, 'speechCount=', speechValues.length);
 
   // Detect unimodal distribution (no real speech)
-  // If the gap between clusters is too small, or one cluster is empty
+  // Use cluster MEANS for bimodality check (edges include transitional samples)
   const ambientCeiling = ambientValues.length > 0 ? Math.max(...ambientValues) : 0;
   const speechFloor = speechValues.length > 0 ? Math.min(...speechValues) : 1;
-  const gap = speechFloor - ambientCeiling;
+  const ambientMean = ambientValues.length > 0 ? ambientValues.reduce((a, b) => a + b, 0) / ambientValues.length : 0;
+  const speechMean = speechValues.length > 0 ? speechValues.reduce((a, b) => a + b, 0) / speechValues.length : 0;
+  const meanGap = speechMean - ambientMean;
+  const edgeGap = speechFloor - ambientCeiling;
+  dlog('analyzePhase1: ambientCeiling=', ambientCeiling.toFixed(4), 'speechFloor=', speechFloor.toFixed(4), 'edgeGap=', edgeGap.toFixed(4));
+  dlog('analyzePhase1: ambientMean=', ambientMean.toFixed(4), 'speechMean=', speechMean.toFixed(4), 'meanGap=', meanGap.toFixed(4));
 
-  if (speechValues.length === 0 || gap < 0.1) {
+  if (speechValues.length === 0 || meanGap < 0.1) {
+    dlog('analyzePhase1: noSpeechDetected (speechValues.length===0:', speechValues.length === 0, 'meanGap<0.1:', meanGap < 0.1, ')');
     return { ...defaults, data, ambientCeiling };
   }
 
@@ -138,9 +161,11 @@ function analyzePhase1(data: ProbSample[]): Phase1Results {
   const p10Index = Math.max(0, Math.floor(sortedSpeech.length * 0.1));
   const robustSpeechFloor = sortedSpeech[p10Index];
 
-  // Threshold: midpoint of the gap, biased toward ambient ceiling
-  // (70% toward ambient, 30% toward speech — we want to catch speech reliably)
-  const candidateThreshold = ambientCeiling + gap * 0.3;
+  // Threshold: place in the gap between clusters, biased toward ambient
+  // Use robust percentiles (p90 ambient, p10 speech) to avoid transitional outliers
+  const sortedAmbient = [...ambientValues].sort((a, b) => a - b);
+  const ambientP90 = sortedAmbient[Math.min(sortedAmbient.length - 1, Math.floor(sortedAmbient.length * 0.9))];
+  const candidateThreshold = ambientP90 + (robustSpeechFloor - ambientP90) * 0.3;
   const positiveSpeechThreshold = Math.max(
     Math.min(candidateThreshold, 0.9),
     0.15
@@ -148,7 +173,9 @@ function analyzePhase1(data: ProbSample[]): Phase1Results {
 
   // Snap to 0.05 steps
   const rounded = Math.round(positiveSpeechThreshold * 20) / 20;
-  const negativeSpeechThreshold = Math.max(rounded - 0.15, 0.05);
+  const negativeSpeechThreshold = Math.round(Math.max(rounded - 0.15, 0.05) * 20) / 20;
+
+  dlog('analyzePhase1: RESULT posThresh=', rounded, 'negThresh=', negativeSpeechThreshold, 'speechFloor=', robustSpeechFloor.toFixed(4));
 
   return {
     data,
@@ -270,8 +297,10 @@ export function useCalibration(
   const wasVADPausedRef = useRef(false);
   const wasListeningRef = useRef(false);
   const prevEnableInterruptionRef = useRef(true);
+  const tiviRef = useRef(tivi);
+  tiviRef.current = tivi; // keep ref in sync without triggering effects
 
-  // Cleanup on unmount: stop sampling, restore VAD state
+  // Cleanup on unmount only: stop sampling, restore VAD state
   useEffect(() => {
     return () => {
       if (rafRef.current !== null) {
@@ -279,10 +308,10 @@ export function useCalibration(
         rafRef.current = null;
       }
       if (wasVADPausedRef.current) {
-        tivi.pauseVADProcessing();
+        tiviRef.current.pauseVADProcessing();
       }
     };
-  }, [tivi]);
+  }, []);
 
   // Start/stop sampling speechProbRef via rAF
   const startSampling = useCallback(() => {
@@ -308,21 +337,27 @@ export function useCalibration(
   }, []);
 
   const startCalibration = useCallback(async () => {
+    dlog('startCalibration: mode=', vadParams.mode, 'isListening=', tivi.isListening, 'enableInterruption=', vadParams.enableInterruption);
+
     // Save previous state
     wasListeningRef.current = tivi.isListening;
     prevEnableInterruptionRef.current = vadParams.enableInterruption;
 
     // Ensure we're listening
     if (!tivi.isListening) {
+      dlog('startCalibration: starting listening...');
       await tivi.startListening();
+      dlog('startCalibration: listening started');
     }
 
     // Ensure VAD is processing (in responsive/continuous, it's paused)
     if (vadParams.mode !== 'guarded') {
       wasVADPausedRef.current = true;
       tivi.resumeVADProcessing();
+      dlog('startCalibration: resumed VAD processing');
     } else {
       wasVADPausedRef.current = false;
+      dlog('startCalibration: guarded mode, VAD already processing');
     }
 
     // Reset results
@@ -331,12 +366,15 @@ export function useCalibration(
 
     // Start phase 1
     startSampling();
+    dlog('startCalibration: sampling started, phase1 active');
     setPhase('phase1');
   }, [tivi, vadParams.mode, vadParams.enableInterruption, startSampling]);
 
   const finishPhase1 = useCallback(() => {
     const data = stopSampling();
+    dlog('finishPhase1: collected', data.length, 'samples');
     const results = analyzePhase1(data);
+    dlog('finishPhase1: noSpeechDetected=', results.noSpeechDetected);
     setPhase1Results(results);
     setPhase('phase1-summary');
   }, [stopSampling]);
@@ -352,9 +390,12 @@ export function useCalibration(
     setPhase('phase2');
 
     // Play TTS — when it finishes, analyze
+    dlog('startPhase2: threshold=', phase1Results.positiveSpeechThreshold, 'playing TTS...');
     tivi.speak(CALIBRATION_TTS_TEXT, 1.0).then(() => {
       const data = stopSampling();
+      dlog('phase2 TTS done: collected', data.length, 'samples');
       const results = analyzePhase2(data, phase1Results.positiveSpeechThreshold);
+      dlog('phase2 results: spikes=', results.spikes.length, 'maxSpikeDuration=', results.maxSpikeDuration, 'minSpeechStartMs=', results.minSpeechStartMs);
       setPhase2Results(results);
 
       // Restore interruption setting
@@ -381,6 +422,11 @@ export function useCalibration(
       tivi.pauseVADProcessing();
     }
 
+    // Stop listening if calibration started it
+    if (!wasListeningRef.current && tivi.isListening) {
+      tivi.stopListening();
+    }
+
     setPhase('idle');
   }, [phase1Results, phase2Results, updateVadParam, tivi]);
 
@@ -397,6 +443,11 @@ export function useCalibration(
     // Restore VAD processing state
     if (wasVADPausedRef.current) {
       tivi.pauseVADProcessing();
+    }
+
+    // Stop listening if calibration started it
+    if (!wasListeningRef.current && tivi.isListening) {
+      tivi.stopListening();
     }
 
     setPhase1Results(null);
