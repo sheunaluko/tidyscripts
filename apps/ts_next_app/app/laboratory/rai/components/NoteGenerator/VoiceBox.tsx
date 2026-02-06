@@ -65,7 +65,14 @@ declare global {
   }
 }
 
+import { useInsights } from '../../context/InsightsContext';
+
 export const VoiceBox: React.FC = () => {
+  const { client: insightsClient } = useInsights();
+  const trackEvent = (type: string, payload: Record<string, any>) => {
+    try { insightsClient?.addEvent(type, payload); } catch (_) {}
+  };
+
   const [recognitionState, setRecognitionState] = useState<'idle' | 'listening'>('idle');
   const [transcript, setTranscript] = useState<string>('');
   const [interimTranscript, setInterimTranscript] = useState<string>('');
@@ -178,10 +185,12 @@ export const VoiceBox: React.FC = () => {
       recognitionRef.current.stop();
       setRecognitionState('idle');
       setInterimTranscript('');
+      trackEvent('voicebox_recording_stopped', { transcript });
     } else {
       // Start recording
       try {
         recognitionRef.current.start();
+        trackEvent('voicebox_recording_started', {});
       } catch (error) {
         setErrorMessage('Failed to start recording');
       }
@@ -200,6 +209,7 @@ export const VoiceBox: React.FC = () => {
     try {
       await navigator.clipboard.writeText(transcript);
       setCopySuccess(true);
+      trackEvent('voicebox_copy', { text: transcript });
     } catch (error) {
       setErrorMessage('Failed to copy to clipboard');
     }
@@ -219,12 +229,15 @@ export const VoiceBox: React.FC = () => {
     setFormatting(true);
     setErrorMessage(null);
 
+    const inputText = transcript;
     try {
       const formatted = await formatTranscriptText(transcript);
       setTranscript(formatted);
+      trackEvent('voicebox_format', { inputText, outputText: formatted, status: 'success' });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to format text';
       setErrorMessage(`Formatting error: ${errorMsg}`);
+      trackEvent('voicebox_format', { inputText, error: errorMsg, status: 'error' });
     } finally {
       setFormatting(false);
     }

@@ -261,6 +261,18 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     set({ toolCallThoughts: [] });
   },
 
+  // Review State
+  reviewPending: false,
+  setReviewPending: (pending: boolean) => {
+    debug.add('review_pending_changed', { pending });
+    set({ reviewPending: pending });
+  },
+  reviewMessage: null,
+  setReviewMessage: (message: string | null) => {
+    debug.add('review_message_changed', { message });
+    set({ reviewMessage: message });
+  },
+
   // Note Generation
   generatedNote: null,
   noteGenerationLoading: false,

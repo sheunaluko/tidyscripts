@@ -1,4 +1,4 @@
-// VoiceMode Component - Voice agent interface
+// VoiceMode Component - Simplified voice input interface (direct transcription)
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -9,19 +9,56 @@ import {
   CircularProgress,
   Chip,
   Stack,
+  LinearProgress,
 } from '@mui/material';
-import { Mic, MicOff, Circle, Pause, PlayArrow } from '@mui/icons-material';
+import { Mic, MicOff, Circle, Pause, PlayArrow, VolumeUp } from '@mui/icons-material';
 import { useVoiceAgent } from '../../hooks/useVoiceAgent';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useInsights } from '../../context/InsightsContext';
 
 declare var window: any;
 
 export const VoiceMode: React.FC = () => {
-  const { startAgent, stopAgent, connected } = useVoiceAgent();
-  const { voiceAgentTranscript, settings } = useRaiStore();
+  // Get insights client from context
+  const { client: insightsClient } = useInsights();
+
+  // Initialize voice agent with insights
+  const { startAgent, stopAgent, connected, tivi } = useVoiceAgent({
+    insightsClient,
+  });
+  const { voiceAgentTranscript, settings, reviewPending, reviewMessage } = useRaiStore();
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Audio level visualization
+  const [audioLevel, setAudioLevel] = useState(0);
+  const animationRef = useRef<number | null>(null);
+
+  // Update audio level from Tivi ref
+  useEffect(() => {
+    if (!connected) {
+      setAudioLevel(0);
+      return;
+    }
+
+    const updateLevel = () => {
+      if (tivi?.audioLevelRef?.current !== undefined) {
+        // Scale the audio level for better visualization
+        const scaledLevel = Math.min(tivi.audioLevelRef.current * 10, 1);
+        setAudioLevel(scaledLevel);
+      }
+      animationRef.current = requestAnimationFrame(updateLevel);
+    };
+
+    updateLevel();
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [connected, tivi?.audioLevelRef]);
 
   // Auto-scroll to bottom when new transcript entries arrive
   useEffect(() => {
@@ -50,18 +87,14 @@ export const VoiceMode: React.FC = () => {
 
   const handlePause = () => {
     try {
-      const session = window.voiceAgentDebug?.session;
-      if (!session) {
-        console.error('No active voice agent session found');
-        return;
+      // With Tivi, we can cancel speech if speaking
+      if (tivi?.isSpeaking) {
+        tivi.cancelSpeech();
       }
-
-      const newPausedState = !isPaused;
-      session.transport.mute(newPausedState);
-      setIsPaused(newPausedState);
-      console.log(`Voice agent ${newPausedState ? 'muted' : 'unmuted'}`);
+      setIsPaused(!isPaused);
+      console.log(`Voice agent ${!isPaused ? 'paused' : 'resumed'}`);
     } catch (error) {
-      console.error('Error toggling mute:', error);
+      console.error('Error toggling pause:', error);
     }
   };
 
@@ -83,7 +116,7 @@ export const VoiceMode: React.FC = () => {
       case 'user':
         return 'You';
       case 'agent':
-        return 'Agent';
+        return 'Assistant';
       case 'system':
         return 'System';
       default:
@@ -124,6 +157,24 @@ export const VoiceMode: React.FC = () => {
           />
         )}
 
+        {tivi?.isSpeaking && (
+          <Chip
+            icon={<VolumeUp sx={{ fontSize: 12 }} />}
+            label="Speaking"
+            color="info"
+            size="small"
+          />
+        )}
+
+        {tivi?.isListening && !tivi?.isSpeaking && (
+          <Chip
+            icon={<Mic sx={{ fontSize: 12 }} />}
+            label="Listening"
+            color="primary"
+            size="small"
+          />
+        )}
+
         {!connected && hasStartedRef.current && (
           <Chip
             label="Disconnected"
@@ -131,11 +182,53 @@ export const VoiceMode: React.FC = () => {
             size="small"
           />
         )}
+
+        {reviewPending && (
+          <Chip
+            icon={<CircularProgress size={12} />}
+            label="Reviewing..."
+            color="warning"
+            size="small"
+          />
+        )}
       </Stack>
+
+      {/* Audio Level Indicator */}
+      {connected && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={audioLevel * 100}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 4,
+                backgroundColor: tivi?.isSpeaking ? 'secondary.main' : 'primary.main',
+              },
+            }}
+          />
+        </Box>
+      )}
+
+      {/* Review message display */}
+      {reviewMessage && (
+        <Paper sx={{ p: 1.5, mb: 2, bgcolor: 'warning.dark', color: 'warning.contrastText' }}>
+          <Typography variant="body2">
+            {reviewMessage} — Say &ldquo;finished&rdquo; again to generate the note anyways.
+          </Typography>
+        </Paper>
+      )}
 
       {/* Instructions */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Speak naturally about the patient information. Say &ldquo;finished&rdquo; when done.
+        {tivi?.interimResult && (
+          <Box component="span" sx={{ ml: 1, fontStyle: 'italic', color: 'text.disabled' }}>
+            {tivi.interimResult}...
+          </Box>
+        )}
       </Typography>
 
       {/* Control buttons */}
@@ -195,15 +288,15 @@ export const VoiceMode: React.FC = () => {
               <>
                 <Mic sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
                 <Typography variant="body1">
-                  Click &ldquo;Start Agent&rdquo; to begin voice input
+                  Click &ldquo;Start&rdquo; to begin voice input
                 </Typography>
               </>
             )}
             {connected && (
               <>
-                <CircularProgress sx={{ mb: 2 }} />
+                <Mic sx={{ fontSize: 64, mb: 2, opacity: 0.5, color: 'primary.main' }} />
                 <Typography variant="body1">
-                  Initializing voice agent...
+                  Listening... speak naturally
                 </Typography>
               </>
             )}

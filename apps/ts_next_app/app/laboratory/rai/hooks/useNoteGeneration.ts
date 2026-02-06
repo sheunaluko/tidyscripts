@@ -8,7 +8,7 @@ import { NOTE_GENERATION_SYSTEM_PROMPT } from '../prompts/note_generation_prompt
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 
-export function useNoteGeneration() {
+export function useNoteGeneration(insightsClient?: any) {
   const {
     selectedTemplate,
     collectedInformation,
@@ -56,7 +56,9 @@ export function useNoteGeneration() {
             settings.aiModel,
             selectedTemplate.template,
             collectedText,
-            NOTE_GENERATION_SYSTEM_PROMPT
+            NOTE_GENERATION_SYSTEM_PROMPT,
+            3,
+            insightsClient
           );
 
       setGeneratedNote(note);
@@ -76,6 +78,7 @@ export function useNoteGeneration() {
     setGeneratedNote,
     setNoteGenerationLoading,
     setNoteGenerationError,
+    insightsClient,
   ]);
 
   return {

@@ -8,9 +8,11 @@ import { VoiceBox } from './VoiceBox';
 import { DotPhraseIndex } from './DotPhraseIndex';
 import { useNoteGeneration } from '../../hooks/useNoteGeneration';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useInsights } from '../../context/InsightsContext';
 
 export const NoteGenerator: React.FC = () => {
-    const { generate, generatedNote, loading, error } = useNoteGeneration();
+    const { client: insightsClient } = useInsights();
+    const { generate, generatedNote, loading, error } = useNoteGeneration(insightsClient);
     const { settings, selectedTemplate, collectedInformation } = useRaiStore();
 
     // Always show blank note editor by default
