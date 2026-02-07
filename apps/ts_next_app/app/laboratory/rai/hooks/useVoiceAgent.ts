@@ -13,6 +13,7 @@ import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
 import { useSelectedTemplate } from './useTemplateLookups';
 import { useTivi } from '../../components/tivi/lib/index';
+import { useTiviSettings } from '../../components/tivi/lib/useTiviSettings';
 import { reviewTemplate } from '../lib/rai_agent_web';
 
 const log = tsw.common.logger.get_logger({ id: 'rai_voice' });
@@ -37,6 +38,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   }, []);
 
   const selectedTemplate = useSelectedTemplate();
+  const { settings: tiviSettings } = useTiviSettings();
   const {
     voiceAgentConnected,
     setVoiceAgentConnected,
@@ -70,16 +72,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     debug.add('tts_interrupted', { timestamp: new Date().toISOString() });
   }, []);
 
-  // Initialize Tivi — uses settings from store
+  // Initialize Tivi — voice/device settings from tivi settings module
   const tivi = useTivi({
-    mode: settings.tiviMode,
-    positiveSpeechThreshold: settings.positiveSpeechThreshold,
-    negativeSpeechThreshold: settings.negativeSpeechThreshold,
-    minSpeechStartMs: settings.minSpeechStartMs,
-    powerThreshold: settings.powerThreshold,
-    enableInterruption: settings.enableInterruption,
-    language: 'en-US',
-    verbose: false,
+    mode: tiviSettings.mode,
+    positiveSpeechThreshold: tiviSettings.positiveSpeechThreshold,
+    negativeSpeechThreshold: tiviSettings.negativeSpeechThreshold,
+    minSpeechStartMs: tiviSettings.minSpeechStartMs,
+    powerThreshold: tiviSettings.powerThreshold,
+    enableInterruption: tiviSettings.enableInterruption,
+    language: tiviSettings.language,
+    verbose: tiviSettings.verbose,
     onError: handleTiviError,
     onInterrupt: handleTiviInterrupt,
   });
@@ -135,7 +137,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
           timestamp: new Date(),
         });
 
-        await tivi.speak(fullMessage, settings.playbackRate || 1.5);
+        await tivi.speak(fullMessage, tiviSettings.playbackRate || 1.5);
       }
     } catch (error) {
       log(`Review error: ${error}`);
@@ -162,7 +164,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setReviewMessage,
     settings.agentModel,
     settings.aiModel,
-    settings.playbackRate,
+    tiviSettings.playbackRate,
     tivi,
   ]);
 
@@ -293,13 +295,13 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       debug.add('voice_agent_connected', { timestamp: new Date().toISOString() });
       addInsightEvent('voice_session_started', {
         templateId: selectedTemplate?.id,
-        mode: settings.tiviMode,
-        positiveSpeechThreshold: settings.positiveSpeechThreshold,
-        negativeSpeechThreshold: settings.negativeSpeechThreshold,
-        minSpeechStartMs: settings.minSpeechStartMs,
-        powerThreshold: settings.powerThreshold,
-        enableInterruption: settings.enableInterruption,
-        playbackRate: settings.playbackRate,
+        mode: tiviSettings.mode,
+        positiveSpeechThreshold: tiviSettings.positiveSpeechThreshold,
+        negativeSpeechThreshold: tiviSettings.negativeSpeechThreshold,
+        minSpeechStartMs: tiviSettings.minSpeechStartMs,
+        powerThreshold: tiviSettings.powerThreshold,
+        enableInterruption: tiviSettings.enableInterruption,
+        playbackRate: tiviSettings.playbackRate,
         aiModel: settings.aiModel,
         agentModel: settings.agentModel,
       });

@@ -88,6 +88,7 @@ export class InsightsClient {
   private batchTimer: any = null;
   private chainStack: Array<{ event_id: string; trace_id: string }> = [];
   private enabled: boolean = true;
+  private sessionTags: string[] = [];
 
   constructor(config: InsightsConfig) {
     // Set defaults
@@ -347,6 +348,25 @@ export class InsightsClient {
     this.stopBatchTimer();
     await this.flushBatch();
     log("InsightsClient shutdown complete");
+  }
+
+  /**
+   * Add tags to the current session
+   */
+  addSessionTags(tags: string[]): void {
+    for (const tag of tags) {
+      if (!this.sessionTags.includes(tag)) {
+        this.sessionTags.push(tag);
+      }
+    }
+    this.addEvent('session_tags', { tags: this.sessionTags });
+  }
+
+  /**
+   * Get current session tags
+   */
+  getSessionTags(): string[] {
+    return [...this.sessionTags];
   }
 
   /**

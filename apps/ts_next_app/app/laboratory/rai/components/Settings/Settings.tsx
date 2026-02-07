@@ -31,12 +31,14 @@ import { getRaiStore, migrateLocalToCloud } from '../../lib/storage';
 import { surreal_query } from '../../../../../src/firebase_utils';
 import { toast_toast } from '../../../../../components/Toast';
 import { useTivi } from '../../../components/tivi/lib/index';
+import { useTiviSettings } from '../../../components/tivi/lib/useTiviSettings';
 import { VADMonitor } from '../../../components/tivi/VADMonitor';
 import { CalibrationPanel } from '../../../components/tivi/CalibrationPanel';
 import { VoiceSelector } from '../../../components/tivi/VoiceSelector';
 
 export const Settings: React.FC = () => {
   const { settings, updateSettings } = useRaiStore();
+  const { settings: tiviSettings, updateSettings: updateTiviSettingsFn, resetSettings: resetTiviSettingsFn } = useTiviSettings();
   const { client: insightsClient } = useInsights();
 
   const addInsightEvent = (type: string, payload: Record<string, any>) => {
@@ -48,6 +50,11 @@ export const Settings: React.FC = () => {
     addInsightEvent('settings_changed', updates);
   };
 
+  const trackAndUpdateTivi = useCallback((updates: Parameters<typeof updateTiviSettingsFn>[0]) => {
+    updateTiviSettingsFn(updates);
+    addInsightEvent('voice_settings_changed', updates);
+  }, [updateTiviSettingsFn, insightsClient]);
+
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -55,19 +62,19 @@ export const Settings: React.FC = () => {
 
   // Own tivi instance for calibration/monitoring on Settings page
   const tivi = useTivi({
-    mode: settings.tiviMode,
-    positiveSpeechThreshold: settings.positiveSpeechThreshold,
-    negativeSpeechThreshold: settings.negativeSpeechThreshold,
-    minSpeechStartMs: settings.minSpeechStartMs,
-    powerThreshold: settings.powerThreshold,
-    enableInterruption: settings.enableInterruption,
+    mode: tiviSettings.mode,
+    positiveSpeechThreshold: tiviSettings.positiveSpeechThreshold,
+    negativeSpeechThreshold: tiviSettings.negativeSpeechThreshold,
+    minSpeechStartMs: tiviSettings.minSpeechStartMs,
+    powerThreshold: tiviSettings.powerThreshold,
+    enableInterruption: tiviSettings.enableInterruption,
     language: 'en-US',
     verbose: false,
   });
 
   const updateVadParam = useCallback((key: string, value: any) => {
-    trackAndUpdate({ [key]: value });
-  }, [updateSettings, insightsClient]);
+    trackAndUpdateTivi({ [key]: value });
+  }, [trackAndUpdateTivi]);
 
   const handleParametersAccepted = useCallback((params: {
     positiveSpeechThreshold: number;
@@ -83,9 +90,9 @@ export const Settings: React.FC = () => {
     if (params.disableInterruption) {
       updates.enableInterruption = false;
     }
-    updateSettings(updates);
+    updateTiviSettingsFn(updates);
     addInsightEvent('calibration_accepted', params);
-  }, [updateSettings, insightsClient]);
+  }, [updateTiviSettingsFn, insightsClient]);
 
   const handleAdvancedFeaturesToggle = (checked: boolean) => {
     if (checked && !settings.advancedFeaturesEnabled) {
@@ -117,16 +124,17 @@ export const Settings: React.FC = () => {
 
   const handleReset = () => {
     updateSettings(DEFAULT_SETTINGS);
-    addInsightEvent('settings_reset', DEFAULT_SETTINGS);
+    resetTiviSettingsFn();
+    addInsightEvent('settings_reset', { ...DEFAULT_SETTINGS, voiceReset: true });
   };
 
   const vadParams = {
-    positiveSpeechThreshold: settings.positiveSpeechThreshold,
-    negativeSpeechThreshold: settings.negativeSpeechThreshold,
-    minSpeechStartMs: settings.minSpeechStartMs,
-    powerThreshold: settings.powerThreshold,
-    enableInterruption: settings.enableInterruption,
-    mode: settings.tiviMode,
+    positiveSpeechThreshold: tiviSettings.positiveSpeechThreshold,
+    negativeSpeechThreshold: tiviSettings.negativeSpeechThreshold,
+    minSpeechStartMs: tiviSettings.minSpeechStartMs,
+    powerThreshold: tiviSettings.powerThreshold,
+    enableInterruption: tiviSettings.enableInterruption,
+    mode: tiviSettings.mode,
     verbose: false,
     language: 'en-US',
   };
@@ -335,9 +343,9 @@ export const Settings: React.FC = () => {
           <VADMonitor
             speechProbRef={tivi.speechProbRef}
             audioLevelRef={tivi.audioLevelRef}
-            threshold={settings.positiveSpeechThreshold}
-            powerThreshold={settings.tiviMode === 'responsive' ? settings.powerThreshold : undefined}
-            minSpeechStartMs={settings.minSpeechStartMs}
+            threshold={tiviSettings.positiveSpeechThreshold}
+            powerThreshold={tiviSettings.mode === 'responsive' ? tiviSettings.powerThreshold : undefined}
+            minSpeechStartMs={tiviSettings.minSpeechStartMs}
             paused={false}
             width={300}
             height={60}
@@ -379,8 +387,8 @@ export const Settings: React.FC = () => {
             Recognition Mode
           </Typography>
           <Select
-            value={settings.tiviMode}
-            onChange={(e) => trackAndUpdate({ tiviMode: e.target.value as 'guarded' | 'responsive' | 'continuous' })}
+            value={tiviSettings.mode}
+            onChange={(e) => trackAndUpdateTivi({ mode: e.target.value as 'guarded' | 'responsive' | 'continuous' })}
             size="small"
             fullWidth
             disabled={tivi.isListening}
@@ -397,8 +405,8 @@ export const Settings: React.FC = () => {
             control={
               <Switch
                 size="small"
-                checked={settings.enableInterruption}
-                onChange={(e) => trackAndUpdate({ enableInterruption: e.target.checked })}
+                checked={tiviSettings.enableInterruption}
+                onChange={(e) => trackAndUpdateTivi({ enableInterruption: e.target.checked })}
                 disabled={tivi.isListening}
               />
             }
@@ -407,17 +415,17 @@ export const Settings: React.FC = () => {
         </Box>
 
         {/* Power Threshold - only for responsive mode */}
-        {settings.tiviMode === 'responsive' && (
+        {tiviSettings.mode === 'responsive' && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Power Threshold: {settings.powerThreshold.toFixed(3)}
+              Power Threshold: {tiviSettings.powerThreshold.toFixed(3)}
             </Typography>
             <Slider
-              value={settings.powerThreshold}
+              value={tiviSettings.powerThreshold}
               min={0.001}
               max={0.1}
               step={0.001}
-              onChange={(_, value) => trackAndUpdate({ powerThreshold: value as number })}
+              onChange={(_, value) => trackAndUpdateTivi({ powerThreshold: value as number })}
               valueLabelDisplay="auto"
               size="small"
               disabled={tivi.isListening}
@@ -429,14 +437,14 @@ export const Settings: React.FC = () => {
         {/* Speech Detection Threshold */}
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Speech Detection Threshold: {settings.positiveSpeechThreshold.toFixed(2)}
+            Speech Detection Threshold: {tiviSettings.positiveSpeechThreshold.toFixed(2)}
           </Typography>
           <Slider
-            value={settings.positiveSpeechThreshold}
+            value={tiviSettings.positiveSpeechThreshold}
             min={0}
             max={1}
             step={0.05}
-            onChange={(_, value) => trackAndUpdate({ positiveSpeechThreshold: value as number })}
+            onChange={(_, value) => trackAndUpdateTivi({ positiveSpeechThreshold: value as number })}
             valueLabelDisplay="auto"
             size="small"
             disabled={tivi.isListening}
@@ -447,14 +455,14 @@ export const Settings: React.FC = () => {
         {/* Silence Detection Threshold */}
         <Box sx={{ mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Silence Detection Threshold: {settings.negativeSpeechThreshold.toFixed(2)}
+            Silence Detection Threshold: {tiviSettings.negativeSpeechThreshold.toFixed(2)}
           </Typography>
           <Slider
-            value={settings.negativeSpeechThreshold}
+            value={tiviSettings.negativeSpeechThreshold}
             min={0}
             max={1}
             step={0.05}
-            onChange={(_, value) => trackAndUpdate({ negativeSpeechThreshold: value as number })}
+            onChange={(_, value) => trackAndUpdateTivi({ negativeSpeechThreshold: value as number })}
             valueLabelDisplay="auto"
             size="small"
             disabled={tivi.isListening}
@@ -469,8 +477,8 @@ export const Settings: React.FC = () => {
           </Typography>
           <TextField
             type="number"
-            value={settings.minSpeechStartMs}
-            onChange={(e) => trackAndUpdate({ minSpeechStartMs: parseInt(e.target.value) || 150 })}
+            value={tiviSettings.minSpeechStartMs}
+            onChange={(e) => trackAndUpdateTivi({ minSpeechStartMs: parseInt(e.target.value) || 150 })}
             size="small"
             fullWidth
             disabled={tivi.isListening}
@@ -481,14 +489,14 @@ export const Settings: React.FC = () => {
         {/* TTS Playback Rate */}
         <Box sx={{ mt: 2, mb: 3 }}>
           <Typography variant="caption" color="text.secondary">
-            TTS Playback Rate: {(settings.playbackRate || 1.5).toFixed(1)}x
+            TTS Playback Rate: {tiviSettings.playbackRate.toFixed(1)}x
           </Typography>
           <Slider
-            value={settings.playbackRate || 1.5}
+            value={tiviSettings.playbackRate}
             min={0.5}
             max={2.5}
             step={0.1}
-            onChange={(_, value) => trackAndUpdate({ playbackRate: value as number })}
+            onChange={(_, value) => trackAndUpdateTivi({ playbackRate: value as number })}
             valueLabelDisplay="auto"
             valueLabelFormat={(v) => `${v}x`}
             size="small"

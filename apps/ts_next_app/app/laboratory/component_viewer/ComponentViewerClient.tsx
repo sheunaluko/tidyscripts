@@ -43,15 +43,11 @@ export const ComponentViewerClient = () => {
         <Tivi
           onTranscription={(text) => console.log('Transcription:', text)}
           onInterrupt={() => console.log('TTS Interrupted!')}
-          positiveSpeechThreshold={0.3}
-          negativeSpeechThreshold={0.25}
-          minSpeechStartMs={400}
         />
       ),
       code: `<Tivi
   onTranscription={(text) => console.log(text)}
   onInterrupt={() => console.log('Interrupted!')}
-  positiveSpeechThreshold={0.3}
 />`,
       props: [
         {

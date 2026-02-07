@@ -19,6 +19,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import * as tts from './lib/tts';
+import { getTiviSettings, updateTiviSettings } from './lib/settings';
 
 // Memoized voice item component for performance
 const VoiceItem = React.memo<{
@@ -131,8 +132,8 @@ export function VoiceSelector() {
       const availableVoices = tts.getVoices();
       setVoices(availableVoices);
 
-      // Get saved voice from localStorage
-      const savedVoiceURI = tts.getDefaultVoiceURI();
+      // Get saved voice from tivi settings
+      const savedVoiceURI = getTiviSettings().defaultVoiceURI;
       if (savedVoiceURI) {
         setSelectedVoiceURI(savedVoiceURI);
       }
@@ -171,7 +172,7 @@ export function VoiceSelector() {
 
   const handleSelectVoice = useCallback((voice: SpeechSynthesisVoice) => {
     setSelectedVoiceURI(voice.voiceURI);
-    tts.setDefaultVoice(voice.voiceURI);
+    updateTiviSettings({ defaultVoiceURI: voice.voiceURI });
   }, []);
 
   if (isLoading) {

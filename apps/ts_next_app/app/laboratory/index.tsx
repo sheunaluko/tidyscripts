@@ -95,13 +95,6 @@ const AllLinks = () => {
 
 	  
 
-	  <MLink href="/laboratory/vip">
-	      <Card style={card_style}>
-		  <Typography variant="h5" color="primary">Voice Interface Panel [VIP] </Typography>
-		  <p>Configure browser Speech Recognition and Text-to-Speech</p>
-	      </Card >
-	  </MLink> 
-
 	  <MLink href="/laboratory/local_storage_interface">
 	      <Card style={card_style}>
 		  <Typography variant="h5" color="primary">Local Storage Interface </Typography>

@@ -31,6 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useTivi } from './lib';
 import type { TiviProps, TiviMode } from './lib';
+import { useTiviSettings } from './lib/useTiviSettings';
 import * as tsw from 'tidyscripts_web';
 import { VizComponent } from './VizComponent';
 import { VoiceSelector } from './VoiceSelector';
@@ -79,73 +80,30 @@ export const Tivi: React.FC<TiviProps> = ({
   const [interruptCount, setInterruptCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
-  // VAD parameters with localStorage persistence
-  // Always initialize with defaults to match SSR
-  const [vadParams, setVadParams] = useState({
-    positiveSpeechThreshold: propPositiveThreshold ?? 0.7,
-    negativeSpeechThreshold: propNegativeThreshold ?? 0.45,
-    minSpeechStartMs: propMinSpeechStartMs ?? 150,
-    verbose: false,
-    mode: 'responsive' as TiviMode,
-    powerThreshold: 0.01,
-    enableInterruption: true,
-  });
+  // VAD parameters via tivi settings module (persisted to localStorage)
+  const { settings: tiviSettings, updateSettings: updateTiviSettingsFn, resetSettings: resetTiviSettingsFn } = useTiviSettings();
 
-  // Load from localStorage after mount (client-side only)
-  useEffect(() => {
-    const stored = localStorage.getItem('tivi-vad-params');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        log(`Loaded VAD params from localStorage: ${stored}`);
-        // Migrate old minSpeechMs to minSpeechStartMs if needed
-        const migrated = {
-          positiveSpeechThreshold: parsed.positiveSpeechThreshold ?? 0.7,
-          negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? 0.45,
-          minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? 150,
-          verbose: parsed.verbose ?? false,
-          mode: (parsed.mode ?? 'responsive') as TiviMode,
-          powerThreshold: parsed.powerThreshold ?? 0.01,
-          enableInterruption: parsed.enableInterruption ?? true,
-        };
-        setVadParams(migrated);
-        // Save migrated params back to localStorage
-        if (!parsed.minSpeechStartMs && parsed.minSpeechMs) {
-          localStorage.setItem('tivi-vad-params', JSON.stringify(migrated));
-          log('Migrated localStorage: minSpeechMs -> minSpeechStartMs');
-        }
-      } catch (error) {
-        console.error('[Tivi] Failed to parse stored VAD params:', error);
-      }
-    }
-  }, []);
+  // Derive vadParams from tivi settings for internal use
+  const vadParams = {
+    positiveSpeechThreshold: propPositiveThreshold ?? tiviSettings.positiveSpeechThreshold,
+    negativeSpeechThreshold: propNegativeThreshold ?? tiviSettings.negativeSpeechThreshold,
+    minSpeechStartMs: propMinSpeechStartMs ?? tiviSettings.minSpeechStartMs,
+    verbose: tiviSettings.verbose,
+    mode: tiviSettings.mode,
+    powerThreshold: tiviSettings.powerThreshold,
+    enableInterruption: tiviSettings.enableInterruption,
+  };
 
-  // Update VAD parameter and save to localStorage
-  const updateVadParam = useCallback((key: keyof typeof vadParams, value: number | boolean | TiviMode) => {
-    setVadParams((prev) => {
-      const updated = { ...prev, [key]: value };
-      const stringified = JSON.stringify(updated);
-      log(`Saving VAD params to localStorage: ${stringified}`);
-      localStorage.setItem('tivi-vad-params', stringified);
-      return updated;
-    });
-  }, []);
+  // Update VAD parameter and persist via tivi settings
+  const updateVadParam = useCallback((key: string, value: number | boolean | TiviMode) => {
+    updateTiviSettingsFn({ [key]: value });
+  }, [updateTiviSettingsFn]);
 
-  // Restore VAD parameters to defaults and save to localStorage
+  // Restore VAD parameters to defaults
   const restoreDefaults = useCallback(() => {
-    const defaults = {
-      positiveSpeechThreshold: 0.7,
-      negativeSpeechThreshold: 0.45,
-      minSpeechStartMs: 150,
-      verbose: false,
-      mode: 'responsive' as TiviMode,
-      powerThreshold: 0.01,
-      enableInterruption: true,
-    };
     log('Restoring VAD defaults');
-    localStorage.setItem('tivi-vad-params', JSON.stringify(defaults));
-    setVadParams(defaults);
-  }, []);
+    resetTiviSettingsFn();
+  }, [resetTiviSettingsFn]);
 
   // Memoize callbacks
   const handleTranscription = useCallback(
@@ -186,7 +144,7 @@ export const Tivi: React.FC<TiviProps> = ({
     mode: vadParams.mode,
     powerThreshold: vadParams.powerThreshold,
     enableInterruption: vadParams.enableInterruption,
-    language,
+    language: language ?? tiviSettings.language,
     onTranscription: handleTranscription,
     onInterrupt: handleInterrupt,
     onAudioLevel: handleAudioLevel,

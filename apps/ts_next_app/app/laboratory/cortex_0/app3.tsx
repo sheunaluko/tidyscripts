@@ -49,6 +49,7 @@ import {
 } from "@mui/material"
 
 import {useTivi} from "../components/tivi/lib/index"
+import { useTiviSettings } from '../components/tivi/lib/useTiviSettings';
 
 import { ExecutionSnapshot } from './types/execution';
 import * as fb from "../../../src/firebase" ;
@@ -204,43 +205,9 @@ const  Component: NextPage = (props : any) => {
     
     const [audio_history, set_audio_history] = useState([]);
     const [ai_model, set_ai_model] = useState(default_model);
-    const [playbackRate, setPlaybackRate] = useState(1.5)
 
-    // Tivi voice recognition parameters
-    const [tiviParams, setTiviParams] = useState({
-        positiveSpeechThreshold: 0.8,
-        negativeSpeechThreshold: 0.6,
-        minSpeechStartMs: 150,
-        language: 'en-US',
-        verbose: false,
-        mode: 'responsive' as 'guarded' | 'responsive' | 'continuous',
-        powerThreshold: 0.01,
-        enableInterruption: true,
-    });
-
-    // Load tiviParams from localStorage after mount (shared with tivi component)
-    useEffect(() => {
-        const stored = localStorage.getItem('tivi-vad-params');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                // Migrate and merge with defaults
-                setTiviParams(prev => ({
-                    ...prev,
-                    positiveSpeechThreshold: parsed.positiveSpeechThreshold ?? prev.positiveSpeechThreshold,
-                    negativeSpeechThreshold: parsed.negativeSpeechThreshold ?? prev.negativeSpeechThreshold,
-                    minSpeechStartMs: parsed.minSpeechStartMs ?? parsed.minSpeechMs ?? prev.minSpeechStartMs,
-                    verbose: parsed.verbose ?? prev.verbose,
-                    mode: parsed.mode ?? prev.mode,
-                    powerThreshold: parsed.powerThreshold ?? prev.powerThreshold,
-                    enableInterruption: parsed.enableInterruption ?? prev.enableInterruption,
-                    // Note: language is cortex-specific, don't load from shared storage
-                }));
-            } catch (e) {
-                console.error('[Cortex] Failed to parse tivi-vad-params:', e);
-            }
-        }
-    }, []);
+    // Tivi settings — shared across all apps via tivi settings module
+    const { settings: tiviSettings, updateSettings: updateTiviSettings } = useTiviSettings();
 
     const [workspace, set_workspace] = useState({}) ;
 
@@ -323,34 +290,15 @@ const  Component: NextPage = (props : any) => {
     // Audio level is now tracked in a ref inside useTivi (not React state)
     // to avoid triggering Firebase's aggressive IndexedDB polling
 
-    // Handler for tivi parameter changes (saves to shared localStorage)
-    const handleTiviParamsChange = useCallback((params: Partial<typeof tiviParams>) => {
-        setTiviParams(prev => {
-            const updated = { ...prev, ...params };
-            // Save to shared localStorage (exclude language - app-specific)
-            const toStore = {
-                positiveSpeechThreshold: updated.positiveSpeechThreshold,
-                negativeSpeechThreshold: updated.negativeSpeechThreshold,
-                minSpeechStartMs: updated.minSpeechStartMs,
-                verbose: updated.verbose,
-                mode: updated.mode,
-                powerThreshold: updated.powerThreshold,
-                enableInterruption: updated.enableInterruption,
-            };
-            localStorage.setItem('tivi-vad-params', JSON.stringify(toStore));
-            return updated;
-        });
-    }, []);
-
     const tivi = useTivi({
-	verbose: tiviParams.verbose,
-        positiveSpeechThreshold: tiviParams.positiveSpeechThreshold,
-        negativeSpeechThreshold: tiviParams.negativeSpeechThreshold,
-        minSpeechStartMs: tiviParams.minSpeechStartMs,
-        language: tiviParams.language,
-        mode: tiviParams.mode,
-        powerThreshold: tiviParams.powerThreshold,
-        enableInterruption: tiviParams.enableInterruption,
+	verbose: tiviSettings.verbose,
+        positiveSpeechThreshold: tiviSettings.positiveSpeechThreshold,
+        negativeSpeechThreshold: tiviSettings.negativeSpeechThreshold,
+        minSpeechStartMs: tiviSettings.minSpeechStartMs,
+        language: tiviSettings.language,
+        mode: tiviSettings.mode,
+        powerThreshold: tiviSettings.powerThreshold,
+        enableInterruption: tiviSettings.enableInterruption,
     });
 
     // Update voice status based on current state
@@ -664,18 +612,18 @@ const  Component: NextPage = (props : any) => {
 
     useEffect( ()=> {
         let speak = async function(content : string) {
-            await tivi.speak(content, playbackRate) ; 
+            await tivi.speak(content, tiviSettings.playbackRate) ;
         }
-	
+
 	if (COR) {
 	    //this is redundant but leaving for historical reasons
 	    if (mode == 'chat' ) {
-		COR.configure_user_output(add_ai_message) 
+		COR.configure_user_output(add_ai_message)
 	    } else {
-		COR.configure_user_output(add_ai_message )		
+		COR.configure_user_output(add_ai_message )
 	    }
 	}
-    }, [playbackRate, COR, mode])
+    }, [tiviSettings.playbackRate, COR, mode])
 
 
     useEffect( ()=> {
@@ -895,10 +843,10 @@ const  Component: NextPage = (props : any) => {
 	}
     };
 
-    //handle audio playback rate 
+    //handle audio playback rate
     const handleRateChange = (event: Event, newValue: number | number[]) => {
 	if (Array.isArray(newValue)) return; // Handle single value only
-	setPlaybackRate(newValue);
+	updateTiviSettings({ playbackRate: newValue });
     }
 
 
@@ -916,11 +864,11 @@ const  Component: NextPage = (props : any) => {
 	//here we need to actually speak the response too!
 	if (mode != "chat") {
 	    log(`generating audio response...`)
-	    log(`Using playbackRate to ${playbackRate}`)
+	    log(`Using playbackRate to ${tiviSettings.playbackRate}`)
 	    //first pause SR
 	    tivi.pauseSpeechRecognition() ;  // this will get retriggered based on VAD
 	    //then speak
-	    await tivi.speak(content, playbackRate) ;
+	    await tivi.speak(content, tiviSettings.playbackRate) ;
 	    log(`done`)
 	} else {
 	    log(`Skipping speech!`)
@@ -962,7 +910,7 @@ const  Component: NextPage = (props : any) => {
 		});
 	}
 
-    }, [sound_feedback, mode, playbackRate, tivi, insightsClient, fpsMonitor]);
+    }, [sound_feedback, mode, tiviSettings.playbackRate, tivi, insightsClient, fpsMonitor]);
 
     //function for getting AI response from the chat history and the ai_model
     let get_ai_response = async function() {
@@ -1359,15 +1307,15 @@ const  Component: NextPage = (props : any) => {
                 onResetLayout={resetLayout}
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
-                tiviParams={tiviParams}
-                onTiviParamsChange={handleTiviParamsChange}
+                tiviParams={tiviSettings}
+                onTiviParamsChange={updateTiviSettings}
                 tivi={tivi}
                 speechProbRef={tivi.speechProbRef}
                 audioLevelRef={tivi.audioLevelRef}
                 speechCooldownMs={speechCooldownMs}
                 onSpeechCooldownChange={setSpeechCooldownMs}
-                playbackRate={playbackRate}
-                onPlaybackRateChange={setPlaybackRate}
+                playbackRate={tiviSettings.playbackRate}
+                onPlaybackRateChange={(rate) => updateTiviSettings({ playbackRate: rate })}
                 isListening={tivi.isListening}
             />
 

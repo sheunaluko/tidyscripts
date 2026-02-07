@@ -20,23 +20,13 @@ import { VADMonitor } from '../../components/tivi/VADMonitor';
 import { CalibrationPanel } from '../../components/tivi/CalibrationPanel';
 import { VoiceSelector } from '../../components/tivi/VoiceSelector';
 import type { UseTiviReturn } from '../../components/tivi/lib';
+import type { TiviSettings } from '../../components/tivi/lib/settings';
 
 interface WidgetConfig {
   id: string;
   name: string;
   visible: boolean;
   order: number;
-}
-
-interface TiviParams {
-  positiveSpeechThreshold: number;
-  negativeSpeechThreshold: number;
-  minSpeechStartMs: number;
-  language: string;
-  verbose: boolean;
-  mode: 'guarded' | 'responsive' | 'continuous';
-  powerThreshold: number;
-  enableInterruption: boolean;
 }
 
 interface SettingsPanelProps {
@@ -46,8 +36,8 @@ interface SettingsPanelProps {
   onResetLayout?: () => void;
   open: boolean;
   onClose: () => void;
-  tiviParams?: TiviParams;
-  onTiviParamsChange?: (params: Partial<TiviParams>) => void;
+  tiviParams?: TiviSettings;
+  onTiviParamsChange?: (params: Partial<TiviSettings>) => void;
   tivi?: UseTiviReturn;
   speechProbRef?: React.MutableRefObject<number>;
   audioLevelRef?: React.MutableRefObject<number>;
@@ -159,7 +149,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </Typography>
             <Select
               value={tiviParams.mode}
-              onChange={(e) => onTiviParamsChange({ mode: e.target.value as TiviParams['mode'] })}
+              onChange={(e) => onTiviParamsChange({ mode: e.target.value as TiviSettings['mode'] })}
               size="small"
               fullWidth
               disabled={isListening}

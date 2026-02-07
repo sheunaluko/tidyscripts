@@ -38,7 +38,7 @@ export const THEME_CONFIG = {
 // Supported AI Models - from model registry
 export const SUPPORTED_MODELS = getRegisteredModels();
 
-// Default Settings
+// Default Settings (voice/device settings managed by tivi settings module)
 export const DEFAULT_SETTINGS: AppSettings = {
   inputMode: 'voice',
   aiModel: 'gpt-5.2',                 // Model for note generation
@@ -47,14 +47,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
-  positiveSpeechThreshold: 0.8,       // VAD positive speech threshold (0.0-1.0)
-  negativeSpeechThreshold: 0.6,       // VAD negative (silence) threshold (0.0-1.0)
-  minSpeechStartMs: 150,              // Min speech duration before triggering (ms)
-  powerThreshold: 0.01,               // Audio power threshold for responsive mode
-  enableInterruption: true,           // Allow voice interruption of TTS
   useUnstructuredMode: false,
-  tiviMode: 'guarded',                // Voice recognition mode: guarded, responsive, continuous
-  playbackRate: 1.5,                  // TTS playback rate
 };
 
 // Advanced Features Password Hash (SHA-256)

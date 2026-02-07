@@ -18,7 +18,7 @@ export interface ParsedRoute {
   error?: string;
 }
 
-// App Settings
+// App Settings (voice/device settings managed by tivi settings module — see tivi/lib/settings.ts)
 export interface AppSettings {
   inputMode: 'voice' | 'text';
   aiModel: string;                    // Model for note generation
@@ -27,14 +27,7 @@ export interface AppSettings {
   autostartGeneration: boolean;
   showDefaultTemplates: boolean;
   advancedFeaturesEnabled: boolean;
-  positiveSpeechThreshold: number;    // VAD positive speech threshold (0.0-1.0)
-  negativeSpeechThreshold: number;    // VAD negative (silence) threshold (0.0-1.0)
-  minSpeechStartMs: number;           // Minimum speech duration before triggering (ms)
-  powerThreshold: number;             // Audio power threshold for responsive mode
-  enableInterruption: boolean;        // Allow voice interruption of TTS
   useUnstructuredMode?: boolean;      // Toggle between structured/unstructured LLM calls
-  tiviMode: 'guarded' | 'responsive' | 'continuous';  // Voice recognition mode
-  playbackRate: number;               // TTS playback rate (1.0 = normal)
 }
 
 // Note Template
@@ -200,9 +193,9 @@ export interface RaiState {
 
   // Settings
   settings: AppSettings;
-  updateSettings: (settings: Partial<AppSettings>) => void;
-  loadSettings: (insights?: any) => Promise<void>;
-  saveSettings: () => Promise<void>;
+  updateSettings: (settings: Partial<AppSettings>) => any;
+  loadSettings: () => Promise<any>;
+  saveSettings: () => Promise<any>;
 
   // Test Interface
   selectedTemplateForTestId: string | null;

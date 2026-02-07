@@ -42,9 +42,11 @@ const RAIContent: React.FC = () => {
       tsw.common.logger.suppress('Sidebar', 'Too verbose for RAI app');
       tsw.common.logger.suppress('router', 'Too verbose for RAI app');
 
+      // Bind InsightsClient to the store for auto-instrumentation
+      useRaiStore.setInsights(insightsClient);
+
       // Load settings first — resolves storage backend (local vs cloud)
-      // Pass insights so the singleton is created with telemetry from the start
-      await loadSettings(insightsClient);
+      await loadSettings();
 
       // Load data in parallel — individual catches prevent one failure from blocking the rest
       await Promise.all([
@@ -54,10 +56,9 @@ const RAIContent: React.FC = () => {
       ]);
 
       // Expose utilities to window for debugging
+      // Note: window.__rai__ (dispatch, getState) is auto-exposed by createInsightStore
       Object.assign(window, {
         tsw,
-        raiStore: useRaiStore,
-        getRaiState: () => useRaiStore.getState(),
         test_app_data_store,
         clear_app_data_store_test,
       });

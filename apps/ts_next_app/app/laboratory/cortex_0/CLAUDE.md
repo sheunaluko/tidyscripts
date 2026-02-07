@@ -51,7 +51,14 @@ Microphone → Tivi VAD → Speech Recognition → transcription_cb()
 - `window.tsw` — tidyscripts web library
 - `bin/save_session cortex_0` — export session data
 
+### Simi (Simulation Workflows)
+- Simi is available for Cortex via `createInsightStore` — add `workflows` to the store config
+- Define workflows in `simi/workflows/`, export from `simi/index.ts`
+- Bridge: `window.__cortex_0__.simi.workflows.NAME(opts?)` (once workflows are added)
+- See `apps/ts_next_app/CLAUDE.md` → Simi section for full details
+
 ## Adding Things
 - **New widget**: create in `widgets/`, register in `useWidgetConfig.ts`, add layout in `DraggableWidgetGrid.tsx`, render in `app3.tsx`
 - **New agent function**: define in `cortex_agent_web.ts`, wrap with `wrap_function()`, register in `get_agent()`
 - **New event**: emit via `ops.util.event()`, add handler in `event_dic` in app3.tsx
+- **New Simi workflow**: create `simi/workflows/` directory, define workflows with `defineWorkflow()`, pass to store config

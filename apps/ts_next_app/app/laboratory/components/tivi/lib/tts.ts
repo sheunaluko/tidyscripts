@@ -5,6 +5,8 @@
 
 'use client';
 
+import { getTiviSettings, updateTiviSettings } from './settings';
+
 export interface TTSOptions {
   text: string;
   voiceURI?: string | null;
@@ -173,39 +175,23 @@ export async function speak(options: TTSOptions): Promise<void> {
 
 /**
  * Speak with specified rate
- * Uses voice from localStorage if available
+ * Uses voice from tivi settings if available
  */
 export async function speakWithRate(text: string, rate: number = 1.0): Promise<void> {
-  let voiceURI: string | null = null;
-
-  // Try to get saved voice from localStorage
-  try {
-    voiceURI = localStorage.getItem('default_voice_uri');
-  } catch (e) {
-    // localStorage might not be available
-  }
-
+  const voiceURI = getTiviSettings().defaultVoiceURI;
   return speak({ text, voiceURI, rate });
 }
 
 /**
- * Set default voice by URI and save to localStorage
+ * Set default voice by URI
  */
 export function setDefaultVoice(voiceURI: string): void {
-  try {
-    localStorage.setItem('default_voice_uri', voiceURI);
-  } catch (e) {
-    console.error('Failed to save voice to localStorage:', e);
-  }
+  updateTiviSettings({ defaultVoiceURI: voiceURI });
 }
 
 /**
- * Get default voice URI from localStorage
+ * Get default voice URI
  */
 export function getDefaultVoiceURI(): string | null {
-  try {
-    return localStorage.getItem('default_voice_uri');
-  } catch (e) {
-    return null;
-  }
+  return getTiviSettings().defaultVoiceURI;
 }
