@@ -35,6 +35,8 @@ export interface ActionStep {
   action: string;
   args?: any[];
   wait?: number;
+  /** Timeout in ms for async actions. If the action's promise doesn't resolve within this window, the step fails and the workflow stops. */
+  timeout?: number;
 }
 
 export interface AssertStep {

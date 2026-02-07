@@ -48,7 +48,7 @@ The insightsClient instruments all apps for both production telemetry and debug 
   - `state`: reads dotted path from state
   - `find`: array lookup by index or match (supports regex, nested objects)
   - `eval`: calls function against state
-- **Runner** (`runner.ts`): `executeWorkflow(workflow, dispatch, getState, getClient, opts?)` — runs steps, emits telemetry, returns `RunResult`
+- **Runner** (`runner.ts`): `executeWorkflow(workflow, dispatch, getState, getClient, opts?)` — runs steps, emits telemetry, returns `RunResult`. Awaits async actions (promise detection). Supports `timeout` on ActionSteps — races promise vs timeout, stops workflow on timeout error.
 - **Public API** (`index.ts`): `defineWorkflow()` helper, `executeWorkflow`, all type exports
 - Wired into stores via `createInsightStore` `workflows` config — auto-compiled and mounted on bridge
 - Every step emits telemetry: `simi_workflow_start`, `simi_step`, `simi_resolve`, `simi_workflow_complete`

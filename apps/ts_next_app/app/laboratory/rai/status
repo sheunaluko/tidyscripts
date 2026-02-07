@@ -1,0 +1,46 @@
+# RAI Status — 2026-02-07
+
+## Completed: Store-Driven Workflows for Simi
+
+All user-facing workflows are now dispatchable from the store. Simi can simulate full end-to-end user flows.
+
+### New Store Actions
+
+| Action | Type | Description |
+|--------|------|-------------|
+| `generateNote()` | `async` | Full note generation: validates template + info, runs @END_TEMPLATE review, calls LLM, sets result |
+| `generateAnyway()` | `async` | Bypasses review message and generates note |
+| `dismissReview()` | `sync` | Dismisses review message without generating |
+| `copyToClipboard(text?)` | `async` | Copies text (or generatedNote) to clipboard, emits `note_copied` event |
+| `selectTemplateAndBegin(template)` | `sync` | Resets info, clears transcript, selects template, navigates to input |
+| `switchStorageMode(mode)` | `async` | Switches local/cloud with migration, toasts, and insight events |
+
+### New State
+- `reviewing: boolean` — true while @END_TEMPLATE review is in progress
+
+### Hook Changes
+- `useNoteGeneration` is now a thin wrapper over store actions (same return interface, backward compatible)
+
+### Component Changes
+- `TemplatePicker` uses `selectTemplateAndBegin` instead of 4 separate calls
+- `NoteDisplay` uses `copyToClipboard` from store
+- `TestResultsTable` uses `copyToClipboard` from store
+- `Settings` uses `switchStorageMode` (removed inline migration logic + 3 unused imports)
+
+### Simi Changes
+- New workflow: `full_note_flow` — end-to-end: select template, add 3 info entries, generate note (LLM), assert content, copy to clipboard
+  - Tags: `['e2e', 'note_generation', 'clipboard']`
+  - `generateNote` step uses `timeout: 120000` (120s guard for LLM call)
+
+### Simi Runner Fix
+- Runner now `await`s async actions (was fire-and-forget before)
+- New `timeout` field on `ActionStep` — races the action promise against a timeout, stops workflow on timeout
+- Sync actions unaffected
+
+### Verified
+- Type check: clean
+- Session export: `full_note_flow` ran successfully (48.3s, 11/11 steps passed, LLM latency 45s)
+- `copyToClipboard` returns false in automated contexts (expected — clipboard API requires user gesture)
+
+### Known Limitation
+- `copyToClipboard` silently fails in Simi/Playwright contexts due to browser clipboard API restrictions. The step succeeds but returns `false`. Acceptable for automated runs.

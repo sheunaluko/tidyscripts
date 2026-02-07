@@ -70,7 +70,7 @@ async function initSchema() {
 
     // Define metadata fields
     console.log('Defining metadata fields...');
-    await db.query('DEFINE FIELD tags ON insights_events TYPE option<array>');
+    await db.query('DEFINE FIELD tags ON insights_events TYPE option<array<string>>');
     await db.query('DEFINE FIELD duration_ms ON insights_events TYPE option<int>');
     await db.query('DEFINE FIELD client_info ON insights_events FLEXIBLE TYPE option<object>');
     console.log('✅ Metadata fields defined\n');

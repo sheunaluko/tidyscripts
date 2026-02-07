@@ -65,7 +65,7 @@ DEFINE FIELD payload ON insights_events FLEXIBLE TYPE object;
 -- ============================================================================
 
 -- Flexible tags (e.g., ["error", "slow", "retry"])
-DEFINE FIELD tags ON insights_events TYPE option<array>;
+DEFINE FIELD tags ON insights_events TYPE option<array<string>>;
 
 -- Duration in milliseconds
 DEFINE FIELD duration_ms ON insights_events TYPE option<int>;

@@ -27,6 +27,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import * as tsw from 'tidyscripts_web';
 import { ModelTestResult } from '../../types';
+import { useRaiStore } from '../../store/useRaiStore';
 
 const log = tsw.common.logger.get_logger({ id: 'TestResultsTable' });
 const debug = tsw.common.util.debug;
@@ -39,6 +40,7 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({ results }) =
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [copiedModel, setCopiedModel] = useState<string>('');
+  const { copyToClipboard } = useRaiStore();
 
   log({ msg: 'Render', resultsCount: results.length });
 
@@ -55,14 +57,14 @@ export const TestResultsTable: React.FC<TestResultsTableProps> = ({ results }) =
   };
 
   const handleCopy = async (model: string, note: string) => {
-    try {
-      await navigator.clipboard.writeText(note);
+    const success = await copyToClipboard(note);
+    if (success) {
       setCopiedModel(model);
       setSnackbarOpen(true);
       debug.add('note_copied', { model, length: note.length });
       log({ msg: 'Note copied to clipboard', model });
-    } catch (error) {
-      log({ msg: 'Copy failed', model, error });
+    } else {
+      log({ msg: 'Copy failed', model });
     }
   };
 

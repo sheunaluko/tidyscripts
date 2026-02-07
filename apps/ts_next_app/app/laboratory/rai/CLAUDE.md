@@ -48,9 +48,17 @@ Hash-based routing (`#templates`, `#input`, `#generator`, `#settings`, `#test`, 
 ### Note Generation
 - Provider auto-detected from model name (`claude-*` → anthropic, `gemini-*` → gemini, else → openai)
 - Routes to `/api/{provider}_structured_response`
-- `generateNote()` — builds template-filling prompt via `buildNotePrompt()`, uses structured output with Zod
+- `generateNote()` — **store action** that validates, reviews (@END_TEMPLATE), calls LLM, sets result. Full logic in store.
+- `generateAnyway()` — bypasses review, generates directly
+- `dismissReview()` — clears review message
+- `useNoteGeneration` hook — thin wrapper over store actions (backward compatible)
 - `callLLMDirect()` — sends system/user prompts directly without template wrapping (used for analysis)
 - Tracked via insightsClient event chains
+
+### Store-Level Composite Actions
+- `selectTemplateAndBegin(template)` — resets info + transcript, selects template, navigates to input
+- `copyToClipboard(text?)` — clipboard write + `note_copied` event (returns false in automated contexts)
+- `switchStorageMode(mode)` — local/cloud switch with migration, toasts, and insight events
 
 ### Checkpoints (dual system)
 - `analyticsCheckpoints` — append-only, immutable (telemetry)
@@ -67,11 +75,13 @@ Hash-based routing (`#templates`, `#input`, `#generator`, `#settings`, `#test`, 
 - Declarative test workflows that compile into runnable functions on the Playwright bridge
 - Wired into store via `workflows: raiWorkflows` in `createInsightStore` config
 - Bridge: `window.__rai__.simi.workflows.NAME(opts?)` — runs workflow, returns `RunResult`
-- List workflows: `window.__rai__.simi.list()` → `['basic_note_flow']`
+- List workflows: `window.__rai__.simi.list()` → `['basic_note_flow', 'full_note_flow']`
 - Speed control: `{ speed: 5 }` runs 5x faster
 - Sessions auto-tagged: `['simi', 'rai', workflow_id, ...workflow.tags]`
+- Runner awaits async actions and supports `timeout` on ActionSteps (races promise vs timeout, stops workflow on timeout)
 - Existing workflows:
   - `basic_note_flow` — selects first template, adds patient info, navigates to generator (tags: `smoke`, `note_generation`)
+  - `full_note_flow` — end-to-end: select template, add info, generate note (LLM call, 120s timeout), assert content, copy to clipboard (tags: `e2e`, `note_generation`, `clipboard`)
 
 ### Telemetry (Insight Events)
 Session-exported events emitted by the settings/storage flow:
@@ -90,6 +100,11 @@ Session-exported events emitted by the settings/storage flow:
 | `simi_step` | `simi/runner.ts` | `workflow_id`, `step`, `type`, `duration_ms`, `status` |
 | `simi_resolve` | `simi/runner.ts` | `workflow_id`, `step`, `resolver_type`, `status`, `error?` |
 | `simi_workflow_complete` | `simi/runner.ts` | `workflow_id`, `total_ms`, `steps_passed`, `steps_failed`, `completed` |
+| `template_review` | `useRaiStore.ts` | `template_id`, `template_name`, `model`, `action`, `message`, `latency_ms` |
+| `template_review_response` | `useRaiStore.ts` | `user_action` (`generate_anyway` or `dismissed`), `review_message` |
+| `note_copied` | `useRaiStore.ts` | `text` (copied content) |
+| `storage_mode_changed` | `useRaiStore.ts` | `mode`, `migrated?`, `failed?` |
+| `storage_mode_change_failed` | `useRaiStore.ts` | `mode`, `error` |
 
 ## Debugging
 - `window.getRaiState()` — current store snapshot
@@ -101,6 +116,8 @@ Session-exported events emitted by the settings/storage flow:
 - `window.__rai__.simi.list()` — list available Simi workflows
 - `await window.__rai__.simi.workflows.basic_note_flow()` — run smoke test workflow
 - `await window.__rai__.simi.workflows.basic_note_flow({ speed: 5 })` — run fast
+- `await window.__rai__.simi.workflows.full_note_flow()` — run full e2e workflow (includes LLM call, ~45s)
+- `await window.__rai__.dispatch('generateNote')` — dispatch note generation directly
 
 ## Adding Things
 - **New view**: update `ViewType` in types.ts, add case in `renderView()`, add route

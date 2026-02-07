@@ -27,9 +27,7 @@ import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../../store/useRaiStore';
 import { useInsights } from '../../context/InsightsContext';
 import { SUPPORTED_MODELS, DEFAULT_SETTINGS, ADVANCED_FEATURES_PASSWORD_HASH } from '../../constants';
-import { getRaiStore, migrateLocalToCloud } from '../../lib/storage';
-import { surreal_query } from '../../../../../src/firebase_utils';
-import { toast_toast } from '../../../../../components/Toast';
+import { getRaiStore } from '../../lib/storage';
 import { useTivi } from '../../../components/tivi/lib/index';
 import { useTiviSettings } from '../../../components/tivi/lib/useTiviSettings';
 import { VADMonitor } from '../../../components/tivi/VADMonitor';
@@ -37,7 +35,7 @@ import { CalibrationPanel } from '../../../components/tivi/CalibrationPanel';
 import { VoiceSelector } from '../../../components/tivi/VoiceSelector';
 
 export const Settings: React.FC = () => {
-  const { settings, updateSettings } = useRaiStore();
+  const { settings, updateSettings, switchStorageMode } = useRaiStore();
   const { settings: tiviSettings, updateSettings: updateTiviSettingsFn, resetSettings: resetTiviSettingsFn } = useTiviSettings();
   const { client: insightsClient } = useInsights();
 
@@ -301,27 +299,11 @@ export const Settings: React.FC = () => {
               value={getRaiStore().getMode()}
               onChange={async (e) => {
                 const newMode = e.target.value as 'local' | 'cloud';
-                const store = getRaiStore();
-                if (newMode === 'cloud' && store.getMode() !== 'cloud') {
-                  try {
-                    const queryFn = async (args: { query: string; variables?: Record<string, any> }) => {
-                      return await surreal_query(args);
-                    };
-                    store.switchToCloud(queryFn);
-                    const result = await migrateLocalToCloud(queryFn);
-                    addInsightEvent('storage_mode_changed', { mode: 'cloud', migrated: result.migrated, failed: result.failed });
-                    toast_toast({ title: 'Switched to Cloud storage', description: `Migrated ${result.migrated} items`, status: 'success', duration: 4000 });
-                  } catch (err: any) {
-                    addInsightEvent('storage_mode_change_failed', { mode: 'cloud', error: err?.message });
-                    toast_toast({ title: 'Cloud storage failed', description: 'Please log in to use cloud storage', status: 'error', duration: 5000 });
-                    return;
-                  }
-                } else if (newMode === 'local') {
-                  store.switchToLocal();
-                  addInsightEvent('storage_mode_changed', { mode: 'local' });
+                try {
+                  await switchStorageMode(newMode);
+                } catch {
+                  // Error handled inside switchStorageMode (toast + insight event)
                 }
-                // Force re-render so the Select reflects the new mode
-                updateSettings({});
               }}
               size="small"
             >

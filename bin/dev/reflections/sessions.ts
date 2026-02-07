@@ -99,6 +99,59 @@ export async function get_user_sessions(user_id: string, limit: number = 20) {
 }
 
 /**
+ * Find sessions by session tags (from addSessionTags)
+ */
+export async function find_sessions_by_tags(tags: string[], options?: { app_name?: string; limit?: number }) {
+  const limit = options?.limit ?? 10;
+  log(`Finding sessions with tags: [${tags.join(', ')}]${options?.app_name ? ` for app: ${options.app_name}` : ''}`);
+
+  // Query session_tags events and match on payload.tags (event-level tags may be empty)
+  const db = await core.getDB();
+  let query = 'SELECT * FROM insights_events WHERE event_type = "session_tags" AND $tags ALLINSIDE payload.tags';
+  const params: any = { tags, limit: limit * 3 };
+
+  if (options?.app_name) {
+    query += ' AND app_name = $app_name';
+    params.app_name = options.app_name;
+  }
+
+  query += ' ORDER BY timestamp DESC LIMIT $limit';
+  const raw = await db.query(query, params);
+  const events = raw[0] || [];
+
+  // Extract unique session IDs
+  const sessionIds = new Set<string>();
+  events.forEach((evt: any) => {
+    if (sessionIds.size < limit) {
+      sessionIds.add(evt.session_id);
+    }
+  });
+
+  // Get details for each session
+  const sessions = await Promise.all(
+    Array.from(sessionIds).map(async (session_id: string) => {
+      const session = await core.inspectSession(session_id);
+      const tagEvents = events.filter((e: any) => e.session_id === session_id);
+      // Collect all session tags from payload
+      const sessionTags = tagEvents.reduce((acc: string[], e: any) => {
+        const t = e.payload?.tags;
+        if (Array.isArray(t)) {
+          for (const tag of t) {
+            if (!acc.includes(tag)) acc.push(tag);
+          }
+        }
+        return acc;
+      }, []);
+      return { ...session, session_tags: sessionTags };
+    })
+  );
+
+  log(`Found ${sessions.length} sessions with tags: [${tags.join(', ')}]`);
+
+  return sessions;
+}
+
+/**
  * Deep session inspection
  */
 export async function inspect_session(session_id: string) {

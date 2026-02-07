@@ -359,7 +359,7 @@ export class InsightsClient {
         this.sessionTags.push(tag);
       }
     }
-    this.addEvent('session_tags', { tags: this.sessionTags });
+    this.addEvent('session_tags', { tags: this.sessionTags }, { tags: this.sessionTags });
   }
 
   /**

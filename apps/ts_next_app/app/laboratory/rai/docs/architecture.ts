@@ -33,6 +33,7 @@ app/laboratory/rai/
     index.ts                 # Workflow exports
     workflows/
       basic_note_flow.ts     # Smoke test workflow
+      full_note_flow.ts      # End-to-end workflow (LLM call + clipboard)
   components/
     Layout/                  # MainLayout, Sidebar
     TemplatePicker/          # Template selection
@@ -66,7 +67,9 @@ All app state lives in a single Zustand store (\`useRaiStore\`). Key state domai
 - **Navigation** — current view, routing
 - **Templates** — loaded templates, selection, editor state
 - **Information** — collected clinical entries, voice transcript
-- **Note Generation** — generated note, loading state, checkpoints
+- **Note Generation** — generated note, loading state, checkpoints, review state
+- **Note Generation Actions** — \`generateNote()\`, \`generateAnyway()\`, \`dismissReview()\` (full LLM pipeline in store)
+- **Composite Actions** — \`selectTemplateAndBegin()\`, \`copyToClipboard()\`, \`switchStorageMode()\`
 - **Settings** — all app preferences
 - **Test Interface** — test runs, model comparison results
 
@@ -134,7 +137,7 @@ SimiWorkflow { id, app, tags?, steps: WorkflowStep[] }
 \`\`\`
 
 **Step types:**
-- **ActionStep** — dispatch a store action with optional args and wait delay
+- **ActionStep** — dispatch a store action with optional args, wait delay, and timeout. Async actions are awaited. If \`timeout\` is set and the action doesn't resolve in time, the workflow stops with a timeout error.
 - **AssertStep** — evaluate an expression against state, halt on failure
 - **WaitForStep** — poll state until condition is true or timeout
 
@@ -146,8 +149,9 @@ SimiWorkflow { id, app, tags?, steps: WorkflowStep[] }
 **Usage:**
 \`\`\`
 window.__rai__.simi.list()                                    // List workflows
-await window.__rai__.simi.workflows.basic_note_flow()         // Run workflow
+await window.__rai__.simi.workflows.basic_note_flow()         // Run smoke test
 await window.__rai__.simi.workflows.basic_note_flow({speed:5}) // Run fast
+await window.__rai__.simi.workflows.full_note_flow()          // Run e2e (LLM call, ~45s)
 \`\`\`
 
 Every step emits telemetry (\`simi_step\`, \`simi_resolve\`) and sessions are auto-tagged for retrieval.
@@ -198,5 +202,7 @@ The following utilities are available on \`window\` for debugging:
 | \`await window.clear_app_data_store_test()\` | Clean up test data |
 | \`window.__rai__.simi.list()\` | List available Simi workflows |
 | \`await window.__rai__.simi.workflows.basic_note_flow()\` | Run smoke test workflow |
+| \`await window.__rai__.simi.workflows.full_note_flow()\` | Run full e2e workflow (includes LLM call) |
+| \`await window.__rai__.dispatch('generateNote')\` | Dispatch note generation directly |
 | \`window.raiInsights.getSessionTags()\` | Get current session tags |
 `;

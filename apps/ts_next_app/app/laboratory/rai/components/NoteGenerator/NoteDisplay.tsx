@@ -23,6 +23,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
     addAnalyticsCheckpoint,
     navigateCheckpoint,
     acceptCheckpoint,
+    copyToClipboard,
   } = useRaiStore();
   const { client: insightsClient } = useInsights();
   const addInsightEvent = (type: string, payload: Record<string, any>) => {
@@ -181,12 +182,9 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
   // Copy displayed content (edited or checkpoint)
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(displayContent);
+    const success = await copyToClipboard(displayContent);
+    if (success) {
       setCopySuccess(true);
-      addInsightEvent('note_copied', { text: displayContent });
-    } catch (error) {
-      console.error('Failed to copy:', error);
     }
   };
 

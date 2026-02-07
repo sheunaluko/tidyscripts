@@ -11,6 +11,7 @@
  */
 
 import common from "../../packages/ts_common/dist/index";
+import * as path from "path";
 
 // Import sub-modules
 import * as core from "./reflections/core";
@@ -98,6 +99,7 @@ export const {
   get_recent_sessions,
   inspect_session,
   find_sessions_with_errors,
+  find_sessions_by_tags,
   summarize_session,
   get_session_timeline,
   get_user_sessions
@@ -233,6 +235,76 @@ export async function quick_export_latest_session(
 
   log(`Exported session ${session.session_id} to ${filepath}`);
   return filepath;
+}
+
+/**
+ * Quick export workflow - find most recent session(s) with given tags and export
+ */
+export async function quick_export_by_tag(
+  tags: string[],
+  output_path?: string,
+  app_name?: string,
+  last: number = 1
+): Promise<string | string[]> {
+  log(`Quick export by tags: [${tags.join(', ')}]${app_name ? ` (app: ${app_name})` : ''} (last: ${last})`);
+
+  const results = await sessions.find_sessions_by_tags(tags, { app_name, limit: last });
+  if (!results || results.length === 0) {
+    throw new Error(`No sessions found with tags: [${tags.join(', ')}]${app_name ? ` for app: ${app_name}` : ''}`);
+  }
+
+  if (last === 1) {
+    const session = results[0];
+    const filepath = await exportUtil.export_session_to_file(
+      session.session_id,
+      output_path
+    );
+    log(`Exported session ${session.session_id} (tags: ${session.session_tags?.join(', ')}) to ${filepath}`);
+    return filepath;
+  }
+
+  // Multi-export: use batch export into the output_path's directory
+  const session_ids = results.map((s: any) => s.session_id);
+  const output_dir = output_path ? path.dirname(output_path) : undefined;
+  const filepaths = await exportUtil.export_sessions_batch(
+    session_ids,
+    output_dir,
+    undefined,
+    { app_name, tags }
+  );
+  log(`Exported ${filepaths.length} sessions with tags: [${tags.join(', ')}]`);
+  return filepaths;
+}
+
+/**
+ * Quick export workflow - export N most recent sessions for an app (tagless)
+ */
+export async function quick_export_latest_sessions(
+  app_name: string,
+  output_dir?: string,
+  last: number = 3
+): Promise<string[]> {
+  log(`Quick export latest ${last} sessions for app: ${app_name}`);
+
+  const recentSessions = await sessions.get_recent_sessions(last * 2);
+  // Filter to the target app
+  const appSessions = recentSessions
+    .filter((s: any) => s.app_name === app_name || s.events?.[0]?.app_name === app_name)
+    .slice(0, last);
+
+  if (appSessions.length === 0) {
+    throw new Error(`No sessions found for app: ${app_name}`);
+  }
+
+  const session_ids = appSessions.map((s: any) => s.session_id);
+  const filepaths = await exportUtil.export_sessions_batch(
+    session_ids,
+    output_dir,
+    undefined,
+    { app_name }
+  );
+  log(`Exported ${filepaths.length} sessions for app: ${app_name}`);
+  return filepaths;
 }
 
 // Helper to display formatted output in REPL

@@ -121,8 +121,26 @@ export async function executeWorkflow(
           }
         }
 
-        // Dispatch
-        const result = dispatch(step.action, ...resolvedArgs);
+        // Dispatch (await async actions, with optional timeout)
+        const rawResult = dispatch(step.action, ...resolvedArgs);
+        let result: any;
+
+        if (rawResult && typeof rawResult.then === 'function') {
+          // Async action — await with optional timeout
+          if (step.timeout) {
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error(
+                `Action "${step.action}" timed out after ${step.timeout}ms`
+              )), step.timeout)
+            );
+            result = await Promise.race([rawResult, timeoutPromise]);
+          } else {
+            result = await rawResult;
+          }
+        } else {
+          result = rawResult;
+        }
+
         const duration_ms = Math.round(performance.now() - stepStart);
 
         stepResults.push({ step: label, result, duration_ms, status: 'ok' });

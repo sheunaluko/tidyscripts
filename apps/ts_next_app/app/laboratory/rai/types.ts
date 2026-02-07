@@ -178,6 +178,19 @@ export interface RaiState {
   setNoteGenerationLoading: (loading: boolean) => void;
   setNoteGenerationError: (error: string | null) => void;
 
+  // Note Generation Actions
+  reviewing: boolean;
+  generateNote: () => Promise<void>;
+  generateAnyway: () => Promise<void>;
+  dismissReview: () => void;
+
+  // Clipboard
+  copyToClipboard: (text?: string) => Promise<boolean>;
+
+  // Composite Actions
+  selectTemplateAndBegin: (template: NoteTemplate) => void;
+  switchStorageMode: (mode: 'local' | 'cloud') => Promise<void>;
+
   // Note Checkpoints - Dual Tracking System
   // Analytics Checkpoints - append-only, captures everything
   analyticsCheckpoints: NoteCheckpoint[];

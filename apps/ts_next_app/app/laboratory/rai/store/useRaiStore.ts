@@ -12,14 +12,15 @@ import {
   normalizeDotPhraseTitle,
   generateDotPhraseId,
 } from '../lib/templateParser';
-import { getRaiStore, RAI_DATA_KEYS, migrateLegacyLocalStorage } from '../lib/storage';
+import { getRaiStore, RAI_DATA_KEYS, migrateLegacyLocalStorage, migrateLocalToCloud } from '../lib/storage';
 import { updateTiviSettings, getTiviSettings } from '../../components/tivi/lib/settings';
 import { surreal_query } from '../../../../src/firebase_utils';
 import { toast_toast } from '../../../../components/Toast';
 import { generateTestHash, findCachedResults, mergeWithCache, runParallelTest } from '../lib/testRunner';
 import { buildAnalysisPrompt } from '../prompts/result_analysis_prompt';
 import { NOTE_GENERATION_SYSTEM_PROMPT } from '../prompts/note_generation_prompt';
-import { callLLMDirect } from '../lib/noteGenerator';
+import { callLLMDirect, generateNote as generateNoteAPI, generateNoteUnstructured } from '../lib/noteGenerator';
+import { reviewTemplate } from '../lib/rai_agent_web';
 import { parseHash, generateHash, updateHash } from '../lib/router';
 import { raiWorkflows } from '../simi';
 
@@ -282,6 +283,211 @@ export const useRaiStore = createInsightStore<RaiState>({
         log(error);
       }
       set({ noteGenerationError: error });
+    },
+
+    // Note Generation Actions
+    reviewing: false,
+
+    generateNote: async () => {
+      const { templates, selectedTemplateId, collectedInformation, settings } = get();
+      const selectedTemplate = templates.find(t => t.id === selectedTemplateId) || null;
+
+      if (!selectedTemplate) {
+        get().setNoteGenerationError('No template selected');
+        return;
+      }
+
+      if (collectedInformation.length === 0) {
+        get().setNoteGenerationError('No information collected');
+        return;
+      }
+
+      get().setNoteGenerationError(null);
+      get().setReviewMessage(null);
+
+      const collectedText = collectedInformation.map((entry) => {
+        if (entry.suggestedVariable) {
+          return `[${entry.suggestedVariable}] ${entry.text}`;
+        }
+        return entry.text;
+      });
+
+      const insightsClient = insights.getClient();
+
+      // Review template requirements if @END_TEMPLATE exists
+      if (selectedTemplate.template.includes('@END_TEMPLATE')) {
+        set({ reviewing: true });
+        const reviewStart = Date.now();
+        try {
+          const review = await reviewTemplate(
+            selectedTemplate,
+            collectedInformation,
+            settings.agentModel,
+            insightsClient
+          );
+          const latency_ms = Date.now() - reviewStart;
+
+          insights.emit('template_review', {
+            template_id: selectedTemplate.id,
+            template_name: selectedTemplate.title,
+            collected_text: collectedText,
+            model: settings.agentModel,
+            action: review.action,
+            message: review.message || null,
+            latency_ms,
+          });
+
+          if (review.action === 'user_message' && review.message) {
+            set({ reviewing: false });
+            get().setReviewMessage(review.message);
+            return;
+          }
+        } catch (err) {
+          log('Review failed, proceeding with generation: ' + err);
+          insights.emit('template_review', {
+            template_id: selectedTemplate.id,
+            action: 'error',
+            error: String(err),
+            latency_ms: Date.now() - reviewStart,
+          });
+        }
+        set({ reviewing: false });
+      }
+
+      // Review passed or no review needed — generate
+      const doGenerate = async () => {
+        const ic = insights.getClient();
+        const note = settings.useUnstructuredMode
+          ? await generateNoteUnstructured(
+              settings.aiModel,
+              selectedTemplate.template,
+              collectedText,
+              NOTE_GENERATION_SYSTEM_PROMPT
+            )
+          : await generateNoteAPI(
+              settings.aiModel,
+              selectedTemplate.template,
+              collectedText,
+              NOTE_GENERATION_SYSTEM_PROMPT,
+              3,
+              ic,
+              { templateId: selectedTemplate.id, templateName: selectedTemplate.title }
+            );
+        get().setGeneratedNote(note);
+      };
+
+      set({ noteGenerationLoading: true });
+      try {
+        await doGenerate();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        log('Note generation error:');
+        log(error);
+        get().setNoteGenerationError(errorMessage);
+      } finally {
+        set({ noteGenerationLoading: false });
+      }
+    },
+
+    generateAnyway: async () => {
+      const { templates, selectedTemplateId, collectedInformation, settings, reviewMessage: currentReviewMessage } = get();
+      const selectedTemplate = templates.find(t => t.id === selectedTemplateId) || null;
+
+      insights.emit('template_review_response', {
+        user_action: 'generate_anyway',
+        review_message: currentReviewMessage,
+      });
+      get().setReviewMessage(null);
+
+      const collectedText = collectedInformation.map((entry) => {
+        if (entry.suggestedVariable) {
+          return `[${entry.suggestedVariable}] ${entry.text}`;
+        }
+        return entry.text;
+      });
+
+      const insightsClient = insights.getClient();
+
+      set({ noteGenerationLoading: true });
+      try {
+        const note = settings.useUnstructuredMode
+          ? await generateNoteUnstructured(
+              settings.aiModel,
+              selectedTemplate!.template,
+              collectedText,
+              NOTE_GENERATION_SYSTEM_PROMPT
+            )
+          : await generateNoteAPI(
+              settings.aiModel,
+              selectedTemplate!.template,
+              collectedText,
+              NOTE_GENERATION_SYSTEM_PROMPT,
+              3,
+              insightsClient,
+              { templateId: selectedTemplate!.id, templateName: selectedTemplate!.title }
+            );
+        get().setGeneratedNote(note);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        log('Note generation error:');
+        log(error);
+        get().setNoteGenerationError(errorMessage);
+      } finally {
+        set({ noteGenerationLoading: false });
+      }
+    },
+
+    dismissReview: () => {
+      insights.emit('template_review_response', {
+        user_action: 'dismissed',
+        review_message: get().reviewMessage,
+      });
+      get().setReviewMessage(null);
+    },
+
+    copyToClipboard: async (text?: string) => {
+      const content = text || get().generatedNote;
+      if (!content) return false;
+      try {
+        await navigator.clipboard.writeText(content);
+        insights.emit('note_copied', { text: content });
+        return true;
+      } catch (error) {
+        log('Copy to clipboard failed:');
+        log(error);
+        return false;
+      }
+    },
+
+    selectTemplateAndBegin: (template: NoteTemplate) => {
+      get().resetInformation();
+      get().clearTranscript();
+      get().setSelectedTemplate(template);
+      get().setCurrentView('information_input');
+    },
+
+    switchStorageMode: async (mode: 'local' | 'cloud') => {
+      const store = getRaiStore();
+      if (mode === 'cloud' && store.getMode() !== 'cloud') {
+        try {
+          const queryFn = async (args: { query: string; variables?: Record<string, any> }) => {
+            return await surreal_query(args);
+          };
+          store.switchToCloud(queryFn);
+          const result = await migrateLocalToCloud(queryFn);
+          insights.emit('storage_mode_changed', { mode: 'cloud', migrated: result.migrated, failed: result.failed });
+          toast_toast({ title: 'Switched to Cloud storage', description: `Migrated ${result.migrated} items`, status: 'success', duration: 4000 });
+        } catch (err: any) {
+          insights.emit('storage_mode_change_failed', { mode: 'cloud', error: err?.message });
+          toast_toast({ title: 'Cloud storage failed', description: 'Please log in to use cloud storage', status: 'error', duration: 5000 });
+          throw err;
+        }
+      } else if (mode === 'local') {
+        store.switchToLocal();
+        insights.emit('storage_mode_changed', { mode: 'local' });
+      }
+      // Force re-render so UI reflects the new mode
+      get().updateSettings({});
     },
 
     // Note Checkpoints - Dual Tracking System

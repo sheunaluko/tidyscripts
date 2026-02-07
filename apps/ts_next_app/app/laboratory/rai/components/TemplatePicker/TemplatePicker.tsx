@@ -12,20 +12,12 @@ const log = tsw.common.logger.get_logger({ id: 'TemplatePicker' });
 
 export const TemplatePicker: React.FC = () => {
   const { templates, setSelectedTemplate } = useTemplates();
-  const { setCurrentView, resetInformation, clearTranscript, setTemplateEditorMode, setEditingTemplate, settings } = useRaiStore();
+  const { setCurrentView, selectTemplateAndBegin, setTemplateEditorMode, setEditingTemplate, settings } = useRaiStore();
 
   log(`Render: templatesCount=${templates.length}, showingSkeletons=${templates.length === 0}`);
 
   const handleSelectTemplate = (template: NoteTemplate) => {
-    // Reset any previous session data
-    resetInformation();
-    clearTranscript();
-
-    // Set the selected template
-    setSelectedTemplate(template);
-
-    // Navigate to information input
-    setCurrentView('information_input');
+    selectTemplateAndBegin(template);
   };
 
   const handleEditTemplate = (template: NoteTemplate) => {

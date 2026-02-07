@@ -3,7 +3,9 @@
 APP_NAME="$1"
 
 if [ -z "$APP_NAME" ]; then
-  echo "Usage: save_session <app_name>" >&2
+  echo "Usage: save_session <app_name> [--tag <tag1,tag2>] [--last <N>]" >&2
+  echo "  --tag <tags>  Export sessions with these tags (comma-separated, e.g. 'simi,smoke')" >&2
+  echo "  --last <N>    Export the N most recent matching sessions (default: 1)" >&2
   exit 1
 fi
 
@@ -11,8 +13,42 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 SESSION_DIR="$REPO_ROOT/apps/ts_next_app/.session_data"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-OUTFILE="$SESSION_DIR/session_${APP_NAME}_${TIMESTAMP}.json"
+
+# Parse --tag and --last from remaining args for filename generation
+TAGS=""
+LAST=""
+ARGS=("${@:2}")
+i=0
+while [ $i -lt ${#ARGS[@]} ]; do
+  case "${ARGS[$i]}" in
+    --tag)
+      TAGS="${ARGS[$((i+1))]}"
+      i=$((i+2))
+      ;;
+    --last)
+      LAST="${ARGS[$((i+1))]}"
+      i=$((i+2))
+      ;;
+    *)
+      i=$((i+1))
+      ;;
+  esac
+done
+
+# Build filename with tags if present
+if [ -n "$TAGS" ]; then
+  # Replace commas with underscores for filename
+  TAGS_SLUG="$(echo "$TAGS" | tr ',' '_')"
+  OUTFILE="$SESSION_DIR/session_${APP_NAME}_${TAGS_SLUG}_${TIMESTAMP}.json"
+else
+  OUTFILE="$SESSION_DIR/session_${APP_NAME}_${TIMESTAMP}.json"
+fi
 
 mkdir -p "$SESSION_DIR"
 
-"$SCRIPT_DIR/export_last_session_for_app" "$APP_NAME" "$OUTFILE"
+# For multi-export (--last > 1), let the TS layer generate filenames in SESSION_DIR
+if [ -n "$LAST" ] && [ "$LAST" -gt 1 ] 2>/dev/null; then
+  "$SCRIPT_DIR/export_last_session_for_app" "$APP_NAME" "$OUTFILE" "${@:2}"
+else
+  "$SCRIPT_DIR/export_last_session_for_app" "$APP_NAME" "$OUTFILE" "${@:2}"
+fi

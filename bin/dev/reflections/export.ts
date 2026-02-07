@@ -32,6 +32,7 @@ export interface SessionMetadata {
   app_name: string;
   app_version?: string;
   user_id: string;
+  session_tags: string[];
   start_time: string;              // ISO 8601
   end_time: string;                // ISO 8601
   duration_ms: number;
@@ -99,6 +100,7 @@ async function build_metadata(session_id: string, events: any[]): Promise<Sessio
     return {
       app_name: 'unknown',
       user_id: 'unknown',
+      session_tags: [],
       start_time: new Date().toISOString(),
       end_time: new Date().toISOString(),
       duration_ms: 0,
@@ -120,10 +122,16 @@ async function build_metadata(session_id: string, events: any[]): Promise<Sessio
   const endTime = new Date(lastEvent.timestamp);
   const durationMs = endTime.getTime() - startTime.getTime();
 
+  // Extract session tags from session_tags events (take the last one — cumulative)
+  const tagEvents = events.filter((e: any) => e.event_type === 'session_tags');
+  const lastTagEvent = tagEvents[tagEvents.length - 1];
+  const session_tags: string[] = lastTagEvent?.payload?.tags || [];
+
   return {
     app_name: firstEvent.app_name || 'unknown',
     app_version: firstEvent.payload?.app_version || firstEvent.payload?.version,
     user_id: firstEvent.user_id || 'unknown',
+    session_tags,
     start_time: startTime.toISOString(),
     end_time: endTime.toISOString(),
     duration_ms: durationMs,
@@ -409,9 +417,20 @@ export async function export_session_to_json(
  */
 export function get_export_filename(
   session_id: string,
-  format: 'json' | 'jsonl' = 'json'
+  format: 'json' | 'jsonl' = 'json',
+  opts?: { app_name?: string; tags?: string[] }
 ): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').replace('T', 'T').slice(0, 15);
+
+  if (opts?.app_name) {
+    const parts = ['session', opts.app_name];
+    if (opts.tags && opts.tags.length > 0) {
+      parts.push(...opts.tags.map(t => t.replace(/[^a-zA-Z0-9_-]/g, '_')));
+    }
+    parts.push(timestamp);
+    return `${parts.join('_')}.${format}`;
+  }
+
   const cleanSessionId = session_id.replace(/[^a-zA-Z0-9_-]/g, '_');
   return `session_${cleanSessionId}_${timestamp}.${format}`;
 }
@@ -460,7 +479,8 @@ export async function export_session_to_file(
 export async function export_sessions_batch(
   session_ids: string[],
   output_dir?: string,
-  options?: ExportOptions
+  options?: ExportOptions,
+  naming?: { app_name?: string; tags?: string[] }
 ): Promise<string[]> {
   log(`Batch exporting ${session_ids.length} sessions`);
 
@@ -472,8 +492,13 @@ export async function export_sessions_batch(
   // Export each session
   const filepaths: string[] = [];
 
-  for (const session_id of session_ids) {
-    const filename = get_export_filename(session_id, 'json');
+  for (let i = 0; i < session_ids.length; i++) {
+    const session_id = session_ids[i];
+    let filename = get_export_filename(session_id, 'json', naming);
+    // Disambiguate when batch exporting multiple sessions (same-second timestamps)
+    if (session_ids.length > 1) {
+      filename = filename.replace(/\.json$/, `_${i + 1}.json`);
+    }
     const filepath = path.join(dir, filename);
 
     try {
