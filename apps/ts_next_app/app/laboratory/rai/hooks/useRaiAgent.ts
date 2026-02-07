@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
+import { useSelectedTemplate } from './useTemplateLookups';
 import * as raiAgent from '../lib/rai_agent_web';
 import type { Cortex } from 'tidyscripts_common/src/apis/cortex/cortex';
 
@@ -35,8 +36,8 @@ export function useRaiAgent(options: UseRaiAgentOptions): UseRaiAgentReturn {
   const [error, setError] = useState<Error | null>(null);
 
   // Get store values and actions
+  const selectedTemplate = useSelectedTemplate();
   const {
-    selectedTemplate,
     addInformationText,
     updateInformationText,
     deleteInformationEntry,

@@ -47,8 +47,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostartGeneration: false,
   showDefaultTemplates: true,
   advancedFeaturesEnabled: false,
-  vadThreshold: 0.8,                  // VAD positive speech threshold (0.0-1.0)
-  vadSilenceDurationMs: 750,          // Legacy: not used with Tivi
+  positiveSpeechThreshold: 0.8,       // VAD positive speech threshold (0.0-1.0)
+  negativeSpeechThreshold: 0.6,       // VAD negative (silence) threshold (0.0-1.0)
+  minSpeechStartMs: 150,              // Min speech duration before triggering (ms)
+  powerThreshold: 0.01,               // Audio power threshold for responsive mode
+  enableInterruption: true,           // Allow voice interruption of TTS
   useUnstructuredMode: false,
   tiviMode: 'guarded',                // Voice recognition mode: guarded, responsive, continuous
   playbackRate: 1.5,                  // TTS playback rate
@@ -57,14 +60,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // Advanced Features Password Hash (SHA-256)
 export const ADVANCED_FEATURES_PASSWORD_HASH =
   '79e040d13c4ce2d6b75db910c64e927d23d06ef5863faaefe4cfa8dcc226b8b0';
-
-// LocalStorage Keys
-export const STORAGE_KEYS = {
-  settings: 'rai_settings',
-  customTemplates: 'rai_custom_templates',
-  testRuns: 'rai_test_runs',
-  dotPhrases: 'rai_dot_phrases',
-};
 
 // Default Template IDs (file-based templates)
 export const DEFAULT_TEMPLATE_IDS = [

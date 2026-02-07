@@ -24,7 +24,7 @@ import { useInsights } from '../../context/InsightsContext';
 export const InformationDisplay: React.FC = () => {
   const { collectedInformation, updateInformationText, deleteInformationEntry } = useRaiStore();
   const { client: insightsClient } = useInsights();
-  const trackEvent = (type: string, payload: Record<string, any>) => {
+  const addInsightEvent = (type: string, payload: Record<string, any>) => {
     try { insightsClient?.addEvent(type, payload); } catch (_) {}
   };
 
@@ -47,7 +47,7 @@ export const InformationDisplay: React.FC = () => {
 
       // Update in store
       updateInformationText(editingId, newText);
-      trackEvent('information_entry_edited', { entryIndex: itemNumber, newText, originalText });
+      addInsightEvent('information_entry_edited', { entryIndex: itemNumber, newText, originalText });
 
       // Generate renumbered list (after update)
       const renumberedList = collectedInformation
@@ -91,7 +91,7 @@ export const InformationDisplay: React.FC = () => {
       const deletedText = collectedInformation[index]?.text || '';
       deleteInformationEntry(deletingId);
       const remainingCount = collectedInformation.length - 1;
-      trackEvent('information_entry_deleted', { entryIndex: itemNumber, deletedText, remainingCount });
+      addInsightEvent('information_entry_deleted', { entryIndex: itemNumber, deletedText, remainingCount });
 
       // Generate renumbered list (after deletion)
       const renumberedList = collectedInformation

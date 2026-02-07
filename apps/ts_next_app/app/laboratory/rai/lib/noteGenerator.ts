@@ -149,6 +149,77 @@ IMPORTANT: Output ONLY the completed note as plain text. Do NOT use markdown syn
 
 
 /**
+ * Direct LLM call with explicit system/user prompts — no template wrapping.
+ * Use this for non-note-generation tasks (analysis, etc.) where buildNotePrompt
+ * would inject irrelevant template-filling instructions.
+ */
+export async function callLLMDirect(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  retries: number = 3,
+): Promise<string> {
+  const provider = getProviderFromModel(model);
+  const endpoint = getEndpointForProvider(provider);
+
+  const zodFormat = zodResponseFormat(NoteOutputSchema, 'NoteOutput');
+  const { schema: jsonSchema, schema_name: schemaName } = extractJsonSchema(zodFormat);
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      log(`Direct LLM call with ${model} (attempt ${attempt + 1}/${retries})...`);
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          input: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          schema: jsonSchema,
+          schema_name: schemaName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      let parsedOutput: any;
+      if (data.output_text) {
+        parsedOutput = JSON.parse(data.output_text);
+      } else if (data.output) {
+        parsedOutput = typeof data.output === 'string' ? JSON.parse(data.output) : data.output;
+      } else if (data.choices && data.choices[0]?.message?.parsed) {
+        parsedOutput = data.choices[0].message.parsed;
+      } else if (data.choices && data.choices[0]?.message?.content) {
+        const content = data.choices[0].message.content;
+        parsedOutput = typeof content === 'string' ? JSON.parse(content) : content;
+      } else {
+        throw new Error('Unexpected API response format');
+      }
+
+      const validated = NoteOutputSchema.parse(parsedOutput);
+      return validated.note;
+    } catch (error) {
+      log(`Error in direct LLM call (attempt ${attempt + 1}):`);
+      log(error);
+
+      if (attempt === retries - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+
+  throw new Error('Failed direct LLM call after all retries');
+}
+
+
+/**
  * Generate note using structured LLM API
  */
 export async function generateNote(
@@ -157,7 +228,8 @@ export async function generateNote(
   collectedText: string[],
   systemPrompt: string,
   retries: number = 3,
-  insightsClient?: any
+  insightsClient?: any,
+  metadata?: { templateId?: string; templateName?: string }
 ): Promise<string> {
   const provider = getProviderFromModel(model);
   const endpoint = getEndpointForProvider(provider);
@@ -182,8 +254,12 @@ export async function generateNote(
   if (insightsClient) {
     try {
       noteGenerationEventId = await insightsClient.startChain('note_generation', {
-        template_length: template.length,
-        collected_text_count: collectedText.length,
+        template_id: metadata?.templateId,
+        template_name: metadata?.templateName,
+        template,
+        collected_text: collectedText,
+        model,
+        provider,
       });
     } catch (err) {
       log(`Error starting insights chain: ${err}`);
@@ -255,10 +331,8 @@ export async function generateNote(
             completion_tokens: data.usage?.completion_tokens || 0,
             latency_ms: latency,
             status: 'success',
-            context: {
-              note_length: validated.note.length,
-              attempt: attempt + 1,
-            }
+            attempt: attempt + 1,
+            generated_note: validated.note,
           });
         } catch (err) {
           log(`Error adding LLM invocation event: ${err}`);

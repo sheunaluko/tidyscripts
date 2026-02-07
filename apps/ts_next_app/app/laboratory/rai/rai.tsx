@@ -14,7 +14,9 @@ import { Settings } from './components/Settings/Settings';
 import { TestInterface } from './components/TestInterface';
 import { useRaiStore } from './store/useRaiStore';
 import { useHashRouter } from './hooks/useHashRouter';
-import { InsightsProvider } from './context/InsightsContext';
+import { InsightsProvider, useInsights } from './context/InsightsContext';
+import { Manual } from './components/Manual/Manual';
+import { test_app_data_store, clear_app_data_store_test } from './lib/test_app_data_store';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
 
@@ -23,40 +25,46 @@ declare var window: any;
 const RAIContent: React.FC = () => {
   const { currentView, loadTemplates, loadSettings, loadTestHistory, loadDotPhrases } = useRaiStore();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const { client: insightsClient } = useInsights();
 
   // Initialize hash router
   useHashRouter();
 
+  // Initialize app once insights client is ready
   useEffect(() => {
-    // Initialize the app
-    log('RAI app initializing...');
+    if (!insightsClient) return;
 
-    // Suppress verbose logs
-    tsw.common.logger.suppress('MainLayout', 'Too verbose for RAI app');
-    tsw.common.logger.suppress('Sidebar', 'Too verbose for RAI app');
-    tsw.common.logger.suppress('router', 'Too verbose for RAI app');
+    (async () => {
+      log('RAI app initializing...');
 
-    // Load settings from localStorage
-    loadSettings();
+      // Suppress verbose logs
+      tsw.common.logger.suppress('MainLayout', 'Too verbose for RAI app');
+      tsw.common.logger.suppress('Sidebar', 'Too verbose for RAI app');
+      tsw.common.logger.suppress('router', 'Too verbose for RAI app');
 
-    // Load templates
-    loadTemplates();
+      // Load settings first — resolves storage backend (local vs cloud)
+      // Pass insights so the singleton is created with telemetry from the start
+      await loadSettings(insightsClient);
 
-    // Load test history (needed for route validation)
-    loadTestHistory();
+      // Load data in parallel — individual catches prevent one failure from blocking the rest
+      await Promise.all([
+        loadTemplates().catch(err => log('Failed to load templates: ' + err)),
+        loadTestHistory().catch(err => log('Failed to load test history: ' + err)),
+        loadDotPhrases().catch(err => log('Failed to load dot phrases: ' + err)),
+      ]);
 
-    // Load dot phrases
-    loadDotPhrases();
+      // Expose utilities to window for debugging
+      Object.assign(window, {
+        tsw,
+        raiStore: useRaiStore,
+        getRaiState: () => useRaiStore.getState(),
+        test_app_data_store,
+        clear_app_data_store_test,
+      });
 
-    // Expose utilities to window for debugging
-    Object.assign(window, {
-      tsw,
-      raiStore: useRaiStore,
-      getRaiState: () => useRaiStore.getState(),
-    });
-
-    log('RAI app initialized');
-  }, [loadSettings, loadTemplates, loadTestHistory, loadDotPhrases]);
+      log('RAI app initialized');
+    })();
+  }, [insightsClient, loadSettings, loadTemplates, loadTestHistory, loadDotPhrases]);
 
   // Log computed styles of container
   useEffect(() => {
@@ -85,6 +93,9 @@ const RAIContent: React.FC = () => {
 
       case 'settings':
         return <Settings />;
+
+      case 'manual':
+        return <Manual />;
 
       default:
         return null;

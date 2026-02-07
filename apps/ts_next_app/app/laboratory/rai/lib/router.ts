@@ -15,6 +15,7 @@ export const ROUTES = {
   GENERATOR: { pattern: 'generator', view: 'note_generator' as ViewType },
   SETTINGS: { pattern: 'settings', view: 'settings' as ViewType },
   TEST: { pattern: 'test', view: 'test_interface' as ViewType },
+  MANUAL: { pattern: 'manual', view: 'manual' as ViewType },
 
   // Template editor routes
   TEMPLATE_EDITOR_LIST: {
@@ -214,6 +215,9 @@ export function generateHash(
 
     case 'settings':
       return 'settings';
+
+    case 'manual':
+      return 'manual';
 
     case 'test_interface':
       if (opts.testRunId) {

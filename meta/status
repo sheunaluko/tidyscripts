@@ -43,7 +43,9 @@ Todo
   - () CONSIDER: streaming repsonse from smartchat
   
 
-
+[ ] General
+  - Zustand + Insights + Integrated "Actions" (user emulation targets) for playwright  = CLAD
+  - CLAD = closed loop application development 
 
 
 [x] Observability - Phase 1 Complete

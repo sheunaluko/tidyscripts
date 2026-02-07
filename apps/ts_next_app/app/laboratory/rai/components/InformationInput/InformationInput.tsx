@@ -8,9 +8,11 @@ import { VoiceMode } from './VoiceMode';
 import { InformationDisplay } from './InformationDisplay';
 import { DevTools } from './DevTools';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useSelectedTemplate } from '../../hooks/useTemplateLookups';
 
 export const InformationInput: React.FC = () => {
-  const { selectedTemplate, settings, resetInformation, collectedInformation } = useRaiStore();
+  const selectedTemplate = useSelectedTemplate();
+  const { settings, resetInformation, collectedInformation } = useRaiStore();
   const [resetDialogOpen, setResetDialogOpen] = React.useState(false);
   const [templateVisible, setTemplateVisible] = React.useState(false);
 

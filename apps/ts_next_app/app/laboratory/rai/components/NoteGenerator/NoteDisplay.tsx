@@ -25,7 +25,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
     acceptCheckpoint,
   } = useRaiStore();
   const { client: insightsClient } = useInsights();
-  const trackEvent = (type: string, payload: Record<string, any>) => {
+  const addInsightEvent = (type: string, payload: Record<string, any>) => {
     try { insightsClient?.addEvent(type, payload); } catch (_) {}
   };
   const [copySuccess, setCopySuccess] = useState(false);
@@ -140,7 +140,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
     debouncedValidateRef.current = setTimeout(() => {
       // Save checkpoint BEFORE transformation
       addCheckpoint(newValue, 'user_edit');
-      trackEvent('note_edited', { content: newValue });
+      addInsightEvent('note_edited', { content: newValue });
 
       const transformed = validateAndTransform(newValue, dotPhrases);
       if (transformed !== newValue) {
@@ -155,7 +155,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
 
         // Save checkpoint AFTER transformation
         addCheckpoint(transformed, 'transformation');
-        trackEvent('dot_phrase_applied', { before: newValue, after: transformed });
+        addInsightEvent('dot_phrase_applied', { before: newValue, after: transformed });
       }
     }, 500);
   };
@@ -184,7 +184,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
     try {
       await navigator.clipboard.writeText(displayContent);
       setCopySuccess(true);
-      trackEvent('note_copied', { text: displayContent });
+      addInsightEvent('note_copied', { text: displayContent });
     } catch (error) {
       console.error('Failed to copy:', error);
     }
@@ -226,7 +226,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
             <Tooltip title="Browse backwards">
               <span>
                 <IconButton
-                  onClick={() => { navigateCheckpoint('back'); trackEvent('checkpoint_navigated', { direction: 'back', checkpointIndex: currentCheckpointIndex }); }}
+                  onClick={() => { navigateCheckpoint('back'); addInsightEvent('checkpoint_navigated', { direction: 'back', checkpointIndex: currentCheckpointIndex }); }}
                   disabled={currentCheckpointIndex === 0}
                   size="small"
                   color="primary"
@@ -239,7 +239,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
             <Tooltip title="Browse forwards">
               <span>
                 <IconButton
-                  onClick={() => { navigateCheckpoint('forward'); trackEvent('checkpoint_navigated', { direction: 'forward', checkpointIndex: currentCheckpointIndex }); }}
+                  onClick={() => { navigateCheckpoint('forward'); addInsightEvent('checkpoint_navigated', { direction: 'forward', checkpointIndex: currentCheckpointIndex }); }}
                   disabled={currentCheckpointIndex === -1 || currentCheckpointIndex >= uiCheckpoints.length - 1}
                   size="small"
                   color="primary"
@@ -253,7 +253,7 @@ export const NoteDisplay: React.FC<NoteDisplayProps> = ({ note }) => {
             {isBrowsingCheckpoints && (
               <Tooltip title="Accept this checkpoint">
                 <IconButton
-                  onClick={() => { acceptCheckpoint(); trackEvent('checkpoint_accepted', { checkpointIndex: currentCheckpointIndex, content: uiCheckpoints[currentCheckpointIndex]?.content }); }}
+                  onClick={() => { acceptCheckpoint(); addInsightEvent('checkpoint_accepted', { checkpointIndex: currentCheckpointIndex, content: uiCheckpoints[currentCheckpointIndex]?.content }); }}
                   size="small"
                   color="success"
                 >

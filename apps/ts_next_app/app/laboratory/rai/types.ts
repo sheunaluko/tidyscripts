@@ -1,6 +1,6 @@
 // RAI App TypeScript Type Definitions
 
-export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'template_editor' | 'settings' | 'test_interface';
+export type ViewType = 'template_picker' | 'information_input' | 'note_generator' | 'template_editor' | 'settings' | 'test_interface' | 'manual';
 
 export type Provider = 'anthropic' | 'gemini' | 'openai';
 
@@ -27,8 +27,11 @@ export interface AppSettings {
   autostartGeneration: boolean;
   showDefaultTemplates: boolean;
   advancedFeaturesEnabled: boolean;
-  vadThreshold: number;
-  vadSilenceDurationMs: number;
+  positiveSpeechThreshold: number;    // VAD positive speech threshold (0.0-1.0)
+  negativeSpeechThreshold: number;    // VAD negative (silence) threshold (0.0-1.0)
+  minSpeechStartMs: number;           // Minimum speech duration before triggering (ms)
+  powerThreshold: number;             // Audio power threshold for responsive mode
+  enableInterruption: boolean;        // Allow voice interruption of TTS
   useUnstructuredMode?: boolean;      // Toggle between structured/unstructured LLM calls
   tiviMode: 'guarded' | 'responsive' | 'continuous';  // Voice recognition mode
   playbackRate: number;               // TTS playback rate (1.0 = normal)
@@ -133,19 +136,19 @@ export interface RaiState {
 
   // Templates
   templates: NoteTemplate[];
-  selectedTemplate: NoteTemplate | null;
+  selectedTemplateId: string | null;
   setSelectedTemplate: (template: NoteTemplate) => void;
   loadTemplates: () => Promise<void>;
 
   // Template Editor
   customTemplates: NoteTemplate[];
   templateEditorMode: 'list' | 'create' | 'edit';
-  editingTemplate: NoteTemplate | null;
-  createCustomTemplate: (data: Omit<NoteTemplate, 'id' | 'variables' | 'isDefault' | 'createdAt' | 'updatedAt'>) => void;
-  updateCustomTemplate: (id: string, updates: Partial<NoteTemplate>) => void;
-  deleteCustomTemplate: (id: string) => void;
-  loadCustomTemplates: () => void;
-  saveCustomTemplates: () => void;
+  editingTemplateId: string | null;
+  createCustomTemplate: (data: Omit<NoteTemplate, 'id' | 'variables' | 'isDefault' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateCustomTemplate: (id: string, updates: Partial<NoteTemplate>) => Promise<void>;
+  deleteCustomTemplate: (id: string) => Promise<void>;
+  loadCustomTemplates: () => Promise<void>;
+  saveCustomTemplates: () => Promise<void>;
   setTemplateEditorMode: (mode: 'list' | 'create' | 'edit') => void;
   setEditingTemplate: (template: NoteTemplate | null) => void;
 
@@ -198,11 +201,11 @@ export interface RaiState {
   // Settings
   settings: AppSettings;
   updateSettings: (settings: Partial<AppSettings>) => void;
-  loadSettings: () => void;
-  saveSettings: () => void;
+  loadSettings: (insights?: any) => Promise<void>;
+  saveSettings: () => Promise<void>;
 
   // Test Interface
-  selectedTemplateForTest: NoteTemplate | null;
+  selectedTemplateForTestId: string | null;
   testInputText: string;
   selectedModels: string[];
   currentTestRun: TestRun | null;
@@ -216,8 +219,8 @@ export interface RaiState {
   setAnalysisModel: (model: string) => void;
   startTest: () => Promise<void>;
   analyzeResults: (testRunId: string) => Promise<void>;
-  loadTestHistory: () => void;
-  saveTestHistory: () => void;
+  loadTestHistory: () => Promise<void>;
+  saveTestHistory: () => Promise<void>;
   loadTestRun: (testRunId: string) => void;
   deleteTestRun: (testRunId: string) => void;
 
@@ -226,6 +229,6 @@ export interface RaiState {
   createDotPhrase: (title: string, phrase: string, description?: string) => void;
   updateDotPhrase: (id: string, updates: Partial<DotPhrase>) => void;
   deleteDotPhrase: (id: string) => void;
-  loadDotPhrases: () => void;
-  saveDotPhrases: () => void;
+  loadDotPhrases: () => Promise<void>;
+  saveDotPhrases: () => Promise<void>;
 }

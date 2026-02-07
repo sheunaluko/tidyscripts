@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+APP_NAME="$1"
+
+if [ -z "$APP_NAME" ]; then
+  echo "Usage: save_session <app_name>" >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+SESSION_DIR="$REPO_ROOT/apps/ts_next_app/.session_data"
+TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+OUTFILE="$SESSION_DIR/session_${APP_NAME}_${TIMESTAMP}.json"
+
+mkdir -p "$SESSION_DIR"
+
+"$SCRIPT_DIR/export_last_session_for_app" "$APP_NAME" "$OUTFILE"

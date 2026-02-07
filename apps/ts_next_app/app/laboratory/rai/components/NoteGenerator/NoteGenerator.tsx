@@ -1,19 +1,21 @@
 // Note Generator Component
 
 import React, { useEffect } from 'react';
-import { Box, Typography, Button, Alert, Paper, Chip, Skeleton, Grid } from '@mui/material';
-import { AutoAwesome, Refresh } from '@mui/icons-material';
+import { Box, Typography, Button, Alert, Paper, Chip, Skeleton, Grid, CircularProgress } from '@mui/material';
+import { AutoAwesome, Refresh, Warning } from '@mui/icons-material';
 import { NoteDisplay } from './NoteDisplay';
 import { VoiceBox } from './VoiceBox';
 import { DotPhraseIndex } from './DotPhraseIndex';
 import { useNoteGeneration } from '../../hooks/useNoteGeneration';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useSelectedTemplate } from '../../hooks/useTemplateLookups';
 import { useInsights } from '../../context/InsightsContext';
 
 export const NoteGenerator: React.FC = () => {
     const { client: insightsClient } = useInsights();
-    const { generate, generatedNote, loading, error } = useNoteGeneration(insightsClient);
-    const { settings, selectedTemplate, collectedInformation } = useRaiStore();
+    const { generate, generateAnyway, dismissReview, generatedNote, loading, reviewing, reviewMessage, error } = useNoteGeneration(insightsClient);
+    const selectedTemplate = useSelectedTemplate();
+    const { settings, collectedInformation } = useRaiStore();
 
     // Always show blank note editor by default
     const noteToDisplay = generatedNote || '';
@@ -57,6 +59,30 @@ export const NoteGenerator: React.FC = () => {
 		</Alert>
 	    )}
 
+	    {/* Review Indicator */}
+	    {reviewing && (
+		<Alert severity="info" icon={<CircularProgress size={20} />} sx={{ mb: 2 }}>
+		    Reviewing template requirements...
+		</Alert>
+	    )}
+
+	    {/* Review Message */}
+	    {reviewMessage && (
+		<Alert
+		    severity="warning"
+		    icon={<Warning />}
+		    sx={{ mb: 2 }}
+		    onClose={dismissReview}
+		    action={
+			<Button color="warning" size="small" onClick={generateAnyway}>
+			    Generate Anyway
+			</Button>
+		    }
+		>
+		    {reviewMessage}
+		</Alert>
+	    )}
+
 	    {/* Generate Button and Voice Box */}
 	    <Box>
 		<Button
@@ -64,10 +90,11 @@ export const NoteGenerator: React.FC = () => {
 		    size="large"
 		    startIcon={<AutoAwesome />}
 		    onClick={generate}
+		    disabled={reviewing}
 		    fullWidth
 		    sx={{ mb: 2 }}
 		>
-		    Generate Note
+		    {reviewing ? 'Reviewing...' : 'Generate Note'}
 		</Button>
 
 	    </Box>

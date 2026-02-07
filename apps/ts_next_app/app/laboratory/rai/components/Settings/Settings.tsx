@@ -1,14 +1,12 @@
 // Settings Component
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
   FormControl,
   FormLabel,
-  RadioGroup,
   FormControlLabel,
-  Radio,
   Select,
   MenuItem,
   Checkbox,
@@ -21,26 +19,81 @@ import {
   DialogActions,
   TextField,
   Slider,
+  Switch,
+  Collapse,
 } from '@mui/material';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useInsights } from '../../context/InsightsContext';
 import { SUPPORTED_MODELS, DEFAULT_SETTINGS, ADVANCED_FEATURES_PASSWORD_HASH } from '../../constants';
+import { getRaiStore, migrateLocalToCloud } from '../../lib/storage';
+import { surreal_query } from '../../../../../src/firebase_utils';
+import { toast_toast } from '../../../../../components/Toast';
+import { useTivi } from '../../../components/tivi/lib/index';
+import { VADMonitor } from '../../../components/tivi/VADMonitor';
+import { CalibrationPanel } from '../../../components/tivi/CalibrationPanel';
+import { VoiceSelector } from '../../../components/tivi/VoiceSelector';
 
 export const Settings: React.FC = () => {
   const { settings, updateSettings } = useRaiStore();
+  const { client: insightsClient } = useInsights();
+
+  const addInsightEvent = (type: string, payload: Record<string, any>) => {
+    try { insightsClient?.addEvent(type, payload); } catch (_) {}
+  };
+
+  const trackAndUpdate = (updates: Partial<typeof settings>) => {
+    updateSettings(updates);
+    addInsightEvent('settings_changed', updates);
+  };
+
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showVoices, setShowVoices] = useState(false);
+
+  // Own tivi instance for calibration/monitoring on Settings page
+  const tivi = useTivi({
+    mode: settings.tiviMode,
+    positiveSpeechThreshold: settings.positiveSpeechThreshold,
+    negativeSpeechThreshold: settings.negativeSpeechThreshold,
+    minSpeechStartMs: settings.minSpeechStartMs,
+    powerThreshold: settings.powerThreshold,
+    enableInterruption: settings.enableInterruption,
+    language: 'en-US',
+    verbose: false,
+  });
+
+  const updateVadParam = useCallback((key: string, value: any) => {
+    trackAndUpdate({ [key]: value });
+  }, [updateSettings, insightsClient]);
+
+  const handleParametersAccepted = useCallback((params: {
+    positiveSpeechThreshold: number;
+    negativeSpeechThreshold: number;
+    minSpeechStartMs: number;
+    disableInterruption?: boolean;
+  }) => {
+    const updates: Record<string, any> = {
+      positiveSpeechThreshold: params.positiveSpeechThreshold,
+      negativeSpeechThreshold: params.negativeSpeechThreshold,
+      minSpeechStartMs: params.minSpeechStartMs,
+    };
+    if (params.disableInterruption) {
+      updates.enableInterruption = false;
+    }
+    updateSettings(updates);
+    addInsightEvent('calibration_accepted', params);
+  }, [updateSettings, insightsClient]);
 
   const handleAdvancedFeaturesToggle = (checked: boolean) => {
     if (checked && !settings.advancedFeaturesEnabled) {
-      // Enabling - require password
       setPasswordDialogOpen(true);
       setPasswordInput('');
       setPasswordError('');
     } else {
-      // Disabling - no password needed
-      updateSettings({ advancedFeaturesEnabled: false });
+      trackAndUpdate({ advancedFeaturesEnabled: false });
     }
   };
 
@@ -49,13 +102,12 @@ export const Settings: React.FC = () => {
       const hashedPassword = await tsw.common.apis.cryptography.sha256(passwordInput);
 
       if (hashedPassword === ADVANCED_FEATURES_PASSWORD_HASH) {
-        // Password correct - enable advanced features
         updateSettings({ advancedFeaturesEnabled: true });
+        addInsightEvent('settings_changed', { advancedFeaturesEnabled: true });
         setPasswordDialogOpen(false);
         setPasswordInput('');
         setPasswordError('');
       } else {
-        // Password incorrect
         setPasswordError('Incorrect password');
       }
     } catch (error) {
@@ -65,6 +117,18 @@ export const Settings: React.FC = () => {
 
   const handleReset = () => {
     updateSettings(DEFAULT_SETTINGS);
+    addInsightEvent('settings_reset', DEFAULT_SETTINGS);
+  };
+
+  const vadParams = {
+    positiveSpeechThreshold: settings.positiveSpeechThreshold,
+    negativeSpeechThreshold: settings.negativeSpeechThreshold,
+    minSpeechStartMs: settings.minSpeechStartMs,
+    powerThreshold: settings.powerThreshold,
+    enableInterruption: settings.enableInterruption,
+    mode: settings.tiviMode,
+    verbose: false,
+    language: 'en-US',
   };
 
   return (
@@ -80,13 +144,14 @@ export const Settings: React.FC = () => {
         {/* Input Mode */}
         <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
           <FormLabel component="legend">Input Mode</FormLabel>
-          <RadioGroup
+          <Select
             value={settings.inputMode}
-            onChange={(e) => updateSettings({ inputMode: e.target.value as 'voice' | 'text' })}
+            onChange={(e) => trackAndUpdate({ inputMode: e.target.value as 'voice' | 'text' })}
+            size="small"
           >
-            <FormControlLabel value="voice" control={<Radio />} label="Voice (AI Agent)" />
-            <FormControlLabel value="text" control={<Radio />} label="Text Input" />
-          </RadioGroup>
+            <MenuItem value="voice">Voice</MenuItem>
+            <MenuItem value="text">Text Input</MenuItem>
+          </Select>
         </FormControl>
 
         <Divider sx={{ my: 3 }} />
@@ -105,7 +170,7 @@ export const Settings: React.FC = () => {
           </Typography>
           <Select
             value={settings.aiModel}
-            onChange={(e) => updateSettings({ aiModel: e.target.value })}
+            onChange={(e) => trackAndUpdate({ aiModel: e.target.value })}
             size="small"
           >
             {SUPPORTED_MODELS.map((model) => (
@@ -125,7 +190,7 @@ export const Settings: React.FC = () => {
           </Typography>
           <Select
             value={settings.agentModel || settings.aiModel}
-            onChange={(e) => updateSettings({ agentModel: e.target.value })}
+            onChange={(e) => trackAndUpdate({ agentModel: e.target.value })}
             size="small"
           >
             {SUPPORTED_MODELS.map((model) => (
@@ -144,7 +209,7 @@ export const Settings: React.FC = () => {
             control={
               <Checkbox
                 checked={settings.autostartAgent}
-                onChange={(e) => updateSettings({ autostartAgent: e.target.checked })}
+                onChange={(e) => trackAndUpdate({ autostartAgent: e.target.checked })}
               />
             }
             label="Autostart Voice Agent"
@@ -159,7 +224,7 @@ export const Settings: React.FC = () => {
             control={
               <Checkbox
                 checked={settings.autostartGeneration}
-                onChange={(e) => updateSettings({ autostartGeneration: e.target.checked })}
+                onChange={(e) => trackAndUpdate({ autostartGeneration: e.target.checked })}
               />
             }
             label="Autostart Note Generation"
@@ -174,7 +239,7 @@ export const Settings: React.FC = () => {
             control={
               <Checkbox
                 checked={settings.showDefaultTemplates}
-                onChange={(e) => updateSettings({ showDefaultTemplates: e.target.checked })}
+                onChange={(e) => trackAndUpdate({ showDefaultTemplates: e.target.checked })}
               />
             }
             label="Show Default Templates"
@@ -205,7 +270,7 @@ export const Settings: React.FC = () => {
               control={
                 <Checkbox
                   checked={settings.useUnstructuredMode || false}
-                  onChange={(e) => updateSettings({ useUnstructuredMode: e.target.checked })}
+                  onChange={(e) => trackAndUpdate({ useUnstructuredMode: e.target.checked })}
                 />
               }
               label="Use Unstructured Mode"
@@ -216,93 +281,218 @@ export const Settings: React.FC = () => {
           </Box>
         )}
 
+        <Box sx={{ mb: 3 }}>
+          <FormControl fullWidth>
+            <FormLabel component="legend" sx={{ mb: 1 }}>
+              Storage Mode
+            </FormLabel>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+              Where your templates, settings, and test data are persisted
+            </Typography>
+            <Select
+              value={getRaiStore().getMode()}
+              onChange={async (e) => {
+                const newMode = e.target.value as 'local' | 'cloud';
+                const store = getRaiStore();
+                if (newMode === 'cloud' && store.getMode() !== 'cloud') {
+                  try {
+                    const queryFn = async (args: { query: string; variables?: Record<string, any> }) => {
+                      return await surreal_query(args);
+                    };
+                    store.switchToCloud(queryFn);
+                    const result = await migrateLocalToCloud(queryFn);
+                    addInsightEvent('storage_mode_changed', { mode: 'cloud', migrated: result.migrated, failed: result.failed });
+                    toast_toast({ title: 'Switched to Cloud storage', description: `Migrated ${result.migrated} items`, status: 'success', duration: 4000 });
+                  } catch (err: any) {
+                    addInsightEvent('storage_mode_change_failed', { mode: 'cloud', error: err?.message });
+                    toast_toast({ title: 'Cloud storage failed', description: 'Please log in to use cloud storage', status: 'error', duration: 5000 });
+                    return;
+                  }
+                } else if (newMode === 'local') {
+                  store.switchToLocal();
+                  addInsightEvent('storage_mode_changed', { mode: 'local' });
+                }
+                // Force re-render so the Select reflects the new mode
+                updateSettings({});
+              }}
+              size="small"
+            >
+              <MenuItem value="local">Local (Browser Storage)</MenuItem>
+              <MenuItem value="cloud">Cloud (SurrealDB)</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
         <Divider sx={{ my: 3 }} />
 
-        {/* Voice Agent Audio Controls */}
+        {/* Voice Agent Settings */}
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Voice Agent Settings
-        </Typography>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 3 }}>
-          Note: Changes require restarting the voice agent to take effect
+          Voice Settings
         </Typography>
 
-        {/* Voice Recognition Mode */}
-        <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
-          <FormLabel component="legend">Voice Recognition Mode</FormLabel>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-            Controls how the voice agent detects and processes speech
-          </Typography>
-          <RadioGroup
-            value={settings.tiviMode || 'guarded'}
-            onChange={(e) => updateSettings({ tiviMode: e.target.value as 'guarded' | 'responsive' | 'continuous' })}
-          >
-            <FormControlLabel
-              value="guarded"
-              control={<Radio />}
-              label="Guarded (VAD-triggered, filters noise well)"
-            />
-            <FormControlLabel
-              value="responsive"
-              control={<Radio />}
-              label="Responsive (Power-triggered, fast response)"
-            />
-            <FormControlLabel
-              value="continuous"
-              control={<Radio />}
-              label="Continuous (Always listening)"
-            />
-          </RadioGroup>
-        </FormControl>
-
-        <Box sx={{ mb: 3 }}>
-          <FormLabel component="legend" sx={{ mb: 1 }}>
-            VAD Sensitivity: {settings.vadThreshold.toFixed(2)}
-          </FormLabel>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-            Higher values require clearer speech. Lower values are more sensitive to quiet speech but may pick up noise.
-          </Typography>
-
-          <Slider
-            value={settings.vadThreshold}
-            sx={{margin: "5px"}}
-            onChange={(_, value) => updateSettings({ vadThreshold: value as number })}
-            min={0.5}
-            max={1.0}
-            step={0.05}
-            marks={[
-              { value: 0.5, label: '0.5 (Sensitive)' },
-              { value: 0.7, label: '0.7' },
-              { value: 0.8, label: '0.8 (Default)' },
-              { value: 0.9, label: '0.9' },
-              { value: 1.0, label: '1.0 (Strict)' },
-            ]}
-            valueLabelDisplay="auto"
+        {/* VADMonitor */}
+        <Box sx={{ my: 2 }}>
+          <VADMonitor
+            speechProbRef={tivi.speechProbRef}
+            audioLevelRef={tivi.audioLevelRef}
+            threshold={settings.positiveSpeechThreshold}
+            powerThreshold={settings.tiviMode === 'responsive' ? settings.powerThreshold : undefined}
+            minSpeechStartMs={settings.minSpeechStartMs}
+            paused={false}
+            width={300}
+            height={60}
           />
         </Box>
 
-        <Box sx={{ mb: 3 }}>
-          <FormLabel component="legend" sx={{ mb: 1 }}>
-            TTS Playback Rate: {(settings.playbackRate || 1.5).toFixed(1)}x
-          </FormLabel>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-            Speed of voice agent responses. Higher values speak faster.
-          </Typography>
+        {/* Calibration */}
+        <Box sx={{ mt: 2, mb: 2 }}>
+          <CalibrationPanel
+            tivi={tivi}
+            vadParams={vadParams}
+            updateVadParam={updateVadParam}
+            onParametersAccepted={handleParametersAccepted}
+            disabled={tivi.isSpeaking}
+          />
+        </Box>
 
+        {/* Voice Selector Toggle */}
+        <Box sx={{ mb: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            startIcon={<VolumeUpIcon />}
+            onClick={() => setShowVoices(prev => !prev)}
+          >
+            {showVoices ? 'Hide Voice Selection' : 'Select Voice'}
+          </Button>
+          <Collapse in={showVoices}>
+            <Box sx={{ mt: 1 }}>
+              <VoiceSelector />
+            </Box>
+          </Collapse>
+        </Box>
+
+        {/* Recognition Mode */}
+        <Box sx={{ mt: 2, mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+            Recognition Mode
+          </Typography>
+          <Select
+            value={settings.tiviMode}
+            onChange={(e) => trackAndUpdate({ tiviMode: e.target.value as 'guarded' | 'responsive' | 'continuous' })}
+            size="small"
+            fullWidth
+            disabled={tivi.isListening}
+          >
+            <MenuItem value="guarded">Guarded (VAD-triggered)</MenuItem>
+            <MenuItem value="responsive">Responsive (power-triggered)</MenuItem>
+            <MenuItem value="continuous">Continuous</MenuItem>
+          </Select>
+        </Box>
+
+        {/* Enable Voice Interruption */}
+        <Box sx={{ mt: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={settings.enableInterruption}
+                onChange={(e) => trackAndUpdate({ enableInterruption: e.target.checked })}
+                disabled={tivi.isListening}
+              />
+            }
+            label={<Typography variant="caption">Enable Voice Interruption</Typography>}
+          />
+        </Box>
+
+        {/* Power Threshold - only for responsive mode */}
+        {settings.tiviMode === 'responsive' && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Power Threshold: {settings.powerThreshold.toFixed(3)}
+            </Typography>
+            <Slider
+              value={settings.powerThreshold}
+              min={0.001}
+              max={0.1}
+              step={0.001}
+              onChange={(_, value) => trackAndUpdate({ powerThreshold: value as number })}
+              valueLabelDisplay="auto"
+              size="small"
+              disabled={tivi.isListening}
+              sx={{ mt: 1 }}
+            />
+          </Box>
+        )}
+
+        {/* Speech Detection Threshold */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            Speech Detection Threshold: {settings.positiveSpeechThreshold.toFixed(2)}
+          </Typography>
+          <Slider
+            value={settings.positiveSpeechThreshold}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(_, value) => trackAndUpdate({ positiveSpeechThreshold: value as number })}
+            valueLabelDisplay="auto"
+            size="small"
+            disabled={tivi.isListening}
+            sx={{ mt: 1 }}
+          />
+        </Box>
+
+        {/* Silence Detection Threshold */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="caption" color="text.secondary">
+            Silence Detection Threshold: {settings.negativeSpeechThreshold.toFixed(2)}
+          </Typography>
+          <Slider
+            value={settings.negativeSpeechThreshold}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(_, value) => trackAndUpdate({ negativeSpeechThreshold: value as number })}
+            valueLabelDisplay="auto"
+            size="small"
+            disabled={tivi.isListening}
+            sx={{ mt: 1 }}
+          />
+        </Box>
+
+        {/* Min Speech Start */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+            Min Speech Start (ms)
+          </Typography>
+          <TextField
+            type="number"
+            value={settings.minSpeechStartMs}
+            onChange={(e) => trackAndUpdate({ minSpeechStartMs: parseInt(e.target.value) || 150 })}
+            size="small"
+            fullWidth
+            disabled={tivi.isListening}
+            inputProps={{ min: 32, max: 500, step: 32 }}
+          />
+        </Box>
+
+        {/* TTS Playback Rate */}
+        <Box sx={{ mt: 2, mb: 3 }}>
+          <Typography variant="caption" color="text.secondary">
+            TTS Playback Rate: {(settings.playbackRate || 1.5).toFixed(1)}x
+          </Typography>
           <Slider
             value={settings.playbackRate || 1.5}
-            sx={{margin: "5px"}}
-            onChange={(_, value) => updateSettings({ playbackRate: value as number })}
             min={0.5}
             max={2.5}
             step={0.1}
-            marks={[
-              { value: 0.5, label: '0.5x' },
-              { value: 1.0, label: '1.0x' },
-              { value: 1.5, label: '1.5x (Default)' },
-              { value: 2.0, label: '2.0x' },
-              { value: 2.5, label: '2.5x' },
-            ]}
+            onChange={(_, value) => trackAndUpdate({ playbackRate: value as number })}
             valueLabelDisplay="auto"
+            valueLabelFormat={(v) => `${v}x`}
+            size="small"
+            sx={{ mt: 1 }}
           />
         </Box>
 

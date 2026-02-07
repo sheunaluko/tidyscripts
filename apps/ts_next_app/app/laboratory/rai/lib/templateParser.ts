@@ -2,7 +2,7 @@
 
 import * as tsw from 'tidyscripts_web';
 import { NoteTemplate } from '../types';
-import { STORAGE_KEYS, DEFAULT_TEMPLATE_IDS } from '../constants';
+import { DEFAULT_TEMPLATE_IDS } from '../constants';
 import initialConsultationRaw from '../templates/initial_consultation.json';
 import ivfCycleMonitoringRaw from '../templates/ivf_cycle_monitoring.json';
 import ultrasoundFindingsRaw from '../templates/ultrasound_findings.json';
@@ -81,28 +81,23 @@ export function loadTemplates(): NoteTemplate[] {
 }
 
 /**
- * Load custom templates from localStorage
+ * Parse pre-loaded custom template data into NoteTemplate array.
+ * Accepts data already retrieved from any storage backend.
+ * @param data - Array of raw template objects (parsed JSON)
  * @returns Array of custom templates
  */
-export function loadCustomTemplatesFromStorage(): NoteTemplate[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.customTemplates);
-    if (!stored) return [];
+export function loadCustomTemplatesFromData(data: any[]): NoteTemplate[] {
+  if (!data || !Array.isArray(data)) return [];
 
-    const parsed = JSON.parse(stored);
-    const templates = parsed.map((t: any) => parseTemplate({
-      ...t,
-      createdAt: new Date(t.createdAt),
-      updatedAt: new Date(t.updatedAt),
-      isDefault: false,
-    }));
+  const templates = data.map((t: any) => parseTemplate({
+    ...t,
+    createdAt: t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt),
+    updatedAt: t.updatedAt instanceof Date ? t.updatedAt : new Date(t.updatedAt),
+    isDefault: false,
+  }));
 
-    debug.add('custom_templates_loaded', { count: templates.length });
-    return templates;
-  } catch (error) {
-    log({ msg: 'Error loading custom templates from storage', error });
-    return [];
-  }
+  debug.add('custom_templates_loaded_from_data', { count: templates.length });
+  return templates;
 }
 
 /**
@@ -244,26 +239,3 @@ export function generateDotPhraseId(): string {
   return `dotphrase_${timestamp}_${random}`;
 }
 
-/**
- * Load dot phrases from localStorage
- * @returns Array of dot phrases with parsed dates
- */
-export function loadDotPhrasesFromStorage(): any[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.dotPhrases);
-    if (!stored) return [];
-
-    const parsed = JSON.parse(stored);
-    const dotPhrases = parsed.map((dp: any) => ({
-      ...dp,
-      createdAt: new Date(dp.createdAt),
-      updatedAt: new Date(dp.updatedAt),
-    }));
-
-    debug.add('dot_phrases_loaded', { count: dotPhrases.length });
-    return dotPhrases;
-  } catch (error) {
-    log({ msg: 'Error loading dot phrases from storage', error });
-    return [];
-  }
-}

@@ -24,6 +24,7 @@ import {
   Science,
   ChevronLeft,
   ChevronRight,
+  MenuBook,
 } from '@mui/icons-material';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../../store/useRaiStore';
@@ -44,6 +45,7 @@ const ICON_MAP = {
   EditNote,
   Science,
   Settings,
+  MenuBook,
 } as const;
 
 type IconName = keyof typeof ICON_MAP;
@@ -90,6 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onToggle }) => {
       : []
     ),
     { id: 'settings', label: 'Settings', icon: 'Settings' },
+    { id: 'manual' as ViewType, label: 'Manual', icon: 'MenuBook' as IconName },
   ];
 
   const allMenuItems = [...menuItems, ...bottomMenuItems];

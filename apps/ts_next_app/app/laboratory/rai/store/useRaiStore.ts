@@ -3,20 +3,22 @@
 import { create } from 'zustand';
 import * as tsw from 'tidyscripts_web';
 import { RaiState, ViewType, NoteTemplate, InformationEntry, TranscriptEntry, ToolCallThought, AppSettings, TestRun, ModelTestResult, DotPhrase, NoteCheckpoint } from '../types';
-import { DEFAULT_SETTINGS, STORAGE_KEYS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
+import { DEFAULT_SETTINGS, SUPPORTED_MODELS, TEMPLATE_SYNTAX } from '../constants';
 import {
   loadTemplates as loadTemplatesFromFiles,
-  loadCustomTemplatesFromStorage,
+  loadCustomTemplatesFromData,
   extractVariables,
   generateCustomTemplateId,
   normalizeDotPhraseTitle,
   generateDotPhraseId,
-  loadDotPhrasesFromStorage,
 } from '../lib/templateParser';
+import { getRaiStore, RAI_DATA_KEYS, migrateLegacyLocalStorage } from '../lib/storage';
+import { surreal_query } from '../../../../src/firebase_utils';
+import { toast_toast } from '../../../../components/Toast';
 import { generateTestHash, findCachedResults, mergeWithCache, runParallelTest } from '../lib/testRunner';
 import { buildAnalysisPrompt } from '../prompts/result_analysis_prompt';
 import { NOTE_GENERATION_SYSTEM_PROMPT } from '../prompts/note_generation_prompt';
-import { generateNote } from '../lib/noteGenerator';
+import { callLLMDirect } from '../lib/noteGenerator';
 import { parseHash, generateHash, updateHash } from '../lib/router';
 
 const log = tsw.common.logger.get_logger({ id: 'rai' });
@@ -87,17 +89,17 @@ export const useRaiStore = create<RaiState>((set, get) => ({
             );
 
             if (template) {
-              set({ editingTemplate: template });
+              set({ editingTemplateId: template.id });
             } else {
               log(`Template not found: ${parsed.params.templateId}, redirecting to list`);
               set({
                 templateEditorMode: 'list',
-                editingTemplate: null
+                editingTemplateId: null
               });
               updateHash('templates/edit');
             }
           } else if (parsed.mode === 'create') {
-            set({ editingTemplate: null });
+            set({ editingTemplateId: null });
           }
         }
         break;
@@ -136,13 +138,13 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     const {
       currentView,
       templateEditorMode,
-      editingTemplate,
+      editingTemplateId,
       currentTestRun,
     } = get();
 
     const hash = generateHash(currentView, {
       templateEditorMode,
-      templateId: editingTemplate?.id,
+      templateId: editingTemplateId ?? undefined,
       testRunId: currentTestRun?.id,
     });
 
@@ -152,10 +154,10 @@ export const useRaiStore = create<RaiState>((set, get) => ({
 
   // Templates
   templates: [],
-  selectedTemplate: null,
+  selectedTemplateId: null,
   setSelectedTemplate: (template: NoteTemplate) => {
     debug.add('template_selected', template);
-    set({ selectedTemplate: template });
+    set({ selectedTemplateId: template.id });
   },
   loadTemplates: async () => {
     try {
@@ -165,8 +167,10 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       const defaultTemplates = loadTemplatesFromFiles();
       defaultTemplates.forEach(t => t.isDefault = true);
 
-      // Load custom templates from localStorage
-      const customTemplates = loadCustomTemplatesFromStorage();
+      // Load custom templates from AppDataStore
+      const store = getRaiStore();
+      const data = await store.get<any[]>(RAI_DATA_KEYS.customTemplates);
+      const customTemplates = data ? loadCustomTemplatesFromData(data) : [];
 
       // Merge: default templates first, then custom
       const allTemplates = [...defaultTemplates, ...customTemplates];
@@ -186,7 +190,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   // Template Editor
   customTemplates: [],
   templateEditorMode: 'list' as 'list' | 'create' | 'edit',
-  editingTemplate: null,
+  editingTemplateId: null as string | null,
 
   // Dot Phrases
   dotPhrases: [],
@@ -426,22 +430,77 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   // Settings
   settings: DEFAULT_SETTINGS,
   updateSettings: (newSettings: Partial<AppSettings>) => {
-    const updated = { ...get().settings, ...newSettings };
+    const before = get().settings;
+    const updated = { ...before, ...newSettings };
+    const changedKeys = Object.keys(newSettings).filter(
+      k => (before as any)[k] !== (newSettings as any)[k]
+    );
     debug.add('settings_updated', updated);
     set({ settings: updated });
+
+    // Emit to insights with full before/after data
+    try {
+      getRaiStore().emitEvent('rai_settings_updated', {
+        changed_keys: changedKeys,
+        before,
+        after: updated,
+      });
+    } catch { /* insights should never break operations */ }
+
     get().saveSettings();
   },
-  loadSettings: () => {
+  loadSettings: async (insights?: any) => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.settings);
+      const legacyResult = migrateLegacyLocalStorage();
+      const queryFn = async (args: { query: string; variables?: Record<string, any> }) => {
+        return await surreal_query(args);
+      };
+      const store = getRaiStore(insights || undefined, queryFn);
+
+      // Emit legacy migration result now that store has insights
+      store.emitEvent('rai_legacy_migration', legacyResult);
+
+      const stored = await store.get<any>(RAI_DATA_KEYS.settings);
+
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = stored;
+        // Migration: vadThreshold → positiveSpeechThreshold
+        let hadMigration = false;
+        if ('vadThreshold' in parsed && !('positiveSpeechThreshold' in parsed)) {
+          parsed.positiveSpeechThreshold = parsed.vadThreshold;
+          parsed.negativeSpeechThreshold = Math.max(0, parsed.vadThreshold - 0.15);
+          delete parsed.vadThreshold;
+          hadMigration = true;
+        }
+        if ('vadSilenceDurationMs' in parsed) {
+          delete parsed.vadSilenceDurationMs;
+          hadMigration = true;
+        }
         const merged = { ...DEFAULT_SETTINGS, ...parsed };
         debug.add('settings_loaded', merged);
         set({ settings: merged });
+
+        store.emitEvent('rai_settings_loaded', {
+          source: 'stored',
+          had_migration: hadMigration,
+          raw_stored: stored,
+          merged,
+        });
+
+        // Only re-save if migration changed something
+        if (hadMigration) {
+          await store.set(RAI_DATA_KEYS.settings, merged);
+        }
       } else {
         debug.add('settings_loaded_defaults', DEFAULT_SETTINGS);
         set({ settings: DEFAULT_SETTINGS });
+
+        store.emitEvent('rai_settings_loaded', {
+          source: 'defaults',
+          had_migration: false,
+          raw_stored: null,
+          merged: DEFAULT_SETTINGS,
+        });
       }
     } catch (error) {
       log('Error loading settings:');
@@ -449,11 +508,18 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       set({ settings: DEFAULT_SETTINGS });
     }
   },
-  saveSettings: () => {
+  saveSettings: async () => {
     try {
       const settings = get().settings;
-      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+      const store = getRaiStore();
+      const ok = await store.set(RAI_DATA_KEYS.settings, settings);
       debug.add('settings_saved', settings);
+
+      store.emitEvent('rai_settings_saved', {
+        ok,
+        mode: store.getMode(),
+        settings,
+      });
     } catch (error) {
       log('Error saving settings:');
       log(error);
@@ -461,7 +527,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   },
 
   // Template Editor CRUD Operations
-  createCustomTemplate: (templateData) => {
+  createCustomTemplate: async (templateData) => {
     const newTemplate: NoteTemplate = {
       ...templateData,
       id: generateCustomTemplateId(),
@@ -473,14 +539,14 @@ export const useRaiStore = create<RaiState>((set, get) => ({
 
     const customTemplates = [...get().customTemplates, newTemplate];
     set({ customTemplates });
-    get().saveCustomTemplates();
-    get().loadTemplates(); // Refresh merged list
+    await get().saveCustomTemplates();
+    await get().loadTemplates(); // Refresh merged list
 
     debug.add('custom_template_created', { id: newTemplate.id, title: newTemplate.title });
     log(`Created custom template: ${newTemplate.title}`);
   },
 
-  updateCustomTemplate: (id, updates) => {
+  updateCustomTemplate: async (id, updates) => {
     const customTemplates = get().customTemplates.map(t =>
       t.id === id
         ? {
@@ -493,31 +559,34 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     );
 
     set({ customTemplates });
-    get().saveCustomTemplates();
-    get().loadTemplates(); // Refresh merged list
+
+    await get().saveCustomTemplates();
+    await get().loadTemplates(); // Refresh merged list
 
     debug.add('custom_template_updated', { id, updates });
     log(`Updated custom template: ${id}`);
   },
 
-  deleteCustomTemplate: (id) => {
+  deleteCustomTemplate: async (id) => {
     const customTemplates = get().customTemplates.filter(t => t.id !== id);
     set({ customTemplates });
-    get().saveCustomTemplates();
-    get().loadTemplates(); // Refresh merged list
+    await get().saveCustomTemplates();
+    await get().loadTemplates(); // Refresh merged list
 
     // If deleting currently selected template, clear selection
-    if (get().selectedTemplate?.id === id) {
-      set({ selectedTemplate: null });
+    if (get().selectedTemplateId === id) {
+      set({ selectedTemplateId: null });
     }
 
     debug.add('custom_template_deleted', { id });
     log(`Deleted custom template: ${id}`);
   },
 
-  loadCustomTemplates: () => {
+  loadCustomTemplates: async () => {
     try {
-      const customTemplates = loadCustomTemplatesFromStorage();
+      const store = getRaiStore();
+      const data = await store.get<any[]>(RAI_DATA_KEYS.customTemplates);
+      const customTemplates = data ? loadCustomTemplatesFromData(data) : [];
       set({ customTemplates });
       debug.add('custom_templates_loaded', { count: customTemplates.length });
     } catch (error) {
@@ -527,7 +596,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     }
   },
 
-  saveCustomTemplates: () => {
+  saveCustomTemplates: async () => {
     try {
       const templates = get().customTemplates.map(t => ({
         id: t.id,
@@ -537,9 +606,39 @@ export const useRaiStore = create<RaiState>((set, get) => ({
         createdAt: t.createdAt?.toISOString(),
         updatedAt: t.updatedAt?.toISOString(),
       }));
-      localStorage.setItem(STORAGE_KEYS.customTemplates, JSON.stringify(templates));
+      const store = getRaiStore();
+      const ok = await store.set(RAI_DATA_KEYS.customTemplates, templates);
+      if (!ok) {
+        toast_toast({
+          status: 'warning',
+          duration: 8000,
+          isClosable: true,
+          render: ({ onClose }: { onClose: () => void }) => {
+            const React = require('react');
+            return React.createElement('div', {
+              style: { background: '#2D3748', color: 'white', padding: '16px', borderRadius: '8px', maxWidth: '420px' },
+            },
+              React.createElement('div', { style: { fontWeight: 600, marginBottom: '8px', fontSize: '15px' } }, 'Templates not synced'),
+              React.createElement('div', { style: { marginBottom: '12px', fontSize: '14px', lineHeight: '1.5' } },
+                'Please log in to sync your templates across devices and for the best user experience. Alternatively, switch to local storage mode in Settings.'
+              ),
+              React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                React.createElement('button', {
+                  onClick: () => { window.location.href = '/laboratory/login'; onClose(); },
+                  style: { background: '#4299E1', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' },
+                }, 'LOG IN'),
+                React.createElement('button', {
+                  onClick: onClose,
+                  style: { background: 'transparent', color: '#A0AEC0', border: '1px solid #4A5568', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' },
+                }, 'Dismiss'),
+              ),
+            );
+          },
+        } as any);
+        return;
+      }
       debug.add('custom_templates_saved', { count: templates.length });
-      log(`Saved ${templates.length} custom templates to localStorage`);
+      log(`Saved ${templates.length} custom templates`);
     } catch (error) {
       log('Error saving custom templates:');
       log(error);
@@ -592,12 +691,22 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     log(`Deleted dot phrase: ${id}`);
   },
 
-  loadDotPhrases: () => {
+  loadDotPhrases: async () => {
     try {
-      const dotPhrases = loadDotPhrasesFromStorage();
-      set({ dotPhrases });
-      debug.add('dot_phrases_loaded', { count: dotPhrases.length });
-      log(`Loaded ${dotPhrases.length} dot phrases from localStorage`);
+      const store = getRaiStore();
+      const data = await store.get<any[]>(RAI_DATA_KEYS.dotPhrases);
+      if (data && Array.isArray(data)) {
+        const dotPhrases = data.map((dp: any) => ({
+          ...dp,
+          createdAt: dp.createdAt instanceof Date ? dp.createdAt : new Date(dp.createdAt),
+          updatedAt: dp.updatedAt instanceof Date ? dp.updatedAt : new Date(dp.updatedAt),
+        }));
+        set({ dotPhrases });
+        debug.add('dot_phrases_loaded', { count: dotPhrases.length });
+        log(`Loaded ${dotPhrases.length} dot phrases`);
+      } else {
+        set({ dotPhrases: [] });
+      }
     } catch (error) {
       log('Error loading dot phrases:');
       log(error);
@@ -605,19 +714,21 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     }
   },
 
-  saveDotPhrases: () => {
+  saveDotPhrases: async () => {
     try {
       const dotPhrases = get().dotPhrases.map(dp => ({
         id: dp.id,
         title: dp.title,
         titleNormalized: dp.titleNormalized,
         phrase: dp.phrase,
+        description: dp.description,
         createdAt: dp.createdAt.toISOString(),
         updatedAt: dp.updatedAt.toISOString(),
       }));
-      localStorage.setItem(STORAGE_KEYS.dotPhrases, JSON.stringify(dotPhrases));
+      const store = getRaiStore();
+      await store.set(RAI_DATA_KEYS.dotPhrases, dotPhrases);
       debug.add('dot_phrases_saved', { count: dotPhrases.length });
-      log(`Saved ${dotPhrases.length} dot phrases to localStorage`);
+      log(`Saved ${dotPhrases.length} dot phrases`);
     } catch (error) {
       log('Error saving dot phrases:');
       log(error);
@@ -633,7 +744,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   },
 
   setEditingTemplate: (template) => {
-    set({ editingTemplate: template });
+    set({ editingTemplateId: template?.id ?? null });
     debug.add('editing_template_set', { templateId: template?.id });
 
     // Sync route after state update
@@ -641,7 +752,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   },
 
   // Test Interface
-  selectedTemplateForTest: null,
+  selectedTemplateForTestId: null as string | null,
   testInputText: '',
   selectedModels: [...SUPPORTED_MODELS], // Default: all models selected
   currentTestRun: null,
@@ -651,7 +762,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
   isAnalyzing: false,
 
   setSelectedTemplateForTest: (template) => {
-    set({ selectedTemplateForTest: template });
+    set({ selectedTemplateForTestId: template?.id ?? null });
     debug.add('test_template_selected', { templateId: template?.id });
   },
 
@@ -671,11 +782,16 @@ export const useRaiStore = create<RaiState>((set, get) => ({
 
   startTest: async () => {
     const {
-      selectedTemplateForTest,
+      selectedTemplateForTestId,
       testInputText,
       selectedModels,
       testHistory,
+      templates,
     } = get();
+
+    const selectedTemplateForTest = selectedTemplateForTestId
+      ? templates.find(t => t.id === selectedTemplateForTestId) ?? null
+      : null;
 
     if (!selectedTemplateForTest || !testInputText.trim() || selectedModels.length === 0) {
       log('Cannot start test: missing template, input, or models');
@@ -797,14 +913,12 @@ export const useRaiStore = create<RaiState>((set, get) => ({
 
       log({ msg: 'Analysis prompt built', systemLength: system.length, userLength: user.length });
 
-      // Call LLM for analysis
-      // Use generateNote with analysis prompt as template and user prompt as input
-      const analysisContent = await generateNote(
+      // Call LLM directly with proper system/user prompt separation
+      const analysisContent = await callLLMDirect(
         analysisModel,
-        system, // Use system prompt as template
-        [user], // User prompt as input
-        '', // Empty system prompt since we're using it as template
-        3 // retries
+        system,
+        user,
+        3
       );
 
       // Update test run with analysis
@@ -842,12 +956,12 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     }
   },
 
-  loadTestHistory: () => {
+  loadTestHistory: async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.testRuns);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const history: TestRun[] = parsed.map((run: any) => ({
+      const store = getRaiStore();
+      const data = await store.get<any[]>(RAI_DATA_KEYS.testRuns);
+      if (data && Array.isArray(data)) {
+        const history: TestRun[] = data.map((run: any) => ({
           ...run,
           createdAt: new Date(run.createdAt),
           results: run.results.map((r: any) => ({
@@ -868,7 +982,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
     }
   },
 
-  saveTestHistory: () => {
+  saveTestHistory: async () => {
     try {
       const { testHistory } = get();
       const serialized = testHistory.map(run => ({
@@ -884,7 +998,8 @@ export const useRaiStore = create<RaiState>((set, get) => ({
           timestamp: run.analysis.timestamp.toISOString(),
         } : null,
       }));
-      localStorage.setItem(STORAGE_KEYS.testRuns, JSON.stringify(serialized));
+      const store = getRaiStore();
+      await store.set(RAI_DATA_KEYS.testRuns, serialized);
       log({ msg: 'Test history saved', count: serialized.length });
     } catch (error) {
       log({ msg: 'Error saving test history', error });
@@ -899,7 +1014,7 @@ export const useRaiStore = create<RaiState>((set, get) => ({
       // Load test run data into form
       const template = get().templates.find(t => t.id === testRun.templateId);
       set({
-        selectedTemplateForTest: template || null,
+        selectedTemplateForTestId: template?.id ?? null,
         testInputText: testRun.inputText,
         selectedModels: testRun.models,
         currentTestRun: testRun,

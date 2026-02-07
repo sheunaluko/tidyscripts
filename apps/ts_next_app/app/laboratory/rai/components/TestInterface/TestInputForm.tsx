@@ -19,15 +19,16 @@ import {
 import { PlayArrow } from '@mui/icons-material';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useSelectedTemplateForTest } from '../../hooks/useTemplateLookups';
 import { SUPPORTED_MODELS } from '../../constants';
 
 const log = tsw.common.logger.get_logger({ id: 'TestInputForm' });
 const debug = tsw.common.util.debug;
 
 export const TestInputForm: React.FC = () => {
+  const selectedTemplateForTest = useSelectedTemplateForTest();
   const {
     templates,
-    selectedTemplateForTest,
     testInputText,
     selectedModels,
     isRunningTest,

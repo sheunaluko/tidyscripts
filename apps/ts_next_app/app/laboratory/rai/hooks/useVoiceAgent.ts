@@ -11,6 +11,7 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
 import * as tsw from 'tidyscripts_web';
 import { useRaiStore } from '../store/useRaiStore';
+import { useSelectedTemplate } from './useTemplateLookups';
 import { useTivi } from '../../components/tivi/lib/index';
 import { reviewTemplate } from '../lib/rai_agent_web';
 
@@ -31,12 +32,12 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
   useEffect(() => { insightsRef.current = insightsClient; }, [insightsClient]);
 
   // Safe insights tracking — never throws
-  const trackEvent = useCallback((eventType: string, payload: Record<string, any>) => {
+  const addInsightEvent = useCallback((eventType: string, payload: Record<string, any>) => {
     try { insightsRef.current?.addEvent(eventType, payload); } catch (_) {}
   }, []);
 
+  const selectedTemplate = useSelectedTemplate();
   const {
-    selectedTemplate,
     voiceAgentConnected,
     setVoiceAgentConnected,
     addTranscriptEntry,
@@ -69,15 +70,16 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     debug.add('tts_interrupted', { timestamp: new Date().toISOString() });
   }, []);
 
-  // Initialize Tivi — always continuous mode for this workflow
+  // Initialize Tivi — uses settings from store
   const tivi = useTivi({
-    mode: 'continuous',
-    positiveSpeechThreshold: 0.8,
-    negativeSpeechThreshold: 0.6,
-    minSpeechStartMs: 150,
+    mode: settings.tiviMode,
+    positiveSpeechThreshold: settings.positiveSpeechThreshold,
+    negativeSpeechThreshold: settings.negativeSpeechThreshold,
+    minSpeechStartMs: settings.minSpeechStartMs,
+    powerThreshold: settings.powerThreshold,
+    enableInterruption: settings.enableInterruption,
     language: 'en-US',
     verbose: false,
-    powerThreshold: 0.01,
     onError: handleTiviError,
     onInterrupt: handleTiviInterrupt,
   });
@@ -166,7 +168,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
   // Handle "finished" keyword
   const handleFinishedKeyword = useCallback(async () => {
-    trackEvent('voice_finished_keyword', { skipReview: skipReviewRef.current });
+    addInsightEvent('voice_finished_keyword', { skipReview: skipReviewRef.current });
 
     if (skipReviewRef.current) {
       // Second "finished" — skip review, proceed directly
@@ -191,7 +193,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     setVoiceAgentConnected,
     tivi,
     reviewAndComplete,
-    trackEvent,
+    addInsightEvent,
   ]);
 
   // Handle transcription from Tivi
@@ -218,7 +220,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     });
 
     // Track each speech input
-    trackEvent('voice_transcription', { text: trimmed, charLength: trimmed.length });
+    addInsightEvent('voice_transcription', { text: trimmed, charLength: trimmed.length });
 
     // Check for exact "finished" keyword
     if (trimmed.toLowerCase() === 'finished' || trimmed.toLowerCase() === 'finished.') {
@@ -229,7 +231,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     }
 
     isProcessingRef.current = false;
-  }, [addTranscriptEntry, addInformationText, handleFinishedKeyword, trackEvent]);
+  }, [addTranscriptEntry, addInformationText, handleFinishedKeyword, addInsightEvent]);
 
   // Listen for transcription events
   useEffect(() => {
@@ -289,12 +291,23 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
 
       log('Voice agent started (continuous mode)');
       debug.add('voice_agent_connected', { timestamp: new Date().toISOString() });
-      trackEvent('voice_session_started', { templateId: selectedTemplate?.id, mode: 'continuous' });
+      addInsightEvent('voice_session_started', {
+        templateId: selectedTemplate?.id,
+        mode: settings.tiviMode,
+        positiveSpeechThreshold: settings.positiveSpeechThreshold,
+        negativeSpeechThreshold: settings.negativeSpeechThreshold,
+        minSpeechStartMs: settings.minSpeechStartMs,
+        powerThreshold: settings.powerThreshold,
+        enableInterruption: settings.enableInterruption,
+        playbackRate: settings.playbackRate,
+        aiModel: settings.aiModel,
+        agentModel: settings.agentModel,
+      });
 
     } catch (error) {
       log(`Error starting voice agent: ${error}`);
       debug.add('voice_agent_start_error', { error: String(error) });
-      trackEvent('voice_session_started', { error: String(error), status: 'error' });
+      addInsightEvent('voice_session_started', { error: String(error), status: 'error' });
 
       setIsSessionActive(false);
       setVoiceAgentConnected(false);
@@ -311,7 +324,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
     addTranscriptEntry,
     setReviewMessage,
     tivi,
-    trackEvent,
+    addInsightEvent,
   ]);
 
   // Stop voice agent
@@ -334,7 +347,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       });
 
       log('Voice agent stopped');
-      trackEvent('voice_session_ended', { transcriptionCount: collectedInformationRef.current.length });
+      addInsightEvent('voice_session_ended', { transcriptionCount: collectedInformationRef.current.length });
 
     } catch (error) {
       log(`Error stopping voice agent: ${error}`);
@@ -344,7 +357,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions = {}) {
       setIsSessionActive(false);
       setVoiceAgentConnected(false);
     }
-  }, [setVoiceAgentConnected, addTranscriptEntry, tivi, trackEvent]);
+  }, [setVoiceAgentConnected, addTranscriptEntry, tivi, addInsightEvent]);
 
   return {
     startAgent,

@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { Save, Cancel, ExpandMore, HelpOutline, CheckCircle, Error } from '@mui/icons-material';
 import { useRaiStore } from '../../store/useRaiStore';
+import { useEditingTemplate } from '../../hooks/useTemplateLookups';
 import { validateTemplate, extractVariables } from '../../lib/templateParser';
 import { TEMPLATE_SYNTAX } from '../../constants';
 
@@ -27,9 +28,9 @@ interface TemplateFormProps {
 }
 
 export const TemplateForm: React.FC<TemplateFormProps> = ({ onCancel }) => {
+  const editingTemplate = useEditingTemplate();
   const {
     templates,
-    editingTemplate,
     templateEditorMode,
     createCustomTemplate,
     updateCustomTemplate,
