@@ -14,7 +14,6 @@ import * as lab from "./laboratory/src/index"
 import * as bashr from "../src/bashr/index"  ;
 
 import useInit from "../hooks/useInit"
-import IndexSidebar from "../components/IndexSidebar"
 import IndexLoadingLogo from "../components/IndexLoadingLogo"
 import BackgroundAnimation from "../components/BackgroundAnimation"
 
@@ -35,10 +34,6 @@ const SIDEBAR_CONFIG = {
 };
 
 const Home: NextPage = (props : any) => {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(
-        new Set([])
-    );
     const [showLoadingLogo, setShowLoadingLogo] = useState(true);
 
     let init = async function() {
@@ -70,31 +65,9 @@ const Home: NextPage = (props : any) => {
     let clean_up = ()=> { log("index unmounted") }
     useInit({ init , clean_up })  //my wrapper around useEffect
 
-    const toggleExpandedItem = (itemId: string) => {
-        setExpandedMenuItems(prev => {
-            const next = new Set(prev);
-            if (next.has(itemId)) {
-                next.delete(itemId);
-            } else {
-                next.add(itemId);
-            }
-            return next;
-        });
-    }; 
-
-
-
-    
-    
     return (
         <Box sx={{ width: '100%', minHeight: 'calc(100vh - 200px)', position: 'relative' }}>
             <BackgroundAnimation />
-            <IndexSidebar
-                open={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
-                expandedItems={expandedMenuItems}
-                onToggleExpanded={toggleExpandedItem}
-            />
 
             <Box
                 component="main"

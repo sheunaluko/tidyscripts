@@ -64,6 +64,19 @@ const RAIContent: React.FC = () => {
       });
 
       log('RAI app initialized');
+
+      // Reload cloud data when user logs in via the global LoginModal
+      const onLogin = () => {
+        log('Login detected — reloading cloud data');
+        loadSettings().then(() => {
+          Promise.all([
+            loadTemplates().catch(() => {}),
+            loadDotPhrases().catch(() => {}),
+          ]);
+        });
+      };
+      window.addEventListener('loginSuccess', onLogin);
+      return () => window.removeEventListener('loginSuccess', onLogin);
     })();
   }, [insightsClient, loadSettings, loadTemplates, loadTestHistory, loadDotPhrases]);
 

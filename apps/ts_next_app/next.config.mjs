@@ -7,6 +7,14 @@ import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
  */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      // URL aliases — expose lab apps under /apps/ without moving source files
+      // See CLAUDE.md "URL Rewrites" section for the pattern
+      { source: '/apps/rai/:path*', destination: '/laboratory/rai/:path*' },
+      { source: '/apps/rai', destination: '/laboratory/rai' },
+    ];
+  },
   webpack: (config, { isServer }) => {
     config.resolve.extensions.push(".ts", ".tsx");
     config.resolve.fallback = { fs: false };

@@ -5,7 +5,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
-import React, { useEffect } from 'react' ;
+import React, { useEffect, useState } from 'react' ;
 
 import Head from 'next/head' ;
 
@@ -21,6 +21,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import Footer from '../components/Footer' ; //the footer component contains the drawer as well
 import Toast from '../components/Toast'
+import LoginModal from '../components/LoginModal'
+import IndexSidebar from '../components/IndexSidebar'
 
 import { Analytics } from '@vercel/analytics/react';
 
@@ -35,24 +37,37 @@ declare var window : any ;
 
 export default function RootLayout({children}: {children: React.ReactNode;}) {
 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(new Set([]));
+
     // Expose getAuth to window for InsightsClient
     useEffect(() => {
         if (typeof window !== 'undefined') {
             (window as any).getAuth = getAuth;
-            (window as any).tsw = tsw;	    
+            (window as any).tsw = tsw;
         }
     }, []);
 
+    const toggleExpandedItem = (itemId: string) => {
+        setExpandedMenuItems(prev => {
+            const next = new Set(prev);
+            if (next.has(itemId)) {
+                next.delete(itemId);
+            } else {
+                next.add(itemId);
+            }
+            return next;
+        });
+    };
+
     let footer_v_padding="20px";
-    let footer_h_padding="10px"; 
-    //let main_v_padding="25px";
-    //let main_h_padding="10px"; 
+    let footer_h_padding="10px";
 
     return (
 	<html lang="en">
 	    <Head>
 		<meta name="viewport" content="initial-scale=1, width=device-width" />
-	    </Head> 
+	    </Head>
 	    <body
 		style={{
 		    minHeight : "100vh",
@@ -60,8 +75,14 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 		    position : "relative"
 		}}
 	    >
-		<ThemeContextProvider> 
-		    <ThemeWrapper> 
+		<ThemeContextProvider>
+		    <ThemeWrapper>
+			    <IndexSidebar
+				open={sidebarOpen}
+				onToggle={() => setSidebarOpen(!sidebarOpen)}
+				expandedItems={expandedMenuItems}
+				onToggleExpanded={toggleExpandedItem}
+			    />
 			    <div
 				style={{
 				    display: 'flex',
@@ -71,7 +92,7 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 			    >
 				<main
 				    style={{ width: '100%' }}
-				    className={styles.main} 
+				    className={styles.main}
 				>
 				    {children}
 				</main>
@@ -91,11 +112,12 @@ export default function RootLayout({children}: {children: React.ReactNode;}) {
 			    >
 				<ChakraProvider>
 				    <Footer/>
+				    <LoginModal/>
 				</ChakraProvider>
 				<Toast/>
 			    </div>
 		    </ThemeWrapper>
-			
+
 
 		    <Analytics />
 		</ThemeContextProvider>

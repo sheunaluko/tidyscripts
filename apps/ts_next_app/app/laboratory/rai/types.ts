@@ -141,7 +141,7 @@ export interface RaiState {
   updateCustomTemplate: (id: string, updates: Partial<NoteTemplate>) => Promise<void>;
   deleteCustomTemplate: (id: string) => Promise<void>;
   loadCustomTemplates: () => Promise<void>;
-  saveCustomTemplates: () => Promise<void>;
+  saveCustomTemplates: () => Promise<{ localFallback: boolean }>;
   setTemplateEditorMode: (mode: 'list' | 'create' | 'edit') => void;
   setEditingTemplate: (template: NoteTemplate | null) => void;
 

@@ -12,7 +12,6 @@ import {
   AccountTree as AccountTreeIcon,
   School as SchoolIcon,
   BugReport as BugReportIcon,
-  Campaign as CampaignIcon,
   Storage as StorageIcon,
   Terminal as TerminalIcon,
   LibraryMusic as LibraryMusicIcon,
@@ -37,6 +36,12 @@ export const INDEX_MENU_ITEMS: MenuItem[] = [
     icon: AppShortcutIcon,
     href: '/apps',
     children: [
+      {
+        id: 'rai',
+        label: 'RAI - Realtime AI Notes',
+        icon: MicIcon,
+        href: '/apps/rai',
+      },
       {
         id: 'automate-care',
         label: 'Automate.Care',
@@ -70,12 +75,6 @@ export const INDEX_MENU_ITEMS: MenuItem[] = [
         href: '/laboratory/cortex_0',
       },
       {
-        id: 'rai',
-        label: 'RAI - Realtime AI Notes',
-        icon: MicIcon,
-        href: '/laboratory/rai',
-      },
-      {
         id: 'knowledge-graph',
         label: 'Graph Visualization',
         icon: AccountTreeIcon,
@@ -93,13 +92,7 @@ export const INDEX_MENU_ITEMS: MenuItem[] = [
         icon: AccountTreeIcon,
         href: '/laboratory/graph',
       },
-      {
-        id: 'vip',
-        label: 'Voice Interface Panel [VIP]',
-        icon: CampaignIcon,
-        href: '/laboratory/vip',
-      },
-      {
+{
         id: 'local-storage',
         label: 'Local Storage Interface',
         icon: StorageIcon,

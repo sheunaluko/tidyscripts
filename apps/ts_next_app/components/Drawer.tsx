@@ -48,32 +48,21 @@ export default function Component(props : any) {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const btnRef : any  = React.useRef()
 
-  let drawerToast = function() {
-    toast_toast({
-      title : 'Welcome!' ,
-      description : 'Explore Tidysripts further and customize your experience' ,
-      duration : 3000 , 
-      status : 'info' ,
-      isClosable : true, 
-    }) 
-  }
+  // Expose global opener so navbar Feedback item can trigger this panel
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.openFeedbackPanel = () => onOpen();
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.openFeedbackPanel;
+      }
+    };
+  }, [onOpen]);
 
-
-  
-  let dev_1 = async function() {
-    toast_toast({
-      title: 'Feedback' , 
-      description: 'For now, please contact sheun.aluko@wustl.edu (We will deploy a feedback interface soon)' , 
-      status: 'info',
-      duration: 6000,
-      isClosable: true,
-    }) 
-    
-  } 
-  
   return (
 
-    <Box> 
+    <Box>
     <Drawer
     isOpen={isOpen}
     placement='right'
@@ -83,15 +72,15 @@ export default function Component(props : any) {
     <DrawerOverlay />
     <DrawerContent>
       <DrawerCloseButton />
-      <DrawerHeader>Menu</DrawerHeader>
+      <DrawerHeader>Feedback</DrawerHeader>
 
       <DrawerBody>
 
 	  <Card style={card_style}>
 	    <h1> We value your feedback, <br/> so tell us how we can improve: </h1>
-	    <br/> 
+	    <br/>
 	    <textarea id="feedback_text"></textarea>
-	    <br/> 	    
+	    <br/>
 	    <Button onClick={function(){
 		let el = (document.getElementById("feedback_text") as any)
 		let feedback = (el.value as any)
@@ -100,38 +89,35 @@ export default function Component(props : any) {
 		toast_toast({
 		    title : 'Success' ,
 		    description : 'Thank you for your invaluable feedback.' ,
-		    duration : 3000 , 
+		    duration : 3000 ,
 		    status : 'success' ,
-		    isClosable : true, 
-		}) 
+		    isClosable : true,
+		})
 
 	    }}>
 		Submit
-	    </Button> 
+	    </Button>
 
 	  </Card >
 
-
-	  
-	
       </DrawerBody>
 
-      
     </DrawerContent>
     </Drawer>
 
     <Button
 	style={{
-	    backgroundColor : grey[50] , 
-	    color : primary 
+	    backgroundColor : grey[50] ,
+	    color : primary
 	}}
 
-	ref={btnRef} size="sm"  onClick={function(){onOpen();  drawerToast()}} >
+	ref={btnRef} size="sm" onClick={function(){
+	    if (typeof window !== 'undefined' && window.openNavSidebar) {
+		window.openNavSidebar();
+	    }
+	}} >
       <Icon as={HamburgerIcon} boxSize={4} />
     </Button>
-
-    
-
 
     </Box>
 

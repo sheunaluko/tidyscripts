@@ -12,6 +12,7 @@ import {
   InsightsClient,
   SurrealQueryFn,
 } from '../../../../src/lib/app_data_store';
+import { isFirebaseAuthenticated } from './authCheck';
 
 // ─── Data key constants ──────────────────────────────────────────────
 
@@ -94,6 +95,7 @@ export function getRaiStore(insights?: InsightsClient, cloudQueryFn?: SurrealQue
       bootstrap: bootstrapResult,
       resolved_mode: _instance.getMode(),
       has_cloud_query_fn: !!cloudQueryFn,
+      is_authenticated: isFirebaseAuthenticated(),
     });
   } else {
     if (insights) _instance.setInsights(insights);
@@ -158,15 +160,94 @@ export function migrateLegacyLocalStorage(): { migrated: number; skipped: number
   return { migrated, skipped };
 }
 
+// Keys whose values are arrays of items with `id` fields — these get
+// merged (local-only items added to cloud) rather than skipped entirely.
+const ARRAY_MERGE_KEYS: Set<string> = new Set([
+  RAI_DATA_KEYS.customTemplates,
+  RAI_DATA_KEYS.dotPhrases,
+  RAI_DATA_KEYS.testRuns,
+]);
+
 /**
- * Migrate all local data to SurrealDB cloud backend.
- * Used when user switches from local -> cloud mode.
+ * Migrate local data to SurrealDB cloud backend (non-destructive).
+ *
+ * - Object keys (e.g. settings): cloud wins — skip if cloud has data
+ * - Array keys (e.g. custom_templates): merge by `id` — local-only items
+ *   are added to cloud, existing cloud items are untouched
+ *
+ * This prevents overwriting real cloud data with stale/default local values
+ * (e.g. after a temporary switch to local due to auth expiry) while still
+ * picking up genuinely new items created while in local mode.
  */
-export async function migrateLocalToCloud(queryFn: SurrealQueryFn): Promise<{ migrated: number; failed: number }> {
+export async function migrateLocalToCloud(queryFn: SurrealQueryFn): Promise<{ migrated: number; merged: number; skipped: number; failed: number }> {
   const store = getRaiStore();
   const local = store.getLocalBackend();
   const surreal = new SurrealBackend(queryFn);
+  const appId = 'rai';
 
-  const result = await store.migrate(local, surreal);
-  return result.data || { migrated: 0, failed: 0 };
+  const listResult = await local.list(appId);
+  if (!listResult.ok || !listResult.data) {
+    return { migrated: 0, merged: 0, skipped: 0, failed: 0 };
+  }
+
+  let migrated = 0;
+  let merged = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const key of listResult.data) {
+    const localResult = await local.load(appId, key);
+    if (!localResult.ok || !localResult.data) {
+      failed++;
+      continue;
+    }
+
+    // Check if cloud already has data for this key
+    const cloudResult = await surreal.load(appId, key);
+    if (cloudResult.ok && cloudResult.data) {
+      // Cloud has data — try to merge if this is an array key
+      if (ARRAY_MERGE_KEYS.has(key)) {
+        const cloudArr = Array.isArray(cloudResult.data.content) ? cloudResult.data.content : [];
+        const localArr = Array.isArray(localResult.data.content) ? localResult.data.content : [];
+        const cloudIds = new Set(cloudArr.map((item: any) => item?.id).filter(Boolean));
+
+        // Find items in local that don't exist in cloud
+        const newItems = localArr.filter((item: any) => item?.id && !cloudIds.has(item.id));
+
+        if (newItems.length > 0) {
+          const mergedArr = [...cloudArr, ...newItems];
+          const saveResult = await surreal.save(appId, key, mergedArr, localResult.data.metadata);
+          if (saveResult.ok) {
+            merged += newItems.length;
+          } else {
+            failed++;
+          }
+        } else {
+          skipped++;
+        }
+      } else {
+        // Object key — cloud wins, skip
+        skipped++;
+      }
+      continue;
+    }
+
+    // Cloud is empty for this key — migrate from local
+    const saveResult = await surreal.save(appId, key, localResult.data.content, localResult.data.metadata);
+    if (saveResult.ok) {
+      migrated++;
+    } else {
+      failed++;
+    }
+  }
+
+  store.emitEvent('appdata_migrate_to_cloud', {
+    migrated,
+    merged,
+    skipped,
+    failed,
+    total_local_keys: listResult.data.length,
+  });
+
+  return { migrated, merged, skipped, failed };
 }

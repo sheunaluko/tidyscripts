@@ -13,6 +13,7 @@ import {
   generateDotPhraseId,
 } from '../lib/templateParser';
 import { getRaiStore, RAI_DATA_KEYS, migrateLegacyLocalStorage, migrateLocalToCloud } from '../lib/storage';
+import { checkCloudAuth, notifyCloudAuthRequired, notifyTemplateSavedLocally, waitForFirebaseAuth } from '../lib/authCheck';
 import { updateTiviSettings, getTiviSettings } from '../../components/tivi/lib/settings';
 import { surreal_query } from '../../../../src/firebase_utils';
 import { toast_toast } from '../../../../components/Toast';
@@ -475,8 +476,19 @@ export const useRaiStore = createInsightStore<RaiState>({
           };
           store.switchToCloud(queryFn);
           const result = await migrateLocalToCloud(queryFn);
-          insights.emit('storage_mode_changed', { mode: 'cloud', migrated: result.migrated, failed: result.failed });
-          toast_toast({ title: 'Switched to Cloud storage', description: `Migrated ${result.migrated} items`, status: 'success', duration: 4000 });
+          insights.emit('storage_mode_changed', { mode: 'cloud', migrated: result.migrated, merged: result.merged, skipped: result.skipped, failed: result.failed });
+          const parts: string[] = [];
+          if (result.migrated > 0) parts.push(`${result.migrated} migrated`);
+          if (result.merged > 0) parts.push(`${result.merged} synced from local`);
+          if (result.skipped > 0) parts.push(`${result.skipped} already in cloud`);
+          const desc = parts.length > 0 ? parts.join(', ') : 'Switched to cloud storage';
+          toast_toast({ title: 'Switched to Cloud storage', description: desc, status: 'success', duration: 4000 });
+          // Reload data from cloud so UI reflects actual cloud state
+          await Promise.all([
+            get().loadSettings().catch(() => {}),
+            get().loadTemplates().catch(() => {}),
+            get().loadDotPhrases().catch(() => {}),
+          ]);
         } catch (err: any) {
           insights.emit('storage_mode_change_failed', { mode: 'cloud', error: err?.message });
           toast_toast({ title: 'Cloud storage failed', description: 'Please log in to use cloud storage', status: 'error', duration: 5000 });
@@ -485,6 +497,12 @@ export const useRaiStore = createInsightStore<RaiState>({
       } else if (mode === 'local') {
         store.switchToLocal();
         insights.emit('storage_mode_changed', { mode: 'local' });
+        // Reload data from local backend so UI reflects local state
+        await Promise.all([
+          get().loadSettings().catch(() => {}),
+          get().loadTemplates().catch(() => {}),
+          get().loadDotPhrases().catch(() => {}),
+        ]);
       }
       // Force re-render so UI reflects the new mode
       get().updateSettings({});
@@ -625,7 +643,21 @@ export const useRaiStore = createInsightStore<RaiState>({
         // Emit legacy migration result as system event
         insights.emit('rai_legacy_migration', legacyResult);
 
+        // Wait for Firebase auth to resolve before cloud queries —
+        // on page load, currentUser is null until the SDK loads the
+        // persisted token (~300-800ms). Without this, cloud requests
+        // go out unauthenticated and return empty.
+        if (store.getMode() === 'cloud') {
+          await waitForFirebaseAuth(3000);
+        }
+
         const stored = await store.get<any>(RAI_DATA_KEYS.settings);
+
+        // Check auth state after cloud round-trip
+        const authState = checkCloudAuth();
+        if (authState.needsAttention) {
+          notifyCloudAuthRequired('settings_load', insights.emit);
+        }
 
         if (stored) {
           const parsed = stored;
@@ -718,6 +750,10 @@ export const useRaiStore = createInsightStore<RaiState>({
         const store = getRaiStore();
         const ok = await store.set(RAI_DATA_KEYS.settings, settings);
 
+        if (checkCloudAuth().needsAttention) {
+          notifyCloudAuthRequired('save_settings', insights.emit);
+        }
+
         // Return enriched data for auto-instrumentation
         return { ok, mode: store.getMode(), settings };
       } catch (error) {
@@ -739,8 +775,16 @@ export const useRaiStore = createInsightStore<RaiState>({
 
       const customTemplates = [...get().customTemplates, newTemplate];
       set({ customTemplates });
-      await get().saveCustomTemplates();
-      await get().loadTemplates(); // Refresh merged list
+      const result = await get().saveCustomTemplates();
+
+      if (result?.localFallback) {
+        // Local fallback — merge from in-memory state (don't read cloud which would return empty)
+        const defaultTemplates = loadTemplatesFromFiles();
+        defaultTemplates.forEach(t => t.isDefault = true);
+        set({ templates: [...defaultTemplates, ...get().customTemplates] });
+      } else {
+        await get().loadTemplates(); // Refresh merged list
+      }
 
       log(`Created custom template: ${newTemplate.title}`);
     },
@@ -758,9 +802,15 @@ export const useRaiStore = createInsightStore<RaiState>({
       );
 
       set({ customTemplates });
+      const result = await get().saveCustomTemplates();
 
-      await get().saveCustomTemplates();
-      await get().loadTemplates(); // Refresh merged list
+      if (result?.localFallback) {
+        const defaultTemplates = loadTemplatesFromFiles();
+        defaultTemplates.forEach(t => t.isDefault = true);
+        set({ templates: [...defaultTemplates, ...get().customTemplates] });
+      } else {
+        await get().loadTemplates(); // Refresh merged list
+      }
 
       log(`Updated custom template: ${id}`);
     },
@@ -768,8 +818,15 @@ export const useRaiStore = createInsightStore<RaiState>({
     deleteCustomTemplate: async (id) => {
       const customTemplates = get().customTemplates.filter(t => t.id !== id);
       set({ customTemplates });
-      await get().saveCustomTemplates();
-      await get().loadTemplates(); // Refresh merged list
+      const result = await get().saveCustomTemplates();
+
+      if (result?.localFallback) {
+        const defaultTemplates = loadTemplatesFromFiles();
+        defaultTemplates.forEach(t => t.isDefault = true);
+        set({ templates: [...defaultTemplates, ...get().customTemplates] });
+      } else {
+        await get().loadTemplates(); // Refresh merged list
+      }
 
       // If deleting currently selected template, clear selection
       if (get().selectedTemplateId === id) {
@@ -792,7 +849,7 @@ export const useRaiStore = createInsightStore<RaiState>({
       }
     },
 
-    saveCustomTemplates: async () => {
+    saveCustomTemplates: async (): Promise<{ localFallback: boolean }> => {
       try {
         const templates = get().customTemplates.map(t => ({
           id: t.id,
@@ -803,40 +860,24 @@ export const useRaiStore = createInsightStore<RaiState>({
           updatedAt: t.updatedAt?.toISOString(),
         }));
         const store = getRaiStore();
-        const ok = await store.set(RAI_DATA_KEYS.customTemplates, templates);
-        if (!ok) {
-          toast_toast({
-            status: 'warning',
-            duration: 8000,
-            isClosable: true,
-            render: ({ onClose }: { onClose: () => void }) => {
-              const React = require('react');
-              return React.createElement('div', {
-                style: { background: '#2D3748', color: 'white', padding: '16px', borderRadius: '8px', maxWidth: '420px' },
-              },
-                React.createElement('div', { style: { fontWeight: 600, marginBottom: '8px', fontSize: '15px' } }, 'Templates not synced'),
-                React.createElement('div', { style: { marginBottom: '12px', fontSize: '14px', lineHeight: '1.5' } },
-                  'Please log in to sync your templates across devices and for the best user experience. Alternatively, switch to local storage mode in Settings.'
-                ),
-                React.createElement('div', { style: { display: 'flex', gap: '8px' } },
-                  React.createElement('button', {
-                    onClick: () => { window.location.href = '/laboratory/login'; onClose(); },
-                    style: { background: '#4299E1', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' },
-                  }, 'LOG IN'),
-                  React.createElement('button', {
-                    onClick: onClose,
-                    style: { background: 'transparent', color: '#A0AEC0', border: '1px solid #4A5568', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' },
-                  }, 'Dismiss'),
-                ),
-              );
-            },
-          } as any);
-          return;
+        const authState = checkCloudAuth();
+
+        if (authState.needsAttention) {
+          // Cloud mode but not authenticated — save to localStorage as fallback
+          const localBackend = store.getLocalBackend();
+          await localBackend.save('rai', RAI_DATA_KEYS.customTemplates, templates);
+          notifyTemplateSavedLocally(insights.emit);
+          log(`Saved ${templates.length} custom templates (local fallback — not authenticated)`);
+          return { localFallback: true };
         }
+
+        const ok = await store.set(RAI_DATA_KEYS.customTemplates, templates);
         log(`Saved ${templates.length} custom templates`);
+        return { localFallback: !ok };
       } catch (error) {
         log('Error saving custom templates:');
         log(error);
+        return { localFallback: false };
       }
     },
 

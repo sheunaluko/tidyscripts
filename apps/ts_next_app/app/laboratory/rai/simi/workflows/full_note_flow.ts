@@ -5,6 +5,8 @@ export const fullNoteFlow = defineWorkflow({
   app: 'rai',
   tags: ['e2e', 'note_generation', 'clipboard'],
   steps: [
+    // Wait for templates to load (async init)
+    { waitFor: 'state.templates.length > 0', timeout: 15000 },
     // Select first template and begin
     {
       action: 'selectTemplateAndBegin',

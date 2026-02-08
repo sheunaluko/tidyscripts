@@ -61,8 +61,29 @@ The insightsClient instruments all apps for both production telemetry and debug 
 3. Export from `app/laboratory/<app>/simi/index.ts`
 4. Pass to `createInsightStore` via `workflows` config in the store file
 
+## URL Rewrites (App Migration Pattern)
+
+Apps can be exposed under a different URL path without moving source files, using Next.js `rewrites()` in `next.config.mjs`. This keeps all imports intact while changing the user-facing URL.
+
+**Active rewrites:**
+| Public URL | Source location | Purpose |
+|-|-|-|
+| `/apps/rai` | `app/laboratory/rai/` | RAI exposed under App Library |
+
+**To expose another lab app under a new URL:**
+1. Add rewrite rules to `next.config.mjs` `rewrites()` (both `/:path*` and bare path)
+2. Update the menu entry `href` in `constants/indexMenuItems.ts`
+3. Add the new URL to `HIDDEN_PATHS` in `components/IndexSidebar.tsx` if needed
+4. Both old and new URLs will work — rewrites are transparent to the browser
+
+**To fully move an app's source folder** (if ever needed):
+1. Convert parent-relative imports (`../../..`) to `@/` aliases first — the `@/*` path alias is configured in `tsconfig.json`
+2. `git mv` the folder
+3. Add a rewrite for the OLD URL so bookmarks/links still work
+4. Type-check to catch any broken imports
+
 ## Laboratory Apps
 Each app under `app/laboratory/` is self-contained. Active apps:
-- `rai/` — medical note generation (see rai/CLAUDE.md)
+- `rai/` — medical note generation, exposed at `/apps/rai` (see rai/CLAUDE.md)
 - `cortex_0/` — voice AI agent with sandboxed execution (see cortex_0/CLAUDE.md)
 - Shared code: `app/laboratory/src/` (cortex engine, utilities)

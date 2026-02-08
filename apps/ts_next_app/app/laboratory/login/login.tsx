@@ -13,12 +13,20 @@ const log = tsw.common.logger.get_logger({id:"login"})
 
 function login_success() {
     toast_toast({
-        title : "Successfully logged in.", 
+        title : "Successfully logged in.",
         description : "",
         duration : 2000,
-        status : "success" , 
-        isClosable : true , 
+        status : "success" ,
+        isClosable : true ,
     })
+    // If a redirect URL was passed (e.g. from auth toast), navigate back
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect && redirect.startsWith('/')) {
+            setTimeout(() => { window.location.href = redirect; }, 1000);
+        }
+    } catch {}
 } 
 
 function login_error(error : string) {

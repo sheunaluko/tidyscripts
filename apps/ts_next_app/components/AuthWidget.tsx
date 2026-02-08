@@ -54,15 +54,16 @@ const logout = (
 const login = (
     <Button size="small"
 	    style={{
-		backgroundColor : 'background.paper' , 
-		color : 'primary.main' 
+		backgroundColor : 'background.paper' ,
+		color : 'primary.main'
 	    }}
 	    onClick={
     function(){
-	if (typeof window != "undefined" ) { 
+	if (typeof window != "undefined" && window.openLoginModal) {
+	    window.openLoginModal();
+	} else {
 	    window.location.href="/laboratory/login"
 	}
-
     }}>
 	Log In
     </Button>

@@ -13,6 +13,7 @@ const customJestConfig = {
     '**/__tests__/**/*.test.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)'
   ],
+  testPathIgnorePatterns: ['/node_modules/', 'tests/e2e/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     // Handle ESM .js imports in TypeScript files (for react-grid-layout)

@@ -1,6 +1,6 @@
 // Note Generator Component
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Box, Typography, Button, Alert, Paper, Chip, Skeleton, Grid, CircularProgress } from '@mui/material';
 import { AutoAwesome, Refresh, Warning } from '@mui/icons-material';
 import { NoteDisplay } from './NoteDisplay';
@@ -20,9 +20,11 @@ export const NoteGenerator: React.FC = () => {
     // Always show blank note editor by default
     const noteToDisplay = generatedNote || '';
 
+    // Ref guard prevents double-fire from React Strict Mode's double-effect invocation
+    const autostartFired = useRef(false);
     useEffect(() => {
-	// Autostart generation if enabled and no note generated yet
-	if (settings.autostartGeneration && !generatedNote && !loading && collectedInformation.length > 0) {
+	if (settings.autostartGeneration && !generatedNote && !loading && collectedInformation.length > 0 && !autostartFired.current) {
+	    autostartFired.current = true;
 	    generate();
 	}
     }, [settings.autostartGeneration, generatedNote, loading, collectedInformation.length, generate]);

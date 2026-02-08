@@ -5,6 +5,8 @@ export const basicNoteFlow = defineWorkflow({
   app: 'rai',
   tags: ['smoke', 'note_generation'],
   steps: [
+    // Wait for templates to load (async init)
+    { waitFor: 'state.templates.length > 0', timeout: 15000 },
     {
       action: 'setSelectedTemplate',
       args: [{ $resolve: 'find', path: 'templates', index: 0 }],
