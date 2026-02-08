@@ -254,11 +254,11 @@ export function notifyCloudAuthRequired(
       },
         React.createElement('div', {
           style: { fontWeight: 600, marginBottom: '8px', fontSize: '15px' },
-        }, 'Cloud storage requires login'),
+        }, 'Welcome to R.AI'),
         React.createElement('div', {
           style: { marginBottom: '12px', fontSize: '14px', lineHeight: '1.5' },
         },
-          'You are in cloud storage mode but not logged in. Your data may not be loading or saving correctly.'
+          'Log in to sync your templates and settings across devices, or switch to local storage to use R.AI without an account.'
         ),
         React.createElement('div', { style: { display: 'flex', gap: '8px' } },
           ...authToastButtons(emitFn, onClose),

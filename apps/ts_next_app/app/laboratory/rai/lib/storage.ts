@@ -77,7 +77,10 @@ function bootstrapBackendModeFlag(): { action: string; source?: string } {
     }
   } catch {}
 
-  return { action: 'none' };
+  // New user — default to cloud so the auth check prompts them to log in
+  // (or switch to local). This ensures cloud sync is the happy path.
+  localStorage.setItem(modeKey, 'cloud');
+  return { action: 'set_cloud', source: 'default' };
 }
 
 // ─── Singleton accessor ──────────────────────────────────────────────
