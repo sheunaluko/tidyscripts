@@ -2,6 +2,7 @@
 
 ## Quick Orientation
 - Entry: `rai.tsx` — view router, wraps everything in `InsightsProvider`
+- URL: `/apps/rai` (rewritten from `app/laboratory/rai/` via `next.config.mjs` rewrites)
 - State: Single Zustand store in `store/useRaiStore.ts` — all app state lives here
 - Types: `types.ts`, Constants: `constants.ts`
 - Simi workflows: `simi/` — declarative test workflows for simulation and Playwright
@@ -25,9 +26,19 @@ Hash-based routing (`#templates`, `#input`, `#generator`, `#settings`, `#test`, 
 - Singleton: `getRaiStore()` in `lib/storage.ts` — scoped to `app_id='rai'`
 - Data keys: `settings`, `custom_templates`, `test_runs`, `dot_phrases` (defined in `RAI_DATA_KEYS`)
 - Backend mode: persisted in `__backend_mode__` localStorage flag, not in AppSettings
+- **Default mode: cloud** — new users start in cloud mode so the auth check prompts them to log in or switch to local
 - `getRaiStore(insights, cloudQueryFn)` handles late `cloudQueryFn` — if singleton was created before the query function was available and mode flag says cloud, it upgrades via `switchToCloud()`
-- `bootstrapBackendModeFlag()` detects cloud users from stored settings on first load
+- `bootstrapBackendModeFlag()` sets cloud as default for new users; detects existing cloud users from stored settings
+- `migrateLocalToCloud()` — non-destructive: object keys skip if cloud has data, array keys (`custom_templates`, `dot_phrases`, `test_runs`) merge by `id` field
 - AppDataStore details: see `apps/ts_next_app/CLAUDE.md` → AppDataStore section
+
+### Auth Check (`lib/authCheck.ts`)
+- Detects cloud mode without Firebase authentication (logged-out or new user)
+- `waitForFirebaseAuth(timeoutMs)` — awaits `onAuthStateChanged` before cloud queries (called in `loadSettings`)
+- `checkCloudAuth()` / `notifyCloudAuthRequired()` — shows debounced toast with LOG IN / USE LOCAL / Dismiss buttons
+- `notifyTemplateSavedLocally()` — warns when templates saved to local only (cloud auth missing)
+- Toast LOG IN button opens `window.openLoginModal()` (global LoginModal component)
+- `loginSuccess` DOM event — dispatched by LoginModal on successful auth; RAI listens in `rai.tsx` to reload cloud data
 
 ### Voice/Device Settings (Tivi Settings Module)
 - Voice/device settings are **not** in AppSettings — they live in tivi's settings module (`components/tivi/lib/settings.ts`)
@@ -103,7 +114,10 @@ Session-exported events emitted by the settings/storage flow:
 | `template_review` | `useRaiStore.ts` | `template_id`, `template_name`, `model`, `action`, `message`, `latency_ms` |
 | `template_review_response` | `useRaiStore.ts` | `user_action` (`generate_anyway` or `dismissed`), `review_message` |
 | `note_copied` | `useRaiStore.ts` | `text` (copied content) |
-| `storage_mode_changed` | `useRaiStore.ts` | `mode`, `migrated?`, `failed?` |
+| `cloud_auth_required` | `authCheck.ts` | `context` (`settings_load`, `save_settings`, `save_templates`) |
+| `cloud_auth_action` | `authCheck.ts` | `action` (`switch_to_local`, `dismissed`, `logged_in_via_popup`) |
+| `appdata_migrate_to_cloud` | `storage.ts` | `migrated`, `merged`, `skipped`, `failed`, `total_local_keys` |
+| `storage_mode_changed` | `useRaiStore.ts` | `mode`, `migrated?`, `merged?`, `skipped?`, `failed?` |
 | `storage_mode_change_failed` | `useRaiStore.ts` | `mode`, `error` |
 
 ## Debugging

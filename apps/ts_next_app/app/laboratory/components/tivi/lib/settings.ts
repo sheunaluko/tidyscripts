@@ -176,9 +176,10 @@ export function getSnapshot(): TiviSettings {
   return ensureCache();
 }
 
-/** Server snapshot for useSyncExternalStore SSR. */
+/** Server snapshot for useSyncExternalStore SSR — must be a stable reference. */
+const _serverSnapshot: TiviSettings = { ...TIVI_DEFAULTS };
 export function getServerSnapshot(): TiviSettings {
-  return { ...TIVI_DEFAULTS };
+  return _serverSnapshot;
 }
 
 /** Swap the storage backend (for testing or future migration to AppDataStore). */

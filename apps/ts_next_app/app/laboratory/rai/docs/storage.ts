@@ -7,7 +7,16 @@ export const content = `
 
 R.AI supports two storage backends for persisting your data (templates, settings, test history, dot phrases). You can switch between them in **Settings > Storage Mode**.
 
-### Local Storage (Default)
+### Cloud Storage (Default)
+
+- Data is stored in a remote SurrealDB cloud database
+- **Requires login** — you must be authenticated via Firebase to use this backend
+- Data syncs across all your devices and browsers
+- No practical storage limits
+- Data is associated with your user account
+- New users start in cloud mode — on first load, a prompt appears to log in or switch to local
+
+### Local Storage
 
 - Data is stored in your browser's \`localStorage\`
 - No login required
@@ -16,15 +25,7 @@ R.AI supports two storage backends for persisting your data (templates, settings
 - Subject to browser storage limits (~5-10MB)
 - Keys are prefixed with \`appdata::rai::\` to avoid collisions
 
-### Cloud Storage (SurrealDB)
-
-- Data is stored in a remote SurrealDB cloud database
-- **Requires login** — you must be authenticated via Firebase to use this backend
-- Data syncs across all your devices and browsers
-- No practical storage limits
-- Data is associated with your user account
-
-> **Note:** Switching to Cloud mode requires an active login. If the connection fails, the switch is blocked, your storage stays on Local, and you'll see an error toast. On success, existing local data is automatically migrated to the cloud.
+> **Note:** If you are in cloud mode but not logged in, R.AI will prompt you to either log in (to sync data across devices) or switch to local storage. Switching to Cloud mode migrates local data non-destructively — existing cloud data is preserved.
 
 ## How It Works
 
@@ -66,7 +67,11 @@ On first launch, R.AI automatically migrates data from the old \`rai_*\` localSt
 
 ### Local to Cloud Migration
 
-When switching from Local to Cloud storage mode, R.AI can migrate all your existing local data to the cloud database. This copies all keys — it does not delete local data.
+When switching from Local to Cloud storage mode, R.AI migrates your local data to the cloud non-destructively:
+
+- **Settings** (object keys) — cloud data wins; if the cloud already has settings, local settings are skipped
+- **Templates, dot phrases, test runs** (array keys) — merged by \`id\` field; items that exist only in local are added to cloud, existing cloud items are untouched
+- Local data is never deleted — it stays as a backup
 
 ## Telemetry
 

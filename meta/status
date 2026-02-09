@@ -31,19 +31,24 @@ Todo
   - [x] update model selector to reflect model registry
   - [x] do not allow model or audio settings changes while running
   - [x] fix CurrentUser issue (need to scope record id to user so it can be duplicated)
-  - [ ] auto calibrate
+  - [x] auto calibrate
   - [x] mode that disables listening while speaking
   - [x] change default audio mode to responsive
+  - [ ] upgrade to mirror CLAD architecture in r.ai (closed loop app dev)
 
 
    FREEDOM
   - [ ] Add a paywall and deploy on SmartChats.AI - target date -> mid february (valentines day) 
 
+
+- [ ] Eve (embedding visualization engine) 
+
+
 [ ] SmartChats Improvements 
   - () CONSIDER: streaming repsonse from smartchat
   
 
-[ ] General
+[ ~ implemented as design pattern ] General
   - Zustand + Insights + Integrated "Actions" (user emulation targets) for playwright  = CLAD
   - CLAD = closed loop application development 
 

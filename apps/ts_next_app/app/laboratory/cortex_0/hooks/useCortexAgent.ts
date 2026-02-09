@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import * as cortex_agent from "../cortex_agent_web";
 
-export function useCortexAgent(model: string, insightsClient?: any) {
+export function useCortexAgent(model: string, insightsClient?: any, authInfo?: { isAuthenticated: boolean }) {
   const [agent, setAgent] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -15,7 +15,7 @@ export function useCortexAgent(model: string, insightsClient?: any) {
       try {
         setIsLoading(true);
         setError(null);
-        const newAgent = await cortex_agent.get_agent(model, insightsClient);
+        const newAgent = await cortex_agent.get_agent(model, insightsClient, authInfo);
 
         if (!cancelled) {
           setAgent(newAgent);
@@ -38,7 +38,7 @@ export function useCortexAgent(model: string, insightsClient?: any) {
       //   agent.off('event', handle_event);
       // }
     };
-  }, [model, insightsClient]);
+  }, [model, insightsClient, authInfo?.isAuthenticated]);
 
   return { agent, isLoading, error };
 }

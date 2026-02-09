@@ -50,12 +50,21 @@ export async function load_mcp_functions() {
 /**
  * Creates a Cortex agent with standard functions only
  */
-export function get_agent(modelName: string = "gpt-5-mini", insightsClient?: any) {
+export function get_agent(modelName: string = "gpt-5-mini", insightsClient?: any, authInfo?: { isAuthenticated: boolean }) {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
     let additional_system_msg = `
     Tidyscripts is the general name for your software architecture.
+    ${!authInfo?.isAuthenticated ? `
+    IMPORTANT: The user is NOT currently logged in. They should log in to access
+    the cloud database backend, sync their data across devices, and customize their
+    experience. You can suggest they log in when relevant (e.g., when they ask about
+    saving data, accessing the database, or personalizing settings). Use the check_login_status
+    function to get current auth details.
+    ` : `
+    The user is logged in and has full access to cloud storage and the database backend.
+    `}
     `;
 
     let extra_msg = `
@@ -89,7 +98,7 @@ export function get_agent(modelName: string = "gpt-5-mini", insightsClient?: any
  * Creates a Cortex agent with MCP functions included
  * Asynchronously loads functions from the MCP server
  */
-export async function get_agent_with_mcp(modelName: string = "gpt-5-mini", insightsClient?: any) {
+export async function get_agent_with_mcp(modelName: string = "gpt-5-mini", insightsClient?: any, authInfo?: { isAuthenticated: boolean }) {
     // init cortex with chosen model
     let model = modelName;
     let name  = "coer" ;
@@ -843,6 +852,53 @@ Parameters:
 	    return "Sandbox environment reset successfully";
 	},
 	return_type: "string"
+    },
+
+    {
+	enabled: true,
+	description: `
+Checks the current login and storage status. Returns authentication state,
+storage mode (local or cloud), and a helpful message about what the user
+can do. Use this when the user asks about their account, login status,
+data storage, or syncing across devices.
+	`,
+	name: "check_login_status",
+	parameters: null,
+	fn: async (ops: any) => {
+	    const { log } = ops.util;
+	    log("Checking login status");
+
+	    let isAuthenticated = false;
+	    let storageMode = 'unknown';
+	    let userName = '';
+
+	    try {
+		if (typeof window !== 'undefined' && window.getAuth) {
+		    const auth = window.getAuth();
+		    isAuthenticated = !!auth?.currentUser;
+		    if (auth?.currentUser) {
+			userName = auth.currentUser.displayName || auth.currentUser.email || '';
+		    }
+		}
+	    } catch {}
+
+	    try {
+		const modeKey = 'appdata::cortex_0::__backend_mode__';
+		storageMode = (typeof window !== 'undefined' && localStorage.getItem(modeKey)) || 'cloud';
+	    } catch {}
+
+	    let message: string;
+	    if (isAuthenticated) {
+		message = `You are logged in${userName ? ` as ${userName}` : ''} with ${storageMode} storage. Your data syncs across devices.`;
+	    } else if (storageMode === 'cloud') {
+		message = 'You are not logged in. You are in cloud mode but your data cannot sync until you log in. You can log in via the login button, or switch to local storage if you prefer to use Cortex without an account.';
+	    } else {
+		message = 'You are using local storage mode. Your data is saved in this browser only and will not sync across devices. You can log in and switch to cloud storage to enable cross-device sync.';
+	    }
+
+	    return { isAuthenticated, storageMode, userName, message };
+	},
+	return_type: "object"
     }
 
 ]

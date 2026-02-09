@@ -9,7 +9,6 @@ import React from 'react' ;
 import styles from '../../../styles/Default.module.css'
 import  "./app.css"
 import * as tsw from "tidyscripts_web"  ;
-const { insights } = tsw.common;
 import { fps_monitor } from "../src";
 import { eventListenerTracker } from "./utils/eventListenerTracker";
 //import { ChakraProvider } from '@chakra-ui/react' ;
@@ -53,6 +52,8 @@ import { useTiviSettings } from '../components/tivi/lib/useTiviSettings';
 
 import { ExecutionSnapshot } from './types/execution';
 import * as fb from "../../../src/firebase" ;
+import { useInsights } from '../rai/context/InsightsContext';
+import { useCortexStore } from './store/useCortexStore';
 
 export async function get_question(qid : string) {
     qid = qid || "t1_q1" ; 
@@ -173,93 +174,96 @@ const  Component: NextPage = (props : any) => {
     const [transcribe, setTranscribe] = useState(true)
     const transcribeRef = React.useRef(transcribe) //toggle for enabling transcription
     const audioCleanupRef = useRef<(() => void) | null>(null); //cleanup function for audio listeners
-
-    // Speech cooldown: ignore transcriptions within X seconds of the last processed one
-    const [speechCooldownMs, setSpeechCooldownMs] = useState(2000);
     const lastTranscriptionTimeRef = useRef<number>(0);
-
-    let init_chat_history = [
-	{role : 'system' , content : 'You are an AI voice agent, and as such your responses should be concise and to the point and allow the user to request more if needed, especially because long responses create a delay for audio generation. Do not ask if I want further details or more information at the end of your response!'} 
-    ]
-
-    //const default_model = "gpt-5.1"
-    const default_model = "o4-mini"    
-    //const default_model = "claude-sonnet-4-5-20250929"
-    //const default_model = "gemini-3-pro-preview" 
-    //const default_model = "gemini-3-flash-preview"    
-    
-    /* const default_model = "gpt-4o-mini-2024-07-18" */ 
-
-    const [started, set_started] = useState(false);    
-    const [chat_history, set_chat_history] = useState(init_chat_history);
-    const [last_ai_message, set_last_ai_message] = useState("" as string);
-    const last_ai_message_ref = React.useRef(last_ai_message) 
-    
-    const [interim_result, set_interim_result] = useState("" as string);            
-
-    const init_thoughts : string[] = []  ; 
-    const [thought_history, set_thought_history] = useState(init_thoughts);
-
-    const init_logs : string[] = []  ;     
-    const [log_history, set_log_history] = useState(init_logs);    
-    
+    const [started, set_started] = useState(false);
+    const [interim_result, set_interim_result] = useState("" as string);
     const [audio_history, set_audio_history] = useState([]);
-    const [ai_model, set_ai_model] = useState(default_model);
 
     // Tivi settings — shared across all apps via tivi settings module
     const { settings: tiviSettings, updateSettings: updateTiviSettings } = useTiviSettings();
 
-    const [workspace, set_workspace] = useState({}) ;
-
-    // Context usage from Cortex events
-    const [contextUsage, setContextUsage] = useState<{
-        usagePercent: number
-        totalUsed: number
-        contextWindow: number
-    } | null>(null);
-
-    // InsightsClient for event tracking - initialized FIRST
+    // InsightsClient from InsightsProvider (replaces manual init)
+    const { client: insightsClientFromContext, isReady: insightsReady } = useInsights();
     const insightsClient = useRef<any>(null);
-    const [sessionId, setSessionId] = useState<string>("");
-    const [insightsReady, setInsightsReady] = useState(false);
+
+    // Sync insightsClient ref from context
+    useEffect(() => {
+	if (insightsClientFromContext) {
+	    insightsClient.current = insightsClientFromContext;
+	}
+    }, [insightsClientFromContext]);
+
+    // Store selectors — state that moved from useState to Zustand
+    const {
+	chatHistory: chat_history,
+	lastAiMessage: last_ai_message,
+	workspace,
+	thoughtHistory: thought_history,
+	logHistory: log_history,
+	htmlDisplay: html_display,
+	codeParams: code_params,
+	contextUsage,
+	isAuthenticated,
+	aiModel: ai_model,
+	speechCooldownMs,
+	soundFeedback: sound_feedback_from_store,
+	// Execution state
+	currentCode,
+	executionId,
+	executionStatus,
+	executionError,
+	executionDuration,
+	executionResult,
+	functionCalls,
+	variableAssignments,
+	sandboxLogs,
+	executionHistory,
+	selectedIndex,
+	isPinned,
+	// Actions
+	addUserMessage: store_addUserMessage,
+	addAiMessage: store_addAiMessage,
+	updateWorkspace: store_updateWorkspace,
+	updateSettings: store_updateSettings,
+	handleThought,
+	handleLog: storeHandleLog,
+	handleCodeUpdate,
+	handleHtmlUpdate,
+	handleContextStatus,
+	handleCodeExecutionStart,
+	handleCodeExecutionComplete,
+	handleSandboxLog,
+	handleSandboxEvent,
+	handleHistoryItemClick: store_handleHistoryItemClick,
+	setIsPinned: store_setIsPinned,
+	loadSettings,
+	loadConversation,
+	saveConversation,
+	saveSettings,
+	// Agent ref for replay
+	setAgent: store_setAgent,
+	_llmActive,
+    } = useCortexStore();
+
+    const last_ai_message_ref = React.useRef(last_ai_message);
+
+    // Late-bind InsightsClient to Zustand store
+    useEffect(() => {
+	if (insightsClientFromContext) {
+	    useCortexStore.setInsights(insightsClientFromContext);
+	}
+    }, [insightsClientFromContext]);
+
+    // Init flow: load settings and conversation from AppDataStore
+    useEffect(() => {
+	if (insightsReady) {
+	    loadSettings().then(() => loadConversation());
+	}
+    }, [insightsReady]);
 
     // FPS Monitor for performance tracking
     const fpsMonitor = useRef<any>(null);
     const sessionStartTime = useRef<number>(Date.now());
-
-    // Initialize InsightsClient
-    useEffect(() => {
-
-	(async () => {
-            const sid = insights.generateSessionId();
-            setSessionId(sid);
-
-	    let a = window.getAuth();
-
-	    let user = "" ;
-	    try {
-		let {uid,email,displayName} = a.currentUser ;
-		user = `${uid}|${email}|${displayName}` ;
-	    } catch (e : any ) {
-		user = "" ;
-	    }
-
-            insightsClient.current = new insights.InsightsClient({
-		app_name: 'cortex',
-		app_version: '3.0.0',
-		user_id: user,
-		session_id: sid,
-            });
-
-            // Expose for debugging
-            if (typeof window !== 'undefined') {
-		(window as any).insights = insightsClient.current;
-            }
-
-            log(`InsightsClient initialized with session ${sid}`);
-            setInsightsReady(true);
-	})()
-    }, []);
 
     // Initialize FPS Monitor after InsightsClient is ready
     useEffect(() => {
@@ -276,7 +280,8 @@ const  Component: NextPage = (props : any) => {
     // Cortex agent hook - automatically re-initializes when model changes or insights is ready
     const { agent: COR, isLoading: agentLoading, error: agentError } = useCortexAgent(
         ai_model,
-        insightsReady ? insightsClient.current : undefined
+        insightsReady ? insightsClient.current : undefined,
+        { isAuthenticated }
     );
 
     // Keep a ref to the latest COR to avoid stale closures in transcription_cb
@@ -315,50 +320,24 @@ const  Component: NextPage = (props : any) => {
     }, [tivi.isSpeaking, isAiTyping, started]);
 
     const [text_input, set_text_input] = useState<string>('');
-    const [html_display, set_html_display] = useState<string>('<h1>Hello from Cortex</h1>');    
-
-    let init_code_params_ = {
-	code : `console.log("hello universe!")` ,
-	mode : `javascript` 
-    }
-
-    let init_code_params =   {
-	code : "print(\"Welcome to Tidyscripts!\")" , 
-	mode : "python"
-    }
-
-    const [code_params, set_code_params] = useState(init_code_params as any); //for coding widget
 
     const handle_code_change = useCallback((new_params : any) => {
-    	set_code_params({ code: new_params.code, mode: new_params.mode });
-    }, []);	
+    	// Update store directly — codeParams is in Zustand now
+    	handleCodeUpdate({ code_params: new_params });
+    }, [handleCodeUpdate]);
     
 
 
     const [focusedWidget, setFocusedWidget] = useState<string | null>(null);
 
-    // Observability state for new widgets
-    const [currentCode, setCurrentCode] = useState<string>("");
-    const [executionId, setExecutionId] = useState<string>("");
-    const [executionStatus, setExecutionStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
-    const [executionError, setExecutionError] = useState<string>("");
-    const [executionDuration, setExecutionDuration] = useState<number>(0);
-    const [executionResult, setExecutionResult] = useState<any>(undefined);
-    const [functionCalls, setFunctionCalls] = useState<any[]>([]);
-    const [variableAssignments, setVariableAssignments] = useState<any[]>([]);
-    const [sandboxLogs, setSandboxLogs] = useState<any[]>([]);
-
-    // History state - single source of truth
-    const [executionHistory, setExecutionHistory] = useState<ExecutionSnapshot[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState<number>(-1); // -1 means "latest"
-    const [isPinned, setIsPinned] = useState<boolean>(false);
+    // Execution state — from store (destructured directly above)
 
 
 
     // Function to add a user's message to the chat
     const add_user_message = useCallback((content: string) => {
-	// @ts-ignore
-	set_chat_history((prev) => [...prev, { role: "user", content }])
+	// Update store
+	store_addUserMessage(content);
 
 	//add the user message to COR
 	COR.add_user_text_input(content)
@@ -376,31 +355,19 @@ const  Component: NextPage = (props : any) => {
 	    });
 	}
 
-	if (sound_feedback) {
+	if (sound_feedback_from_store) {
 	    sounds.proceed()
 	}
-    }, [COR, mode, sound_feedback]);
+    }, [COR, mode, sound_feedback_from_store, store_addUserMessage]);
 
     
     // Widget configuration hook
     const { widgets, visibleWidgets, toggleWidget, widgetLayout, saveLayout, resetLayout, applyPreset } = useWidgetConfig();
-    /* E V E N T _ H A N D L I N G */
-    const handle_thought = useCallback((evt : any) => {
-	let {thought} = evt ;
-	log(`Got thought event: ${thought}`)
-	set_thought_history((prev) => [...prev, thought])
-    }, []);
-
-    const handle_log = useCallback((evt : any) => {
-	log(`Got log event: ${evt.log}`)
-	set_log_history((prev) => [...prev, evt.log])
-    }, []);
-
+    /* E V E N T _ H A N D L I N G — delegated to store actions */
     const handle_workspace_update = useCallback((evt : any) => {
 	log(`Got workspace update event`)
-	// Use workspace from event payload instead of window.workspace
-	set_workspace({ ...evt.workspace });
-    }, []);
+	store_updateWorkspace(evt.workspace);
+    }, [store_updateWorkspace]);
 
     const handle_html_form_data = useCallback((evt: any) => {
 	log(`Got HTML form data event`);
@@ -445,100 +412,10 @@ const  Component: NextPage = (props : any) => {
 	log(`Added user message: ${message}`);
     }, [add_user_message]);
 
-    const handle_code_update = useCallback((evt : any) => {
-	log(`Got code update event`)
-	log(evt)
-	handle_code_change(evt.code_params) ;
-    }, [handle_code_change]);
-
-    const handle_html_update = useCallback((evt : any) => {
-	log(`Got html update event`)
-	log(evt)
-	set_html_display(evt.html)
-    }, []);
-
-    const handle_context_status = useCallback((evt: any) => {
-	const { usagePercent, totalUsed, contextWindow } = evt.status
-	log(`Context: ${usagePercent.toFixed(1)}% (${totalUsed}/${contextWindow} tokens)`)
-	setContextUsage({ usagePercent, totalUsed, contextWindow })
-    }, []);
-
-    // New event handlers for sandbox observability
-    const handle_code_execution_start = useCallback((evt: any) => {
-	log(`Got code execution start event`)
-	setCurrentCode(evt.code);
-	setExecutionId(evt.executionId);
-	setExecutionStatus('running');
-	setExecutionError("");
-	setExecutionDuration(0);
-	// Clear previous execution data
-	setFunctionCalls([]);
-	setVariableAssignments([]);
-	setSandboxLogs([]);
-	// Reset to show live execution (not pinned to history)
-	if (!isPinned) {
-	    setSelectedIndex(-1);
-	}
-    }, [isPinned]);
-
-    const handle_sandbox_log = useCallback((evt: any) => {
-	log(`Got sandbox log event: ${evt.level}`)
-	setSandboxLogs(prev => [...prev, {
-	    level: evt.level,
-	    args: evt.args,
-	    timestamp: evt.timestamp
-	}]);
-    }, []);
-
-    const handle_sandbox_event = useCallback((evt: any) => {
-	const { eventType, data, timestamp } = evt;
-	log(`Got sandbox event: ${eventType}`)
-
-	switch (eventType) {
-	    case 'function_start':
-		setFunctionCalls(prev => [...prev, {
-		    name: data.name,
-		    args: data.args,
-		    timestamp,
-		    callId: data.callId,
-		    status: 'running'
-		}]);
-		break;
-
-	    case 'function_end':
-		setFunctionCalls(prev => prev.map(call =>
-		    call.callId === data.callId
-			? { ...call, duration: data.duration, status: 'success', result: data.result }
-			: call
-		));
-		break;
-
-	    case 'function_error':
-		setFunctionCalls(prev => prev.map(call =>
-		    call.callId === data.callId
-			? { ...call, error: data.error, status: 'error' }
-			: call
-		));
-		break;
-
-	    case 'variable_set':
-		setVariableAssignments(prev => [...prev, {
-		    name: data.name,
-		    value: data.value,
-		    timestamp
-		}]);
-		break;
-	}
-    }, []);
-
-    const handle_code_execution_complete = useCallback((evt: any) => {
-	log(`Got code execution complete event`)
-	const { status, error, duration, result } = evt;
-	setExecutionStatus(status);
-	setExecutionError(error || "");
-	setExecutionDuration(duration);
-	setExecutionResult(result);
-    }, []);
+    // Event handlers delegated to store: handleThought, storeHandleLog,
+    // handleCodeUpdate, handleHtmlUpdate, handleContextStatus,
+    // handleCodeExecutionStart, handleCodeExecutionComplete,
+    // handleSandboxLog, handleSandboxEvent — all from useCortexStore()
 
     // Derive current execution from history and selected index
     // When execution is running, return null to show live state
@@ -559,26 +436,20 @@ const  Component: NextPage = (props : any) => {
 	return executionHistory[selectedIndex];
     }, [executionHistory, selectedIndex, executionStatus]);
 
-    const handleHistoryItemClick = useCallback((index: number) => {
-	setSelectedIndex(index);
-	// Note: Does NOT automatically set isPinned
-	// User must explicitly click pin toggle to lock
-    }, []);
-
     const event_dic: {[k:string] : any} = useMemo(() => ({
-	'thought' : handle_thought ,
+	'thought' : handleThought,
 	'workspace_update' : handle_workspace_update,
-	'log' : handle_log ,
-	'code_update' : handle_code_update ,
-	'html_update' : handle_html_update ,
+	'log' : storeHandleLog,
+	'code_update' : handleCodeUpdate,
+	'html_update' : handleHtmlUpdate,
 	'html_form_data': handle_html_form_data,
 	'html_interaction_complete': handle_html_interaction_complete,
-	'code_execution_start': handle_code_execution_start,
-	'code_execution_complete': handle_code_execution_complete,
-	'sandbox_log': handle_sandbox_log,
-	'sandbox_event': handle_sandbox_event,
-	'context_status': handle_context_status,
-    }), [handle_thought, handle_workspace_update, handle_log, handle_code_update, handle_html_update, handle_html_form_data, handle_html_interaction_complete, handle_code_execution_start, handle_code_execution_complete, handle_sandbox_log, handle_sandbox_event, handle_context_status]);
+	'code_execution_start': handleCodeExecutionStart,
+	'code_execution_complete': handleCodeExecutionComplete,
+	'sandbox_log': handleSandboxLog,
+	'sandbox_event': handleSandboxEvent,
+	'context_status': handleContextStatus,
+    }), [handleThought, handle_workspace_update, storeHandleLog, handleCodeUpdate, handleHtmlUpdate, handle_html_form_data, handle_html_interaction_complete, handleCodeExecutionStart, handleCodeExecutionComplete, handleSandboxLog, handleSandboxEvent, handleContextStatus]);
     
     const handle_event = useCallback((evt : any) => {
 	log(`Got event: ${JSON.stringify(evt)}`)
@@ -629,41 +500,28 @@ const  Component: NextPage = (props : any) => {
     useEffect( ()=> {
     	log(`Detected cor change`)
 	if (COR) {
+	    // Keep store's agent ref in sync for replay/dispatch
+	    store_setAgent(COR);
             COR.on('event', handle_event)
             return () => { COR.off('event', handle_event) }
 	}
     }, [COR, handle_event])
 
-    // Capture execution snapshot when complete
+    // Execution snapshot capture is now handled inside the store (captureExecutionSnapshot)
+
+    // Auto-save: debounced save after chat/workspace/settings changes
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-	if ((executionStatus === 'success' || executionStatus === 'error') && executionId) {
-	    const snapshot: ExecutionSnapshot = {
-		executionId,
-		timestamp: Date.now(),
-		code: currentCode,
-		status: executionStatus as 'success' | 'error',
-		error: executionError || undefined,
-		duration: executionDuration,
-		result: executionResult,
-		functionCalls: [...functionCalls],
-		variableAssignments: [...variableAssignments],
-		sandboxLogs: [...sandboxLogs]
-	    };
-
-	    setExecutionHistory(prev => {
-		const updated = [...prev, snapshot];
-		// Keep last 100 executions
-		return updated.slice(-100);
-	    });
-
-	    // If not pinned, auto-advance to latest
-	    if (!isPinned) {
-		setSelectedIndex(-1); // -1 means "show latest"
-	    }
-	    // If pinned, selectedIndex stays unchanged, just array grows
-	}
-    }, [executionStatus, executionId, currentCode, executionError, executionDuration, executionResult,
-	functionCalls, variableAssignments, sandboxLogs, isPinned]);
+	if (!insightsReady) return;
+	if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+	saveTimerRef.current = setTimeout(() => {
+	    saveConversation();
+	    saveSettings();
+	}, 2000);
+	return () => {
+	    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+	};
+    }, [chat_history, workspace, ai_model, speechCooldownMs, sound_feedback_from_store, insightsReady]);
 
     // Auto-scroll for widget displays - only depend on data that affects scroll
     useEffect(() => {
@@ -726,13 +584,13 @@ const  Component: NextPage = (props : any) => {
 	    get_ai_response ,
 	    get_agent: () => COR,  // Simple getter for backward compatibility
 	    transcription_cb ,
-	    workspace : {} ,
+	    workspace ,
 	    last_ai_message,
 	    last_ai_message_ref,
 	    COR,
 	    tivi,
 	    sandbox,  // Sandboxed JavaScript execution
-
+	    cortexInsights: insightsClient.current,
 	}) ;
 
 	return ()=>{
@@ -755,32 +613,38 @@ const  Component: NextPage = (props : any) => {
     useEffect(  ()=> {
 	//determine if it is user_message or ai_message
 	if (chat_history.length < 1)  {
-	    log(`Chat history empty`); return 
+	    log(`Chat history empty`); return
 	}
 	let role = fp.last(chat_history).role
 	log(`Detected change in chat history from: ${role}`)
 
 	if (role == 'user') {
 
+	    // Guard: if sendMessage() is driving the LLM, skip this reactive trigger
+	    if (_llmActive) {
+		log(`Skipping reactive LLM trigger — sendMessage is active`)
+		return
+	    }
+
 	    log(`Given user change, will send to ai`)
 	    get_ai_response().then( (result : any) => {
 		// add_ai_message(resp)
 		//but now response display is handled by tool/function call
 
-		
-	    }); 
 
-	    return 
-	    
+	    });
+
+	    return
+
 	}
 
 	if (role == 'system') {
-	    log(`System change ignored`) 
+	    log(`System change ignored`)
 	} else {
-	    log(`Given ai change, will await user response `) 
-	} 
+	    log(`Given ai change, will await user response `)
+	}
 
-    }, [chat_history])
+    }, [chat_history, _llmActive])
 
     /*
        DEFINE THE TRANSCRIPTION CALLBACK
@@ -852,17 +716,17 @@ const  Component: NextPage = (props : any) => {
 
     // Function to add an AI's message to the chat
     const add_ai_message = useCallback(async (content: string) => {
-	// @ts-ignore
-	set_chat_history((prev) => [...prev, { role: "assistant", content }]);
-	if (sound_feedback) {
+	// Update store
+	store_addAiMessage(content);
+	if (sound_feedback_from_store) {
 	    sounds.proceed()
 	}
 
-	set_last_ai_message(content) ;
-
 
 	//here we need to actually speak the response too!
-	if (mode != "chat") {
+	//Skip TTS if in chat mode OR if tivi hasn't been started
+	//(user may be typing in the chat widget while in voice mode)
+	if (mode != "chat" && started) {
 	    log(`generating audio response...`)
 	    log(`Using playbackRate to ${tiviSettings.playbackRate}`)
 	    //first pause SR
@@ -871,7 +735,7 @@ const  Component: NextPage = (props : any) => {
 	    await tivi.speak(content, tiviSettings.playbackRate) ;
 	    log(`done`)
 	} else {
-	    log(`Skipping speech!`)
+	    log(`Skipping speech — ${mode === 'chat' ? 'chat mode' : 'tivi not started'}`)
 	}
 
 	// Measure FPS after AI response (non-blocking)
@@ -910,7 +774,7 @@ const  Component: NextPage = (props : any) => {
 		});
 	}
 
-    }, [sound_feedback, mode, tiviSettings.playbackRate, tivi, insightsClient, fpsMonitor]);
+    }, [sound_feedback_from_store, mode, started, tiviSettings.playbackRate, tivi, insightsClient, fpsMonitor, store_addAiMessage]);
 
     //function for getting AI response from the chat history and the ai_model
     let get_ai_response = async function() {
@@ -1229,8 +1093,8 @@ const  Component: NextPage = (props : any) => {
                             executions={executionHistory}
                             selectedIndex={selectedIndex}
                             isPinned={isPinned}
-                            onSelectExecution={handleHistoryItemClick}
-                            onTogglePin={() => setIsPinned(prev => !prev)}
+                            onSelectExecution={store_handleHistoryItemClick}
+                            onTogglePin={() => store_setIsPinned(!isPinned)}
                             onFocus={() => setFocusedWidget('history')}
                         />
                     );
@@ -1271,7 +1135,7 @@ const  Component: NextPage = (props : any) => {
         widgetLayout,
         transcription_cb,
         handle_code_change,
-        handleHistoryItemClick,
+        store_handleHistoryItemClick,
         saveLayout
     ]);
 
@@ -1290,7 +1154,7 @@ const  Component: NextPage = (props : any) => {
                 isSpeaking={tivi.isSpeaking}
                 onCancelSpeech={() => tivi.cancelSpeech()}
                 aiModel={ai_model}
-                onModelChange={(model) => set_ai_model(model)}
+                onModelChange={(model) => store_updateSettings({ aiModel: model })}
                 onOpenSettings={() => setSettingsOpen(true)}
                 audioLevelRef={tivi.audioLevelRef}
                 voiceStatus={voiceStatus}
@@ -1313,7 +1177,7 @@ const  Component: NextPage = (props : any) => {
                 speechProbRef={tivi.speechProbRef}
                 audioLevelRef={tivi.audioLevelRef}
                 speechCooldownMs={speechCooldownMs}
-                onSpeechCooldownChange={setSpeechCooldownMs}
+                onSpeechCooldownChange={(ms: number) => store_updateSettings({ speechCooldownMs: ms })}
                 playbackRate={tiviSettings.playbackRate}
                 onPlaybackRateChange={(rate) => updateTiviSettings({ playbackRate: rate })}
                 isListening={tivi.isListening}
@@ -1660,8 +1524,8 @@ const  Component: NextPage = (props : any) => {
 			executions={executionHistory}
 			selectedIndex={selectedIndex}
 			isPinned={isPinned}
-			onSelectExecution={handleHistoryItemClick}
-			onTogglePin={() => setIsPinned(prev => !prev)}
+			onSelectExecution={store_handleHistoryItemClick}
+			onTogglePin={() => store_setIsPinned(!isPinned)}
 			fullscreen
 			onClose={() => setFocusedWidget(null)}
 		    />
@@ -1718,8 +1582,7 @@ async function on_init_audio( transcribeRef : any  , transcription_cb : any, tiv
 
 }
 
-/* Params  */
-var   sound_feedback = true
+/* sound_feedback is now from the store (store_sound_feedback) */
 
 
 /*
